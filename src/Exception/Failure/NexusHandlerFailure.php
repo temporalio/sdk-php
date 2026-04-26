@@ -12,12 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Exception\Failure;
 
 /**
- * Typed exception for a Nexus HandlerError carried over the wire as
- * {@see \Temporal\Api\Failure\V1\NexusHandlerFailureInfo}.
- *
- * Transport-level error raised by the Nexus handler itself (`BAD_REQUEST`,
- * `INTERNAL`, `NOT_FOUND`, etc. — see the Nexus spec). Maps 1:1 to the
- * `NexusHandlerException` thrown on the server side.
+ * Transport-level Nexus HandlerError (`BAD_REQUEST`, `INTERNAL`, `NOT_FOUND`, etc.).
+ * Maps 1:1 to the `NexusHandlerException` thrown on the handler side.
  */
 class NexusHandlerFailure extends TemporalFailure
 {
@@ -31,9 +27,7 @@ class NexusHandlerFailure extends TemporalFailure
     }
 
     /**
-     * Raw Nexus error-type string (e.g. `BAD_REQUEST`, `INTERNAL`, or a
-     * user-defined one). Preserved verbatim so unknown types survive
-     * round-trip.
+     * Raw error-type string (e.g. `BAD_REQUEST`, or user-defined).
      */
     public function getType(): string
     {
@@ -41,7 +35,7 @@ class NexusHandlerFailure extends TemporalFailure
     }
 
     /**
-     * {@see \Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior} enum value.
+     * {@see \Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior} value.
      */
     public function getRetryBehavior(): int
     {

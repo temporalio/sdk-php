@@ -59,9 +59,7 @@ final class NexusOperationStub implements NexusOperationStubInterface
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         array $nexusHeaders = [],
     ): NexusOperationHandle {
-        // Wire boundary validation — server-side would reject empty
-        // endpoint/service/operation with an opaque "not found", so surface
-        // the real cause (forgotten `withEndpoint()` etc.) right here.
+        // Surface "missing endpoint/service/operation" locally — server returns opaque "not found".
         $endpoint = $this->options->endpoint;
         $service = $this->options->service;
         if ($endpoint === '') {
@@ -74,7 +72,6 @@ final class NexusOperationStub implements NexusOperationStubInterface
                 'Nexus service is empty; call NexusOperationOptions::withService() or pass a #[Service]-annotated interface to newNexusServiceStub()',
             );
         }
-        /** @psalm-suppress TypeDoesNotContainType — defensive runtime guard for callers that silence psalm */
         if ($operation === '') {
             throw new \InvalidArgumentException('Nexus operation name must be a non-empty string');
         }
@@ -89,33 +86,21 @@ final class NexusOperationStub implements NexusOperationStubInterface
             nexusHeaders: $nexusHeaders,
         );
 
-        // Wrap in NexusOperationHandle so workflows can start the operation,
-        // do other work, and await later. The current wire starts+waits
-        // atomically, so the promise only resolves on completion; future
-        // wire extensions can surface the operation token earlier without
-        // breaking this API.
+        // Handle splits start/await for source-compat with future wire (token-on-async).
         return new NexusOperationHandle(
             EncodedValues::decodePromise($this->normalizeFailure($this->request($request), $endpoint, $service, $operation), $returnType),
         );
     }
 
+    protected function request(RequestInterface $request): PromiseInterface
+    {
+        return Workflow::getCurrentContext()->request($request);
+    }
+
     /**
-     * Normalize the failure envelope so workflow code can rely on a single
-     * exception type — matches the Java SDK contract where every rejection
-     * of a Nexus operation future surfaces as `NexusOperationFailure` with
-     * the original cause attached as `$previous`.
-     *
-     * Server-originated failures (handler error, schedule_to_close timeout,
-     * cancel of a started op) already arrive wrapped via the
-     * NexusOperationFailureInfo proto and pass through unchanged. Locally
-     * resolved cases — Go SDK's `WaitRequested`/`TryCancel` early ack which
-     * surfaces a bare `CanceledFailure`, or PHP-side scope cancel before the
-     * request leaves RR — get wrapped here.
-     *
-     * `scheduledEventId` and `operationToken` are zero/empty for locally
-     * wrapped failures because they're server-side concepts not available
-     * on the caller path; consumers reading those fields should branch on
-     * the previous-exception type.
+     * Wrap bare CanceledFailure / local rejections in a NexusOperationFailure so
+     * workflow code can match a single type. Server-side failures pass through
+     * untouched; locally wrapped ones have empty scheduledEventId/operationToken.
      */
     private function normalizeFailure(
         PromiseInterface $promise,
@@ -140,10 +125,5 @@ final class NexusOperationStub implements NexusOperationStubInterface
                 previous: $e,
             );
         });
-    }
-
-    protected function request(RequestInterface $request): PromiseInterface
-    {
-        return Workflow::getCurrentContext()->request($request);
     }
 }

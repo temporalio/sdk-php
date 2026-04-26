@@ -5,18 +5,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Nexus;
 
 /**
- * Workflow-run operation token codec — Java/Go-compatible.
+ * Workflow-run operation token: base64url(JSON{t:1, ns, wid}).
+ * Java/Go-compatible. Non-zero `v` field on decode = newer producer, rejected.
  *
- * Wire format: `base64url-no-padding(JSON{"t":1,"ns":"<namespace>","wid":"<workflowId>"})`.
- *
- * `t` is the operation token type discriminator (`1` = workflow-run).
- * `v` (version) is intentionally omitted on encode — its presence on decode
- * means the token is from a newer SDK and must be rejected (matches the Go
- * reference at `temporalnexus/token.go` and the Java reference at
- * `io.temporal.internal.nexus.WorkflowRunOperationToken`).
- *
- * @internal Used by {@see \Temporal\Nexus\WorkflowRunOperation} for both
- *           token generation on async-start and decoding on cancel.
+ * @internal
  */
 final class WorkflowRunOperationToken
 {
@@ -27,9 +19,6 @@ final class WorkflowRunOperationToken
         public readonly string $workflowId,
     ) {}
 
-    /**
-     * Encode a workflow-run operation token.
-     */
     public static function generate(string $namespace, string $workflowId): string
     {
         $payload = [
@@ -44,11 +33,7 @@ final class WorkflowRunOperationToken
     }
 
     /**
-     * Decode a workflow-run operation token.
-     *
-     * @throws \InvalidArgumentException if the token is malformed, has the
-     *         wrong type discriminator, carries a non-empty version, or is
-     *         missing the workflow id.
+     * @throws \InvalidArgumentException on malformed input.
      */
     public static function load(string $token): self
     {
@@ -85,11 +70,12 @@ final class WorkflowRunOperationToken
             );
         }
 
-        // The Go reference rejects any token that surfaces a `v` field —
-        // version 0 is implicit (omitted on encode), anything else means
-        // the producer is newer than this decoder.
+        // Non-zero version = newer producer.
         if (\array_key_exists('v', $parsed) && $parsed['v'] !== 0) {
-            throw new \InvalidArgumentException('invalid workflow run token: "v" field should not be present');
+            throw new \InvalidArgumentException(\sprintf(
+                'invalid workflow run token: unsupported version %s',
+                \var_export($parsed['v'], true),
+            ));
         }
 
         $workflowId = $parsed['wid'] ?? '';

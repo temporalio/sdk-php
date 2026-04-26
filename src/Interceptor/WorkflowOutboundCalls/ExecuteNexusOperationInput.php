@@ -16,9 +16,8 @@ final class ExecuteNexusOperationInput
      * @param non-empty-string $service
      * @param non-empty-string $operation
      * @param array<string, string> $nexusHeaders raw-string headers forwarded
-     *        on the Nexus operation wire (handler reads them from
-     *        OperationContext::$headers); separate from the Temporal
-     *        interceptor `Header` (payload-typed values).
+     *        on the Nexus operation wire (separate from the Temporal `Header`
+     *        that carries payload-typed values).
      *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
@@ -40,11 +39,7 @@ final class ExecuteNexusOperationInput
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
         ?array $nexusHeaders = null,
     ): self {
-        // Values from `$this->*` were validated as non-empty by the
-        // constructor; callers wanting to replace them keep the same
-        // non-empty-string contract. Psalm cannot express this invariant
-        // across the `?:` narrowing, so suppress is the least-bad option.
-        /** @psalm-suppress ArgumentTypeCoercion */
+        /** @psalm-suppress ArgumentTypeCoercion non-empty contract preserved by ?? fallback */
         return new self(
             $service ?? $this->service,
             $operation ?? $this->operation,

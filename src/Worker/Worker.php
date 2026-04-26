@@ -40,12 +40,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
 
-    /**
-     * Optional client wired in by {@see \Temporal\WorkerFactory} when one was
-     * provided to `WorkerFactory::create()`. Used to build the
-     * {@see \Temporal\Nexus\NexusOperationContext} that Nexus operation handlers
-     * (notably `WorkflowRunOperation`) need to start workflows.
-     */
+    /** Wired by WorkerFactory; backs NexusOperationContext for handlers. */
     private ?WorkflowClient $workflowClient = null;
 
     public function __construct(
@@ -131,23 +126,8 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
     public function registerNexusServiceImplementation(object ...$services): WorkerInterface
     {
-        $seenInCall = [];
-        foreach ($services as $index => $service) {
-            $instance = ServiceImplInstance::fromInstance($service);
-            $name = $instance->definition->name;
-
-            if (isset($seenInCall[$name])) {
-                throw new \InvalidArgumentException(\sprintf(
-                    'registerNexusServiceImplementation: services at positions %d and %d '
-                    . 'both declare Nexus service "%s"',
-                    $seenInCall[$name],
-                    $index,
-                    $name,
-                ));
-            }
-            $seenInCall[$name] = $index;
-
-            $this->services->nexusServices->add($instance);
+        foreach ($services as $service) {
+            $this->services->nexusServices->add(ServiceImplInstance::fromInstance($service));
         }
 
         return $this;
@@ -200,11 +180,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
             $this->services->dataConverter,
         );
 
-        // Hand the worker's task queue + the factory-supplied client to the
-        // task handler so it can build a NexusOperationContext for every
-        // dispatch. Workers without a client (e.g. activity-only setups that
-        // never registered a Nexus service) skip this — handlers that need
-        // the context will surface a clear error via Nexus::getOperationContext().
+        // Skip when no client — context-needing handlers fail fast via Nexus::getOperationContext().
         if ($this->workflowClient !== null) {
             $handler->withWorkerEnvironment(
                 $this->workflowClient->getClientOptions()->namespace,

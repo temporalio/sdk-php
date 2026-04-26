@@ -79,7 +79,7 @@ class TestGreetingServiceImpl
     public function sayHello(): OperationHandlerInterface
     {
         return new SynchronousOperationHandler(
-            fn(OperationContext $ctx, OperationStartDetails $details, ?string $name): string
+            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $name): string
                 => "Hello, {$name}!",
         );
     }
@@ -107,7 +107,7 @@ class TestGreetingServiceImpl
     public function failingOp(): OperationHandlerInterface
     {
         return new SynchronousOperationHandler(
-            function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
+            static function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
                 throw OperationException::failed('Something went wrong');
             },
         );
@@ -170,17 +170,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 {
     private NexusTaskHandler $handler;
     private PayloadSerializer $serializer;
-
-    protected function setUp(): void
-    {
-        $dataConverter = DataConverter::createDefault();
-        $this->serializer = new PayloadSerializer($dataConverter);
-
-        $repository = new NexusServiceRepository();
-        $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
-
-        $this->handler = new NexusTaskHandler($repository, $this->serializer, $dataConverter);
-    }
 
     public function testStartSyncOperation(): void
     {
@@ -259,27 +248,26 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertSame(OperationException::class, $meta['type']);
     }
 
-    public function testTracebackCanBeStrippedViaFlag(): void
+    public function testTracebackCanBeStrippedViaConstructorFlag(): void
     {
-        $prior = NexusTaskHandler::$includeTracebackInFailure;
-        NexusTaskHandler::$includeTracebackInFailure = false;
+        $repository = new NexusServiceRepository();
+        $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
+        $handler = new NexusTaskHandler(
+            $repository,
+            $this->serializer,
+            DataConverter::createDefault(),
+            includeTracebackInFailure: false,
+        );
 
-        try {
-            $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
-            $response = $this->handler->handleStartOperation($request);
-            $failure = $response->getStartOperation()->getOperationError()->getFailure();
+        $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
+        $response = $handler->handleStartOperation($request);
+        $failure = $response->getStartOperation()->getOperationError()->getFailure();
 
-            // Stripped mode: no trace details, but metadata['type'] still carries
-            // the outer exception class for minimal diagnostics.
-            self::assertSame('', $failure->getDetails());
-            $meta = \iterator_to_array($failure->getMetadata());
-            self::assertSame(OperationException::class, $meta['type']);
-
-            // Message still propagates — the minimum useful diagnostic.
-            self::assertSame('Something went wrong', $failure->getMessage());
-        } finally {
-            NexusTaskHandler::$includeTracebackInFailure = $prior;
-        }
+        // Stripped mode: no trace details, metadata still carries the class.
+        self::assertSame('', $failure->getDetails());
+        $meta = \iterator_to_array($failure->getMetadata());
+        self::assertSame(OperationException::class, $meta['type']);
+        self::assertSame('Something went wrong', $failure->getMessage());
     }
 
     public function testStartOperationWithUnknownService(): void
@@ -430,6 +418,17 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
         $response = $this->handler->handleStartOperation($request);
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
+    }
+
+    protected function setUp(): void
+    {
+        $dataConverter = DataConverter::createDefault();
+        $this->serializer = new PayloadSerializer($dataConverter);
+
+        $repository = new NexusServiceRepository();
+        $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
+
+        $this->handler = new NexusTaskHandler($repository, $this->serializer, $dataConverter);
     }
 
     private function buildStartRequest(string $service, string $operation, string $input): Request

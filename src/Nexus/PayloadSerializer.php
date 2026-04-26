@@ -28,9 +28,7 @@ final class PayloadSerializer implements SerializerInterface
         $payload = $this->dataConverter->toPayload($value);
         $data = $payload->getData();
 
-        // Payload::getMetadata() returns a Google\Protobuf MapField which is
-        // IteratorAggregate but psalm sees only the ArrayAccess portion and
-        // flags direct iteration. `iterator_to_array` narrows to a plain array.
+        // Protobuf MapField: psalm sees only ArrayAccess, narrow to plain array.
         $headers = \iterator_to_array($payload->getMetadata());
 
         return new Content($data, $headers);

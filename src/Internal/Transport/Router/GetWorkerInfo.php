@@ -71,10 +71,7 @@ final class GetWorkerInfo extends Route
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
             'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
-            // NexusServiceInfo[]
-            // Key is lowerCamelCase to match the Go tag
-            // `json:"nexusServices,omitempty"` on the RR side — do NOT rename
-            // to PascalCase without a coordinated RR change.
+            // Key matches RR's `json:"nexusServices,omitempty"` — do not rename.
             'nexusServices' => $worker->getNexusServices(),
         ];
     }
@@ -97,11 +94,7 @@ final class GetWorkerInfo extends Route
     {
         return [
             'ApiKey' => $this->credentials->apiKey,
-            // Advertises that this PHP worker handles the `CancelNexusOperationMethod`
-            // command (method-cancel for in-flight Nexus handlers). RoadRunner only
-            // emits that command if the flag is present — otherwise the worker would
-            // see an unknown command and fail. Stringified because RR flags are
-            // `map[string]string`.
+            // Tells RR this worker handles CancelNexusOperationMethod.
             'nexus_method_cancel' => 'true',
         ];
     }

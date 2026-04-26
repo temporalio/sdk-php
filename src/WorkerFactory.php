@@ -114,12 +114,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected EnvironmentInterface $env;
     protected PluginRegistry $pluginRegistry;
 
-    /**
-     * Workflow client kept around so workers can build a {@see \Temporal\Nexus\NexusOperationContext}
-     * for every Nexus operation dispatch. `null` when the factory was created
-     * without a client — Nexus `WorkflowRunOperation` handlers will then fail
-     * fast with a clear message.
-     */
+    /** Reused for the NexusOperationContext on each dispatch. */
     protected ?WorkflowClient $workflowClient = null;
 
     public function __construct(

@@ -326,12 +326,16 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Execute a Nexus operation directly without a typed stub.
      *
      * @see Workflow::executeNexusOperation()
+     *
+     * @param array<string, string> $nexusHeaders Raw-string headers carried on
+     *        the Nexus wire and surfaced to the handler via OperationContext.
      */
     public function executeNexusOperation(
         string $operation,
         array $args = [],
         ?NexusOperationOptions $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): PromiseInterface;
 
     /**

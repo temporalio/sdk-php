@@ -12,14 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Exception\Failure;
 
 /**
- * Typed exception for a Nexus operation failure carried over the wire as
- * {@see \Temporal\Api\Failure\V1\NexusOperationFailureInfo}.
- *
- * Raised on the workflow side when a Nexus operation — invoked via
- * {@see \Temporal\Workflow::executeNexusOperation()} — fails or is cancelled.
- * The `$previous` throwable carries the cause wrapped as a
- * {@see TemporalFailure} (usually an {@see ApplicationFailure} when the
- * handler returned an `OperationError`).
+ * Workflow-side failure for a Nexus operation invoked via
+ * {@see \Temporal\Workflow::executeNexusOperation()}.
+ * `$previous` carries the cause as a {@see TemporalFailure}.
  */
 class NexusOperationFailure extends TemporalFailure
 {
@@ -32,8 +27,6 @@ class NexusOperationFailure extends TemporalFailure
         private readonly string $operationToken,
         ?\Throwable $previous = null,
     ) {
-        // Mirrors ChildWorkflowFailure/ActivityFailure: the rendered message
-        // is the identity tuple; the actual cause message lives on $previous.
         parent::__construct(
             self::buildMessage([
                 'endpoint' => $endpoint,

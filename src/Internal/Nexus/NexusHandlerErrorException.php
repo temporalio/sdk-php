@@ -7,7 +7,7 @@ namespace Temporal\Internal\Nexus;
 use Temporal\Api\Nexus\V1\HandlerError;
 
 /**
- * Wraps a Nexus HandlerError proto for transport back to the server.
+ * Wraps a Nexus HandlerError proto for transport back to RR.
  */
 final class NexusHandlerErrorException extends \RuntimeException
 {

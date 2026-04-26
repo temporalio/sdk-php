@@ -10,25 +10,14 @@ use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\LinkParser;
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
- * Handles "InvokeNexusOperation" command from Go RoadRunner plugin.
- *
- * Go sends: options={service, operation, requestId, callback, callbackHeaders, headers, links, invocationId?}
- *           payloads=binary input payload
- * PHP responds: payloads=result payload (sync) or failure
- *
- * When `invocationId` is present (non-zero) a fresh {@see MethodCanceller}
- * is created and registered in {@see NexusInvocationRegistry} so the
- * `CancelNexusOperationMethod` route can trigger it. The canceller is
- * removed in a `finally` block regardless of outcome.
- *
- * The `invocationId` key is optional so older RoadRunner builds keep
- * working — the context simply gets no canceller and
- * `$context->isMethodCancelled()` stays `false`.
+ * Route for "InvokeNexusOperation" from RR.
+ * Registers a MethodCanceller when invocationId is supplied; cleans up in finally.
  */
 final class InvokeNexusOperation extends Route
 {
@@ -47,19 +36,14 @@ final class InvokeNexusOperation extends Route
         $callback = $options['callback'] ?? null;
         $callbackHeaders = $options['callbackHeaders'] ?? [];
         $requestHeaders = $options['headers'] ?? [];
-        // Correlates this invocation with a future CancelNexusOperationMethod.
-        // `0` means the RR side did not supply one — method-cancel is then a
-        // silent no-op, preserving compatibility with older RR builds.
+        // 0 = no canceller (legacy RR).
         $invocationId = (int) ($options['invocationId'] ?? 0);
 
         $deadline = NexusTaskHandler::deadlineFromHeaders($requestHeaders);
 
         $canceller = null;
         if ($invocationId !== 0) {
-            // Passing the deadline to the canceller gives listeners the
-            // chance to fire on expiry (Java parity). The context-level
-            // deadline check in OperationContext::isMethodCancelled() is a
-            // backup for the no-canceller case.
+            // Canceller fires listeners on deadline expiry too (Java parity).
             $canceller = new MethodCanceller($deadline);
             $this->invocations->register($invocationId, $canceller);
         }
@@ -72,11 +56,10 @@ final class InvokeNexusOperation extends Route
             methodCanceller: $canceller,
         );
 
-        // Extract input from payloads — pass raw payload data + metadata to handler
         $inputData = '';
         $inputHeaders = [];
         $payloads = $request->getPayloads();
-        if ($payloads instanceof \Temporal\DataConverter\EncodedValues) {
+        if ($payloads instanceof EncodedValues) {
             $protoPayloads = $payloads->toPayloads();
             if ($protoPayloads->getPayloads()->count() > 0) {
                 $firstPayload = $protoPayloads->getPayloads()[0];
@@ -89,16 +72,12 @@ final class InvokeNexusOperation extends Route
         $input = new HandlerInputContent($inputData, $inputHeaders);
 
         try {
-            // Caller-side Nexus-Link headers parsed by RR and passed as
-            // structured `{url, type}` objects. Malformed payload →
-            // HandlerException(BadRequest) surfaces as HTTP 400 back to the
-            // Nexus caller (Java parity). Done inside the try so the
-            // rejection flows through the same promise path as handler errors.
+            // Strict link parsing: malformed → BadRequest (Java parity).
             $links = LinkParser::fromRaw($options['links'] ?? null);
 
             $details = new OperationStartDetails(
                 requestId: $requestId,
-                callbackUrl: $callback !== '' ? $callback : null,
+                callbackUrl: $callback ?: null,
                 callbackHeaders: $callbackHeaders,
                 links: $links,
             );
@@ -106,9 +85,6 @@ final class InvokeNexusOperation extends Route
             $result = $this->taskHandler->startOperationDirect($context, $details, $input);
             $resolver->resolve($result);
         } catch (\Throwable $e) {
-            // NexusHandlerErrorException (wrapping a HandlerError proto) and
-            // plain throwables both route through the same rejection path —
-            // the RR transport inspects the exception type on the other side.
             $resolver->reject($e);
         } finally {
             if ($invocationId !== 0) {

@@ -196,29 +196,20 @@ final class WorkflowOptions extends Options
     public ?VersioningOverride $versioningOverride = null;
 
     /**
-     * Override for the gRPC `request_id` on `StartWorkflowExecutionRequest`.
+     * Override for `StartWorkflowExecutionRequest.request_id`. `null` = fresh UUID.
+     * Used by Nexus WorkflowRunOperation for caller-driven idempotency.
      *
-     * `null` (default) means a fresh UUID is generated per call. Set this when
-     * idempotency must follow an external request id — e.g. the `requestId`
-     * that Nexus passes to a `WorkflowRunOperation` handler so retries from
-     * the Nexus caller dedupe on the server.
-     *
-     * Not marshalled to Go — applied directly on the proto in
-     * {@see \Temporal\Internal\Client\WorkflowStarter::configureExecutionRequest()}.
+     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
      *
      * @since Nexus support
      */
     public ?string $requestId = null;
 
     /**
-     * Completion callbacks to attach to the workflow at start time.
+     * Completion callbacks attached at start. Used by Nexus to register the
+     * caller's callback URL.
      *
-     * Used by Nexus `WorkflowRunOperation` handlers to register the Nexus
-     * caller's callback URL on the started workflow so the Temporal server
-     * delivers the result back when the workflow completes. Empty by default.
-     *
-     * Not marshalled to Go — applied directly on the proto in
-     * {@see \Temporal\Internal\Client\WorkflowStarter::configureExecutionRequest()}.
+     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
      *
      * @var list<Callback>
      * @since Nexus support
@@ -646,13 +637,9 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Pin the gRPC `request_id` used to start the workflow.
-     *
-     * Pass `null` to restore the default behaviour (a fresh UUID per call).
-     * See {@see self::$requestId} for the use case (Nexus `WorkflowRunOperation`).
+     * Pin gRPC `request_id`. `null` = fresh UUID per call.
      *
      * @return $this
-     *
      * @since Nexus support
      */
     #[Pure]
@@ -664,18 +651,12 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Append a Nexus completion callback. Mirrors the Go reference's
-     * `internal.SetCallbacksOnStartWorkflowOptions` — the callback is attached
-     * to the started workflow, so the Temporal server delivers the result to
-     * the supplied URL when the workflow completes.
+     * Append a Nexus completion callback. Use {@see self::withCompletionCallbacks()}
+     * with an empty array to clear.
      *
-     * Multiple calls accumulate; pass an empty array to {@see self::withCompletionCallbacks()}
-     * to clear.
-     *
-     * @param non-empty-string $url Caller-supplied callback URL.
-     * @param array<string, string> $headers Extra headers (e.g. `Nexus-Operation-Token`).
+     * @param non-empty-string $url
+     * @param array<string, string> $headers
      * @return $this
-     *
      * @since Nexus support
      */
     #[Pure]
@@ -696,12 +677,10 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Replace the full list of completion callbacks. Useful when callers
-     * already build the proto themselves (Internal callbacks, links, etc.).
+     * Replace the full list of completion callbacks.
      *
      * @param list<Callback> $callbacks
      * @return $this
-     *
      * @since Nexus support
      */
     #[Pure]

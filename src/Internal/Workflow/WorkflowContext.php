@@ -467,11 +467,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
-     * @psalm-suppress InvalidReturnType, InvalidReturnStatement
-     *                 — NexusServiceProxy routes user calls through __call,
-     *                 emulating the `$class` interface at runtime. The
-     *                 template binding is a user-facing DX contract, not a
-     *                 structural guarantee psalm can verify.
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement — runtime proxy via __call.
      */
     public function newNexusServiceStub(
         string $class,
@@ -504,30 +500,23 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         array $args = [],
         ?NexusOperationOptions $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): PromiseInterface {
         $options ??= NexusOperationOptions::new();
 
-        $service = $options->service;
-        if ($service === '') {
-            throw new \InvalidArgumentException(
-                'Nexus service is empty; set it via NexusOperationOptions::withService() or use newNexusServiceStub() with a #[Service]-annotated interface',
-            );
-        }
-        if ($operation === '') {
-            throw new \InvalidArgumentException('Nexus operation name must be a non-empty string');
-        }
-
+        // Empty endpoint/service/operation are validated downstream in NexusOperationStub::start.
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
                 ->newUntypedNexusOperationStub($input->options)
                 ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             'executeNexusOperation',
         )(new ExecuteNexusOperationInput(
-            $service,
+            $options->service,
             $operation,
             $args,
             $options,
             $returnType,
+            $nexusHeaders,
         ));
     }
 

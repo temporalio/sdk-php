@@ -161,12 +161,7 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * Read access to the client-wide options bag.
-     *
-     * Used by {@see \Temporal\Worker\Worker} to learn the namespace it should
-     * advertise inside a {@see \Temporal\Nexus\NexusOperationContext} when a
-     * Nexus operation is dispatched. Public read-only accessor — pair with
-     * the existing builders on {@see ClientOptions} to mutate.
+     * Read-only accessor for the client-wide options.
      */
     public function getClientOptions(): ClientOptions
     {

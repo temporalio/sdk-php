@@ -12,10 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 /**
- * Specifies what action should be taken for a Nexus operation when the caller
- * is cancelled. Numeric values must match
- * {@see https://github.com/temporalio/sdk-go/blob/master/internal/workflow.go}
- * `NexusOperationCancellationType` in sdk-go (iota-ordered).
+ * Action for a Nexus operation when the caller is cancelled.
+ * Values match sdk-go `NexusOperationCancellationType` (iota-ordered).
  */
 enum NexusOperationCancellationType: int
 {
@@ -25,6 +23,7 @@ enum NexusOperationCancellationType: int
     case WaitRequested = self::WAIT_REQUESTED;
     case WaitCompleted = self::WAIT_COMPLETED;
 
+    // Mirror as int constants — case values can't reference siblings during init.
     public const UNSPECIFIED = 0;
     public const ABANDON = 1;
     public const TRY_CANCEL = 2;

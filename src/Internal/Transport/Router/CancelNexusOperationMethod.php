@@ -10,20 +10,11 @@ use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
- * Handles "CancelNexusOperationMethod" command from Go RoadRunner plugin.
+ * Cancels the in-flight handler method (vs CancelNexusOperation which uses the
+ * operation token). Late cancel = no-op. Cancellation is cooperative — handlers
+ * must poll {@see \Nexus\Sdk\Handler\OperationContext::isMethodCancelled()}.
  *
- * Unlike `CancelNexusOperation` (which cancels the business Nexus operation
- * via its token), this cancels the **handler method** itself — e.g. on pool
- * shutdown or deadline expiry. It is a one-way signal: we resolve with an
- * empty payload regardless of whether a matching in-flight invocation was
- * found (a late cancel that races with handler completion is a legitimate
- * no-op).
- *
- * Options: `{invocationId: uint64, reason: string}`.
- *
- * PHP is single-threaded, so cancellation is cooperative — long-running
- * handlers must poll `$context->isMethodCancelled()` or register a listener
- * via `$context->addMethodCancellationListener()`.
+ * Options: {invocationId: uint64, reason: string}.
  */
 final class CancelNexusOperationMethod extends Route
 {
@@ -38,7 +29,6 @@ final class CancelNexusOperationMethod extends Route
         $reason = (string) ($options['reason'] ?? '');
 
         if ($invocationId !== 0) {
-            // Null when the handler has already finished — treated as no-op.
             $this->invocations->get($invocationId)?->cancel($reason);
         }
 

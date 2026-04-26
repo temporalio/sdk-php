@@ -7,11 +7,8 @@ namespace Temporal\Internal\Nexus;
 use Nexus\Sdk\Handler\ServiceImplInstance;
 
 /**
- * Stores registered Nexus service implementations.
- *
- * Services are identified by their {@see \Nexus\Sdk\ServiceDefinition::$name}.
- * Registering two implementations that declare the same service name is a
- * configuration error and will fail fast at registration time.
+ * Stores registered Nexus service implementations keyed by service name.
+ * Duplicate registration fails fast.
  */
 final class NexusServiceRepository
 {
@@ -19,9 +16,7 @@ final class NexusServiceRepository
     private array $byName = [];
 
     /**
-     * Register a Nexus service implementation.
-     *
-     * @throws \InvalidArgumentException if a service with the same name is already registered.
+     * @throws \InvalidArgumentException on duplicate service name.
      */
     public function add(ServiceImplInstance $instance): void
     {

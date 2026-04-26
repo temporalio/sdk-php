@@ -36,11 +36,7 @@ use Temporal\Internal\Support\DateInterval;
 final class FailureConverter
 {
     /**
-     * Tag inserted into {@see ApplicationFailureInfo::$type} so that RR can tell a
-     * Nexus handler-side OperationException apart from other application failures.
-     * The full type becomes e.g. "nexus.OperationError.failed".
-     *
-     * @internal Wire contract with roadrunner-temporal.
+     * @internal Wire prefix: Nexus OperationException → "nexus.OperationError.<state>".
      */
     public const NEXUS_OPERATION_ERROR_TYPE_PREFIX = 'nexus.OperationError.';
 
@@ -165,7 +161,6 @@ final class FailureConverter
 
             case $e instanceof NexusHandlerException:
                 $info = new NexusHandlerFailureInfo();
-                // Preserve the raw error-type string (SDK allows unknown raw types).
                 $info->setType($e->rawErrorType);
                 $info->setRetryBehavior(self::mapNexusRetryBehavior($e->retryBehavior));
 
@@ -173,10 +168,7 @@ final class FailureConverter
                 break;
 
             case $e instanceof NexusOperationException:
-                // Business-level Nexus operation failure (state=failed|canceled).
-                // Temporal proto does not yet ship a dedicated failure_info for
-                // handler-side operation errors, so we encode the state in a
-                // tagged ApplicationFailureInfo that RR knows how to decode.
+                // Encode state in tagged ApplicationFailureInfo (no dedicated proto yet).
                 $info = new ApplicationFailureInfo();
                 $info->setType(self::NEXUS_OPERATION_ERROR_TYPE_PREFIX . $e->state->value);
                 $info->setNonRetryable(true);
@@ -192,6 +184,18 @@ final class FailureConverter
         }
 
         return $failure;
+    }
+
+    /**
+     * Translate a Nexus SDK RetryBehavior enum to the Temporal proto enum value.
+     */
+    public static function mapNexusRetryBehavior(NexusRetryBehavior $behavior): int
+    {
+        return match ($behavior) {
+            NexusRetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            NexusRetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            NexusRetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
+        };
     }
 
     private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure
@@ -312,11 +316,10 @@ final class FailureConverter
                 $info = $failure->getNexusOperationExecutionFailureInfo();
                 \assert($info instanceof NexusOperationFailureInfo);
 
-                // `operation_token` is the canonical field; fall back to the
-                // deprecated `operation_id` so older servers still round-trip.
+                // Fall back to deprecated operation_id for older servers.
                 $token = $info->getOperationToken();
                 if ($token === '') {
-                    /** @psalm-suppress DeprecatedMethod — intentional back-compat fallback */
+                    /** @psalm-suppress DeprecatedMethod */
                     $token = $info->getOperationId();
                 }
 
@@ -333,18 +336,6 @@ final class FailureConverter
             default:
                 throw new \InvalidArgumentException('Failure info not set');
         }
-    }
-
-    /**
-     * Translate a Nexus SDK RetryBehavior enum to the Temporal proto enum value.
-     */
-    private static function mapNexusRetryBehavior(NexusRetryBehavior $behavior): int
-    {
-        return match ($behavior) {
-            NexusRetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
-            NexusRetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
-            NexusRetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
-        };
     }
 
     private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string

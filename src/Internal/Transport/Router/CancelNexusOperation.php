@@ -12,9 +12,8 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
- * Handles "CancelNexusOperation" command from Go RoadRunner plugin.
- *
- * Go sends: options={service, operation, operationToken}
+ * Route for "CancelNexusOperation" from RR.
+ * Options: {service, operation, operationToken}.
  */
 final class CancelNexusOperation extends Route
 {
@@ -41,8 +40,6 @@ final class CancelNexusOperation extends Route
             $this->taskHandler->cancelOperationDirect($context, $details);
             $resolver->resolve(EncodedValues::fromValues([]));
         } catch (\Throwable $e) {
-            // NexusHandlerErrorException and plain throwables route through
-            // the same rejection path — the RR transport inspects the type.
             $resolver->reject($e);
         }
     }

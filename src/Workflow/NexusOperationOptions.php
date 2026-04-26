@@ -35,10 +35,8 @@ final class NexusOperationOptions extends Options
     public \DateInterval $scheduleToCloseTimeout;
 
     /**
-     * What to do with the Nexus operation when the caller is cancelled.
-     * One of the {@see NexusOperationCancellationType} integer constants.
-     * Defaults to {@see NexusOperationCancellationType::UNSPECIFIED} so the
-     * server falls back to its current default (`WaitCompleted`).
+     * @see NexusOperationCancellationType
+     * Default UNSPECIFIED → server uses WaitCompleted.
      */
     #[Marshal(name: 'cancellationType')]
     public int $cancellationType = NexusOperationCancellationType::UNSPECIFIED;
@@ -54,7 +52,7 @@ final class NexusOperationOptions extends Options
      */
     public function withEndpoint(string $endpoint): self
     {
-        /** @psalm-suppress TypeDoesNotContainType — runtime guard for callers that silence psalm */
+        /** @psalm-suppress TypeDoesNotContainType */
         if ($endpoint === '') {
             throw new \InvalidArgumentException('Nexus endpoint must be a non-empty string');
         }
@@ -68,7 +66,7 @@ final class NexusOperationOptions extends Options
      */
     public function withService(string $service): self
     {
-        /** @psalm-suppress TypeDoesNotContainType — runtime guard for callers that silence psalm */
+        /** @psalm-suppress TypeDoesNotContainType */
         if ($service === '') {
             throw new \InvalidArgumentException('Nexus service must be a non-empty string');
         }

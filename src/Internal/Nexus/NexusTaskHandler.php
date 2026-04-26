@@ -6,7 +6,6 @@ namespace Temporal\Internal\Nexus;
 
 use Nexus\Sdk\Exception\HandlerException;
 use Nexus\Sdk\Exception\OperationException;
-use Nexus\Sdk\Exception\RetryBehavior;
 use Nexus\Sdk\Handler\AsyncOperationStartResult;
 use Nexus\Sdk\Handler\HandlerInputContent;
 use Nexus\Sdk\Handler\HandlerResultContent;
@@ -21,7 +20,6 @@ use Nexus\Sdk\LinkParser;
 use Nexus\Sdk\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
-use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
 use Temporal\Api\Nexus\V1\Failure;
@@ -35,156 +33,48 @@ use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
- * Bridges Temporal's RoadRunner tasks to the Nexus SDK ServiceHandler.
- *
- * The ServiceHandler is built lazily on first use so that Nexus service
- * implementations can be registered after the worker is constructed.
+ * Bridges Temporal RoadRunner tasks to the Nexus SDK ServiceHandler.
+ * ServiceHandler is built lazily so services may be registered after construction.
  */
 final class NexusTaskHandler
 {
-    /**
-     * Payload metadata marker identifying how the returned payload should be
-     * interpreted by the RR Go side:
-     *  - value "async" — payload.data is the async operation token (string)
-     *  - absent        — payload is a regular sync result
-     *
-     * @internal Wire contract with roadrunner-temporal's aggregatedpool/nexus.go.
-     */
+    /** @internal Wire-protocol marker: "async" → payload.data is operation token. */
     public const NEXUS_KIND_METADATA_KEY = '_rr_nexus_kind';
 
     public const NEXUS_KIND_ASYNC = 'async';
 
-    /**
-     * Payload metadata marker carrying handler-side links (from
-     * `OperationContext::$links->add()`) as a JSON-encoded array of
-     * `[{"url": ..., "type": ...}, ...]`. RoadRunner's Nexus handler parses
-     * this on decode, attaches the links to the nexus result
-     * (sync or async), and strips the key from the payload metadata so it
-     * never leaks to the caller.
-     *
-     * @internal Wire contract with roadrunner-temporal's aggregatedpool/nexus.go.
-     */
+    /** @internal Wire-protocol marker: handler links as JSON `[{url,type},...]`. */
     public const NEXUS_LINKS_METADATA_KEY = '_rr_nexus_links';
-
-    /**
-     * Controls whether handler-side PHP traces (class, message, stack) are
-     * attached to the Nexus `Failure.details` JSON blob.
-     *
-     * ⚠ Traces may contain absolute filesystem paths and internal argument
-     * values — sensitive in cross-tenant / cross-cluster deployments where
-     * the Nexus caller is outside the trust boundary. Set to `false` in
-     * production to emit only the message.
-     *
-     * Default is `true` to preserve existing debuggability.
-     */
-    public static bool $includeTracebackInFailure = true;
 
     private ?ServiceHandler $serviceHandler = null;
 
-    /**
-     * Worker-supplied environment used to build a {@see NexusOperationContext}
-     * around every operation dispatch. `null` until {@see self::withWorkerEnvironment()}
-     * is called — workers without a configured client (or unit tests
-     * exercising the handler directly) skip context publication; handlers
-     * that need it (e.g. `WorkflowRunOperation`) raise a clear error.
-     *
-     * @var array{string, string, WorkflowClientInterface}|null
-     */
+    /** @var array{string, string, WorkflowClientInterface}|null */
     private ?array $workerEnvironment = null;
 
+    /**
+     * @param bool $includeTracebackInFailure Disable in cross-trust-boundary
+     *        deployments — traces leak filesystem paths and argument values.
+     */
     public function __construct(
         private readonly NexusServiceRepository $repository,
         private readonly SerializerInterface $serializer,
         private readonly DataConverterInterface $dataConverter,
+        private readonly bool $includeTracebackInFailure = true,
     ) {}
 
     /**
-     * Wire the worker's namespace, task queue and workflow client into the
-     * handler so each dispatched operation can reach them via
-     * {@see Nexus::getOperationContext()}. Idempotent — calling it again
-     * replaces the previous values.
-     */
-    public function withWorkerEnvironment(
-        string $namespace,
-        string $taskQueue,
-        WorkflowClientInterface $workflowClient,
-    ): self {
-        $this->workerEnvironment = [$namespace, $taskQueue, $workflowClient];
-        return $this;
-    }
-
-    /**
-     * Run `$dispatch` with a {@see NexusOperationContext} published on
-     * {@see Nexus} so handlers can read it via the static accessor.
-     *
-     * Pulls the previous value first and restores it in `finally` — re-entrant
-     * dispatches (Nexus middleware that itself invokes another handler) end up
-     * with the right outer context after the inner one returns.
-     *
-     * If the worker did not supply an environment we leave `Nexus::current`
-     * untouched: handlers that don't need a Temporal-aware context still work,
-     * and ones that do raise a meaningful error from `getOperationContext()`.
-     *
-     * @template T
-     * @param callable(): T $dispatch
-     * @return T
-     */
-    private function runWithContext(callable $dispatch): mixed
-    {
-        if ($this->workerEnvironment === null) {
-            return $dispatch();
-        }
-
-        [$namespace, $taskQueue, $client] = $this->workerEnvironment;
-        $context = new NexusOperationContext($namespace, $taskQueue, $client);
-
-        $previous = null;
-        try {
-            // Capture in a closure; the only legal way to read a
-            // private static field is through the same class — but
-            // `Nexus::setCurrent(null)` after our work nukes any
-            // outer context, so we save+restore explicitly.
-            $previous = self::peekCurrent();
-            Nexus::setCurrent($context);
-            return $dispatch();
-        } finally {
-            Nexus::setCurrent($previous);
-        }
-    }
-
-    /**
-     * Read the current value of {@see Nexus::current} without throwing if it
-     * is null. {@see Nexus::getOperationContext()} only knows how to throw,
-     * which is the right behaviour for handlers — but here we only need to
-     * remember the value for the `finally` restore, so we go through the
-     * `setCurrent`/get-via-throw dance.
-     */
-    private static function peekCurrent(): ?NexusOperationContext
-    {
-        try {
-            return Nexus::getOperationContext();
-        } catch (\LogicException) {
-            return null;
-        }
-    }
-
-    /**
-     * Build an absolute deadline from Nexus timeout headers.
-     *
-     * `Operation-Timeout` wins over `Request-Timeout` — the former is the outer
-     * budget including callbacks. Case-insensitive lookup. Malformed values are
-     * silently ignored so a bad header never drops an otherwise-valid request.
+     * Resolve absolute deadline from Operation-Timeout (preferred) or Request-Timeout.
+     * Case-insensitive; malformed values yield null.
      *
      * @param array<string, string> $headers
      */
     public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
     {
-        // Headers off the wire are not guaranteed lowercase; normalize once so
-        // NexusHeader::get() (which assumes a lowercased map) behaves correctly.
         $lc = \array_change_key_case($headers, \CASE_LOWER);
 
         $value = NexusHeader::get($lc, NexusHeader::OPERATION_TIMEOUT)
@@ -201,6 +91,18 @@ final class NexusTaskHandler
         }
     }
 
+    /**
+     * Bind worker context for {@see Nexus::getOperationContext()}. Idempotent.
+     */
+    public function withWorkerEnvironment(
+        string $namespace,
+        string $taskQueue,
+        WorkflowClientInterface $workflowClient,
+    ): self {
+        $this->workerEnvironment = [$namespace, $taskQueue, $workflowClient];
+        return $this;
+    }
+
     public function handleStartOperation(Request $request): Response
     {
         $startReq = $request->getStartOperation();
@@ -211,8 +113,7 @@ final class NexusTaskHandler
             $headers[(string) $key] = (string) $value;
         }
 
-        // Strict parsing — any malformed link raises HandlerException(BadRequest),
-        // matching the Java reference and the RR route path.
+        // Strict link parsing: malformed → BadRequest (Java parity).
         $links = LinkParser::fromProto($startReq->getLinks());
 
         $callbackHeaders = [];
@@ -229,7 +130,7 @@ final class NexusTaskHandler
 
         $details = new OperationStartDetails(
             requestId: $startReq->getRequestId(),
-            callbackUrl: $startReq->getCallback() !== '' ? $startReq->getCallback() : null,
+            callbackUrl: $startReq->getCallback() ?: null,
             callbackHeaders: $callbackHeaders,
             links: $links,
         );
@@ -255,8 +156,6 @@ final class NexusTaskHandler
             if ($result instanceof SyncOperationStartResult) {
                 $syncResp = new StartOperationResponse\Sync();
 
-                // ServiceHandler wraps the raw return value in HandlerResultContent
-                // (data + headers) before handing it to us — no extra serialization.
                 $content = $result->value;
                 if ($content instanceof HandlerResultContent) {
                     $resultPayload = new Payload();
@@ -275,8 +174,6 @@ final class NexusTaskHandler
                 $startResp->setSyncSuccess($syncResp);
             } else {
                 \assert($result instanceof AsyncOperationStartResult);
-                // OperationInfo's constructor validates the token shape
-                // (non-empty printable ASCII), so no extra guard needed here.
                 $asyncResp = new StartOperationResponse\Async();
                 $asyncResp->setOperationToken($result->info->token);
 
@@ -316,7 +213,7 @@ final class NexusTaskHandler
 
         $token = $cancelReq->getOperationToken();
         if ($token === '') {
-            /** @psalm-suppress DeprecatedMethod — intentional back-compat fallback */
+            /** @psalm-suppress DeprecatedMethod — back-compat fallback */
             $token = $cancelReq->getOperationId();
         }
 
@@ -336,15 +233,8 @@ final class NexusTaskHandler
     }
 
     /**
-     * Start operation directly from parsed context/details/input (used by InvokeNexusOperation route).
-     *
-     * Returns the start result as a raw EncodedValues payload for the Go codec.
-     * Errors are propagated as the native Nexus SDK exceptions:
-     *  - HandlerException → FailureConverter sets NexusHandlerFailureInfo on the
-     *    Failure proto, RR picks up errorType + retryBehavior.
-     *  - OperationException → propagated as-is; FailureConverter preserves its
-     *    state (failed/canceled) so RR can emit a nexus.OperationError rather
-     *    than collapsing into nexus.HandlerError{Internal}.
+     * Start operation, return raw payload. SDK exceptions propagate as-is —
+     * FailureConverter maps them on the way out.
      *
      * @throws HandlerException
      * @throws OperationException
@@ -358,17 +248,12 @@ final class NexusTaskHandler
             fn() => $this->getServiceHandler()->startOperation($context, $details, $input),
         );
 
-        // Handler-side links attached via $ctx->links->add() need to reach the
-        // Nexus caller. Since RR's InvokeNexusOperation route returns raw
-        // EncodedValues (not the StartOperationResponse proto), we piggyback
-        // them on the payload metadata with a reserved `_rr_nexus_*` key.
+        // Handler links travel via reserved payload metadata (no StartOperationResponse here).
         $linksJson = self::encodeLinksMetadata($context->links->all());
 
         if ($result instanceof SyncOperationStartResult) {
             $payload = new Payload();
             $metadata = [];
-            // ServiceHandler already serialized the return value into
-            // HandlerResultContent — we just forward its bytes + headers.
             $content = $result->value;
             if ($content instanceof HandlerResultContent) {
                 $payload->setData($content->data);
@@ -386,10 +271,7 @@ final class NexusTaskHandler
         }
 
         \assert($result instanceof AsyncOperationStartResult);
-        // Async: return an opaque payload carrying the operation token plus a
-        // well-known metadata marker so RR can distinguish it from a sync result.
-        // OperationInfo validates token shape at construction
-        // (printable ASCII, non-empty), safe to pass as payload bytes.
+        // Async: payload data = token, marker tells RR sync vs async.
         $payload = new Payload();
         $payload->setData($result->info->token);
         $metadata = [
@@ -404,8 +286,6 @@ final class NexusTaskHandler
     }
 
     /**
-     * Cancel operation directly from parsed context/details (used by CancelNexusOperation route).
-     *
      * @throws HandlerException
      */
     public function cancelOperationDirect(
@@ -418,13 +298,8 @@ final class NexusTaskHandler
     }
 
     /**
-     * Serialize handler-side links for the `_rr_nexus_links` metadata channel.
-     *
-     * Returns `null` when the list is empty so we don't bloat payloads with
-     * an unnecessary `[]`. Encoded as a JSON array of `{url, type}` objects
-     * matching RoadRunner's `internal.NexusLink` struct.
-     *
      * @param Link[] $links
+     * @return null|string JSON `[{url,type},...]` or null when empty.
      */
     private static function encodeLinksMetadata(array $links): ?string
     {
@@ -435,38 +310,50 @@ final class NexusTaskHandler
         foreach ($links as $link) {
             $out[] = ['url' => $link->uri, 'type' => $link->type];
         }
-        // JSON_UNESCAPED_SLASHES keeps URLs readable; JSON_THROW_ON_ERROR
-        // surfaces pathological inputs as a handler error rather than
-        // silent data loss.
         return \json_encode($out, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
     /**
-     * Pack a PHP exception's type, stack trace, and cause chain into a
-     * Nexus-spec {@see Failure}'s `details` field as JSON, and stamp the
-     * outermost exception class in `metadata["type"]`.
+     * Publish a NexusOperationContext for the duration of $dispatch.
+     * Save+restore the previous value to keep re-entrant dispatches consistent.
      *
-     * The Nexus Failure envelope intentionally exposes only
-     * `{message, metadata, details}` — to avoid losing debugging
-     * information we serialise the trace into `details`. Integrators that
-     * don't care can ignore the extra bytes; those that do can
-     * `json_decode()` them back into a flat array of
-     * `[{type, message, trace}, ...]` entries (outermost first).
+     * @template T
+     * @param callable(): T $dispatch
+     * @return T
      */
-    private static function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
+    private function runWithContext(callable $dispatch): mixed
+    {
+        if ($this->workerEnvironment === null) {
+            return $dispatch();
+        }
+
+        [$namespace, $taskQueue, $client] = $this->workerEnvironment;
+        $context = new NexusOperationContext($namespace, $taskQueue, $client);
+
+        $previous = Nexus::tryGetOperationContext();
+        try {
+            Nexus::setCurrent($context);
+            return $dispatch();
+        } finally {
+            Nexus::setCurrent($previous);
+        }
+    }
+
+    /**
+     * Stamp exception class into metadata.type and pack the cause chain (≤16) as
+     * JSON `[{type,message,trace},...]` into Failure.details.
+     */
+    private function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
     {
         $failure->setMetadata(['type' => $e::class]);
 
-        if (!self::$includeTracebackInFailure) {
-            // Stripped mode: keep the outer class name as type metadata but
-            // emit no details. The caller still receives the message via
-            // Failure.message, which is the minimum useful diagnostic.
+        if (!$this->includeTracebackInFailure) {
             return;
         }
 
         $chain = [];
         $cursor = $e;
-        // Bounded walk guards against a pathological cyclic cause chain.
+        // Bounded — guard against cyclic cause chain.
         for ($depth = 0; $cursor !== null && $depth < 16; $depth++) {
             $chain[] = [
                 'type' => $cursor::class,
@@ -498,16 +385,12 @@ final class NexusTaskHandler
 
     private function buildOperationErrorResponse(OperationException $e): Response
     {
-        // Nexus-spec Failure is a flat {message, metadata, details} envelope
-        // (not Temporal's Failure with its stack-trace/cause fields). Pack
-        // the PHP stack trace and cause chain into `details` as JSON so a
-        // Nexus caller can still recover them.
+        // Trace + cause chain are packed into Failure.details (Nexus envelope is flat).
         $failure = new Failure();
         $failure->setMessage($e->getMessage());
-        self::attachTracebackAsDetails($failure, $e);
+        $this->attachTracebackAsDetails($failure, $e);
 
         $opError = new UnsuccessfulOperationError();
-        // OperationState values are spec-mandated lowercase strings (running|succeeded|failed|canceled).
         $opError->setOperationState($e->state->value);
         $opError->setFailure($failure);
 
@@ -523,17 +406,11 @@ final class NexusTaskHandler
     {
         $handlerError = new HandlerError();
         $handlerError->setErrorType($e->rawErrorType);
-
-        $retryBehavior = match ($e->retryBehavior) {
-            RetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
-            RetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
-            default => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
-        };
-        $handlerError->setRetryBehavior($retryBehavior);
+        $handlerError->setRetryBehavior(FailureConverter::mapNexusRetryBehavior($e->retryBehavior));
 
         $failure = new Failure();
         $failure->setMessage($e->getMessage());
-        self::attachTracebackAsDetails($failure, $e);
+        $this->attachTracebackAsDetails($failure, $e);
         $handlerError->setFailure($failure);
 
         return new NexusHandlerErrorException($handlerError, $e);
