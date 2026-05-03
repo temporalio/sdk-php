@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Nexus\Sdk\Handler\OperationCancelDetails;
-use Nexus\Sdk\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Nexus\NexusTaskHandler;

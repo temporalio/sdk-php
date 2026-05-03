@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
-use Nexus\Sdk\Attribute\ServiceImpl;
+use Temporal\Nexus\Attribute\ServiceImpl;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;

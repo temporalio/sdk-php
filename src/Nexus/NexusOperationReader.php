@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Nexus\Sdk\Attribute\Operation;
-use Nexus\Sdk\Attribute\Service;
+use Temporal\Nexus\Attribute\Operation;
+use Temporal\Nexus\Attribute\Service;
 
 /**
  * Reads #[Service] and #[Operation] attributes from a Nexus service interface.

@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Attribute\Operation;
-use Nexus\Sdk\Attribute\OperationImpl;
-use Nexus\Sdk\Attribute\Service;
-use Nexus\Sdk\Attribute\ServiceImpl;
-use Nexus\Sdk\Exception\ErrorType;
-use Nexus\Sdk\Exception\HandlerException;
-use Nexus\Sdk\Exception\OperationException;
-use Nexus\Sdk\Handler\OperationCancelDetails;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationHandlerInterface;
-use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\Handler\OperationStartResult;
-use Nexus\Sdk\Handler\ServiceImplInstance;
-use Nexus\Sdk\Handler\SynchronousOperationFunctionInterface;
-use Nexus\Sdk\Handler\SynchronousOperationHandler;
-use Nexus\Sdk\Link;
-use Nexus\Sdk\OperationInfo;
-use Nexus\Sdk\OperationState;
+use Temporal\Nexus\Attribute\Operation;
+use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\Service;
+use Temporal\Nexus\Attribute\ServiceImpl;
+use Temporal\Nexus\Exception\ErrorType;
+use Temporal\Nexus\Exception\HandlerException;
+use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\SynchronousOperationFunctionInterface;
+use Temporal\Nexus\Handler\SynchronousOperationHandler;
+use Temporal\Nexus\Link;
+use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\OperationState;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\Request;
@@ -185,7 +185,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertNotNull($payload);
 
         $result = $this->serializer->deserialize(
-            new \Nexus\Sdk\Serializer\Content(
+            new \Temporal\Nexus\Serializer\Content(
                 $payload->getData(),
                 \iterator_to_array($payload->getMetadata()),
             ),
@@ -457,7 +457,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertNotNull($payload);
 
         $result = $this->serializer->deserialize(
-            new \Nexus\Sdk\Serializer\Content(
+            new \Temporal\Nexus\Serializer\Content(
                 $payload->getData(),
                 \iterator_to_array($payload->getMetadata()),
             ),

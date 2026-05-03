@@ -22,7 +22,6 @@
     },
     "require": {
         "php": ">=8.1",
-        "nexus-rpc/sdk-php": "@dev",
         "ext-curl": "*",
         "ext-json": "*",
         "google/common-protos": "^4.9",
@@ -31,6 +30,7 @@
         "internal/destroy": "^1.0",
         "internal/promise": "^3.4",
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
+        "psr/clock": "^1.0",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
         "roadrunner-php/roadrunner-api-dto": "^1.14.0",

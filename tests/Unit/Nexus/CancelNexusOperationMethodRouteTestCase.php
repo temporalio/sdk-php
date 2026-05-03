@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Handler\MethodCanceller;
+use Temporal\Nexus\Handler\MethodCanceller;
 use React\Promise\Deferred;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;

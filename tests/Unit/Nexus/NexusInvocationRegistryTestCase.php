@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Handler\MethodCanceller;
+use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Tests\Unit\AbstractUnit;
 

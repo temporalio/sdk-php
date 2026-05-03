@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
-use Nexus\Sdk\Exception\HandlerException as NexusHandlerException;
-use Nexus\Sdk\Exception\OperationException as NexusOperationException;
-use Nexus\Sdk\Exception\RetryBehavior as NexusRetryBehavior;
+use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
+use Temporal\Nexus\Exception\OperationException as NexusOperationException;
+use Temporal\Nexus\Exception\RetryBehavior as NexusRetryBehavior;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;

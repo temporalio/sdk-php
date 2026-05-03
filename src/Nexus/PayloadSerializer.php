@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Nexus\Sdk\Serializer\Content;
-use Nexus\Sdk\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Content;
+use Temporal\Nexus\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverterInterface;
 

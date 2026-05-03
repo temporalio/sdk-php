@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Attribute\Operation;
-use Nexus\Sdk\Attribute\Service;
+use Temporal\Nexus\Attribute\Operation;
+use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\NexusOperationReader;
 use Temporal\Tests\Unit\AbstractUnit;
 

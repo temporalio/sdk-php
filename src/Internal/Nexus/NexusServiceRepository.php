@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Nexus;
 
-use Nexus\Sdk\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\ServiceImplInstance;
 
 /**
  * Stores registered Nexus service implementations keyed by service name.

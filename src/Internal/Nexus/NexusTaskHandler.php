@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Nexus;
 
-use Nexus\Sdk\Exception\HandlerException;
-use Nexus\Sdk\Exception\OperationException;
-use Nexus\Sdk\Handler\AsyncOperationStartResult;
-use Nexus\Sdk\Handler\HandlerInputContent;
-use Nexus\Sdk\Handler\HandlerResultContent;
-use Nexus\Sdk\Handler\OperationCancelDetails;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\Handler\ServiceHandler;
-use Nexus\Sdk\Handler\SyncOperationStartResult;
-use Nexus\Sdk\Header as NexusHeader;
-use Nexus\Sdk\Link;
-use Nexus\Sdk\LinkParser;
-use Nexus\Sdk\Serializer\SerializerInterface;
+use Temporal\Nexus\Exception\HandlerException;
+use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Handler\AsyncOperationStartResult;
+use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\HandlerResultContent;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\ServiceHandler;
+use Temporal\Nexus\Handler\SyncOperationStartResult;
+use Temporal\Nexus\Header as NexusHeader;
+use Temporal\Nexus\Link;
+use Temporal\Nexus\LinkParser;
+use Temporal\Nexus\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
@@ -86,7 +86,7 @@ final class NexusTaskHandler
 
         try {
             return NexusHeader::deadlineFromTimeout($value);
-        } catch (\Nexus\Sdk\Exception\InvalidArgumentException) {
+        } catch (\Temporal\Nexus\Exception\InvalidArgumentException) {
             return null;
         }
     }

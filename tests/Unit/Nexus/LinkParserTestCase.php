@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Exception\ErrorType;
-use Nexus\Sdk\Exception\HandlerException;
-use Nexus\Sdk\LinkParser;
+use Temporal\Nexus\Exception\ErrorType;
+use Temporal\Nexus\Exception\HandlerException;
+use Temporal\Nexus\LinkParser;
 use Temporal\Tests\Unit\AbstractUnit;
 
 /**

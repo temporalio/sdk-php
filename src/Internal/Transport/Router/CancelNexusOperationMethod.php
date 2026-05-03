@@ -12,7 +12,7 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 /**
  * Cancels the in-flight handler method (vs CancelNexusOperation which uses the
  * operation token). Late cancel = no-op. Cancellation is cooperative — handlers
- * must poll {@see \Nexus\Sdk\Handler\OperationContext::isMethodCancelled()}.
+ * must poll {@see \Temporal\Nexus\Handler\OperationContext::isMethodCancelled()}.
  *
  * Options: {invocationId: uint64, reason: string}.
  */

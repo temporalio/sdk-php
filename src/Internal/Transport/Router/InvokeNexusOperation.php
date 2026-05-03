@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Nexus\Sdk\Handler\HandlerInputContent;
-use Nexus\Sdk\Handler\MethodCanceller;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\LinkParser;
+use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\MethodCanceller;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\LinkParser;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;

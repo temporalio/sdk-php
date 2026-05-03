@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Nexus;
 
-use Nexus\Sdk\Handler\MethodCanceller;
+use Temporal\Nexus\Handler\MethodCanceller;
 
 /**
  * Maps RR `InvocationID` → MethodCanceller for in-flight handlers.

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Nexus\Sdk\Handler\AsyncOperationStartResult;
-use Nexus\Sdk\Handler\OperationCancelDetails;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\AsyncOperationStartResult;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
 use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;

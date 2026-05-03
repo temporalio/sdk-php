@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Nexus\Sdk\Handler\OperationCancelDetails;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationHandlerInterface;
-use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\Handler\OperationStartResult;
-use Nexus\Sdk\OperationInfo;
-use Nexus\Sdk\OperationState;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\OperationState;
 use Temporal\Internal\Nexus\WorkflowRunOperationToken;
 
 /**

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Nexus\InputTypes;
 
-use Nexus\Sdk\Attribute\Operation;
-use Nexus\Sdk\Attribute\OperationImpl;
-use Nexus\Sdk\Attribute\Service;
-use Nexus\Sdk\Attribute\ServiceImpl;
-use Nexus\Sdk\Handler\OperationContext;
-use Nexus\Sdk\Handler\OperationHandlerInterface;
-use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\Handler\SynchronousOperationHandler;
+use Temporal\Nexus\Attribute\Operation;
+use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\Service;
+use Temporal\Nexus\Attribute\ServiceImpl;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
