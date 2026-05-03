@@ -10,7 +10,9 @@ use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
+use Temporal\Nexus\Exception\OperationErrorFailure;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Nexus\Handler\ServiceImplInstance;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
@@ -159,13 +161,17 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $failure = $response->getStartOperation()->getOperationError()->getFailure();
 
         self::assertNotSame('', $failure->getDetails());
-        $chain = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+        $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($details);
+        self::assertSame('failed', $details['state']);
+
+        $chain = $details[NexusFailureConverter::DETAILS_TRACEBACK_KEY];
         self::assertIsArray($chain);
         self::assertSame(OperationException::class, $chain[0]['type']);
         self::assertSame('Something went wrong', $chain[0]['message']);
 
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(OperationException::class, $meta['type']);
+        self::assertSame(OperationErrorFailure::TYPE, $meta['type']);
     }
 
     public function testTracebackCanBeStrippedViaConstructorFlag(): void
@@ -183,9 +189,12 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $response = $handler->handleStartOperation($request);
         $failure = $response->getStartOperation()->getOperationError()->getFailure();
 
-        self::assertSame('', $failure->getDetails());
+        // Canonical envelope: details still carries `state` even without traceback.
+        $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertSame(['state' => 'failed'], $details);
+
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(OperationException::class, $meta['type']);
+        self::assertSame(OperationErrorFailure::TYPE, $meta['type']);
         self::assertSame('Something went wrong', $failure->getMessage());
     }
 

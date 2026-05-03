@@ -29,18 +29,15 @@ use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
-use Temporal\Api\Nexus\V1\Failure;
-use Temporal\Api\Nexus\V1\HandlerError;
 use Temporal\Api\Nexus\V1\Link as ProtoLink;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
-use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
@@ -338,33 +335,6 @@ final class NexusTaskHandler
         return new NexusOperationContext($namespace, $taskQueue, $client);
     }
 
-    /**
-     * Stamp exception class into metadata.type and pack the cause chain (≤16) as
-     * JSON `[{type,message,trace},...]` into Failure.details.
-     */
-    private function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
-    {
-        $failure->setMetadata(['type' => $e::class]);
-
-        if (!$this->includeTracebackInFailure) {
-            return;
-        }
-
-        $chain = [];
-        $cursor = $e;
-        // Bounded — guard against cyclic cause chain.
-        for ($depth = 0; $cursor !== null && $depth < 16; $depth++) {
-            $chain[] = [
-                'type' => $cursor::class,
-                'message' => $cursor->getMessage(),
-                'trace' => $cursor->getTraceAsString(),
-            ];
-            $cursor = $cursor->getPrevious();
-        }
-
-        $failure->setDetails(\json_encode($chain, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR));
-    }
-
     private function getServiceHandler(): ServiceHandler
     {
         if ($this->serviceHandler === null) {
@@ -384,17 +354,11 @@ final class NexusTaskHandler
 
     private function buildOperationErrorResponse(OperationException $e): Response
     {
-        // Trace + cause chain are packed into Failure.details (Nexus envelope is flat).
-        $failure = new Failure();
-        $failure->setMessage($e->getMessage());
-        $this->attachTracebackAsDetails($failure, $e);
-
-        $opError = new UnsuccessfulOperationError();
-        $opError->setOperationState($e->state->value);
-        $opError->setFailure($failure);
-
         $startResp = new StartOperationResponse();
-        $startResp->setOperationError($opError);
+        $startResp->setOperationError(NexusFailureConverter::operationExceptionToProto(
+            $e,
+            $this->includeTracebackInFailure,
+        ));
 
         $response = new Response();
         $response->setStartOperation($startResp);
@@ -403,16 +367,10 @@ final class NexusTaskHandler
 
     private function convertHandlerException(HandlerException $e): NexusHandlerErrorException
     {
-        $handlerError = new HandlerError();
-        $handlerError->setErrorType($e->rawErrorType);
-        $handlerError->setRetryBehavior(FailureConverter::mapNexusRetryBehavior($e->retryBehavior));
-
-        $failure = new Failure();
-        $failure->setMessage($e->getMessage());
-        $this->attachTracebackAsDetails($failure, $e);
-        $handlerError->setFailure($failure);
-
-        return new NexusHandlerErrorException($handlerError, $e);
+        return new NexusHandlerErrorException(
+            NexusFailureConverter::handlerExceptionToProto($e, $this->includeTracebackInFailure),
+            $e,
+        );
     }
 
     /**
