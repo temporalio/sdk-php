@@ -82,7 +82,9 @@ interface WorkerInterface extends Identifiable
 
     /**
      * Register one or multiple Nexus service implementations to be served by this worker.
-     * Each implementation must be annotated with #[ServiceImpl].
+     * Each implementation must implement an interface annotated with #[Service]
+     * (operations are discovered via #[Operation] / #[AsyncOperation] / #[OperationCancel]
+     * methods on that interface).
      *
      * @return $this
      */

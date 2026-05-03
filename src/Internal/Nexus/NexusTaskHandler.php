@@ -41,7 +41,6 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
@@ -99,7 +98,7 @@ final class NexusTaskHandler
     }
 
     /**
-     * Bind worker context for {@see Nexus::getOperationContext()}. Idempotent.
+     * Bind worker context for {@see \Temporal\Nexus\Nexus::getOperationContext()}. Idempotent.
      */
     public function withWorkerEnvironment(
         string $namespace,
@@ -154,8 +153,11 @@ final class NexusTaskHandler
         $input = new HandlerInputContent($inputData, $inputHeaders);
 
         try {
-            $result = $this->runWithContext(
-                fn() => $this->getServiceHandler()->startOperation($context, $details, $input),
+            $result = $this->getServiceHandler()->startOperation(
+                $context,
+                $details,
+                $input,
+                $this->buildNexusOperationContext(),
             );
 
             $startResp = new StartOperationResponse();
@@ -227,8 +229,10 @@ final class NexusTaskHandler
         $details = new OperationCancelDetails(operationToken: $token);
 
         try {
-            $this->runWithContext(
-                fn() => $this->getServiceHandler()->cancelOperation($context, $details),
+            $this->getServiceHandler()->cancelOperation(
+                $context,
+                $details,
+                $this->buildNexusOperationContext(),
             );
 
             $response = new Response();
@@ -251,8 +255,11 @@ final class NexusTaskHandler
         OperationStartDetails $details,
         HandlerInputContent $input,
     ): EncodedValues {
-        $result = $this->runWithContext(
-            fn() => $this->getServiceHandler()->startOperation($context, $details, $input),
+        $result = $this->getServiceHandler()->startOperation(
+            $context,
+            $details,
+            $input,
+            $this->buildNexusOperationContext(),
         );
 
         // Handler links travel via reserved payload metadata (no StartOperationResponse here).
@@ -299,8 +306,10 @@ final class NexusTaskHandler
         OperationContext $context,
         OperationCancelDetails $details,
     ): void {
-        $this->runWithContext(
-            fn() => $this->getServiceHandler()->cancelOperation($context, $details),
+        $this->getServiceHandler()->cancelOperation(
+            $context,
+            $details,
+            $this->buildNexusOperationContext(),
         );
     }
 
@@ -320,30 +329,13 @@ final class NexusTaskHandler
         return \json_encode($out, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
-    /**
-     * Publish a NexusOperationContext for the duration of $dispatch.
-     * Save+restore the previous value to keep re-entrant dispatches consistent.
-     *
-     * @template T
-     * @param callable(): T $dispatch
-     * @return T
-     */
-    private function runWithContext(callable $dispatch): mixed
+    private function buildNexusOperationContext(): ?NexusOperationContext
     {
         if ($this->workerEnvironment === null) {
-            return $dispatch();
+            return null;
         }
-
         [$namespace, $taskQueue, $client] = $this->workerEnvironment;
-        $context = new NexusOperationContext($namespace, $taskQueue, $client);
-
-        $previous = Nexus::tryGetOperationContext();
-        try {
-            Nexus::setCurrent($context);
-            return $dispatch();
-        } finally {
-            Nexus::setCurrent($previous);
-        }
+        return new NexusOperationContext($namespace, $taskQueue, $client);
     }
 
     /**

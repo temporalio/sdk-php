@@ -6,6 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
+use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -20,7 +21,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
     {
         // Always clear — leaking a context would poison sibling tests that
         // rely on `getOperationContext()` throwing outside a handler.
-        Nexus::setCurrent(null);
+        Nexus::setCurrentContext(null);
     }
 
     public function testOutsideDispatchThrows(): void
@@ -36,7 +37,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
         $client = $this->createMock(WorkflowClientInterface::class);
         $ctx = new NexusOperationContext('ns', 'tq', $client);
 
-        Nexus::setCurrent($ctx);
+        Nexus::setCurrentContext(new NexusContext(operation: $ctx));
 
         self::assertSame($ctx, Nexus::getOperationContext());
         self::assertSame('ns', Nexus::getOperationContext()->namespace);
@@ -49,8 +50,8 @@ final class NexusContextAccessorTestCase extends AbstractUnit
         /** @var WorkflowClientInterface&MockObject $client */
         $client = $this->createMock(WorkflowClientInterface::class);
 
-        Nexus::setCurrent(new NexusOperationContext('ns', 'tq', $client));
-        Nexus::setCurrent(null);
+        Nexus::setCurrentContext(new NexusContext(operation: new NexusOperationContext('ns', 'tq', $client)));
+        Nexus::setCurrentContext(null);
 
         $this->expectException(\LogicException::class);
         Nexus::getOperationContext();

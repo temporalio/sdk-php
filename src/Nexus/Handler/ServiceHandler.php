@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
+use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Nexus;
+use Temporal\Nexus\NexusOperationContext;
 use Temporal\Nexus\Serializer\Content;
 use Temporal\Nexus\Serializer\SerializerInterface;
 
@@ -85,11 +87,12 @@ final class ServiceHandler implements HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         HandlerInputContent $input,
+        ?NexusOperationContext $nexusOperation = null,
     ): OperationStartResult {
         [$instance, $handler] = $this->resolveHandler($context);
 
-        $contextWithServiceDef = $context->withServiceDefinition($instance->definition);
-        $interceptedHandler = $this->interceptOperationHandler($contextWithServiceDef, $handler);
+        $contextWithServiceDefinition = $context->withServiceDefinition($instance->definition);
+        $interceptedHandler = $this->interceptOperationHandler($contextWithServiceDefinition, $handler);
         $definition = $instance->definition->operations[$context->operation];
 
         try {
@@ -109,15 +112,15 @@ final class ServiceHandler implements HandlerInterface
             );
         }
 
-        $previousContext = Nexus::tryGetCurrentContext();
-        $previousDetails = Nexus::tryGetStartDetails();
+        Nexus::setCurrentContext(new NexusContext(
+            operation: $nexusOperation,
+            current: $contextWithServiceDefinition,
+            startDetails: $details,
+        ));
         try {
-            Nexus::setOperationContext($contextWithServiceDef);
-            Nexus::setStartDetails($details);
-            $result = $interceptedHandler->start($contextWithServiceDef, $details, $inputObject);
+            $result = $interceptedHandler->start($contextWithServiceDefinition, $details, $inputObject);
         } finally {
-            Nexus::setOperationContext($previousContext);
-            Nexus::setStartDetails($previousDetails);
+            Nexus::setCurrentContext(null);
         }
 
         if (!$result instanceof SyncOperationStartResult) {
@@ -127,7 +130,7 @@ final class ServiceHandler implements HandlerInterface
         return OperationStartResult::sync(
             $this->resultToContent(
                 $result->value,
-                $contextWithServiceDef,
+                $contextWithServiceDefinition,
                 $definition->outputType,
             ),
         );
@@ -136,6 +139,7 @@ final class ServiceHandler implements HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
+        ?NexusOperationContext $nexusOperation = null,
     ): void {
         [$instance, $handler] = $this->resolveHandler($context);
 
@@ -151,18 +155,18 @@ final class ServiceHandler implements HandlerInterface
             );
         }
 
-        $contextWithServiceDef = $context->withServiceDefinition($instance->definition);
+        $contextWithServiceDefinition = $context->withServiceDefinition($instance->definition);
 
-        $previousContext = Nexus::tryGetCurrentContext();
-        $previousDetails = Nexus::tryGetCancelDetails();
+        Nexus::setCurrentContext(new NexusContext(
+            operation: $nexusOperation,
+            current: $contextWithServiceDefinition,
+            cancelDetails: $details,
+        ));
         try {
-            Nexus::setOperationContext($contextWithServiceDef);
-            Nexus::setCancelDetails($details);
-            $this->interceptOperationHandler($contextWithServiceDef, $handler)
-                ->cancel($contextWithServiceDef, $details);
+            $this->interceptOperationHandler($contextWithServiceDefinition, $handler)
+                ->cancel($contextWithServiceDefinition, $details);
         } finally {
-            Nexus::setOperationContext($previousContext);
-            Nexus::setCancelDetails($previousDetails);
+            Nexus::setCurrentContext(null);
         }
     }
 

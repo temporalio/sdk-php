@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Internal\Support\Facade;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
@@ -23,31 +25,25 @@ use Temporal\Nexus\Handler\OperationStartDetails;
  * accepting it as parameters (the impl method signature must stay identical to
  * its contract method).
  *
+ * Like {@see \Temporal\Workflow} and {@see \Temporal\Activity}, this facade extends
+ * {@see Facade} and stores the dispatch state in the shared single-slot context.
+ * The state is process-global and assumes a single active dispatch — running two
+ * Nexus dispatches concurrently in the same process will trample each other.
+ *
  * @since Nexus support
  */
-final class Nexus
+final class Nexus extends Facade
 {
-    private static ?NexusOperationContext $current = null;
-    private static ?OperationContext $operationContext = null;
-    private static ?OperationStartDetails $startDetails = null;
-    private static ?OperationCancelDetails $cancelDetails = null;
-
     /**
+     * Temporal-side context (namespace, taskQueue, workflowClient).
+     *
      * @throws \LogicException when called outside a Nexus operation dispatch.
      */
     public static function getOperationContext(): NexusOperationContext
     {
-        return self::$current ?? throw new \LogicException(
+        return self::getDispatchContext()?->operation ?? throw new \LogicException(
             'Nexus::getOperationContext() called outside a Nexus handler.',
         );
-    }
-
-    /**
-     * Same as {@see self::getOperationContext()} but returns null instead of throwing.
-     */
-    public static function tryGetOperationContext(): ?NexusOperationContext
-    {
-        return self::$current;
     }
 
     /**
@@ -58,14 +54,9 @@ final class Nexus
      */
     public static function getCurrentContext(): OperationContext
     {
-        return self::$operationContext ?? throw new \LogicException(
+        return self::getDispatchContext()?->current ?? throw new \LogicException(
             'Nexus::getCurrentContext() called outside a Nexus operation dispatch.',
         );
-    }
-
-    public static function tryGetCurrentContext(): ?OperationContext
-    {
-        return self::$operationContext;
     }
 
     /**
@@ -75,14 +66,9 @@ final class Nexus
      */
     public static function getStartDetails(): OperationStartDetails
     {
-        return self::$startDetails ?? throw new \LogicException(
+        return self::getDispatchContext()?->startDetails ?? throw new \LogicException(
             'Nexus::getStartDetails() called outside a start-operation dispatch.',
         );
-    }
-
-    public static function tryGetStartDetails(): ?OperationStartDetails
-    {
-        return self::$startDetails;
     }
 
     /**
@@ -90,45 +76,22 @@ final class Nexus
      */
     public static function getCancelDetails(): OperationCancelDetails
     {
-        return self::$cancelDetails ?? throw new \LogicException(
+        return self::getDispatchContext()?->cancelDetails ?? throw new \LogicException(
             'Nexus::getCancelDetails() called outside a cancel-operation dispatch.',
         );
     }
 
-    public static function tryGetCancelDetails(): ?OperationCancelDetails
-    {
-        return self::$cancelDetails;
-    }
-
     /**
-     * @internal Plumbing for {@see \Temporal\Internal\Nexus\NexusTaskHandler}.
+     * Returns the composite dispatch state stored in the Facade slot, or null
+     * when no Nexus dispatch is active.
+     *
+     * @internal Plumbing for {@see \Temporal\Internal\Nexus\NexusTaskHandler}
+     *           and {@see \Temporal\Nexus\Handler\ServiceHandler}. Use the
+     *           typed accessors above from user code.
      */
-    public static function setCurrent(?NexusOperationContext $context): void
+    public static function getDispatchContext(): ?NexusContext
     {
-        self::$current = $context;
-    }
-
-    /**
-     * @internal Plumbing for {@see \Temporal\Nexus\Handler\ServiceHandler}.
-     */
-    public static function setOperationContext(?OperationContext $context): void
-    {
-        self::$operationContext = $context;
-    }
-
-    /**
-     * @internal Plumbing for {@see \Temporal\Nexus\Handler\ServiceHandler}.
-     */
-    public static function setStartDetails(?OperationStartDetails $details): void
-    {
-        self::$startDetails = $details;
-    }
-
-    /**
-     * @internal Plumbing for {@see \Temporal\Nexus\Handler\ServiceHandler}.
-     */
-    public static function setCancelDetails(?OperationCancelDetails $details): void
-    {
-        self::$cancelDetails = $details;
+        $ctx = parent::getCurrentContext();
+        return $ctx instanceof NexusContext ? $ctx : null;
     }
 }

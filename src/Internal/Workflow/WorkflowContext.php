@@ -42,7 +42,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertMemoInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
-use Temporal\Nexus\NexusOperationReader;
+use Temporal\Nexus\ServiceDefinition;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\NexusOperationStubInterface;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -473,16 +473,15 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         string $class,
         NexusOperationOptions $options,
     ): object {
-        $operations = NexusOperationReader::getOperations($class);
-        $serviceName = NexusOperationReader::getServiceName($class);
+        $service = ServiceDefinition::fromClass($class);
 
         if ($options->service === '') {
-            $options = $options->withService($serviceName);
+            $options = $options->withService($service->name);
         }
 
         return new NexusServiceProxy(
             $class,
-            $operations,
+            $service,
             $options,
             $this,
             $this->callsInterceptor,

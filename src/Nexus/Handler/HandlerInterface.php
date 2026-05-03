@@ -13,6 +13,7 @@ namespace Temporal\Nexus\Handler;
 
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\NexusOperationContext;
 
 /**
  * Top-level handler for service calls.
@@ -31,6 +32,7 @@ interface HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         HandlerInputContent $input,
+        ?NexusOperationContext $nexusOperation = null,
     ): OperationStartResult;
 
     /**
@@ -48,5 +50,6 @@ interface HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
+        ?NexusOperationContext $nexusOperation = null,
     ): void;
 }

@@ -8,6 +8,8 @@ use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Nexus\OperationDefinition;
+use Temporal\Nexus\ServiceDefinition;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -17,22 +19,32 @@ final class NexusServiceProxy extends Proxy
         'Nexus service "%s" has no operation method "%s". '
         . 'Did you forget the #[Operation] attribute on the method?';
 
+    /** @var array<string, OperationDefinition> Keyed by PHP method name. */
+    private readonly array $operationsByMethod;
+
     /**
      * @param class-string $class
-     * @param array<string, array{name: string, method: string, returnType: string}> $operations
      * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
         private string $class,
-        private array $operations,
+        ServiceDefinition $service,
         private NexusOperationOptions $options,
         private WorkflowContextInterface $ctx,
         private Pipeline $callsInterceptor,
-    ) {}
+    ) {
+        $byMethod = [];
+        foreach ($service->operations as $operation) {
+            if ($operation->methodName !== null) {
+                $byMethod[$operation->methodName] = $operation;
+            }
+        }
+        $this->operationsByMethod = $byMethod;
+    }
 
     public function __call(string $method, array $args = []): PromiseInterface
     {
-        $operation = $this->operations[$method] ?? null;
+        $operation = $this->operationsByMethod[$method] ?? null;
 
         if ($operation === null) {
             throw new \BadMethodCallException(
@@ -41,19 +53,18 @@ final class NexusServiceProxy extends Proxy
         }
 
         $service = $this->options->service;
-        $opName = $operation['name'];
         if ($service === '') {
             throw new \InvalidArgumentException(
                 \sprintf('Nexus service name resolved to empty for stub class %s', $this->class),
             );
         }
-        if ($opName === '') {
+        if ($operation->name === '') {
             throw new \InvalidArgumentException(
                 \sprintf('Nexus operation name resolved to empty for %s::%s()', $this->class, $method),
             );
         }
 
-        $returnType = $operation['returnType'] === 'void' ? null : $operation['returnType'];
+        $returnType = $operation->outputType === 'void' ? null : $operation->outputType;
 
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this->ctx
@@ -64,7 +75,7 @@ final class NexusServiceProxy extends Proxy
         )(
             new ExecuteNexusOperationInput(
                 $service,
-                $opName,
+                $operation->name,
                 $args,
                 $this->options,
                 $returnType,
