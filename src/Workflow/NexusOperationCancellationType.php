@@ -23,7 +23,7 @@ enum NexusOperationCancellationType: int
     case WaitRequested = self::WAIT_REQUESTED;
     case WaitCompleted = self::WAIT_COMPLETED;
 
-    // Mirror as int constants — case values can't reference siblings during init.
+    // Int mirrors used in property defaults — `EnumCase->value` in const-expr requires PHP 8.2+, project targets 8.1.
     public const UNSPECIFIED = 0;
     public const ABANDON = 1;
     public const TRY_CANCEL = 2;

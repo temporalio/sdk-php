@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Serializer;
+namespace Temporal\Nexus\Serializer\Internal;
 
 use Temporal\Nexus\Internal\Headers;
 

@@ -6,7 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Internal\Nexus\NexusServiceRepository;
 use Temporal\Tests\Unit\AbstractUnit;
 

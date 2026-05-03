@@ -86,7 +86,7 @@ final class Nexus extends Facade
      * when no Nexus dispatch is active.
      *
      * @internal Plumbing for {@see \Temporal\Internal\Nexus\NexusTaskHandler}
-     *           and {@see \Temporal\Nexus\Handler\ServiceHandler}. Use the
+     *           and {@see \Temporal\Nexus\Handler\Internal\ServiceHandler}. Use the
      *           typed accessors above from user code.
      */
     public static function getDispatchContext(): ?NexusContext

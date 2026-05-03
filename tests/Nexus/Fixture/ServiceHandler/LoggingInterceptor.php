@@ -13,8 +13,8 @@ namespace Temporal\Tests\Nexus\Fixture\ServiceHandler;
 
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationMiddlewareInterface;
+use Temporal\Nexus\Handler\Internal\OperationHandlerInterface;
+use Temporal\Nexus\Handler\Internal\OperationMiddlewareInterface;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 

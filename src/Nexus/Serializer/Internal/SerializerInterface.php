@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Serializer;
+namespace Temporal\Nexus\Serializer\Internal;
 
 /**
  * Serializer used to convert values to bytes and vice-versa.

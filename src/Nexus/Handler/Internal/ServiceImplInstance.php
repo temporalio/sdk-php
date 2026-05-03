@@ -9,10 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Handler\Internal\ServiceImplFactory;
 use Temporal\Nexus\ServiceDefinition;
 
 /**

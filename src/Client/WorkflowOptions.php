@@ -13,8 +13,6 @@ namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
-use Temporal\Api\Common\V1\Callback;
-use Temporal\Api\Common\V1\Callback\Nexus as NexusCallback;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
@@ -37,6 +35,7 @@ use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Workflow\CompletionCallback;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -209,9 +208,10 @@ final class WorkflowOptions extends Options
      * Completion callbacks attached at start. Used by Nexus to register the
      * caller's callback URL.
      *
-     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
+     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter},
+     * which handles the proto envelope translation.
      *
-     * @var list<Callback>
+     * @var list<CompletionCallback>
      * @since Nexus support
      */
     public array $completionCallbacks = [];
@@ -652,7 +652,7 @@ final class WorkflowOptions extends Options
 
     /**
      * Append a Nexus completion callback. Use {@see self::withCompletionCallbacks()}
-     * with an empty array to clear.
+     * with an empty argument list to clear.
      *
      * @param non-empty-string $url
      * @param array<string, string> $headers
@@ -662,32 +662,22 @@ final class WorkflowOptions extends Options
     #[Pure]
     public function withNexusCompletionCallback(string $url, array $headers = []): self
     {
-        $nexus = new NexusCallback();
-        $nexus->setUrl($url);
-        if ($headers !== []) {
-            $nexus->setHeader($headers);
-        }
-
-        $callback = new Callback();
-        $callback->setNexus($nexus);
-
         $self = clone $this;
-        $self->completionCallbacks = [...$this->completionCallbacks, $callback];
+        $self->completionCallbacks = [...$this->completionCallbacks, new CompletionCallback($url, $headers)];
         return $self;
     }
 
     /**
      * Replace the full list of completion callbacks.
      *
-     * @param list<Callback> $callbacks
      * @return $this
      * @since Nexus support
      */
     #[Pure]
-    public function withCompletionCallbacks(array $callbacks): self
+    public function withCompletionCallbacks(CompletionCallback ...$callbacks): self
     {
         $self = clone $this;
-        $self->completionCallbacks = $callbacks;
+        $self->completionCallbacks = \array_values($callbacks);
         return $self;
     }
 }

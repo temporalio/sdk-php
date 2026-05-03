@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Api\Common\V1\Callback;
+use Temporal\Api\Common\V1\Callback\Nexus as NexusCallback;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Deployment\V1\WorkerDeploymentVersion;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
@@ -49,6 +51,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow\CompletionCallback;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -400,7 +403,9 @@ final class WorkflowStarter
             // `completion_callbacks` field. Used by Nexus WorkflowRunOperation
             // handlers to register the caller's callback URL on the workflow.
             if ($options->completionCallbacks !== []) {
-                $req->setCompletionCallbacks($options->completionCallbacks);
+                $req->setCompletionCallbacks(
+                    \array_map(self::completionCallbackToProto(...), $options->completionCallbacks),
+                );
             }
         }
 
@@ -409,5 +414,18 @@ final class WorkflowStarter
         }
 
         return $req;
+    }
+
+    private static function completionCallbackToProto(CompletionCallback $callback): Callback
+    {
+        $nexus = new NexusCallback();
+        $nexus->setUrl($callback->url);
+        if ($callback->headers !== []) {
+            $nexus->setHeader($callback->headers);
+        }
+
+        $proto = new Callback();
+        $proto->setNexus($nexus);
+        return $proto;
     }
 }

@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
-use Temporal\Nexus\Handler\HandlerInputContent;
-use Temporal\Nexus\Handler\HandlerResultContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerResultContent;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Internal\Headers;
-use Temporal\Nexus\Serializer\Content;
+use Temporal\Nexus\Serializer\Internal\Content;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

@@ -9,16 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
-use Temporal\Nexus\Serializer\Content;
-use Temporal\Nexus\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Internal\Content;
+use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 
 /**
  * Handler that delegates to service implementations.

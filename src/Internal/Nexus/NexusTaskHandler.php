@@ -14,17 +14,17 @@ namespace Temporal\Internal\Nexus;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\AsyncOperationStartResult;
-use Temporal\Nexus\Handler\HandlerInputContent;
-use Temporal\Nexus\Handler\HandlerResultContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerResultContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\ServiceHandler;
+use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Header as NexusHeader;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\LinkParser;
-use Temporal\Nexus\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
@@ -332,6 +332,7 @@ final class NexusTaskHandler
             return null;
         }
         [$namespace, $taskQueue, $client] = $this->workerEnvironment;
+        /** @psalm-suppress ArgumentTypeCoercion — runtime asserts non-empty in NexusOperationContext */
         return new NexusOperationContext($namespace, $taskQueue, $client);
     }
 

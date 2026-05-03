@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client;
 
-use Temporal\Api\Common\V1\Callback;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Workflow\CompletionCallback;
 
 /**
  * Covers the Nexus-related additions to {@see WorkflowOptions} — `requestId`
@@ -57,18 +57,14 @@ final class WorkflowOptionsTestCase extends AbstractUnit
 
         self::assertCount(2, $options->completionCallbacks);
         foreach ($options->completionCallbacks as $cb) {
-            self::assertInstanceOf(Callback::class, $cb);
-            self::assertNotNull($cb->getNexus());
+            self::assertInstanceOf(CompletionCallback::class, $cb);
         }
 
-        $first = $options->completionCallbacks[0]->getNexus();
-        self::assertSame('https://callback.example/done', $first->getUrl());
+        self::assertSame('https://callback.example/done', $options->completionCallbacks[0]->url);
+        self::assertSame(['Nexus-Operation-Token' => 'tok-1'], $options->completionCallbacks[0]->headers);
 
-        $headerMap = [];
-        foreach ($first->getHeader() as $k => $v) {
-            $headerMap[(string) $k] = (string) $v;
-        }
-        self::assertSame(['Nexus-Operation-Token' => 'tok-1'], $headerMap);
+        self::assertSame('https://callback.example/other', $options->completionCallbacks[1]->url);
+        self::assertSame([], $options->completionCallbacks[1]->headers);
     }
 
     public function testWithNexusCompletionCallbackKeepsOriginalUntouched(): void
@@ -84,8 +80,28 @@ final class WorkflowOptionsTestCase extends AbstractUnit
     {
         $options = (new WorkflowOptions())
             ->withNexusCompletionCallback('https://a', [])
-            ->withCompletionCallbacks([]);
+            ->withCompletionCallbacks();
 
         self::assertSame([], $options->completionCallbacks);
+    }
+
+    public function testWithCompletionCallbacksAcceptsValueObjectsDirectly(): void
+    {
+        $cb1 = new CompletionCallback('https://one.example', ['X-Token' => 't1']);
+        $cb2 = new CompletionCallback('https://two.example');
+
+        $options = (new WorkflowOptions())->withCompletionCallbacks($cb1, $cb2);
+
+        self::assertCount(2, $options->completionCallbacks);
+        self::assertSame($cb1, $options->completionCallbacks[0]);
+        self::assertSame($cb2, $options->completionCallbacks[1]);
+    }
+
+    public function testCompletionCallbackRejectsEmptyUrl(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('url must be a non-empty string');
+
+        new CompletionCallback('');
     }
 }

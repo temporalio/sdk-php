@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\Serializer;
 
-use Temporal\Nexus\Serializer\Content;
-use Temporal\Nexus\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Internal\Content;
+use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 
 /** Identity serializer: serialize→string cast, deserialize→content->data. */
 final class EchoSerializer implements SerializerInterface

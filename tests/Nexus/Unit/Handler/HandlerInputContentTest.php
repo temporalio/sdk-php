@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
-use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

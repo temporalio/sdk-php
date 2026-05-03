@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Serializer;
 
-use Temporal\Nexus\Serializer\Content;
+use Temporal\Nexus\Serializer\Internal\Content;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

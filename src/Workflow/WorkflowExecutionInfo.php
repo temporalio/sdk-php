@@ -97,6 +97,21 @@ final class WorkflowExecutionInfo
         public readonly string $firstRunId,
     ) {}
 
+    /**
+     * Snapshot of the DTO for `var_dump`/`print_r`/Xdebug pretty-printing.
+     *
+     * Drops the {@see EncodedCollection} fields ({@see self::$memo} and
+     * {@see self::$searchAttributes}) — those carry lazily-decoded payloads
+     * whose default dump is dozens of nested protobuf objects, which makes
+     * the rest of the execution info unreadable. Inspect them explicitly via
+     * `$info->memo` / `$info->searchAttributes` when needed.
+     *
+     * Surfaced properties: `execution`, `type`, `startTime`, `closeTime`,
+     * `status`, `historyLength`, `parentNamespaceId`, `parentExecution`,
+     * `executionTime`, `autoResetPoints`, `taskQueue`, `stateTransitionCount`,
+     * `historySizeBytes`, `mostRecentWorkerVersionStamp`, `executionDuration`,
+     * `rootExecution`, `firstRunId`.
+     */
     public function __debugInfo(): ?array
     {
         return [

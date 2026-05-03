@@ -90,16 +90,11 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         self::assertSame('req-1', $capturedOptions->requestId);
         self::assertCount(1, $capturedOptions->completionCallbacks);
 
-        $callback = $capturedOptions->completionCallbacks[0]->getNexus();
-        self::assertSame('https://callback.example/done', $callback->getUrl());
-
-        $headers = [];
-        foreach ($callback->getHeader() as $k => $v) {
-            $headers[(string) $k] = (string) $v;
-        }
-        self::assertSame('demo', $headers['X-Caller']);
-        self::assertSame($expectedToken, $headers['Nexus-Operation-Token']);
-        self::assertSame($expectedToken, $headers['nexus-operation-id']);
+        $callback = $capturedOptions->completionCallbacks[0];
+        self::assertSame('https://callback.example/done', $callback->url);
+        self::assertSame('demo', $callback->headers['X-Caller']);
+        self::assertSame($expectedToken, $callback->headers['Nexus-Operation-Token']);
+        self::assertSame($expectedToken, $callback->headers['nexus-operation-id']);
     }
 
     public function testStartWithoutCallbackOmitsCompletionCallback(): void

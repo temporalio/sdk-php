@@ -14,8 +14,8 @@ namespace Temporal\Tests\Nexus\Fixture\ServiceHandler;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationMiddlewareInterface;
+use Temporal\Nexus\Handler\Internal\OperationHandlerInterface;
+use Temporal\Nexus\Handler\Internal\OperationMiddlewareInterface;
 
 /**
  * Rejects operations missing the expected auth token. Short-circuits in `intercept()`.

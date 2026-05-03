@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;

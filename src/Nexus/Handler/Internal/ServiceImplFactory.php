@@ -15,8 +15,6 @@ use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\ServiceImplInstance;
 use Temporal\Nexus\ServiceDefinition;
 
 /**

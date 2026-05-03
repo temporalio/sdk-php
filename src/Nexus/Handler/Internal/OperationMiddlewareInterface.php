@@ -9,7 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Nexus\Handler\Internal;
+
+use Temporal\Nexus\Handler\OperationContext;
 
 /**
  * Middleware for intercepting operations.

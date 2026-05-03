@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Nexus\Internal\Headers;
 
 /**
- * Content for start operation input.
+ * Content as a result of an operation.
  */
-final class HandlerInputContent
+final class HandlerResultContent
 {
     /** @var array<string, string> Lowercased keys. */
     public readonly array $headers;

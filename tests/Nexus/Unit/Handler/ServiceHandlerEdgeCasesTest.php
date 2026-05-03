@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Nexus\Handler\ServiceHandler;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceHandler;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
 use PHPUnit\Framework\Attributes\CoversClass;

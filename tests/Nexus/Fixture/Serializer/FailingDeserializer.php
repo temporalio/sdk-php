@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\Serializer;
 
-use Temporal\Nexus\Serializer\Content;
-use Temporal\Nexus\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Internal\Content;
+use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 
 /** Deserializer that always throws {@see \JsonException}. */
 final class FailingDeserializer implements SerializerInterface

@@ -15,7 +15,7 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
 use Temporal\Nexus\Handler\Internal\ServiceImplFactory;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Service\GreetingServiceInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ChildInheritingHandler;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\NoServiceImplAnnotation;

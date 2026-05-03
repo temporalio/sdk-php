@@ -9,10 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
 
 /**
  * Handler for an operation.

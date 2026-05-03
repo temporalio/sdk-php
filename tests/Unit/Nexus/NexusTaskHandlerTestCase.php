@@ -13,7 +13,7 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationErrorFailure;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
@@ -110,7 +110,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertNotNull($payload);
 
         $result = $this->serializer->deserialize(
-            new \Temporal\Nexus\Serializer\Content(
+            new \Temporal\Nexus\Serializer\Internal\Content(
                 $payload->getData(),
                 \iterator_to_array($payload->getMetadata()),
             ),
@@ -344,7 +344,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertNotNull($payload);
 
         $result = $this->serializer->deserialize(
-            new \Temporal\Nexus\Serializer\Content(
+            new \Temporal\Nexus\Serializer\Internal\Content(
                 $payload->getData(),
                 \iterator_to_array($payload->getMetadata()),
             ),

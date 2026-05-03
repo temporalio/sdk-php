@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Client\WorkflowClient;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;

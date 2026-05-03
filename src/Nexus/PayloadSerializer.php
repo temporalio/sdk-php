@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Temporal\Nexus\Serializer\Content;
-use Temporal\Nexus\Serializer\SerializerInterface;
+use Temporal\Nexus\Serializer\Internal\Content;
+use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverterInterface;
 

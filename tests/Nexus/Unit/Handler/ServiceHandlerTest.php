@@ -12,12 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\ServiceHandler;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceHandler;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
 use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
@@ -189,7 +189,7 @@ final class ServiceHandlerTest extends TestCase
     }
 
     /**
-     * @param list<\Temporal\Nexus\Handler\OperationMiddlewareInterface> $middlewares
+     * @param list<\Temporal\Nexus\Handler\Internal\OperationMiddlewareInterface> $middlewares
      */
     private static function newGreetingHandler(array $middlewares = []): ServiceHandler
     {

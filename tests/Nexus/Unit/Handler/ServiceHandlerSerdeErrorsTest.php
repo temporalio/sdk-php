@@ -15,11 +15,11 @@ use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Exception\RetryBehavior;
-use Temporal\Nexus\Handler\HandlerInputContent;
+use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\ServiceHandler;
-use Temporal\Nexus\Handler\ServiceImplInstance;
+use Temporal\Nexus\Handler\Internal\ServiceHandler;
+use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Serializer\EchoSerializer;
 use Temporal\Tests\Nexus\Fixture\Serializer\FailingDeserializer;
 use Temporal\Tests\Nexus\Fixture\Serializer\FailingSerializer;
@@ -136,7 +136,7 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
     }
 
     private static function newHandler(
-        \Temporal\Nexus\Serializer\SerializerInterface $serializer,
+        \Temporal\Nexus\Serializer\Internal\SerializerInterface $serializer,
         ?ThrowingGreetingImpl $impl = null,
     ): ServiceHandler {
         return ServiceHandler::create(
