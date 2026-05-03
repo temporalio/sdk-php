@@ -21,7 +21,9 @@ use Temporal\Nexus\Exception\HandlerException;
  */
 final class LinkParser
 {
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     /**

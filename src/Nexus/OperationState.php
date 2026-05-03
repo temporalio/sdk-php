@@ -24,12 +24,18 @@ enum OperationState: string
      */
     case Running = 'running';
 
-    /** Indicates an operation completed successfully. */
+    /**
+     * Indicates an operation completed successfully.
+     */
     case Succeeded = 'succeeded';
 
-    /** Indicates an operation completed as failed. */
+    /**
+     * Indicates an operation completed as failed.
+     */
     case Failed = 'failed';
 
-    /** Indicates an operation completed as canceled. */
+    /**
+     * Indicates an operation completed as canceled.
+     */
     case Canceled = 'canceled';
 }

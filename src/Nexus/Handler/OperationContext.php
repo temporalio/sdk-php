@@ -29,9 +29,7 @@ final class OperationContext
     public readonly array $headers;
 
     public readonly LinkCollection $links;
-
     private readonly ?MethodCanceller $methodCanceller;
-
     private readonly ClockInterface $clock;
 
     /**

@@ -67,13 +67,13 @@ final class OperationDefinitionTypesTest extends TestCase
 
     public function testOperationDefinitionFromMethodMissingAttribute(): void
     {
-        $iface = new class {
+        $interface = new class {
             public function plainMethod(): void {}
         };
-        $method = new \ReflectionMethod($iface::class, 'plainMethod');
+        $method = new \ReflectionMethod($interface::class, 'plainMethod');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing #[Operation] attribute');
+        $this->expectExceptionMessage('Missing #[Operation] or #[AsyncOperation] attribute');
         OperationDefinition::fromMethod($method);
     }
 

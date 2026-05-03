@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\MultiService;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -71,16 +65,11 @@ interface ServiceAInterface
     public function opA(string $input): string;
 }
 
-#[ServiceImpl(service: ServiceAInterface::class)]
-class ServiceAImpl
+class ServiceAImpl implements ServiceAInterface
 {
-    #[OperationImpl]
-    public function opA(): OperationHandlerInterface
+    public function opA(string $input): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $input): string
-                => "A:{$input}",
-        );
+        return "A:{$input}";
     }
 }
 
@@ -91,16 +80,11 @@ interface ServiceBInterface
     public function opB(string $input): string;
 }
 
-#[ServiceImpl(service: ServiceBInterface::class)]
-class ServiceBImpl
+class ServiceBImpl implements ServiceBInterface
 {
-    #[OperationImpl]
-    public function opB(): OperationHandlerInterface
+    public function opB(string $input): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $input): string
-                => "B:{$input}",
-        );
+        return "B:{$input}";
     }
 }
 

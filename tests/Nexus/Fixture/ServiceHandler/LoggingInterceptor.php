@@ -58,11 +58,6 @@ final class LoggingInterceptor implements OperationMiddlewareInterface
                 $this->sink->record($context->operation);
                 $this->next->cancel($context, $details);
             }
-
-            public static function sync(callable $function): self
-            {
-                throw new \LogicException('not a factory handler');
-            }
         };
     }
 

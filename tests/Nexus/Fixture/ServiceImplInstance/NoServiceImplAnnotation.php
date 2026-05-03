@@ -11,13 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\ServiceImplInstance;
 
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
-
+/**
+ * Class that does not implement any #[Service]-annotated interface, so the
+ * factory cannot derive a contract.
+ */
 final class NoServiceImplAnnotation
 {
-    public function operation(): OperationHandlerInterface
+    public function operation(): string
     {
-        return new SynchronousOperationHandler(static fn($ctx, $details, $name) => '');
+        return '';
     }
 }

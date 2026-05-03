@@ -22,7 +22,6 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\ServiceHandler;
 use Temporal\Nexus\Handler\ServiceImplInstance;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
 use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -58,23 +57,19 @@ final class ServiceHandlerMiddlewareTest extends TestCase
                             private readonly string $name,
                         ) {}
 
-                        public function start(OperationContext $c, OperationStartDetails $d, mixed $p): OperationStartResult
+                        public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
                         {
                             $this->log[] = "enter:{$this->name}";
-                            $result = $this->next->start($c, $d, $p);
+                            $result = $this->next->start($context, $details, $param);
                             $this->log[] = "exit:{$this->name}";
                             return $result;
                         }
 
-                        public function cancel(OperationContext $c, OperationCancelDetails $d): void
+                        public function cancel(OperationContext $context, OperationCancelDetails $details): void
                         {
-                            $this->next->cancel($c, $d);
+                            $this->next->cancel($context, $details);
                         }
 
-                        public static function sync(callable $fn): self
-                        {
-                            throw new \LogicException('unused');
-                        }
                     };
                 }
             };
@@ -105,9 +100,13 @@ final class ServiceHandlerMiddlewareTest extends TestCase
         $overriding = new class implements OperationMiddlewareInterface {
             public function intercept(OperationContext $context, OperationHandlerInterface $next): OperationHandlerInterface
             {
-                return SynchronousOperationHandler::fromCallable(
-                    static fn($c, $d, $p): string => "rewritten-{$p}",
-                );
+                return new class implements OperationHandlerInterface {
+                    public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
+                    {
+                        return OperationStartResult::sync("rewritten-{$param}");
+                    }
+                    public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
+                };
             }
         };
 
@@ -153,15 +152,11 @@ final class ServiceHandlerMiddlewareTest extends TestCase
     public function testMiddlewareCanSwallowHandlerException(): void
     {
         $alwaysFailing = new class implements OperationHandlerInterface {
-            public function start(OperationContext $c, OperationStartDetails $d, mixed $p): OperationStartResult
+            public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
                 throw HandlerException::create(ErrorType::Internal, 'boom');
             }
-            public function cancel(OperationContext $c, OperationCancelDetails $d): void {}
-            public static function sync(callable $fn): self
-            {
-                throw new \LogicException('unused');
-            }
+            public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
         };
 
         $swallowing = new class($alwaysFailing) implements OperationMiddlewareInterface {
@@ -172,19 +167,15 @@ final class ServiceHandlerMiddlewareTest extends TestCase
                 $inner = $this->inner;
                 return new class($inner) implements OperationHandlerInterface {
                     public function __construct(private readonly OperationHandlerInterface $inner) {}
-                    public function start(OperationContext $c, OperationStartDetails $d, mixed $p): OperationStartResult
+                    public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
                     {
                         try {
-                            return $this->inner->start($c, $d, $p);
+                            return $this->inner->start($context, $details, $param);
                         } catch (HandlerException) {
                             return OperationStartResult::sync('fallback');
                         }
                     }
-                    public function cancel(OperationContext $c, OperationCancelDetails $d): void {}
-                    public static function sync(callable $fn): self
-                    {
-                        throw new \LogicException('unused');
-                    }
+                    public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
                 };
             }
         };

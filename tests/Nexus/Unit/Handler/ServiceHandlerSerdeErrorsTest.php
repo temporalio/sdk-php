@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,11 +16,8 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Exception\RetryBehavior;
 use Temporal\Nexus\Handler\HandlerInputContent;
-use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
 use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\ServiceHandler;
 use Temporal\Nexus\Handler\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Serializer\EchoSerializer;
@@ -76,9 +73,7 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
     {
         $handler = self::newHandler(
             new EchoSerializer(),
-            new ThrowingGreetingImpl(hello1Override: self::handlerThatThrows(
-                OperationException::failed('intentional business failure'),
-            )),
+            new ThrowingGreetingImpl(hello1Throw: OperationException::failed('intentional business failure')),
         );
 
         $this->expectException(OperationException::class);
@@ -94,12 +89,10 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
     {
         $handler = self::newHandler(
             new EchoSerializer(),
-            new ThrowingGreetingImpl(hello1Override: self::handlerThatThrows(
-                HandlerException::create(
-                    ErrorType::Unauthorized,
-                    'no auth',
-                    retryBehavior: RetryBehavior::NonRetryable,
-                ),
+            new ThrowingGreetingImpl(hello1Throw: HandlerException::create(
+                ErrorType::Unauthorized,
+                'no auth',
+                retryBehavior: RetryBehavior::NonRetryable,
             )),
         );
 
@@ -158,24 +151,5 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
             service: 'GreetingServiceInterface',
             operation: $operation,
         );
-    }
-
-    private static function handlerThatThrows(\Throwable $toThrow): OperationHandlerInterface
-    {
-        return new class ($toThrow) implements OperationHandlerInterface {
-            public function __construct(private readonly \Throwable $toThrow) {}
-
-            public function start(OperationContext $c, OperationStartDetails $d, mixed $p): OperationStartResult
-            {
-                throw $this->toThrow;
-            }
-
-            public function cancel(OperationContext $c, OperationCancelDetails $d): void {}
-
-            public static function sync(callable $fn): self
-            {
-                throw new \LogicException('unused');
-            }
-        };
     }
 }

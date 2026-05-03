@@ -32,7 +32,9 @@ final class OperationErrorFailure
     /** Key inside `details` that carries the operation's terminal state. */
     public const DETAILS_STATE_KEY = 'state';
 
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     /**

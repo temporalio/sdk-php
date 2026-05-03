@@ -75,6 +75,11 @@ final class Header
     public const CONTENT_TYPE_JSON = 'application/json';
 
     /**
+     * @codeCoverageIgnore
+     */
+    private function __construct() {}
+
+    /**
      * Case-insensitive lookup over a lowercase-normalized header map.
      *
      * @param array<string, string> $headers Must be lowercase-normalized.
@@ -108,14 +113,6 @@ final class Header
             's'  => new \DateInterval("PT{$number}S"),
             'm'  => new \DateInterval("PT{$number}M"),
         };
-    }
-
-    private static function millisecondsInterval(int $ms): \DateInterval
-    {
-        $seconds = \intdiv($ms, 1000);
-        $interval = new \DateInterval("PT{$seconds}S");
-        $interval->f = ($ms % 1000) / 1000;
-        return $interval;
     }
 
     /**
@@ -197,6 +194,11 @@ final class Header
         }
     }
 
-    /** @codeCoverageIgnore */
-    private function __construct() {}
+    private static function millisecondsInterval(int $ms): \DateInterval
+    {
+        $seconds = \intdiv($ms, 1000);
+        $interval = new \DateInterval("PT{$seconds}S");
+        $interval->f = ($ms % 1000) / 1000;
+        return $interval;
+    }
 }

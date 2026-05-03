@@ -17,6 +17,11 @@ namespace Temporal\Nexus\Internal;
 final class Headers
 {
     /**
+     * @codeCoverageIgnore
+     */
+    private function __construct() {}
+
+    /**
      * Lowercase keys; last value wins on collision.
      *
      * @param array<string, string> $headers
@@ -30,7 +35,4 @@ final class Headers
         }
         return $normalized;
     }
-
-    /** @codeCoverageIgnore */
-    private function __construct() {}
 }

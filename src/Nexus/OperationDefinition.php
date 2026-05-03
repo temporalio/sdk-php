@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Validation\OperationNameValidator;
@@ -24,6 +25,7 @@ final class OperationDefinition
         public readonly string $name,
         public readonly string $inputType,
         public readonly string $outputType,
+        public readonly bool $async = false,
         public readonly ?string $methodName = null,
     ) {
         OperationNameValidator::assert($name);
@@ -31,12 +33,21 @@ final class OperationDefinition
 
     /**
      * Create an OperationDefinition from a reflection method on a {@see \Temporal\Nexus\Attribute\Service}-annotated interface.
+     *
+     * The method may carry either {@see Operation} (sync) or {@see AsyncOperation} (async).
+     * For async operations the method's declared return type must be {@see OperationInfo};
+     * the wire output type comes from the {@see AsyncOperation::$output} parameter.
      */
     public static function fromMethod(\ReflectionMethod $method): self
     {
-        $attributes = $method->getAttributes(Operation::class);
-        if (\count($attributes) === 0) {
-            throw new InvalidArgumentException('Missing #[Operation] attribute');
+        $syncAttributes = $method->getAttributes(Operation::class);
+        $asyncAttributes = $method->getAttributes(AsyncOperation::class);
+
+        if ($syncAttributes === [] && $asyncAttributes === []) {
+            throw new InvalidArgumentException('Missing #[Operation] or #[AsyncOperation] attribute');
+        }
+        if ($syncAttributes !== [] && $asyncAttributes !== []) {
+            throw new InvalidArgumentException('Cannot combine #[Operation] and #[AsyncOperation] on the same method');
         }
         if ($method->getNumberOfParameters() > 1) {
             throw new InvalidArgumentException('Can have no more than one parameter');
@@ -45,30 +56,56 @@ final class OperationDefinition
             throw new InvalidArgumentException('Cannot be static');
         }
 
-        /** @var Operation $operation */
-        $operation = $attributes[0]->newInstance();
-        $operationName = $operation->name !== '' ? $operation->name : $method->getName();
+        $async = $asyncAttributes !== [];
 
         $inputType = 'void';
         if ($method->getNumberOfParameters() === 1) {
-            $param = $method->getParameters()[0];
+            $parameter = $method->getParameters()[0];
             $inputType = self::typeToString(
-                $param->getType(),
-                "parameter \${$param->getName()} of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
+                $parameter->getType(),
+                "parameter \${$parameter->getName()} of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
                 untypedFallback: 'mixed',
             );
         }
 
-        $outputType = self::typeToString(
-            $method->getReturnType(),
-            "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
-            untypedFallback: 'void',
-        );
+        if ($async) {
+            /** @var AsyncOperation $attribute */
+            $attribute = $asyncAttributes[0]->newInstance();
+            $operationName = $attribute->name !== '' ? $attribute->name : $method->getName();
+
+            $returnType = $method->getReturnType();
+            $declaredReturn = self::typeToString(
+                $returnType,
+                "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
+                untypedFallback: 'void',
+            );
+            if (\ltrim($declaredReturn, '?\\') !== OperationInfo::class) {
+                throw new InvalidArgumentException(\sprintf(
+                    '#[AsyncOperation] method %s::%s() must declare return type %s, got %s',
+                    $method->getDeclaringClass()->getName(),
+                    $method->getName(),
+                    OperationInfo::class,
+                    $declaredReturn,
+                ));
+            }
+
+            $outputType = $attribute->output !== '' ? $attribute->output : 'void';
+        } else {
+            /** @var Operation $attribute */
+            $attribute = $syncAttributes[0]->newInstance();
+            $operationName = $attribute->name !== '' ? $attribute->name : $method->getName();
+            $outputType = self::typeToString(
+                $method->getReturnType(),
+                "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
+                untypedFallback: 'void',
+            );
+        }
 
         return new self(
             name: $operationName,
             inputType: $inputType,
             outputType: $outputType,
+            async: $async,
             methodName: $method->getName(),
         );
     }

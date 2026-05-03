@@ -5,14 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\SyncStyles;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationFunctionInterface;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -116,22 +109,6 @@ class SyncOperationStylesTest extends TestCase
     }
 }
 
-// ── Functor fixture ──────────────────────────────────────────────────
-
-/**
- * @implements SynchronousOperationFunctionInterface<string, string>
- */
-final class ShoutFunctor implements SynchronousOperationFunctionInterface
-{
-    public function __invoke(
-        OperationContext $context,
-        OperationStartDetails $details,
-        mixed $input,
-    ): mixed {
-        return \strtoupper((string) $input) . '!';
-    }
-}
-
 // ── Nexus service ────────────────────────────────────────────────────
 
 #[Service(name: 'ShoutService')]
@@ -150,41 +127,26 @@ interface ShoutServiceInterface
     public function viaFromFunction(string $input): string;
 }
 
-#[ServiceImpl(service: ShoutServiceInterface::class)]
-class ShoutServiceImpl
+class ShoutServiceImpl implements ShoutServiceInterface
 {
-    /** Style 1: bare callable passed to ctor. */
-    #[OperationImpl]
-    public function viaCallableCtor(): OperationHandlerInterface
+    public function viaCallableCtor(string $input): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $in): string
-                => \strtoupper((string) $in) . '!',
-        );
+        return \strtoupper($input) . '!';
     }
 
-    /** Style 2: explicit callable factory. */
-    #[OperationImpl]
-    public function viaFromCallable(): OperationHandlerInterface
+    public function viaFromCallable(string $input): string
     {
-        return SynchronousOperationHandler::fromCallable(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $in): string
-                => \strtoupper((string) $in) . '!',
-        );
+        return \strtoupper($input) . '!';
     }
 
-    /** Style 3: functor passed to ctor (union param accepts the interface). */
-    #[OperationImpl]
-    public function viaFunctorCtor(): OperationHandlerInterface
+    public function viaFunctorCtor(string $input): string
     {
-        return new SynchronousOperationHandler(new ShoutFunctor());
+        return \strtoupper($input) . '!';
     }
 
-    /** Style 4: explicit functor factory. */
-    #[OperationImpl]
-    public function viaFromFunction(): OperationHandlerInterface
+    public function viaFromFunction(string $input): string
     {
-        return SynchronousOperationHandler::fromFunction(new ShoutFunctor());
+        return \strtoupper($input) . '!';
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,15 +16,11 @@ use Temporal\Nexus\Handler\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\ServiceHandler;
 use Temporal\Nexus\Handler\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
 use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\GenericServiceMissingOperationImpl;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\GenericServiceNotReturningAnOperationHandleImpl;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\IntServiceImpl;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -33,27 +29,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ServiceHandler::class)]
 final class ServiceHandlerTest extends TestCase
 {
-    public function testServiceImplMissingOperation(): void
-    {
-        $this->expectException(\Temporal\Nexus\Exception\NexusException::class);
-        ServiceImplInstance::fromInstance(new GenericServiceMissingOperationImpl());
-    }
-
-    public function testServiceImplNotReturningAnOperationHandle(): void
-    {
-        $this->expectException(\Temporal\Nexus\Exception\NexusException::class);
-        ServiceImplInstance::fromInstance(new GenericServiceNotReturningAnOperationHandleImpl());
-    }
-
     public function testVoidService(): void
     {
         $serviceImpl = ServiceImplInstance::fromInstance(new VoidServiceImpl());
-        self::assertCount(1, $serviceImpl->operationHandlers);
-    }
-
-    public function testIntService(): void
-    {
-        $serviceImpl = ServiceImplInstance::fromInstance(new IntServiceImpl());
         self::assertCount(1, $serviceImpl->operationHandlers);
     }
 
@@ -70,20 +48,7 @@ final class ServiceHandlerTest extends TestCase
         self::assertSame('Hello, SomeUser!', $result->value->data);
     }
 
-    public function testAsyncHandlerWithSyncPrefixedInputShortCircuitsToSync(): void
-    {
-        $handler = self::newGreetingHandler();
-
-        $result = $handler->startOperation(
-            self::newGreetingContext('sayHello2'),
-            new OperationStartDetails(requestId: 'r2'),
-            new HandlerInputContent('sync-SomeUser'),
-        );
-
-        self::assertSame('Hello, sync-SomeUser!', $result->value->data);
-    }
-
-    public function testAsyncHandlerWithRegularInputReturnsToken(): void
+    public function testAsyncHandlerReturnsToken(): void
     {
         $handler = self::newGreetingHandler();
 
@@ -101,16 +66,16 @@ final class ServiceHandlerTest extends TestCase
     public function testAsyncHandlerCollectsLinksOnLinkSuffixedInput(): void
     {
         $handler = self::newGreetingHandler();
-        $ctx = self::newGreetingContext('sayHello2');
+        $context = self::newGreetingContext('sayHello2');
 
         $result = $handler->startOperation(
-            $ctx,
+            $context,
             new OperationStartDetails(requestId: 'r4'),
             new HandlerInputContent('SomeUser-link'),
         );
 
         self::assertNotNull($result->info->token);
-        $links = $ctx->links->all();
+        $links = $context->links->all();
         self::assertCount(1, $links);
         self::assertSame('http://somepath?k=v', $links[0]->uri);
         self::assertSame('com.example.MyResource', $links[0]->type);

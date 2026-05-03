@@ -34,7 +34,9 @@ final class HandlerErrorFailure
     /** Key inside `details` that overrides the default retry semantics. */
     public const DETAILS_RETRYABLE_OVERRIDE_KEY = 'retryableOverride';
 
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     /**

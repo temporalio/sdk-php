@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Headers;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
+use Temporal\Nexus\Nexus;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -72,22 +67,17 @@ interface HeaderEchoServiceInterface
     public function echoHeader(string $headerName): string;
 }
 
-#[ServiceImpl(service: HeaderEchoServiceInterface::class)]
-class HeaderEchoServiceImpl
+class HeaderEchoServiceImpl implements HeaderEchoServiceInterface
 {
-    #[OperationImpl]
-    public function echoHeader(): OperationHandlerInterface
+    public function echoHeader(string $headerName): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $headerName): string {
-                if ($headerName === null) {
-                    return '';
-                }
-                // Headers in OperationContext are case-insensitive (lowercased)
-                $key = \strtolower($headerName);
-                return $ctx->headers[$key] ?? "missing:{$headerName}";
-            },
-        );
+        if ($headerName === '') {
+            return '';
+        }
+        // Headers in OperationContext are case-insensitive (lowercased)
+        $context = Nexus::getCurrentContext();
+        $key = \strtolower($headerName);
+        return $context->headers[$key] ?? "missing:{$headerName}";
     }
 }
 

@@ -5,16 +5,10 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Errors;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -236,85 +230,49 @@ interface ErrorServiceInterface
     public function failWithCause(string $reason): string;
 }
 
-#[ServiceImpl(service: ErrorServiceInterface::class)]
-class ErrorServiceImpl
+class ErrorServiceImpl implements ErrorServiceInterface
 {
-    #[OperationImpl]
-    public function failOp(): OperationHandlerInterface
+    public function failOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw OperationException::failed($reason ?? 'unknown');
-            },
-        );
+        throw OperationException::failed($reason ?: 'unknown');
     }
 
-    #[OperationImpl]
-    public function handlerErrorOp(): OperationHandlerInterface
+    public function handlerErrorOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw HandlerException::create(ErrorType::Internal, "infra: {$reason}");
-            },
-        );
+        throw HandlerException::create(ErrorType::Internal, "infra: {$reason}");
     }
 
-    #[OperationImpl]
-    public function badRequestOp(): OperationHandlerInterface
+    public function badRequestOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw HandlerException::create(ErrorType::BadRequest, "bad: {$reason}");
-            },
-        );
+        throw HandlerException::create(ErrorType::BadRequest, "bad: {$reason}");
     }
 
-    #[OperationImpl]
-    public function unauthorizedOp(): OperationHandlerInterface
+    public function unauthorizedOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw HandlerException::create(ErrorType::Unauthorized, "deny: {$reason}");
-            },
-        );
+        throw HandlerException::create(ErrorType::Unauthorized, "deny: {$reason}");
     }
 
-    #[OperationImpl]
-    public function notFoundOp(): OperationHandlerInterface
+    public function notFoundOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw HandlerException::create(ErrorType::NotFound, "missing: {$reason}");
-            },
-        );
+        throw HandlerException::create(ErrorType::NotFound, "missing: {$reason}");
     }
 
-    #[OperationImpl]
-    public function cancelOp(): OperationHandlerInterface
+    public function cancelOp(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw OperationException::canceled($reason ?? 'canceled');
-            },
-        );
+        throw OperationException::canceled($reason ?: 'canceled');
     }
 
-    #[OperationImpl]
-    public function failWithCause(): OperationHandlerInterface
+    public function failWithCause(string $reason): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                // Two-level cause chain. The marker in the inner cause's
-                // message is what the acceptance test asserts to prove the
-                // chain reached the caller.
-                $inner = new \RuntimeException('CAUSE_CHAIN_MARKER: db unavailable');
-                $middle = new \LogicException("middle of {$reason}", 0, $inner);
-                throw HandlerException::create(
-                    ErrorType::Internal,
-                    $reason ?? 'unknown',
-                    cause: $middle,
-                );
-            },
+        // Two-level cause chain. The marker in the inner cause's
+        // message is what the acceptance test asserts to prove the
+        // chain reached the caller.
+        $inner = new \RuntimeException('CAUSE_CHAIN_MARKER: db unavailable');
+        $middle = new \LogicException("middle of {$reason}", 0, $inner);
+        throw HandlerException::create(
+            ErrorType::Internal,
+            $reason ?: 'unknown',
+            cause: $middle,
         );
     }
 }

@@ -49,11 +49,6 @@ final class Link implements \Stringable
         return new self($uri, $type);
     }
 
-    public function __toString(): string
-    {
-        return "Link{uri='{$this->uri}', type='{$this->type}'}";
-    }
-
     /**
      * Encode as RFC 8288 `<uri>; type="..."`. `\` and `"` in `type` are escaped.
      */
@@ -61,5 +56,10 @@ final class Link implements \Stringable
     {
         $escapedType = \addcslashes($this->type, "\\\"");
         return "<{$this->uri}>; type=\"{$escapedType}\"";
+    }
+
+    public function __toString(): string
+    {
+        return "Link{uri='{$this->uri}', type='{$this->type}'}";
     }
 }

@@ -11,16 +11,22 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
 
 /**
- * Reads #[Service] and #[Operation] attributes from a Nexus service interface.
+ * Reads #[Service], #[Operation] and #[AsyncOperation] attributes from a Nexus service interface.
  */
 final class NexusOperationReader
 {
     /**
      * Read operation definitions from a #[Service] annotated interface.
+     *
+     * For #[Operation] (sync), `returnType` is the method's declared return type.
+     * For #[AsyncOperation] (async), `returnType` is the {@see AsyncOperation::$output}
+     * wire type the operation eventually produces — the method's PHP return type is
+     * always {@see OperationInfo}, which is bookkeeping for the handler side only.
      *
      * @param class-string $class
      * @return array<string, array{name: string, method: string, returnType: string}>
@@ -33,16 +39,26 @@ final class NexusOperationReader
         // ReflectionClass::getMethods() on an interface already includes methods
         // inherited from parent interfaces — no need to walk getInterfaces().
         foreach ($reflection->getMethods() as $method) {
-            $attrs = $method->getAttributes(Operation::class);
-            if ($attrs === []) {
+            $syncAttributes = $method->getAttributes(Operation::class);
+            $asyncAttributes = $method->getAttributes(AsyncOperation::class);
+
+            if ($syncAttributes === [] && $asyncAttributes === []) {
                 continue;
             }
 
-            $operation = $attrs[0]->newInstance();
-            $name = $operation->name !== '' ? $operation->name : $method->getName();
+            if ($asyncAttributes !== []) {
+                /** @var AsyncOperation $async */
+                $async = $asyncAttributes[0]->newInstance();
+                $name = $async->name !== '' ? $async->name : $method->getName();
+                $returnTypeName = $async->output !== '' ? $async->output : 'void';
+            } else {
+                /** @var Operation $sync */
+                $sync = $syncAttributes[0]->newInstance();
+                $name = $sync->name !== '' ? $sync->name : $method->getName();
 
-            $returnType = $method->getReturnType();
-            $returnTypeName = $returnType instanceof \ReflectionNamedType ? $returnType->getName() : 'mixed';
+                $returnType = $method->getReturnType();
+                $returnTypeName = $returnType instanceof \ReflectionNamedType ? $returnType->getName() : 'mixed';
+            }
 
             $operations[$method->getName()] = [
                 'name' => $name,
@@ -63,9 +79,9 @@ final class NexusOperationReader
     public static function getServiceName(string $class): string
     {
         $reflection = new \ReflectionClass($class);
-        $attrs = $reflection->getAttributes(Service::class);
+        $attributes = $reflection->getAttributes(Service::class);
 
-        if ($attrs === []) {
+        if ($attributes === []) {
             throw new \InvalidArgumentException(\sprintf(
                 'Nexus service class %s is missing the #[%s] attribute',
                 $class,
@@ -73,7 +89,7 @@ final class NexusOperationReader
             ));
         }
 
-        $service = $attrs[0]->newInstance();
+        $service = $attributes[0]->newInstance();
         return $service->name !== '' ? $service->name : $reflection->getShortName();
     }
 }

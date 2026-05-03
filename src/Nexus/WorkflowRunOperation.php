@@ -11,113 +11,94 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
-use Temporal\Nexus\OperationInfo;
-use Temporal\Nexus\OperationState;
 use Temporal\Internal\Nexus\WorkflowRunOperationToken;
+use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Nexus\Handler\OperationStartDetails;
 
 /**
- * Backs a Nexus operation with a Temporal workflow.
+ * Helpers that back a Nexus operation with a Temporal workflow run.
  *
- * The factory builds {@see WorkflowHandle} (class+options+args).
- * This handler then layers Nexus concerns on top: requestId pinning,
- * completion callback, default task queue, async token encoding.
- * Cancel decodes the token and cancels the workflow.
- *
- * @since Nexus support
+ * Use {@see self::start()} from inside an `#[AsyncOperation]` method to start
+ * the backing workflow and return the {@see OperationInfo} the framework needs.
+ * Use {@see self::cancel()} from inside an `#[OperationCancel]` method to cancel
+ * the workflow by operation token.
  */
 final class WorkflowRunOperation
 {
     /**
-     * @template I
-     * @param callable(OperationContext, OperationStartDetails, I|null): WorkflowHandle $factory
+     * @codeCoverageIgnore
      */
-    public static function fromWorkflowMethod(callable $factory): OperationHandlerInterface
+    private function __construct() {}
+
+    /**
+     * Start the backing workflow described by $handle and return the
+     * {@see OperationInfo} carrying the operation token.
+     *
+     * Layers Nexus concerns on top of the user-supplied options: requestId
+     * pinning, completion callback, default task queue, async token encoding.
+     */
+    public static function start(WorkflowHandle $handle, OperationStartDetails $details): OperationInfo
     {
-        return new class($factory) implements OperationHandlerInterface {
-            /** @var callable */
-            private $factory;
+        $nexusContext = Nexus::getOperationContext();
+        $client = $nexusContext->workflowClient;
 
-            public function __construct(callable $factory)
-            {
-                $this->factory = $factory;
-            }
+        $options = $handle->options;
+        if ($options->workflowId === '') {
+            throw new \LogicException(\sprintf(
+                'WorkflowRunOperation::start(): workflow ID is required for %s — '
+                . 'set it via WorkflowOptions::withWorkflowId($details->requestId) inside your handler.',
+                $handle->workflowClass,
+            ));
+        }
 
-            public function start(
-                OperationContext $context,
-                OperationStartDetails $details,
-                mixed $param,
-            ): OperationStartResult {
-                $nexusCtx = Nexus::getOperationContext();
-                $client = $nexusCtx->workflowClient;
+        // Default task queue to the handler's queue (Java parity); avoids silent hang on `default`.
+        if ($options->taskQueue === \Temporal\Worker\WorkerFactoryInterface::DEFAULT_TASK_QUEUE) {
+            $options = $options->withTaskQueue($nexusContext->taskQueue);
+        }
 
-                $handle = ($this->factory)($context, $details, $param);
-                if (!$handle instanceof WorkflowHandle) {
-                    throw new \LogicException(
-                        'WorkflowRunOperation factory must return a ' . WorkflowHandle::class
-                        . ', got ' . \get_debug_type($handle),
-                    );
-                }
+        // Token = ns+workflowId (stable across retries).
+        $token = WorkflowRunOperationToken::generate(
+            $nexusContext->namespace,
+            $options->workflowId,
+        );
 
-                $options = $handle->options;
-                if ($options->workflowId === '') {
-                    throw new \LogicException(
-                        'WorkflowRunOperation: workflow ID is required — set it via '
-                        . 'WorkflowOptions::withWorkflowId($details->requestId) inside your factory.',
-                    );
-                }
+        if ($details->callbackUrl !== null && $details->callbackUrl !== '') {
+            $headers = $details->callbackHeaders;
+            // Send both header names for pre/post-1.27 server compatibility.
+            $headers['Nexus-Operation-Token'] = $token;
+            $headers['nexus-operation-id'] = $token;
 
-                // Default task queue to the handler's queue (Java parity); avoids silent hang on `default`.
-                if ($options->taskQueue === \Temporal\Worker\WorkerFactoryInterface::DEFAULT_TASK_QUEUE) {
-                    $options = $options->withTaskQueue($nexusCtx->taskQueue);
-                }
+            $options = $options->withNexusCompletionCallback($details->callbackUrl, $headers);
+        }
 
-                // Token = ns+workflowId (stable across retries).
-                $token = WorkflowRunOperationToken::generate(
-                    $nexusCtx->namespace,
-                    $options->workflowId,
-                );
+        // Pin requestId so retried Nexus starts dedupe server-side.
+        $options = $options->withRequestId($details->requestId);
 
-                if ($details->callbackUrl !== null && $details->callbackUrl !== '') {
-                    $headers = $details->callbackHeaders;
-                    // Send both header names for pre/post-1.27 server compatibility.
-                    $headers['Nexus-Operation-Token'] = $token;
-                    $headers['nexus-operation-id'] = $token;
+        $stub = $client->newWorkflowStub($handle->workflowClass, $options);
+        $client->start($stub, ...$handle->args);
 
-                    $options = $options->withNexusCompletionCallback($details->callbackUrl, $headers);
-                }
+        return new OperationInfo($token, OperationState::Running);
+    }
 
-                // Pin requestId so retried Nexus starts dedupe server-side.
-                $options = $options->withRequestId($details->requestId);
+    /**
+     * Cancel the workflow corresponding to the given operation token.
+     *
+     * Decodes the token and asks the workflow client to cancel by workflow ID.
+     */
+    public static function cancel(string $operationToken): void
+    {
+        $nexusContext = Nexus::getOperationContext();
+        $decoded = WorkflowRunOperationToken::load($operationToken);
 
-                $stub = $client->newWorkflowStub($handle->workflowClass, $options);
-                $client->start($stub, ...$handle->args);
+        if ($decoded->namespace !== '' && $decoded->namespace !== $nexusContext->namespace) {
+            throw new InvalidArgumentException(\sprintf(
+                'workflow run token namespace "%s" does not match handler namespace "%s"',
+                $decoded->namespace,
+                $nexusContext->namespace,
+            ));
+        }
 
-                return OperationStartResult::async(new OperationInfo($token, OperationState::Running));
-            }
-
-            public function cancel(
-                OperationContext $context,
-                OperationCancelDetails $details,
-            ): void {
-                $nexusCtx = Nexus::getOperationContext();
-                $decoded = WorkflowRunOperationToken::load($details->operationToken);
-
-                if ($decoded->namespace !== '' && $decoded->namespace !== $nexusCtx->namespace) {
-                    throw new \InvalidArgumentException(\sprintf(
-                        'workflow run token namespace "%s" does not match handler namespace "%s"',
-                        $decoded->namespace,
-                        $nexusCtx->namespace,
-                    ));
-                }
-
-                $stub = $nexusCtx->workflowClient->newUntypedRunningWorkflowStub($decoded->workflowId);
-                $stub->cancel();
-            }
-        };
+        $stub = $nexusContext->workflowClient->newUntypedRunningWorkflowStub($decoded->workflowId);
+        $stub->cancel();
     }
 }

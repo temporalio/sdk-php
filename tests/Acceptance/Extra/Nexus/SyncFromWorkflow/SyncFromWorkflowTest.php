@@ -6,13 +6,7 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\SyncFromWorkflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
@@ -75,16 +69,11 @@ interface SyncFromWorkflowService
     public function greet(string $name): string;
 }
 
-#[ServiceImpl(service: SyncFromWorkflowService::class)]
-class SyncFromWorkflowServiceImpl
+class SyncFromWorkflowServiceImpl implements SyncFromWorkflowService
 {
-    #[OperationImpl]
-    public function greet(): OperationHandlerInterface
+    public function greet(string $name): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $name): string
-                => "Hello, {$name}!",
-        );
+        return "Hello, {$name}!";
     }
 }
 

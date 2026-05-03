@@ -18,7 +18,9 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
  */
 final class PrintableAsciiValidator
 {
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     /**

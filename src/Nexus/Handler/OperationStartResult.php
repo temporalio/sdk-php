@@ -21,7 +21,9 @@ use Temporal\Nexus\OperationInfo;
  */
 abstract readonly class OperationStartResult
 {
-    /** @internal */
+    /**
+     * @internal
+     */
     protected function __construct() {}
 
     /**

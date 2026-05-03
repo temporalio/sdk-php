@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncWorkflow;
 
 use Carbon\CarbonInterval;
-use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\AsyncOperation;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Nexus;
+use Temporal\Nexus\OperationInfo;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
@@ -100,24 +98,29 @@ class WorkflowRunOperationTest extends TestCase
 #[Service(name: 'AsyncWorkflowService')]
 interface AsyncWorkflowService
 {
-    #[Operation]
-    public function hello(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function hello(string $input): OperationInfo;
 }
 
-#[ServiceImpl(service: AsyncWorkflowService::class)]
-class AsyncWorkflowServiceImpl
+class AsyncWorkflowServiceImpl implements AsyncWorkflowService
 {
-    #[OperationImpl]
-    public function hello(): OperationHandlerInterface
+    public function hello(string $input): OperationInfo
     {
-        return WorkflowRunOperation::fromWorkflowMethod(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $input): WorkflowHandle =>
-                WorkflowHandle::fromWorkflowMethod(
-                    AsyncHandlerWorkflow::class,
-                    WorkflowOptions::new()->withWorkflowId($d->requestId),
-                    (string) $input,
-                ),
+        $details = Nexus::getStartDetails();
+        return WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                AsyncHandlerWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId($details->requestId),
+                $input,
+            ),
+            $details,
         );
+    }
+
+    #[OperationCancel(operation: 'hello')]
+    public function cancelHello(string $token): void
+    {
+        WorkflowRunOperation::cancel($token);
     }
 }
 

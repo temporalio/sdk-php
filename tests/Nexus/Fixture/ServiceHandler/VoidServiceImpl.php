@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,18 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\ServiceHandler;
 
-use Temporal\Nexus\Attribute\OperationImpl;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Tests\Nexus\Fixture\Service\VoidServiceInterface;
 
-#[ServiceImpl(service: VoidServiceInterface::class)]
-final class VoidServiceImpl
+final class VoidServiceImpl implements VoidServiceInterface
 {
-    #[OperationImpl]
-    public function operation(): OperationHandlerInterface
-    {
-        return new SynchronousOperationHandler(static fn($ctx, $details, $name) => null);
-    }
+    public function operation(): void {}
 }

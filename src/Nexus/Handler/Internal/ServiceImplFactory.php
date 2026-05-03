@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,164 +11,228 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
-use Temporal\Nexus\Attribute\OperationImpl;
-use Temporal\Nexus\Attribute\ServiceImpl;
+use Temporal\Nexus\Attribute\OperationCancel;
+use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\OperationHandlerInterface;
 use Temporal\Nexus\Handler\ServiceImplInstance;
-use Temporal\Nexus\OperationDefinition;
 use Temporal\Nexus\ServiceDefinition;
 
 /**
- * @internal Orchestrates reflection-driven construction of {@see ServiceImplInstance}.
+ * @internal Reflection-driven construction of {@see ServiceImplInstance}.
+ *
+ * Mirrors Workflow/Activity discovery: the impl class implements a single
+ * interface annotated with {@see Service}; that interface IS the contract.
+ * Operation methods are matched by name; cancel methods are bound via
+ * {@see OperationCancel} attributes.
  */
 final class ServiceImplFactory
 {
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     public static function build(object $instance): ServiceImplInstance
     {
         $reflection = new \ReflectionClass($instance);
-        $attributes = $reflection->getAttributes(ServiceImpl::class);
 
-        if (\count($attributes) === 0) {
-            throw new InvalidArgumentException(\sprintf(
-                'Missing #[ServiceImpl] attribute on %s',
-                $reflection->getName(),
-            ));
-        }
-
-        /** @var ServiceImpl $serviceImpl */
-        $serviceImpl = $attributes[0]->newInstance();
+        $contract = self::findContractFromInterfaces($reflection);
 
         try {
-            $serviceDefinition = ServiceDefinition::fromClass($serviceImpl->service);
+            $serviceDefinition = ServiceDefinition::fromClass($contract->getName());
         } catch (\Exception $e) {
             throw new NexusException(
-                "Failed loading #[ServiceImpl] class {$serviceImpl->service}",
+                "Failed loading Nexus service contract {$contract->getName()} on {$reflection->getName()}",
                 0,
                 $e,
             );
         }
 
-        $operationHandlers = self::collectOperationHandlers($reflection, $serviceDefinition, $instance);
-
-        if (\count($operationHandlers) === 0) {
-            throw new NexusException(\sprintf(
-                'No operation handlers defined on service implementation %s (service %s)',
-                $reflection->getName(),
-                $serviceDefinition->name,
-            ));
-        }
-
-        $missingOps = \array_diff_key($serviceDefinition->operations, $operationHandlers);
-        if (\count($missingOps) > 0) {
-            throw new NexusException(\sprintf(
-                'Missing handlers for service operations on %s: %s',
-                $reflection->getName(),
-                \implode(', ', \array_keys($missingOps)),
-            ));
-        }
-
-        // @codeCoverageIgnoreStart
-        $extraHandlers = \array_diff_key($operationHandlers, $serviceDefinition->operations);
-        if (\count($extraHandlers) > 0) {
-            throw new NexusException(\sprintf(
-                "Operation handlers on %s don't correspond to service operations: %s",
-                $reflection->getName(),
-                \implode(', ', \array_keys($extraHandlers)),
-            ));
-        }
-        // @codeCoverageIgnoreEnd
+        $cancelMethods = self::collectCancelMethods($reflection);
+        $operationHandlers = self::collectOperationHandlers($reflection, $serviceDefinition, $instance, $cancelMethods);
 
         return new ServiceImplInstance($serviceDefinition, $operationHandlers);
     }
 
     /**
+     * Walk the implemented interfaces and return the single one carrying {@see Service}.
+     * Reject zero or multiple matches — the contract must be unambiguous.
+     *
+     * @param \ReflectionClass<object> $reflection
+     * @return \ReflectionClass<object>
+     */
+    private static function findContractFromInterfaces(\ReflectionClass $reflection): \ReflectionClass
+    {
+        $matches = [];
+        foreach ($reflection->getInterfaces() as $interface) {
+            if ($interface->getAttributes(Service::class) !== []) {
+                $matches[$interface->getName()] = $interface;
+            }
+        }
+
+        if ($matches === []) {
+            throw new InvalidArgumentException(\sprintf(
+                'Service implementation %s must implement an interface annotated with #[%s]',
+                $reflection->getName(),
+                Service::class,
+            ));
+        }
+
+        if (\count($matches) > 1) {
+            throw new InvalidArgumentException(\sprintf(
+                'Service implementation %s implements multiple #[%s] interfaces (%s); ambiguous',
+                $reflection->getName(),
+                Service::class,
+                \implode(', ', \array_keys($matches)),
+            ));
+        }
+
+        return \reset($matches);
+    }
+
+    /**
+     * @param \ReflectionClass<object> $reflection
+     * @return array<string, \ReflectionMethod> map of operation name → cancel method
+     */
+    private static function collectCancelMethods(\ReflectionClass $reflection): array
+    {
+        $byOperation = [];
+        foreach ($reflection->getMethods() as $method) {
+            $attributes = $method->getAttributes(OperationCancel::class);
+            if ($attributes === []) {
+                continue;
+            }
+
+            self::assertCancelMethodSignature($method);
+
+            /** @var OperationCancel $attribute */
+            $attribute = $attributes[0]->newInstance();
+            $operationName = $attribute->operation;
+
+            if (isset($byOperation[$operationName])) {
+                throw new NexusException(\sprintf(
+                    'Multiple #[%s(operation: "%s")] methods on %s',
+                    OperationCancel::class,
+                    $operationName,
+                    $reflection->getName(),
+                ));
+            }
+
+            $byOperation[$operationName] = $method;
+        }
+
+        return $byOperation;
+    }
+
+    /**
+     * @param \ReflectionClass<object> $reflection
+     * @param array<string, \ReflectionMethod> $cancelMethods
      * @return array<string, OperationHandlerInterface>
      */
     private static function collectOperationHandlers(
         \ReflectionClass $reflection,
         ServiceDefinition $serviceDefinition,
         object $instance,
+        array $cancelMethods,
     ): array {
         $handlers = [];
 
-        foreach ($reflection->getMethods() as $method) {
-            if (\count($method->getAttributes(OperationImpl::class)) === 0) {
-                continue;
+        foreach ($serviceDefinition->operations as $operationDefinition) {
+            $methodName = $operationDefinition->methodName ?? $operationDefinition->name;
+            try {
+                $method = $reflection->getMethod($methodName);
+            } catch (\ReflectionException $e) {
+                throw new NexusException(\sprintf(
+                    'Service implementation %s is missing method %s() for operation "%s"',
+                    $reflection->getName(),
+                    $methodName,
+                    $operationDefinition->name,
+                ), 0, $e);
             }
 
-            try {
-                self::registerHandler($handlers, $serviceDefinition, $instance, $method);
-            } catch (\Exception $e) {
-                throw new NexusException(
-                    \sprintf(
-                        'Failed obtaining operation handler from %s',
-                        OperationImplMethodValidator::whereOf($method),
-                    ),
-                    0,
-                    $e,
-                );
+            if (!$method->isPublic() || $method->isStatic() || $method->isAbstract()) {
+                throw new NexusException(\sprintf(
+                    'Operation method %s::%s() must be public and non-static',
+                    $reflection->getName(),
+                    $methodName,
+                ));
             }
+
+            $cancelMethod = null;
+            if ($operationDefinition->async) {
+                $cancelMethod = $cancelMethods[$operationDefinition->name] ?? null;
+            }
+
+            $handlers[$operationDefinition->name] = new MethodOperationHandler(
+                instance: $instance,
+                startMethod: $method,
+                operation: $operationDefinition,
+                cancelMethod: $cancelMethod,
+            );
+        }
+
+        // Surface stray cancel attributes for unknown operations. Show available
+        // wire-names — `#[OperationCancel(operation:)]` matches the operation's
+        // wire name (`#[Operation(name:)]` / `#[AsyncOperation(name:)]`), not the
+        // PHP method name, and that distinction is easy to miss.
+        $unknownCancels = \array_diff_key($cancelMethods, $handlers);
+        if ($unknownCancels !== []) {
+            $unknownNames = \array_keys($unknownCancels);
+            $availableNames = \array_keys($serviceDefinition->operations);
+            throw new NexusException(\sprintf(
+                '#[%s] on %s targets unknown operation(s): %s. Available operations: %s.',
+                OperationCancel::class,
+                $reflection->getName(),
+                \implode(', ', $unknownNames),
+                \implode(', ', $availableNames),
+            ));
         }
 
         return $handlers;
     }
 
-    /**
-     * @param array<string, OperationHandlerInterface> $handlers
-     */
-    private static function registerHandler(
-        array &$handlers,
-        ServiceDefinition $serviceDefinition,
-        object $instance,
-        \ReflectionMethod $method,
-    ): void {
-        OperationImplMethodValidator::assertSignature($method);
+    private static function assertCancelMethodSignature(\ReflectionMethod $method): void
+    {
+        $where = \sprintf('%s::%s()', $method->getDeclaringClass()->getName(), $method->getName());
 
-        $operationDefinition = self::findOperationByMethodName($serviceDefinition, $method->getName());
-        if ($operationDefinition === null) {
-            throw new NexusException(\sprintf(
-                'No matching #[Operation] declaration for method %s in service interface %s',
-                OperationImplMethodValidator::whereOf($method),
-                $serviceDefinition->name,
+        if (!$method->isPublic()) {
+            throw new InvalidArgumentException("#[OperationCancel] method {$where} must be public");
+        }
+        if ($method->isStatic()) {
+            throw new InvalidArgumentException("#[OperationCancel] method {$where} cannot be static");
+        }
+        if ($method->getNumberOfParameters() < 1) {
+            throw new InvalidArgumentException(
+                "#[OperationCancel] method {$where} must accept the operation token as its first parameter",
+            );
+        }
+
+        // Operation tokens are always strings on the wire. Allow `string`,
+        // untyped, or `mixed`; reject any other concrete type so the mistake
+        // surfaces at registration rather than as a runtime TypeError.
+        $tokenParameter = $method->getParameters()[0];
+        $tokenType = $tokenParameter->getType();
+        if (
+            $tokenType instanceof \ReflectionNamedType
+            && $tokenType->getName() !== 'string'
+            && $tokenType->getName() !== 'mixed'
+        ) {
+            throw new InvalidArgumentException(\sprintf(
+                '#[OperationCancel] method %s must declare its first parameter as `string` (operation token), got `%s`',
+                $where,
+                (string) $tokenType,
             ));
         }
 
-        /** @var OperationHandlerInterface $handler */
-        $handler = $method->invoke($instance);
-
-        // @codeCoverageIgnoreStart
-        if (isset($handlers[$operationDefinition->name])) {
-            throw new NexusException(\sprintf(
-                'Multiple #[OperationImpl] methods bind to operation "%s" on %s',
-                $operationDefinition->name,
-                $method->getDeclaringClass()->getName(),
+        $returnType = $method->getReturnType();
+        if ($returnType instanceof \ReflectionNamedType && $returnType->getName() !== 'void') {
+            throw new InvalidArgumentException(\sprintf(
+                '#[OperationCancel] method %s must declare return type `void`, got `%s`',
+                $where,
+                (string) $returnType,
             ));
         }
-        // @codeCoverageIgnoreEnd
-
-        ClosureTypeValidator::validate(
-            $handler,
-            $operationDefinition,
-            OperationImplMethodValidator::whereOf($method),
-        );
-
-        $handlers[$operationDefinition->name] = $handler;
-    }
-
-    private static function findOperationByMethodName(
-        ServiceDefinition $serviceDefinition,
-        string $methodName,
-    ): ?OperationDefinition {
-        foreach ($serviceDefinition->operations as $opDef) {
-            if ($methodName === $opDef->methodName) {
-                return $opDef;
-            }
-        }
-        return null;
     }
 }

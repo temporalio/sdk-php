@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\MultiOperation;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -85,42 +79,26 @@ interface MathServiceInterface
     public function constant(): int;
 }
 
-#[ServiceImpl(service: MathServiceInterface::class)]
-class MathServiceImpl
+class MathServiceImpl implements MathServiceInterface
 {
-    #[OperationImpl]
-    public function add(): OperationHandlerInterface
+    public function add(array $args): int
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?array $args): int
-                => (int) ($args[0] ?? 0) + (int) ($args[1] ?? 0),
-        );
+        return (int) ($args[0] ?? 0) + (int) ($args[1] ?? 0);
     }
 
-    #[OperationImpl]
-    public function multiply(): OperationHandlerInterface
+    public function multiply(array $args): int
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?array $args): int
-                => (int) ($args[0] ?? 1) * (int) ($args[1] ?? 1),
-        );
+        return (int) ($args[0] ?? 1) * (int) ($args[1] ?? 1);
     }
 
-    #[OperationImpl]
-    public function echo(): OperationHandlerInterface
+    public function echo(string $value): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $value): string
-                => $value ?? '',
-        );
+        return $value;
     }
 
-    #[OperationImpl]
-    public function constant(): OperationHandlerInterface
+    public function constant(): int
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, mixed $_): int => 42,
-        );
+        return 42;
     }
 }
 

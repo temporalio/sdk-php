@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Links;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Nexus\Link;
+use Temporal\Nexus\Nexus;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -89,7 +85,7 @@ class LinksTest extends TestCase
 
     /**
      * End-to-end verification of the handler-response-Link wire:
-     * handler calls $ctx->links->add(), sdk-php packs them into
+     * handler calls $context->links->add(), sdk-php packs them into
      * `_rr_nexus_links` payload metadata, RoadRunner extracts them and
      * calls nexus.AddHandlerLinks which puts them into the handler ctx;
      * Temporal Go SDK reads them via nexus.HandlerLinks(ctx) and emits
@@ -199,53 +195,40 @@ interface LinkServiceInterface
     public function reportNoLinks(string $_ignored): string;
 }
 
-#[ServiceImpl(service: LinkServiceInterface::class)]
-class LinkServiceImpl
+class LinkServiceImpl implements LinkServiceInterface
 {
-    #[OperationImpl]
-    public function attachAndReportSingle(): OperationHandlerInterface
+    public function attachAndReportSingle(string $suffix): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
-                $ctx->links->add(new Link(
-                    "https://example.test/session/{$suffix}",
-                    'example.session',
-                ));
-                return self::reportLinks($ctx);
-            },
-        );
+        $context = Nexus::getCurrentContext();
+        $context->links->add(new Link(
+            "https://example.test/session/{$suffix}",
+            'example.session',
+        ));
+        return self::reportLinks($context);
     }
 
-    #[OperationImpl]
-    public function attachAndReportMany(): OperationHandlerInterface
+    public function attachAndReportMany(string $suffix): string
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
-                $ctx->links->add(
-                    new Link("https://example.test/primary/primary-{$suffix}", 'example.primary'),
-                    new Link("https://example.test/audit/audit-{$suffix}", 'example.audit'),
-                );
-                return self::reportLinks($ctx);
-            },
+        $context = Nexus::getCurrentContext();
+        $context->links->add(
+            new Link("https://example.test/primary/primary-{$suffix}", 'example.primary'),
+            new Link("https://example.test/audit/audit-{$suffix}", 'example.audit'),
         );
+        return self::reportLinks($context);
     }
 
-    #[OperationImpl]
-    public function reportNoLinks(): OperationHandlerInterface
+    public function reportNoLinks(string $_ignored): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $_in): string
-                => self::reportLinks($ctx),
-        );
+        return self::reportLinks(Nexus::getCurrentContext());
     }
 
     /**
      * Serializes the links currently attached to the given OperationContext into
      * a compact string the test can assert on.
      */
-    private static function reportLinks(OperationContext $ctx): string
+    private static function reportLinks(OperationContext $context): string
     {
-        $links = $ctx->links->all();
+        $links = $context->links->all();
         $parts = [];
         foreach ($links as $link) {
             $parts[] = "{$link->uri}|{$link->type}";

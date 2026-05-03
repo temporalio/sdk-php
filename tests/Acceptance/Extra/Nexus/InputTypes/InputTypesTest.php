@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\InputTypes;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -125,37 +119,22 @@ interface ShapeServiceInterface
     public function echoDto(Item $item): Item;
 }
 
-#[ServiceImpl(service: ShapeServiceInterface::class)]
-class ShapeServiceImpl
+class ShapeServiceImpl implements ShapeServiceInterface
 {
-    #[OperationImpl]
-    public function pingNoInput(): OperationHandlerInterface
+    public function pingNoInput(): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $d, mixed $_in): string
-                => 'pong',
-        );
+        return 'pong';
     }
 
-    #[OperationImpl]
-    public function doubleInt(): OperationHandlerInterface
+    public function doubleInt(int $x): int
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?int $x): int
-                => ($x ?? 0) * 2,
-        );
+        return $x * 2;
     }
 
-    #[OperationImpl]
-    public function echoDto(): OperationHandlerInterface
+    public function echoDto(Item $item): Item
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $d, ?Item $item): Item {
-                $item ??= new Item();
-                // Echo with a trivial transform to prove deserialization actually happened.
-                return new Item($item->name, $item->value);
-            },
-        );
+        // Echo with a trivial transform to prove deserialization actually happened.
+        return new Item($item->name, $item->value);
     }
 }
 

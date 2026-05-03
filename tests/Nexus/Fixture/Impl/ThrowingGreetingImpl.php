@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,40 +11,38 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\Impl;
 
-use Temporal\Nexus\Attribute\OperationImpl;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
+use Temporal\Nexus\Attribute\OperationCancel;
+use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\OperationState;
 use Temporal\Tests\Nexus\Fixture\Service\GreetingServiceInterface;
 
 /**
- * Greeting-service implementation whose operation factories return either an
- * injected handler override (for testing exception paths) or a benign sync
- * stub returning `'ok'`.
+ * Greeting-service implementation whose operations either trigger a configured throwable
+ * (for testing exception paths) or return a benign sync stub.
  */
-#[ServiceImpl(service: GreetingServiceInterface::class)]
-final class ThrowingGreetingImpl
+final class ThrowingGreetingImpl implements GreetingServiceInterface
 {
-    /**
-     * @param OperationHandlerInterface<string, string>|null $hello1Override
-     * @param OperationHandlerInterface<string, string>|null $hello2Override
-     */
     public function __construct(
-        private readonly ?OperationHandlerInterface $hello1Override = null,
-        private readonly ?OperationHandlerInterface $hello2Override = null,
+        private readonly ?\Throwable $hello1Throw = null,
+        private readonly ?\Throwable $hello2Throw = null,
     ) {}
 
-    #[OperationImpl]
-    public function sayHello1(): OperationHandlerInterface
+    public function sayHello1(string $name): string
     {
-        return $this->hello1Override
-            ?? SynchronousOperationHandler::fromCallable(static fn($ctx, $d, $p) => 'ok');
+        if ($this->hello1Throw !== null) {
+            throw $this->hello1Throw;
+        }
+        return 'ok';
     }
 
-    #[OperationImpl]
-    public function sayHello2(): OperationHandlerInterface
+    public function sayHello2(string $name): OperationInfo
     {
-        return $this->hello2Override
-            ?? SynchronousOperationHandler::fromCallable(static fn($ctx, $d, $p) => 'ok');
+        if ($this->hello2Throw !== null) {
+            throw $this->hello2Throw;
+        }
+        return new OperationInfo('throwing-token', OperationState::Running);
     }
+
+    #[OperationCancel(operation: 'sayHello2')]
+    public function cancelSayHello2(string $token): void {}
 }

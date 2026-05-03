@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Cancel;
 
-use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\AsyncOperation;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
 use PHPUnit\Framework\Attributes\Test;
@@ -113,40 +108,25 @@ class AsyncOperationTest extends TestCase
 #[Service(name: 'AsyncJobService')]
 interface AsyncJobServiceInterface
 {
-    #[Operation]
-    public function startJob(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function startJob(string $input): OperationInfo;
 }
 
-#[ServiceImpl(service: AsyncJobServiceInterface::class)]
-class AsyncJobServiceImpl
+class AsyncJobServiceImpl implements AsyncJobServiceInterface
 {
-    #[OperationImpl]
-    public function startJob(): OperationHandlerInterface
+    public function startJob(string $input): OperationInfo
     {
-        return new class implements OperationHandlerInterface {
-            public function start(
-                OperationContext $context,
-                OperationStartDetails $details,
-                mixed $param,
-            ): OperationStartResult {
-                // Generate a deterministic-ish token derived from requestId so the caller
-                // can correlate.
-                $token = 'job-' . \substr(\hash('sha1', $details->requestId . ':' . (string) $param), 0, 12);
-                return OperationStartResult::async(new OperationInfo($token, OperationState::Running));
-            }
+        $details = Nexus::getStartDetails();
+        // Generate a deterministic-ish token derived from requestId so the caller
+        // can correlate.
+        $token = 'job-' . \substr(\hash('sha1', $details->requestId . ':' . $input), 0, 12);
+        return new OperationInfo($token, OperationState::Running);
+    }
 
-            public function cancel(
-                OperationContext $context,
-                OperationCancelDetails $details,
-            ): void {
-                // No-op: real cancellation would notify an external job queue.
-            }
-
-            public static function sync(callable $function): OperationHandlerInterface
-            {
-                throw new \LogicException('not used');
-            }
-        };
+    #[OperationCancel(operation: 'startJob')]
+    public function cancelStartJob(string $token): void
+    {
+        // No-op: real cancellation would notify an external job queue.
     }
 }
 

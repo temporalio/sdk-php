@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\ServiceImplInstance;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Internal\Nexus\NexusServiceRepository;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -31,27 +25,19 @@ interface DupBetaInterface
     public function op(string $in): string;
 }
 
-#[ServiceImpl(service: DupAlphaInterface::class)]
-class DupAlphaImpl
+class DupAlphaImpl implements DupAlphaInterface
 {
-    #[OperationImpl]
-    public function op(): OperationHandlerInterface
+    public function op(string $in): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $c, OperationStartDetails $d, ?string $in) => "alpha:{$in}",
-        );
+        return "alpha:{$in}";
     }
 }
 
-#[ServiceImpl(service: DupBetaInterface::class)]
-class DupBetaImpl
+class DupBetaImpl implements DupBetaInterface
 {
-    #[OperationImpl]
-    public function op(): OperationHandlerInterface
+    public function op(string $in): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $c, OperationStartDetails $d, ?string $in) => "beta:{$in}",
-        );
+        return "beta:{$in}";
     }
 }
 

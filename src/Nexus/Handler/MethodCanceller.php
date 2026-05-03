@@ -35,6 +35,14 @@ final class MethodCanceller
         $this->clock = $clock ?? new SystemClock();
     }
 
+    /**
+     * @internal Shared with {@see \Temporal\Nexus\Handler\OperationContext}.
+     */
+    public static function formatDeadlineReason(\DateTimeImmutable $deadline): string
+    {
+        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
+    }
+
     public function isCancelled(): bool
     {
         $this->checkDeadline();
@@ -93,13 +101,5 @@ final class MethodCanceller
             return;
         }
         $this->cancel(self::formatDeadlineReason($this->deadline));
-    }
-
-    /**
-     * @internal Shared with {@see \Temporal\Nexus\Handler\OperationContext}.
-     */
-    public static function formatDeadlineReason(\DateTimeImmutable $deadline): string
-    {
-        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
     }
 }

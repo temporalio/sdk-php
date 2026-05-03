@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel;
 
 use Carbon\CarbonInterval;
-use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\AsyncOperation;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Nexus;
+use Temporal\Nexus\OperationInfo;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
@@ -80,24 +78,29 @@ class AsyncCancelByTokenTest extends TestCase
 #[Service(name: 'AsyncCancelService')]
 interface AsyncCancelService
 {
-    #[Operation]
-    public function longRunning(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function longRunning(string $input): OperationInfo;
 }
 
-#[ServiceImpl(service: AsyncCancelService::class)]
-class AsyncCancelServiceImpl
+class AsyncCancelServiceImpl implements AsyncCancelService
 {
-    #[OperationImpl]
-    public function longRunning(): OperationHandlerInterface
+    public function longRunning(string $input): OperationInfo
     {
-        return WorkflowRunOperation::fromWorkflowMethod(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $input): WorkflowHandle =>
-                WorkflowHandle::fromWorkflowMethod(
-                    LongRunningHandlerWorkflow::class,
-                    WorkflowOptions::new()->withWorkflowId($d->requestId),
-                    (string) $input,
-                ),
+        $details = Nexus::getStartDetails();
+        return WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                LongRunningHandlerWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId($details->requestId),
+                $input,
+            ),
+            $details,
         );
+    }
+
+    #[OperationCancel(operation: 'longRunning')]
+    public function cancelLongRunning(string $token): void
+    {
+        WorkflowRunOperation::cancel($token);
     }
 }
 

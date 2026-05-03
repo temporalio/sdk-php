@@ -14,6 +14,7 @@ namespace Temporal\Nexus\Handler;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Nexus\Nexus;
 use Temporal\Nexus\Serializer\Content;
 use Temporal\Nexus\Serializer\SerializerInterface;
 
@@ -108,7 +109,16 @@ final class ServiceHandler implements HandlerInterface
             );
         }
 
-        $result = $interceptedHandler->start($contextWithServiceDef, $details, $inputObject);
+        $previousContext = Nexus::tryGetCurrentContext();
+        $previousDetails = Nexus::tryGetStartDetails();
+        try {
+            Nexus::setOperationContext($contextWithServiceDef);
+            Nexus::setStartDetails($details);
+            $result = $interceptedHandler->start($contextWithServiceDef, $details, $inputObject);
+        } finally {
+            Nexus::setOperationContext($previousContext);
+            Nexus::setStartDetails($previousDetails);
+        }
 
         if (!$result instanceof SyncOperationStartResult) {
             return $result;
@@ -129,7 +139,8 @@ final class ServiceHandler implements HandlerInterface
     ): void {
         [$instance, $handler] = $this->resolveHandler($context);
 
-        if ($handler instanceof SynchronousOperationHandler) {
+        $definition = $instance->definition->operations[$context->operation];
+        if (!$definition->async) {
             throw HandlerException::create(
                 ErrorType::NotImplemented,
                 \sprintf(
@@ -141,8 +152,18 @@ final class ServiceHandler implements HandlerInterface
         }
 
         $contextWithServiceDef = $context->withServiceDefinition($instance->definition);
-        $this->interceptOperationHandler($contextWithServiceDef, $handler)
-            ->cancel($contextWithServiceDef, $details);
+
+        $previousContext = Nexus::tryGetCurrentContext();
+        $previousDetails = Nexus::tryGetCancelDetails();
+        try {
+            Nexus::setOperationContext($contextWithServiceDef);
+            Nexus::setCancelDetails($details);
+            $this->interceptOperationHandler($contextWithServiceDef, $handler)
+                ->cancel($contextWithServiceDef, $details);
+        } finally {
+            Nexus::setOperationContext($previousContext);
+            Nexus::setCancelDetails($previousDetails);
+        }
     }
 
     /**
@@ -202,5 +223,4 @@ final class ServiceHandler implements HandlerInterface
             );
         }
     }
-
 }

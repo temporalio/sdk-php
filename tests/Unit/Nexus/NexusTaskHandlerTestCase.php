@@ -4,22 +4,16 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\ServiceImplInstance;
-use Temporal\Nexus\Handler\SynchronousOperationFunctionInterface;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Nexus\Link;
+use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
 use Temporal\Api\Common\V1\Payload;
@@ -39,126 +33,55 @@ interface TestGreetingService
     #[Operation]
     public function sayHello(string $name): string;
 
-    #[Operation]
-    public function asyncOp(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function asyncOp(string $input): OperationInfo;
 
     #[Operation]
     public function failingOp(string $input): string;
 
-    #[Operation]
-    public function cancelableOp(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function cancelableOp(string $input): OperationInfo;
 
     #[Operation]
-    public function shoutViaFunctor(string $input): string;
-
-    #[Operation]
-    public function shoutViaFromFunction(string $input): string;
-
-    #[Operation]
-    public function shoutViaFromCallable(string $input): string;
+    public function shout(string $input): string;
 }
 
-/**
- * @implements SynchronousOperationFunctionInterface<string, string>
- */
-final class ShoutFunctor implements SynchronousOperationFunctionInterface
+class TestGreetingServiceImpl implements TestGreetingService
 {
-    public function __invoke(
-        OperationContext $context,
-        OperationStartDetails $details,
-        mixed $input,
-    ): mixed {
-        return \strtoupper((string) $input) . '!';
-    }
-}
-
-#[ServiceImpl(service: TestGreetingService::class)]
-class TestGreetingServiceImpl
-{
-    #[OperationImpl]
-    public function sayHello(): OperationHandlerInterface
+    public function sayHello(string $name): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $name): string
-                => "Hello, {$name}!",
+        return "Hello, {$name}!";
+    }
+
+    public function asyncOp(string $input): OperationInfo
+    {
+        Nexus::getCurrentContext()->links->add(
+            new Link('http://example.com/workflow/123', 'temporal.workflow'),
         );
+        return new OperationInfo('op-token-123', OperationState::Running);
     }
 
-    #[OperationImpl]
-    public function asyncOp(): OperationHandlerInterface
+    public function failingOp(string $input): string
     {
-        return new class implements OperationHandlerInterface {
-            public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
-            {
-                $context->links->add(new Link('http://example.com/workflow/123', 'temporal.workflow'));
-                return OperationStartResult::async(new OperationInfo('op-token-123', OperationState::Running));
-            }
-
-            public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
-
-            public static function sync(callable $function): OperationHandlerInterface
-            {
-                return new SynchronousOperationHandler($function);
-            }
-        };
+        throw OperationException::failed('Something went wrong');
     }
 
-    #[OperationImpl]
-    public function failingOp(): OperationHandlerInterface
+    public function cancelableOp(string $input): OperationInfo
     {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
-                throw OperationException::failed('Something went wrong');
-            },
-        );
+        return new OperationInfo('cancel-token-456', OperationState::Running);
     }
 
-    #[OperationImpl]
-    public function cancelableOp(): OperationHandlerInterface
+    #[OperationCancel(operation: 'cancelableOp')]
+    public function cancelCancelableOp(string $token): void
     {
-        return new class implements OperationHandlerInterface {
-            public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
-            {
-                return OperationStartResult::async(new OperationInfo('cancel-token-456', OperationState::Running));
-            }
-
-            public function cancel(OperationContext $context, OperationCancelDetails $details): void
-            {
-                if ($details->operationToken === 'unknown') {
-                    throw HandlerException::create(ErrorType::NotFound, 'Not found');
-                }
-            }
-
-            public static function sync(callable $function): OperationHandlerInterface
-            {
-                return new SynchronousOperationHandler($function);
-            }
-        };
+        if ($token === 'unknown') {
+            throw HandlerException::create(ErrorType::NotFound, 'Not found');
+        }
     }
 
-    #[OperationImpl]
-    public function shoutViaFunctor(): OperationHandlerInterface
+    public function shout(string $input): string
     {
-        // A named functor implementing SynchronousOperationFunctionInterface passed
-        // directly into the handler's constructor (union param accepts the interface).
-        return new SynchronousOperationHandler(new ShoutFunctor());
-    }
-
-    #[OperationImpl]
-    public function shoutViaFromFunction(): OperationHandlerInterface
-    {
-        // Explicit factory for functor-style creation.
-        return SynchronousOperationHandler::fromFunction(new ShoutFunctor());
-    }
-
-    #[OperationImpl]
-    public function shoutViaFromCallable(): OperationHandlerInterface
-    {
-        // Explicit factory for callable-style creation.
-        return SynchronousOperationHandler::fromCallable(
-            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $input): string
-                => \strtoupper((string) $input) . '!',
-        );
+        return \strtoupper($input) . '!';
     }
 }
 
@@ -207,7 +130,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $asyncResp = $startResp->getAsyncSuccess();
         self::assertSame('op-token-123', $asyncResp->getOperationToken());
 
-        // Verify links were propagated
         $links = $asyncResp->getLinks();
         self::assertCount(1, $links);
         self::assertSame('http://example.com/workflow/123', $links[0]->getUrl());
@@ -236,14 +158,12 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $response = $this->handler->handleStartOperation($request);
         $failure = $response->getStartOperation()->getOperationError()->getFailure();
 
-        // Default: traceback is included as JSON in Failure.details.
         self::assertNotSame('', $failure->getDetails());
         $chain = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($chain);
         self::assertSame(OperationException::class, $chain[0]['type']);
         self::assertSame('Something went wrong', $chain[0]['message']);
 
-        // Metadata carries the exception class regardless of the flag.
         $meta = \iterator_to_array($failure->getMetadata());
         self::assertSame(OperationException::class, $meta['type']);
     }
@@ -263,7 +183,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $response = $handler->handleStartOperation($request);
         $failure = $response->getStartOperation()->getOperationError()->getFailure();
 
-        // Stripped mode: no trace details, metadata still carries the class.
         self::assertSame('', $failure->getDetails());
         $meta = \iterator_to_array($failure->getMetadata());
         self::assertSame(OperationException::class, $meta['type']);
@@ -341,9 +260,9 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
     }
 
-    public function testSyncOperationViaFunctorConstructor(): void
+    public function testShoutSyncOperation(): void
     {
-        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFunctor', 'hello');
+        $request = $this->buildStartRequest('TestGreetingService', 'shout', 'hello');
 
         $response = $this->handler->handleStartOperation($request);
 
@@ -352,47 +271,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertTrue($startResp->hasSyncSuccess());
 
         self::assertSame('HELLO!', $this->decodeSyncStringResult($startResp));
-    }
-
-    public function testSyncOperationViaFromFunctionFactory(): void
-    {
-        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFromFunction', 'world');
-
-        $response = $this->handler->handleStartOperation($request);
-
-        self::assertTrue($response->hasStartOperation());
-        $startResp = $response->getStartOperation();
-        self::assertTrue($startResp->hasSyncSuccess());
-
-        self::assertSame('WORLD!', $this->decodeSyncStringResult($startResp));
-    }
-
-    public function testSyncOperationViaFromCallableFactory(): void
-    {
-        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFromCallable', 'quiet');
-
-        $response = $this->handler->handleStartOperation($request);
-
-        self::assertTrue($response->hasStartOperation());
-        $startResp = $response->getStartOperation();
-        self::assertTrue($startResp->hasSyncSuccess());
-
-        self::assertSame('QUIET!', $this->decodeSyncStringResult($startResp));
-    }
-
-    public function testFunctorAndCallableProduceIdenticalResults(): void
-    {
-        $callableResp = $this->handler->handleStartOperation(
-            $this->buildStartRequest('TestGreetingService', 'shoutViaFromCallable', 'same-input'),
-        );
-        $functorResp = $this->handler->handleStartOperation(
-            $this->buildStartRequest('TestGreetingService', 'shoutViaFromFunction', 'same-input'),
-        );
-
-        self::assertSame(
-            $this->decodeSyncStringResult($callableResp->getStartOperation()),
-            $this->decodeSyncStringResult($functorResp->getStartOperation()),
-        );
     }
 
     public function testStartOperationWithLinks(): void

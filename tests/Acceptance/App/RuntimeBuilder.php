@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
-use Temporal\Nexus\Attribute\ServiceImpl;
+use Temporal\Nexus\Attribute\Service as NexusService;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
@@ -25,25 +25,37 @@ final class RuntimeBuilder
                     $class = new \ReflectionClass($classString);
 
                     # Register Workflow
-                    $class->getAttributes(WorkflowInterface::class) === [] or $runtime
-                        ->addWorkflow($feature, $classString);
+                    if ($class->getAttributes(WorkflowInterface::class) !== []) {
+                        $runtime->addWorkflow($feature, $classString);
+                    }
 
                     # Register Activity
-                    $class->getAttributes(ActivityInterface::class) === [] or $runtime
-                        ->addActivity($feature, $classString);
+                    if ($class->getAttributes(ActivityInterface::class) !== []) {
+                        $runtime->addActivity($feature, $classString);
+                    }
 
-                    # Register Nexus Service
-                    $class->getAttributes(ServiceImpl::class) === [] or $runtime
-                        ->addNexusService($feature, $classString);
+                    # Register Nexus Service: any non-interface class that implements
+                    # an interface annotated with #[Service] (mirrors Workflow/Activity
+                    # discovery — see WorkflowReader / ActivityReader).
+                    if (!$class->isInterface()) {
+                        foreach ($class->getInterfaces() as $interface) {
+                            if ($interface->getAttributes(NexusService::class) !== []) {
+                                $runtime->addNexusService($feature, $classString);
+                                break;
+                            }
+                        }
+                    }
 
                     # Register Converters
-                    $class->implementsInterface(PayloadConverterInterface::class) and $runtime
-                        ->addConverter($feature, $classString);
+                    if ($class->implementsInterface(PayloadConverterInterface::class)) {
+                        $runtime->addConverter($feature, $classString);
+                    }
 
                     # Register Check
                     foreach ($class->getMethods() as $method) {
-                        $method->getAttributes(Test::class) === [] or $runtime
-                            ->addCheck($feature, $classString, $method->getName());
+                        if ($method->getAttributes(Test::class) !== []) {
+                            $runtime->addCheck($feature, $classString, $method->getName());
+                        }
                     }
                 }
             }

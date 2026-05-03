@@ -40,27 +40,6 @@ enum ErrorType: string
     case UpstreamTimeout = 'UPSTREAM_TIMEOUT';
 
     /**
-     * Canonical HTTP status code per Nexus spec.
-     */
-    public function httpStatus(): int
-    {
-        return match ($this) {
-            self::BadRequest        => 400,
-            self::Unauthenticated   => 401,
-            self::Unauthorized      => 403,
-            self::NotFound          => 404,
-            self::RequestTimeout    => 408,
-            self::Conflict          => 409,
-            self::ResourceExhausted => 429,
-            self::Internal,
-            self::Unknown           => 500,
-            self::NotImplemented    => 501,
-            self::Unavailable       => 503,
-            self::UpstreamTimeout   => 520,
-        };
-    }
-
-    /**
      * Inverse of {@see self::httpStatus()}. Codes not in the spec table —
      * including ad-hoc 4xx/5xx values — resolve to {@see self::Unknown} so
      * the wire signal is preserved without inventing a category.
@@ -80,6 +59,27 @@ enum ErrorType: string
             503 => self::Unavailable,
             520 => self::UpstreamTimeout,
             default => self::Unknown,
+        };
+    }
+
+    /**
+     * Canonical HTTP status code per Nexus spec.
+     */
+    public function httpStatus(): int
+    {
+        return match ($this) {
+            self::BadRequest        => 400,
+            self::Unauthenticated   => 401,
+            self::Unauthorized      => 403,
+            self::NotFound          => 404,
+            self::RequestTimeout    => 408,
+            self::Conflict          => 409,
+            self::ResourceExhausted => 429,
+            self::Internal,
+            self::Unknown           => 500,
+            self::NotImplemented    => 501,
+            self::Unavailable       => 503,
+            self::UpstreamTimeout   => 520,
         };
     }
 }

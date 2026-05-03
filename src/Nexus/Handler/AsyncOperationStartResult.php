@@ -22,7 +22,9 @@ use Temporal\Nexus\OperationInfo;
  */
 final readonly class AsyncOperationStartResult extends OperationStartResult
 {
-    /** @internal */
+    /**
+     * @internal
+     */
     public function __construct(public OperationInfo $info)
     {
         parent::__construct();

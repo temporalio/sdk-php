@@ -21,7 +21,9 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
  */
 final class OperationTokenValidator
 {
-    /** @codeCoverageIgnore */
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     /**

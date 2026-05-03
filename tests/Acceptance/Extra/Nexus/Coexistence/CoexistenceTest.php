@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Coexistence;
 
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
@@ -119,15 +113,10 @@ interface CoexistServiceInterface
     public function ping(string $word): string;
 }
 
-#[ServiceImpl(service: CoexistServiceInterface::class)]
-class CoexistServiceImpl
+class CoexistServiceImpl implements CoexistServiceInterface
 {
-    #[OperationImpl]
-    public function ping(): OperationHandlerInterface
+    public function ping(string $word): string
     {
-        return new SynchronousOperationHandler(
-            static fn(OperationContext $ctx, OperationStartDetails $details, ?string $word): string
-                => "pong-{$word}",
-        );
+        return "pong-{$word}";
     }
 }

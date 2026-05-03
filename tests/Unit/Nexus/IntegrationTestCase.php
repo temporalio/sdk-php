@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
 use Temporal\Nexus\Exception\ErrorType as NexusErrorType;
 use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
 use Temporal\Nexus\Exception\OperationException;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationHandlerInterface;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
-use Temporal\Nexus\Handler\SynchronousOperationHandler;
 use Temporal\Nexus\Link;
+use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
 use React\Promise\Deferred;
@@ -40,14 +35,14 @@ interface EchoServiceInterface
     #[Operation]
     public function echo(string $input): string;
 
-    #[Operation]
-    public function asyncEcho(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function asyncEcho(string $input): OperationInfo;
 
     #[Operation]
     public function failOp(string $input): string;
 
-    #[Operation]
-    public function cancelOp(string $input): string;
+    #[AsyncOperation(output: 'string')]
+    public function cancelOp(string $input): OperationInfo;
 
     #[Operation]
     public function echoWithLinks(string $input): string;
@@ -56,113 +51,69 @@ interface EchoServiceInterface
     #[Operation]
     public function reportCallerLinks(string $input): string;
 
-    /** Reports whether $ctx->deadline was populated and roughly how far in the future it is. */
+    /** Reports whether $context->deadline was populated and roughly how far in the future it is. */
     #[Operation]
     public function reportDeadline(string $input): string;
 }
 
-#[ServiceImpl(service: EchoServiceInterface::class)]
-class EchoServiceImpl
+class EchoServiceImpl implements EchoServiceInterface
 {
     /** @var string[] */
     public array $canceledTokens = [];
 
-    #[OperationImpl]
-    public function echo(): OperationHandlerInterface
+    public function echo(string $input): string
     {
-        return new SynchronousOperationHandler(
-            fn(OperationContext $ctx, OperationStartDetails $details, ?string $input): string
-                => "echo:{$input}",
+        return "echo:{$input}";
+    }
+
+    public function asyncEcho(string $input): OperationInfo
+    {
+        return new OperationInfo('async-token-' . $input, OperationState::Running);
+    }
+
+    public function failOp(string $input): string
+    {
+        throw OperationException::failed("fail:{$input}");
+    }
+
+    public function cancelOp(string $input): OperationInfo
+    {
+        return new OperationInfo('cancel-token-' . $input, OperationState::Running);
+    }
+
+    #[OperationCancel(operation: 'cancelOp')]
+    public function cancelCancelOp(string $token): void
+    {
+        $this->canceledTokens[] = $token;
+    }
+
+    public function echoWithLinks(string $input): string
+    {
+        Nexus::getCurrentContext()->links->add(
+            new Link('http://test.local/resource/1', 'test.Resource'),
+            new Link('http://test.local/resource/2', 'test.Resource'),
         );
+        return "linked:{$input}";
     }
 
-    #[OperationImpl]
-    public function asyncEcho(): OperationHandlerInterface
+    public function reportCallerLinks(string $input): string
     {
-        return new class implements OperationHandlerInterface {
-            public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
-            {
-                return OperationStartResult::async(new OperationInfo('async-token-' . $param, OperationState::Running));
-            }
-            public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
-            public static function sync(callable $function): OperationHandlerInterface
-            {
-                return new SynchronousOperationHandler($function);
-            }
-        };
+        $details = Nexus::getStartDetails();
+        $parts = [];
+        foreach ($details->links as $link) {
+            $parts[] = "{$link->uri}|{$link->type}";
+        }
+        return \sprintf('caller-links:count=%d;items=[%s]', \count($details->links), \implode(';', $parts));
     }
 
-    #[OperationImpl]
-    public function failOp(): OperationHandlerInterface
+    public function reportDeadline(string $input): string
     {
-        return new SynchronousOperationHandler(
-            function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
-                throw OperationException::failed("fail:{$input}");
-            },
-        );
-    }
-
-    #[OperationImpl]
-    public function cancelOp(): OperationHandlerInterface
-    {
-        $impl = $this;
-        return new class($impl) implements OperationHandlerInterface {
-            public function __construct(private readonly EchoServiceImpl $impl) {}
-            public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
-            {
-                return OperationStartResult::async(new OperationInfo('cancel-token-' . $param, OperationState::Running));
-            }
-            public function cancel(OperationContext $context, OperationCancelDetails $details): void
-            {
-                $this->impl->canceledTokens[] = $details->operationToken;
-            }
-            public static function sync(callable $function): OperationHandlerInterface
-            {
-                return new SynchronousOperationHandler($function);
-            }
-        };
-    }
-
-    #[OperationImpl]
-    public function echoWithLinks(): OperationHandlerInterface
-    {
-        return new SynchronousOperationHandler(
-            function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
-                $ctx->links->add(
-                    new Link('http://test.local/resource/1', 'test.Resource'),
-                    new Link('http://test.local/resource/2', 'test.Resource'),
-                );
-                return "linked:{$input}";
-            },
-        );
-    }
-
-    #[OperationImpl]
-    public function reportCallerLinks(): OperationHandlerInterface
-    {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $_in): string {
-                $parts = [];
-                foreach ($details->links as $link) {
-                    $parts[] = "{$link->uri}|{$link->type}";
-                }
-                return \sprintf('caller-links:count=%d;items=[%s]', \count($details->links), \implode(';', $parts));
-            },
-        );
-    }
-
-    #[OperationImpl]
-    public function reportDeadline(): OperationHandlerInterface
-    {
-        return new SynchronousOperationHandler(
-            static function (OperationContext $ctx, OperationStartDetails $details, ?string $_in): string {
-                if ($ctx->deadline === null) {
-                    return 'deadline:none';
-                }
-                $delta = $ctx->deadline->getTimestamp() - (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->getTimestamp();
-                return "deadline:set;delta_seconds={$delta}";
-            },
-        );
+        $context = Nexus::getCurrentContext();
+        if ($context->deadline === null) {
+            return 'deadline:none';
+        }
+        $delta = $context->deadline->getTimestamp() - (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->getTimestamp();
+        return "deadline:set;delta_seconds={$delta}";
     }
 }
 
@@ -170,7 +121,7 @@ class EchoServiceImpl
 
 /**
  * Integration tests exercising the full path matching Go RoadRunner plugin format:
- * ServerRequest(options JSON) → Router → NexusTaskHandler → ServiceHandler → OperationHandler → EncodedValues
+ * ServerRequest(options JSON) → Router → NexusTaskHandler → ServiceHandler → method-adapter → EncodedValues
  *
  * @group unit
  * @group nexus
@@ -233,8 +184,6 @@ final class IntegrationTestCase extends AbstractUnit
 
         $values = $this->awaitDeferred($deferred);
 
-        // Async start is delivered as a raw payload: data = operation token,
-        // metadata carries a well-known marker so RR emits HandlerStartOperationResultAsync.
         $payloads = $values->toPayloads();
         self::assertNotNull($payloads);
         self::assertSame(1, $payloads->getPayloads()->count());
@@ -251,8 +200,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testOperationFailurePropagatesOperationException(): void
     {
-        // Business-level Nexus failure must bubble up as-is so RR can emit
-        // a nexus.OperationError (not a nexus.HandlerError with Internal).
         $request = $this->makeInvokeRequest('EchoService', 'failOp', 'reason');
         $deferred = new Deferred();
 
@@ -298,7 +245,6 @@ final class IntegrationTestCase extends AbstractUnit
         $request = $this->makeCancelRequest('EchoService', 'cancelOp', 'my-token');
         $deferred = new Deferred();
         $this->cancelRoute->handle($request, [], $deferred);
-        // Should resolve without error
         $this->awaitDeferred($deferred);
         self::assertContains('my-token', $this->serviceImpl->canceledTokens);
     }
@@ -357,10 +303,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testMalformedCallerLinkRejectsRequest(): void
     {
-        // Strict policy (Java parity): one bad link fails the whole invocation
-        // with HandlerException(BadRequest). The reason is that silently
-        // dropping links hides client bugs and lets callers assume their
-        // links reached the handler when they didn't.
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
             'operation' => 'reportCallerLinks',
@@ -388,7 +330,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testLinksPayloadWrongShapeRejectsRequest(): void
     {
-        // A non-array links field is an outright client bug.
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
             'operation' => 'reportCallerLinks',
@@ -424,9 +365,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testHandlerAddedLinksAreSerializedIntoPayloadMetadata(): void
     {
-        // echoWithLinks handler calls $ctx->links->add(...) and returns sync.
-        // The RR route should bubble those links up through payload metadata
-        // under the _rr_nexus_links key so Go can reconstruct nexus.Links.
         $request = $this->makeInvokeRequest('EchoService', 'echoWithLinks', 'hi');
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
@@ -449,8 +387,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testNoLinksMeansNoMetadataKey(): void
     {
-        // A plain sync handler without links->add() must NOT set _rr_nexus_links —
-        // otherwise every payload grows by ~20 bytes for an empty marker.
         $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
@@ -481,7 +417,6 @@ final class IntegrationTestCase extends AbstractUnit
         $result = $this->awaitResult($deferred);
 
         self::assertStringContainsString('deadline:set', $result);
-        // Delta should be ~30s. Give a generous window to absorb process+test latency.
         self::assertMatchesRegularExpression('/delta_seconds=(2[5-9]|30|31)/', $result);
     }
 
@@ -504,7 +439,6 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testOperationTimeoutWinsOverRequestTimeout(): void
     {
-        // Operation-Timeout is the outer budget, so it takes precedence.
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
             'operation' => 'reportDeadline',
@@ -544,7 +478,7 @@ final class IntegrationTestCase extends AbstractUnit
             'service' => 'EchoService',
             'operation' => 'reportDeadline',
             'requestId' => 'dl-5',
-            'headers' => ['operation-timeout' => '15s'], // already lowercase
+            'headers' => ['operation-timeout' => '15s'],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();

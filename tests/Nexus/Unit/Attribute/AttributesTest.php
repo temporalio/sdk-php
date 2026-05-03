@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Attribute;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationImpl;
+use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Attribute\ServiceImpl;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Operation::class)]
-#[CoversClass(OperationImpl::class)]
+#[CoversClass(AsyncOperation::class)]
+#[CoversClass(OperationCancel::class)]
 #[CoversClass(Service::class)]
-#[CoversClass(ServiceImpl::class)]
 final class AttributesTest extends TestCase
 {
     public function testOperationDefaultsToEmptyName(): void
@@ -36,10 +36,24 @@ final class AttributesTest extends TestCase
         self::assertSame('myOp', $op->name);
     }
 
-    public function testOperationImplIsConstructible(): void
+    public function testAsyncOperationDefaultsToEmptyNameAndOutput(): void
     {
-        new OperationImpl();
-        self::assertTrue(true);
+        $op = new AsyncOperation();
+        self::assertSame('', $op->name);
+        self::assertSame('', $op->output);
+    }
+
+    public function testAsyncOperationHoldsNameAndOutput(): void
+    {
+        $op = new AsyncOperation(name: 'myOp', output: 'string');
+        self::assertSame('myOp', $op->name);
+        self::assertSame('string', $op->output);
+    }
+
+    public function testOperationCancelHoldsTargetOperation(): void
+    {
+        $cancel = new OperationCancel(operation: 'startJob');
+        self::assertSame('startJob', $cancel->operation);
     }
 
     public function testServiceDefaultsToEmptyName(): void
@@ -52,11 +66,5 @@ final class AttributesTest extends TestCase
     {
         $s = new Service('mySvc');
         self::assertSame('mySvc', $s->name);
-    }
-
-    public function testServiceImplHoldsServiceClass(): void
-    {
-        $si = new ServiceImpl('SomeIface');
-        self::assertSame('SomeIface', $si->service);
     }
 }
