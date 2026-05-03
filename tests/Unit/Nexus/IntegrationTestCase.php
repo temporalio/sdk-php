@@ -20,6 +20,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Nexus\NexusTaskHandler;
+use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use Temporal\Nexus\PayloadSerializer;
@@ -192,8 +193,8 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertSame('async-token-test', $payload->getData());
 
         $meta = \iterator_to_array($payload->getMetadata());
-        self::assertArrayHasKey(NexusTaskHandler::NEXUS_KIND_METADATA_KEY, $meta);
-        self::assertSame(NexusTaskHandler::NEXUS_KIND_ASYNC, $meta[NexusTaskHandler::NEXUS_KIND_METADATA_KEY]);
+        self::assertArrayHasKey(RrMetadata::KIND_KEY, $meta);
+        self::assertSame(RrMetadata::KIND_ASYNC, $meta[RrMetadata::KIND_KEY]);
     }
 
     // ── Operation error ──────────────────────────────────────────
@@ -375,9 +376,9 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertCount(1, $payloads->getPayloads());
 
         $meta = $payloads->getPayloads()[0]->getMetadata();
-        self::assertTrue(isset($meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY]));
+        self::assertTrue(isset($meta[RrMetadata::LINKS_KEY]));
 
-        $decoded = \json_decode((string) $meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY], true);
+        $decoded = \json_decode((string) $meta[RrMetadata::LINKS_KEY], true);
         self::assertIsArray($decoded);
         self::assertCount(2, $decoded);
         self::assertSame('http://test.local/resource/1', $decoded[0]['url']);
@@ -396,7 +397,7 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertNotNull($payloads);
         $meta = $payloads->getPayloads()[0]->getMetadata();
         self::assertFalse(
-            isset($meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY]),
+            isset($meta[RrMetadata::LINKS_KEY]),
             '_rr_nexus_links must be omitted when the handler adds no links',
         );
     }

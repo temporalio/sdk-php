@@ -36,6 +36,7 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Nexus\NexusOperationContext;
@@ -46,14 +47,6 @@ use Temporal\Nexus\NexusOperationContext;
  */
 final class NexusTaskHandler
 {
-    /** @internal Wire-protocol marker: "async" → payload.data is operation token. */
-    public const NEXUS_KIND_METADATA_KEY = '_rr_nexus_kind';
-
-    public const NEXUS_KIND_ASYNC = 'async';
-
-    /** @internal Wire-protocol marker: handler links as JSON `[{url,type},...]`. */
-    public const NEXUS_LINKS_METADATA_KEY = '_rr_nexus_links';
-
     private ?ServiceHandler $serviceHandler = null;
 
     /** @var array{string, string, WorkflowClientInterface}|null */
@@ -271,7 +264,7 @@ final class NexusTaskHandler
                 $metadata = $content->headers;
             }
             if ($linksJson !== null) {
-                $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
+                $metadata[RrMetadata::LINKS_KEY] = $linksJson;
             }
             if ($metadata !== []) {
                 $payload->setMetadata($metadata);
@@ -286,10 +279,10 @@ final class NexusTaskHandler
         $payload = new Payload();
         $payload->setData($result->info->token);
         $metadata = [
-            self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
+            RrMetadata::KIND_KEY => RrMetadata::KIND_ASYNC,
         ];
         if ($linksJson !== null) {
-            $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
+            $metadata[RrMetadata::LINKS_KEY] = $linksJson;
         }
         $payload->setMetadata($metadata);
         $payloads = new Payloads(['payloads' => [$payload]]);

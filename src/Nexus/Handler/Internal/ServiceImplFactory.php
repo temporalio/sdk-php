@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
@@ -158,16 +159,28 @@ final class ServiceImplFactory
                 ));
             }
 
-            $cancelMethod = null;
-            if ($operationDefinition->async) {
-                $cancelMethod = $cancelMethods[$operationDefinition->name] ?? null;
+            $cancelMethod = $cancelMethods[$operationDefinition->name] ?? null;
+            if ($cancelMethod !== null && !$operationDefinition->async) {
+                // Sync operations have no terminal-state cancellation; binding a
+                // cancel routine to one is always a programmer error. Catch it
+                // at registration so the user sees it at worker boot rather
+                // than on first cancel attempt.
+                throw new NexusException(\sprintf(
+                    '#[%s(operation: "%s")] on %s::%s() targets a synchronous operation; '
+                    . 'only #[%s] operations support cancellation',
+                    OperationCancel::class,
+                    $operationDefinition->name,
+                    $reflection->getName(),
+                    $cancelMethod->getName(),
+                    AsyncOperation::class,
+                ));
             }
 
             $handlers[$operationDefinition->name] = new MethodOperationHandler(
                 instance: $instance,
                 startMethod: $method,
                 operation: $operationDefinition,
-                cancelMethod: $cancelMethod,
+                cancelMethod: $operationDefinition->async ? $cancelMethod : null,
             );
         }
 

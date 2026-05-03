@@ -105,6 +105,34 @@ final class ServiceImplInstanceTest extends TestCase
         self::assertStringContainsString('Multiple #[', $e->getMessage());
     }
 
+    public function testCancelMethodTargetingSyncOperationRejectedAtRegistration(): void
+    {
+        $impl = new class implements GreetingServiceInterface {
+            public function sayHello1(string $name): string
+            {
+                return '';
+            }
+
+            public function sayHello2(string $name): \Temporal\Nexus\OperationInfo
+            {
+                return new \Temporal\Nexus\OperationInfo('tok', \Temporal\Nexus\OperationState::Running);
+            }
+
+            // Stray cancel on a sync operation — sync ops have no terminal-state
+            // cancellation, so binding a cancel routine to one is always wrong.
+            #[\Temporal\Nexus\Attribute\OperationCancel(operation: 'sayHello1')]
+            public function cancelSync(string $token): void {}
+        };
+
+        $e = self::assertThrown(
+            NexusException::class,
+            static fn() => ServiceImplInstance::fromInstance($impl),
+        );
+
+        self::assertStringContainsString('targets a synchronous operation', $e->getMessage());
+        self::assertStringContainsString('sayHello1', $e->getMessage());
+    }
+
     public function testCancelMethodMustAcceptToken(): void
     {
         $impl = new class implements GreetingServiceInterface {
