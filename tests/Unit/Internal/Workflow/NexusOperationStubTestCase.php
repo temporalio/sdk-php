@@ -26,7 +26,27 @@ final class NexusOperationStubTestCase extends TestCase
         $stub = $this->makeStub(NexusOperationOptions::new());
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Nexus endpoint is empty');
+        $this->expectExceptionMessage(
+            "Nexus stub for this operation has no endpoint set. "
+            . "Call NexusOperationOptions::withEndpoint('your-endpoint') "
+            . "before passing options to newNexusServiceStub() or newUntypedNexusOperationStub().",
+        );
+
+        $stub->start('someOp');
+    }
+
+    public function testStartRejectsEmptyEndpointMentionsServiceWhenKnown(): void
+    {
+        $stub = $this->makeStub(
+            NexusOperationOptions::new()->withService('PaymentService'),
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            "Nexus stub for service 'PaymentService' has no endpoint set. "
+            . "Call NexusOperationOptions::withEndpoint('your-endpoint') "
+            . "before passing options to newNexusServiceStub() or newUntypedNexusOperationStub().",
+        );
 
         $stub->start('someOp');
     }

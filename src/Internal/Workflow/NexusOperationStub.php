@@ -63,9 +63,10 @@ final class NexusOperationStub implements NexusOperationStubInterface
         $endpoint = $this->options->endpoint;
         $service = $this->options->service;
         if ($endpoint === '') {
-            throw new \InvalidArgumentException(
-                'Nexus endpoint is empty; call NexusOperationOptions::withEndpoint() before starting the operation',
-            );
+            throw new \InvalidArgumentException(\sprintf(
+                "Nexus stub for %s has no endpoint set. Call NexusOperationOptions::withEndpoint('your-endpoint') before passing options to newNexusServiceStub() or newUntypedNexusOperationStub().",
+                $service !== '' ? "service '{$service}'" : 'this operation',
+            ));
         }
         if ($service === '') {
             throw new \InvalidArgumentException(
