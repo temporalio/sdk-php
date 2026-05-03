@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Transport\Request\CancelNexusOperationResult;
 use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
+use Temporal\Internal\Transport\Request\GetNexusOperationResult;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationHandle;
@@ -20,24 +25,18 @@ use Temporal\Workflow\NexusOperationStubInterface;
 
 final class NexusOperationStub implements NexusOperationStubInterface
 {
-    /** @var MarshallerInterface<array> */
-    private MarshallerInterface $marshaller;
-
-    private NexusOperationOptions $options;
-    private HeaderInterface $header;
+    /** Default interval between GetNexusOperationResult retries for async ops. */
+    private const DEFAULT_POLL_INTERVAL_SECONDS = 5;
 
     /**
      * @param MarshallerInterface<array> $marshaller
      */
     public function __construct(
-        MarshallerInterface $marshaller,
-        NexusOperationOptions $options,
-        HeaderInterface $header,
-    ) {
-        $this->marshaller = $marshaller;
-        $this->options = $options;
-        $this->header = $header;
-    }
+        private readonly MarshallerInterface $marshaller,
+        private readonly DataConverterInterface $dataConverter,
+        private readonly NexusOperationOptions $options,
+        private readonly HeaderInterface $header,
+    ) {}
 
     public function getOptions(): NexusOperationOptions
     {
@@ -50,7 +49,9 @@ final class NexusOperationStub implements NexusOperationStubInterface
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         array $nexusHeaders = [],
     ): PromiseInterface {
-        return $this->start($operation, $args, $returnType, $nexusHeaders)->getResult();
+        return $this->start($operation, $args, $returnType, $nexusHeaders)->then(
+            static fn(NexusOperationHandle $handle): PromiseInterface => $handle->getResult(),
+        );
     }
 
     public function start(
@@ -58,10 +59,47 @@ final class NexusOperationStub implements NexusOperationStubInterface
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         array $nexusHeaders = [],
-    ): NexusOperationHandle {
-        // Surface "missing endpoint/service/operation" locally — server returns opaque "not found".
+    ): PromiseInterface {
+        // Programming errors throw synchronously; runtime errors reject the promise.
         $endpoint = $this->options->endpoint;
         $service = $this->options->service;
+        $this->assertOperationParams($endpoint, $service, $operation);
+
+        $startRequest = new ExecuteNexusOperation(
+            endpoint: $endpoint,
+            service: $service,
+            operation: $operation,
+            args: EncodedValues::fromValues($args),
+            options: $this->marshaller->marshal($this->options),
+            header: $this->header,
+            nexusHeaders: $nexusHeaders,
+        );
+
+        $startId = $startRequest->getID();
+
+        return $this->request($startRequest)->then(
+            fn(ValuesInterface $values): NexusOperationHandle => $this->buildHandle(
+                $values,
+                $startId,
+                $returnType,
+                $endpoint,
+                $service,
+                $operation,
+            ),
+        );
+    }
+
+    protected function request(RequestInterface $request, bool $waitResponse = true): PromiseInterface
+    {
+        return Workflow::getCurrentContext()->request($request, waitResponse: $waitResponse);
+    }
+
+    /**
+     * Surface "missing endpoint/service/operation" locally — the server returns
+     * an opaque "not found" otherwise.
+     */
+    private function assertOperationParams(string $endpoint, string $service, string $operation): void
+    {
         if ($endpoint === '') {
             throw new \InvalidArgumentException(\sprintf(
                 "Nexus stub for %s has no endpoint set. Call NexusOperationOptions::withEndpoint('your-endpoint') before passing options to newNexusServiceStub() or newUntypedNexusOperationStub().",
@@ -76,26 +114,86 @@ final class NexusOperationStub implements NexusOperationStubInterface
         if ($operation === '') {
             throw new \InvalidArgumentException('Nexus operation name must be a non-empty string');
         }
+    }
 
-        $request = new ExecuteNexusOperation(
-            endpoint: $endpoint,
-            service: $service,
-            operation: $operation,
-            args: EncodedValues::fromValues($args),
-            options: $this->marshaller->marshal($this->options),
-            header: $this->header,
-            nexusHeaders: $nexusHeaders,
-        );
+    /**
+     * Builds the {@see NexusOperationHandle} from the start-response envelope.
+     *
+     * Sync envelope (`async=false`) → `Payloads[1]` carries the result; we
+     * slice it into a single-payload {@see ValuesInterface} so the handle's
+     * `decodePromise` decodes it via `$returnType` uniformly with the async path.
+     *
+     * Async envelope (`async=true`) → kicks the polling coroutine; the handle's
+     * result-promise resolves when GetNexusOperationResult finally returns it.
+     */
+    private function buildHandle(
+        ValuesInterface $values,
+        int $startId,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType,
+        string $endpoint,
+        string $service,
+        string $operation,
+    ): NexusOperationHandle {
+        $envelope = $values->getValue(0, NexusStartEnvelope::class);
 
-        // Handle splits start/await for source-compat with future wire (token-on-async).
+        $resultDeferred = new Deferred();
+        $rawResult = $this->normalizeFailure($resultDeferred->promise(), $endpoint, $service, $operation);
+
+        if ($envelope->async) {
+            $this->pollForResult($startId, $resultDeferred);
+            return new NexusOperationHandle(
+                operationToken: $envelope->token,
+                rawResult: $rawResult,
+                returnType: $returnType,
+            );
+        }
+
+        $resultDeferred->resolve(EncodedValues::sliceValues(
+            $this->dataConverter,
+            $values,
+            offset: 1,
+            length: 1,
+        ));
         return new NexusOperationHandle(
-            EncodedValues::decodePromise($this->normalizeFailure($this->request($request), $endpoint, $service, $operation), $returnType),
+            operationToken: null,
+            rawResult: $rawResult,
+            returnType: $returnType,
         );
     }
 
-    protected function request(RequestInterface $request): PromiseInterface
+    /**
+     * Drives a normal `while` loop in a workflow coroutine, yielding on
+     * GetNexusOperationResult and on a workflow timer between polls. Empty
+     * response = not ready, retry. Non-empty = result, resolve. Cancel =
+     * notify RR (fire-and-forget) and reject. Other failures propagate.
+     */
+    private function pollForResult(int $startId, Deferred $resultDeferred): void
     {
-        return Workflow::getCurrentContext()->request($request);
+        $stub = $this;
+        $interval = $this->options->pollInterval ?? self::DEFAULT_POLL_INTERVAL_SECONDS;
+        Workflow::async(static function () use ($stub, $startId, $resultDeferred, $interval): \Generator {
+            try {
+                while (true) {
+                    /** @var ValuesInterface $response */
+                    $response = yield $stub->request(new GetNexusOperationResult($startId));
+
+                    if ($response->count() > 0) {
+                        $resultDeferred->resolve($response);
+                        return;
+                    }
+
+                    yield Workflow::timer($interval);
+                }
+            } catch (CanceledFailure $e) {
+                // Drop RR-side bookkeeping early so we don't wait for
+                // Workflow::Close() to GC the entry. Fire-and-forget.
+                $stub->request(new CancelNexusOperationResult($startId), waitResponse: false);
+                $resultDeferred->reject($e);
+                throw $e;
+            } catch (\Throwable $e) {
+                $resultDeferred->reject($e);
+            }
+        });
     }
 
     /**

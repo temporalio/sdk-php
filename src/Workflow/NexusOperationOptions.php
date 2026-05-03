@@ -41,6 +41,13 @@ final class NexusOperationOptions extends Options
     #[Marshal(name: 'cancellationType')]
     public int $cancellationType = NexusOperationCancellationType::UNSPECIFIED;
 
+    /**
+     * Interval between client-side {@see \Temporal\Internal\Transport\Request\GetNexusOperationResult}
+     * retries while the async operation is in flight. `null` falls back to a
+     * built-in default (5 seconds). RR-internal — does not travel to the server.
+     */
+    public ?\DateInterval $pollInterval = null;
+
     public function __construct()
     {
         $this->scheduleToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
@@ -89,6 +96,16 @@ final class NexusOperationOptions extends Options
     {
         $self = clone $this;
         $self->cancellationType = $type instanceof NexusOperationCancellationType ? $type->value : $type;
+        return $self;
+    }
+
+    /**
+     * @param DateIntervalValue $interval
+     */
+    public function withPollInterval($interval): self
+    {
+        $self = clone $this;
+        $self->pollInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
         return $self;
     }
 }

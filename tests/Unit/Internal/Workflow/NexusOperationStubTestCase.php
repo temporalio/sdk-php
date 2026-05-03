@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Internal\Workflow;
 use PHPUnit\Framework\TestCase;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\DataConverter;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
@@ -178,7 +179,12 @@ final class NexusOperationStubTestCase extends TestCase
     {
         /** @var MarshallerInterface<array> $marshaller */
         $marshaller = $this->createStub(MarshallerInterface::class);
-        return new NexusOperationStub($marshaller, $options, Header::empty());
+        return new NexusOperationStub(
+            $marshaller,
+            DataConverter::createDefault(),
+            $options,
+            Header::empty(),
+        );
     }
 
     /**
