@@ -112,38 +112,27 @@ class SyncOperationStylesTest extends TestCase
 // ── Nexus service ────────────────────────────────────────────────────
 
 #[Service(name: 'ShoutService')]
-interface ShoutServiceInterface
+class ShoutService
 {
     #[Operation]
-    public function viaCallableCtor(string $input): string;
-
-    #[Operation]
-    public function viaFromCallable(string $input): string;
-
-    #[Operation]
-    public function viaFunctorCtor(string $input): string;
-
-    #[Operation]
-    public function viaFromFunction(string $input): string;
-}
-
-class ShoutServiceImpl implements ShoutServiceInterface
-{
     public function viaCallableCtor(string $input): string
     {
         return \strtoupper($input) . '!';
     }
 
+    #[Operation]
     public function viaFromCallable(string $input): string
     {
         return \strtoupper($input) . '!';
     }
 
+    #[Operation]
     public function viaFunctorCtor(string $input): string
     {
         return \strtoupper($input) . '!';
     }
 
+    #[Operation]
     public function viaFromFunction(string $input): string
     {
         return \strtoupper($input) . '!';

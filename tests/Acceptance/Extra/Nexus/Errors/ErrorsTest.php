@@ -206,62 +206,45 @@ class ErrorsTest extends TestCase
 }
 
 #[Service(name: 'ErrorService')]
-interface ErrorServiceInterface
+class ErrorService
 {
     #[Operation]
-    public function failOp(string $reason): string;
-
-    #[Operation]
-    public function handlerErrorOp(string $reason): string;
-
-    #[Operation]
-    public function badRequestOp(string $reason): string;
-
-    #[Operation]
-    public function unauthorizedOp(string $reason): string;
-
-    #[Operation]
-    public function notFoundOp(string $reason): string;
-
-    #[Operation]
-    public function cancelOp(string $reason): string;
-
-    #[Operation]
-    public function failWithCause(string $reason): string;
-}
-
-class ErrorServiceImpl implements ErrorServiceInterface
-{
     public function failOp(string $reason): string
     {
         throw OperationException::failed($reason ?: 'unknown');
     }
 
+    #[Operation]
     public function handlerErrorOp(string $reason): string
     {
         throw HandlerException::create(ErrorType::Internal, "infra: {$reason}");
     }
 
+    #[Operation]
     public function badRequestOp(string $reason): string
     {
         throw HandlerException::create(ErrorType::BadRequest, "bad: {$reason}");
     }
 
+    #[Operation]
     public function unauthorizedOp(string $reason): string
     {
         throw HandlerException::create(ErrorType::Unauthorized, "deny: {$reason}");
     }
 
+    #[Operation]
     public function notFoundOp(string $reason): string
     {
         throw HandlerException::create(ErrorType::NotFound, "missing: {$reason}");
     }
 
+    #[Operation]
     public function cancelOp(string $reason): string
     {
         throw OperationException::canceled($reason ?: 'canceled');
     }
 
+    #[Operation]
     public function failWithCause(string $reason): string
     {
         // Two-level cause chain. The marker in the inner cause's

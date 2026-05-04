@@ -101,14 +101,9 @@ class TimeoutTest extends TestCase
 // ── Sync service: handler sleeps past the caller's timeout ─────────
 
 #[Service(name: 'TimeoutSyncService')]
-interface TimeoutSyncService
+class TimeoutSyncService
 {
     #[Operation]
-    public function slowSync(string $input): string;
-}
-
-class TimeoutSyncServiceImpl implements TimeoutSyncService
-{
     public function slowSync(string $input): string
     {
         // PHP-side handler blocks the worker thread; sleep just past the
@@ -149,14 +144,9 @@ class TimeoutSyncCallerWorkflow
 // ── Async service: handler workflow sleeps past the caller's timeout ─
 
 #[Service(name: 'TimeoutAsyncService')]
-interface TimeoutAsyncService
+class TimeoutAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function slowAsync(string $input): OperationInfo;
-}
-
-class TimeoutAsyncServiceImpl implements TimeoutAsyncService
-{
     public function slowAsync(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();

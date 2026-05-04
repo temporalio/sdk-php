@@ -106,14 +106,9 @@ class AsyncOperationTest extends TestCase
 // ── Nexus service ────────────────────────────────────────────────────
 
 #[Service(name: 'AsyncJobService')]
-interface AsyncJobServiceInterface
+class AsyncJobService
 {
     #[AsyncOperation(output: 'string')]
-    public function startJob(string $input): OperationInfo;
-}
-
-class AsyncJobServiceImpl implements AsyncJobServiceInterface
-{
     public function startJob(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();

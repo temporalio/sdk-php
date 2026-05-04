@@ -183,20 +183,9 @@ class LinksTest extends TestCase
 // ── Nexus service ────────────────────────────────────────────────────
 
 #[Service(name: 'LinkService')]
-interface LinkServiceInterface
+class LinkService
 {
     #[Operation]
-    public function attachAndReportSingle(string $suffix): string;
-
-    #[Operation]
-    public function attachAndReportMany(string $suffix): string;
-
-    #[Operation]
-    public function reportNoLinks(string $_ignored): string;
-}
-
-class LinkServiceImpl implements LinkServiceInterface
-{
     public function attachAndReportSingle(string $suffix): string
     {
         $context = Nexus::getCurrentContext();
@@ -207,6 +196,7 @@ class LinkServiceImpl implements LinkServiceInterface
         return self::reportLinks($context);
     }
 
+    #[Operation]
     public function attachAndReportMany(string $suffix): string
     {
         $context = Nexus::getCurrentContext();
@@ -217,6 +207,7 @@ class LinkServiceImpl implements LinkServiceInterface
         return self::reportLinks($context);
     }
 
+    #[Operation]
     public function reportNoLinks(string $_ignored): string
     {
         return self::reportLinks(Nexus::getCurrentContext());

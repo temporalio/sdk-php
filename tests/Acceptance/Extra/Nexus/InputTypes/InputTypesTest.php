@@ -106,31 +106,22 @@ final class Item
 // ── Nexus service ────────────────────────────────────────────────────
 
 #[Service(name: 'ShapeService')]
-interface ShapeServiceInterface
+class ShapeService
 {
     /** Operation with no input parameter — handler receives `null`. */
     #[Operation]
-    public function pingNoInput(): string;
-
-    #[Operation]
-    public function doubleInt(int $x): int;
-
-    #[Operation]
-    public function echoDto(Item $item): Item;
-}
-
-class ShapeServiceImpl implements ShapeServiceInterface
-{
     public function pingNoInput(): string
     {
         return 'pong';
     }
 
+    #[Operation]
     public function doubleInt(int $x): int
     {
         return $x * 2;
     }
 
+    #[Operation]
     public function echoDto(Item $item): Item
     {
         // Echo with a trivial transform to prove deserialization actually happened.

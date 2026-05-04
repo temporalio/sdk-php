@@ -60,6 +60,9 @@ class NexusRegistrationTest extends TestCase
 
 // ── Nexus service (handler side) ─────────────────────────────────
 
+// Interface + impl shape kept here on purpose: this is the smoke test for the
+// "contract is an interface, impl class implements it" registration path. The
+// rest of the Nexus acceptance suite covers the class-only `#[Service]` shape.
 #[Service(name: 'GreetingService')]
 interface GreetingNexusServiceInterface
 {
@@ -67,7 +70,7 @@ interface GreetingNexusServiceInterface
     public function greet(string $name): string;
 }
 
-class GreetingNexusServiceImpl implements GreetingNexusServiceInterface
+final class GreetingNexusServiceImpl implements GreetingNexusServiceInterface
 {
     public function greet(string $name): string
     {

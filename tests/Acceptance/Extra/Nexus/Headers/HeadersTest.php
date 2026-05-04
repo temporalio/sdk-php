@@ -61,14 +61,9 @@ class HeadersTest extends TestCase
 }
 
 #[Service(name: 'HeaderEchoService')]
-interface HeaderEchoServiceInterface
+class HeaderEchoService
 {
     #[Operation]
-    public function echoHeader(string $headerName): string;
-}
-
-class HeaderEchoServiceImpl implements HeaderEchoServiceInterface
-{
     public function echoHeader(string $headerName): string
     {
         if ($headerName === '') {

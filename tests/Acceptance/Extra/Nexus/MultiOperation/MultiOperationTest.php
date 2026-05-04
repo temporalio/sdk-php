@@ -64,38 +64,27 @@ class MultiOperationTest extends TestCase
 }
 
 #[Service(name: 'MathService')]
-interface MathServiceInterface
+class MathService
 {
     #[Operation]
-    public function add(array $args): int;
-
-    #[Operation]
-    public function multiply(array $args): int;
-
-    #[Operation]
-    public function echo(string $value): string;
-
-    #[Operation]
-    public function constant(): int;
-}
-
-class MathServiceImpl implements MathServiceInterface
-{
     public function add(array $args): int
     {
         return (int) ($args[0] ?? 0) + (int) ($args[1] ?? 0);
     }
 
+    #[Operation]
     public function multiply(array $args): int
     {
         return (int) ($args[0] ?? 1) * (int) ($args[1] ?? 1);
     }
 
+    #[Operation]
     public function echo(string $value): string
     {
         return $value;
     }
 
+    #[Operation]
     public function constant(): int
     {
         return 42;

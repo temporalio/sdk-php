@@ -59,14 +59,9 @@ class MultiServiceTest extends TestCase
 }
 
 #[Service(name: 'ServiceA')]
-interface ServiceAInterface
+class ServiceA
 {
     #[Operation]
-    public function opA(string $input): string;
-}
-
-class ServiceAImpl implements ServiceAInterface
-{
     public function opA(string $input): string
     {
         return "A:{$input}";
@@ -74,14 +69,9 @@ class ServiceAImpl implements ServiceAInterface
 }
 
 #[Service(name: 'ServiceB')]
-interface ServiceBInterface
+class ServiceB
 {
     #[Operation]
-    public function opB(string $input): string;
-}
-
-class ServiceBImpl implements ServiceBInterface
-{
     public function opB(string $input): string
     {
         return "B:{$input}";

@@ -14,7 +14,8 @@ namespace Temporal\Nexus\Attribute;
 use Temporal\Nexus\OperationInfo;
 
 /**
- * Marks a method on a {@see Service}-annotated interface as an asynchronous Nexus operation.
+ * Marks a method on a {@see Service}-annotated type (interface or class) as an asynchronous
+ * Nexus operation.
  *
  * The annotated method must declare its return type as {@see OperationInfo}. Because the
  * return type does not carry the eventual wire output, declare it via {@see self::$output}

@@ -107,14 +107,9 @@ class AsyncFailureTest extends TestCase
 // ── Service A: handler workflow throws ApplicationFailure ──────────
 
 #[Service(name: 'AsyncFailingService')]
-interface AsyncFailingService
+class AsyncFailingService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo;
-}
-
-class AsyncFailingServiceImpl implements AsyncFailingService
-{
     public function run(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();
@@ -191,14 +186,9 @@ class HandlerFailsCallerWorkflow
 // ── Service B: handler workflow with fixed ID, terminated externally ──
 
 #[Service(name: 'AsyncTerminateService')]
-interface AsyncTerminateService
+class AsyncTerminateService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo;
-}
-
-class AsyncTerminateServiceImpl implements AsyncTerminateService
-{
     public function run(string $input): OperationInfo
     {
         return WorkflowRunOperation::start(

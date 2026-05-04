@@ -82,14 +82,9 @@ class AsyncCancelByTokenTest extends TestCase
 // ── Nexus service ──────────────────────────────────────────────────
 
 #[Service(name: 'AsyncCancelService')]
-interface AsyncCancelService
+class AsyncCancelService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo;
-}
-
-class AsyncCancelServiceImpl implements AsyncCancelService
-{
     public function longRunning(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();

@@ -152,14 +152,9 @@ class SyncFailureTest extends TestCase
 // ── Service A: throws OperationException::failed() ─────────────────
 
 #[Service(name: 'SyncFailureAppService')]
-interface SyncFailureAppService
+class SyncFailureAppService
 {
     #[Operation]
-    public function failAlways(string $input): string;
-}
-
-class SyncFailureAppServiceImpl implements SyncFailureAppService
-{
     public function failAlways(string $input): string
     {
         throw OperationException::failed('business-error');
@@ -207,6 +202,9 @@ class AppFailureCallerWorkflow
 
 // ── Service B: throws HandlerException with various ErrorTypes ─────
 
+// Interface + impl shape kept here on purpose: pairs with the untyped-stub
+// caller workflow below to cover the "service contract on an interface, called
+// via newUntypedNexusOperationStub" path end-to-end.
 #[Service(name: 'SyncHandlerErrorService')]
 interface SyncHandlerErrorService
 {
@@ -223,7 +221,7 @@ interface SyncHandlerErrorService
     public function unauthorized(string $input): string;
 }
 
-class SyncHandlerErrorServiceImpl implements SyncHandlerErrorService
+final class SyncHandlerErrorServiceImpl implements SyncHandlerErrorService
 {
     public function badRequest(string $input): string
     {
@@ -285,14 +283,9 @@ class HandlerErrorCallerWorkflow
 // ── Service C: known service for "unknown operation" scenario ──────
 
 #[Service(name: 'KnownService')]
-interface KnownService
+class KnownService
 {
     #[Operation]
-    public function knownOp(string $input): string;
-}
-
-class KnownServiceImpl implements KnownService
-{
     public function knownOp(string $input): string
     {
         return "known:{$input}";

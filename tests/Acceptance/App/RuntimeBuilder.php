@@ -34,14 +34,18 @@ final class RuntimeBuilder
                         $runtime->addActivity($feature, $classString);
                     }
 
-                    # Register Nexus Service: any non-interface class that implements
-                    # an interface annotated with #[Service] (mirrors Workflow/Activity
-                    # discovery — see WorkflowReader / ActivityReader).
-                    if (!$class->isInterface()) {
-                        foreach ($class->getInterfaces() as $interface) {
-                            if ($interface->getAttributes(NexusService::class) !== []) {
-                                $runtime->addNexusService($feature, $classString);
-                                break;
+                    # Register Nexus Service: any non-interface class that either carries
+                    # #[Service] directly or implements an interface annotated with #[Service]
+                    # (mirrors Workflow/Activity discovery — see WorkflowReader / ActivityReader).
+                    if (!$class->isInterface() && !$class->isAbstract()) {
+                        if ($class->getAttributes(NexusService::class) !== []) {
+                            $runtime->addNexusService($feature, $classString);
+                        } else {
+                            foreach ($class->getInterfaces() as $interface) {
+                                if ($interface->getAttributes(NexusService::class) !== []) {
+                                    $runtime->addNexusService($feature, $classString);
+                                    break;
+                                }
                             }
                         }
                     }

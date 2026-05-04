@@ -17,9 +17,9 @@ use Temporal\Tests\Nexus\Fixture\Service\UnionInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\UntypedInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\DiamondFinalInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\EmptyService;
-use Temporal\Tests\Nexus\Fixture\ServiceDefinition\InvalidServiceAsClass;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\InvalidServiceDuplicateOperation;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\InvalidServiceNoAnnotation;
+use Temporal\Tests\Nexus\Fixture\ServiceDefinition\ServiceAsClass;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\InvalidServiceWithOperations;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\InvalidSubService;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\OperationOverrideMismatchService;
@@ -38,17 +38,21 @@ final class ServiceDefinitionTest extends TestCase
         ServiceDefinition::fromClass(InvalidServiceNoAnnotation::class);
     }
 
-    public function testInvalidServiceAsClass(): void
+    public function testServiceAttributeOnClassIsAccepted(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Must be an interface');
-        ServiceDefinition::fromClass(InvalidServiceAsClass::class);
+        $defn = ServiceDefinition::fromClass(ServiceAsClass::class);
+
+        self::assertSame('ServiceAsClass', $defn->name);
+        self::assertCount(1, $defn->operations);
+        self::assertArrayHasKey('classOperation', $defn->operations);
+        self::assertSame('string', $defn->operations['classOperation']->inputType);
+        self::assertSame('string', $defn->operations['classOperation']->outputType);
     }
 
     public function testInvalidSubServiceNameMismatch(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not match the expected name on the final interface');
+        $this->expectExceptionMessage('does not match the expected name on the contract');
         ServiceDefinition::fromClass(InvalidSubService::class);
     }
 

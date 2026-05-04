@@ -62,6 +62,9 @@ class SyncFromWorkflowTest extends TestCase
     }
 }
 
+// This test deliberately keeps the interface + impl shape so we cover the
+// "service contract on an interface, impl on a separate class" path end-to-end
+// — the rest of the Nexus acceptance suite runs the class-only shape.
 #[Service(name: 'SyncFromWorkflowService')]
 interface SyncFromWorkflowService
 {
@@ -69,7 +72,7 @@ interface SyncFromWorkflowService
     public function greet(string $name): string;
 }
 
-class SyncFromWorkflowServiceImpl implements SyncFromWorkflowService
+final class SyncFromWorkflowServiceImpl implements SyncFromWorkflowService
 {
     public function greet(string $name): string
     {

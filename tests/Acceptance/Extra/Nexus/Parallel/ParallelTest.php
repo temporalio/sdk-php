@@ -68,14 +68,9 @@ class ParallelTest extends TestCase
 }
 
 #[Service(name: 'ParallelService')]
-interface ParallelService
+class ParallelService
 {
     #[Operation]
-    public function double(int $input): int;
-}
-
-class ParallelServiceImpl implements ParallelService
-{
     public function double(int $input): int
     {
         return $input * 2;

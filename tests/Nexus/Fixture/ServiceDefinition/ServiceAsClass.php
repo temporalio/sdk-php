@@ -11,7 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\ServiceDefinition;
 
+use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
 
 #[Service]
-class InvalidServiceAsClass {}
+class ServiceAsClass
+{
+    #[Operation]
+    public function classOperation(string $input): string
+    {
+        return $input;
+    }
+}

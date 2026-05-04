@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Nexus\Attribute\AsyncOperation;
+use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Validation\ServiceNameValidator;
@@ -31,43 +33,45 @@ final class ServiceDefinition
     }
 
     /**
-     * Create a service definition from a #[Service] annotated interface.
+     * Create a service definition from a `#[Service]`-annotated type.
+     *
+     * Accepts either:
+     *   - an interface carrying `#[Service]` (the interface IS the contract); or
+     *   - a class carrying `#[Service]` directly (the class is its own contract); or
+     *   - a class implementing exactly one interface that carries `#[Service]` (that
+     *     interface is the contract).
      *
      * @param class-string $class
      */
     public static function fromClass(string $class): self
     {
         $reflection = new \ReflectionClass($class);
-        $attributes = $reflection->getAttributes(Service::class);
-
-        if (\count($attributes) === 0) {
-            throw new InvalidArgumentException('Missing #[Service] attribute');
-        }
-        if (!$reflection->isInterface()) {
-            throw new InvalidArgumentException('Must be an interface');
-        }
+        $contract = self::resolveContract($reflection);
 
         /** @var Service $service */
-        $service = $attributes[0]->newInstance();
-        $name = $service->name !== '' ? $service->name : $reflection->getShortName();
+        $service = $contract->getAttributes(Service::class)[0]->newInstance();
+        $name = $service->name !== '' ? $service->name : $contract->getShortName();
 
-        foreach ($reflection->getInterfaces() as $iface) {
-            $subAttrs = $iface->getAttributes(Service::class);
-            if (\count($subAttrs) === 0) {
+        foreach ($reflection->getInterfaces() as $parentInterface) {
+            if ($parentInterface->getName() === $contract->getName()) {
+                continue;
+            }
+            $subAttributes = $parentInterface->getAttributes(Service::class);
+            if (\count($subAttributes) === 0) {
                 continue;
             }
             /** @var Service $subService */
-            $subService = $subAttrs[0]->newInstance();
-            $subName = $subService->name !== '' ? $subService->name : $iface->getShortName();
+            $subService = $subAttributes[0]->newInstance();
+            $subName = $subService->name !== '' ? $subService->name : $parentInterface->getShortName();
             if ($subName !== $name) {
                 throw new InvalidArgumentException(
-                    "Interface {$iface->getName()} has a service attribute whose name ({$subName}) "
-                    . "does not match the expected name on the final interface ({$name})",
+                    "Interface {$parentInterface->getName()} has a service attribute whose name ({$subName}) "
+                    . "does not match the expected name on the contract ({$name})",
                 );
             }
         }
 
-        $allMethods = self::collectMethods($reflection);
+        $allMethods = self::collectMethods($contract);
 
         $operationFailures = [];
         $operations = [];
@@ -86,14 +90,15 @@ final class ServiceDefinition
                         $operations[$firstOperation->name] = $firstOperation;
                     } elseif ($firstOperation->name !== $thisOperation->name
                         || $firstOperation->inputType !== $thisOperation->inputType
-                        || $firstOperation->outputType !== $thisOperation->outputType) {
+                        || $firstOperation->outputType !== $thisOperation->outputType
+                    ) {
                         $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
                             . 'mismatches against another operation of the same name/signature';
                         break;
                     }
-                } catch (\Exception $e) {
+                } catch (\Exception $exception) {
                     $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
-                        . "is invalid: {$e->getMessage()}";
+                        . "is invalid: {$exception->getMessage()}";
                     break;
                 }
             }
@@ -114,6 +119,48 @@ final class ServiceDefinition
     }
 
     /**
+     * Locate the `#[Service]`-bearing type for the given reflection.
+     *
+     * If the reflection itself carries `#[Service]`, it is the contract — works for both
+     * interfaces and classes that put the attribute on themselves. Otherwise, walk the
+     * implemented interfaces and require exactly one `#[Service]`-annotated interface;
+     * zero or multiple matches are rejected.
+     *
+     * @param \ReflectionClass<object> $reflection
+     * @return \ReflectionClass<object>
+     */
+    private static function resolveContract(\ReflectionClass $reflection): \ReflectionClass
+    {
+        if ($reflection->getAttributes(Service::class) !== []) {
+            return $reflection;
+        }
+
+        $matches = [];
+        foreach ($reflection->getInterfaces() as $parentInterface) {
+            if ($parentInterface->getAttributes(Service::class) !== []) {
+                $matches[$parentInterface->getName()] = $parentInterface;
+            }
+        }
+
+        if ($matches === []) {
+            throw new InvalidArgumentException(\sprintf(
+                'Missing #[Service] attribute on %s or any implemented interface',
+                $reflection->getName(),
+            ));
+        }
+
+        if (\count($matches) > 1) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s implements multiple #[Service] interfaces (%s); ambiguous',
+                $reflection->getName(),
+                \implode(', ', \array_keys($matches)),
+            ));
+        }
+
+        return \reset($matches);
+    }
+
+    /**
      * Group methods by signature (name + parameter types) for override detection.
      *
      * @return list<\ReflectionMethod[]>
@@ -131,35 +178,44 @@ final class ServiceDefinition
      * @param array<string, true> $visited
      */
     private static function collectMethodsRecursive(
-        \ReflectionClass $iface,
+        \ReflectionClass $contract,
         array &$groups,
         array &$visited,
     ): void {
-        $key = $iface->getName();
+        $key = $contract->getName();
         if (isset($visited[$key])) {
             return;
         }
         $visited[$key] = true;
 
-        foreach ($iface->getMethods() as $method) {
-            if ($method->getDeclaringClass()->getName() !== $iface->getName()) {
+        foreach ($contract->getMethods() as $method) {
+            if ($method->getDeclaringClass()->getName() !== $contract->getName()) {
+                continue;
+            }
+            // Only methods carrying #[Operation] or #[AsyncOperation] are operations.
+            // Plain helpers, cancel routines (#[OperationCancel]), constructors and
+            // other infrastructure on a #[Service]-annotated class are skipped here.
+            if (
+                $method->getAttributes(Operation::class) === []
+                && $method->getAttributes(AsyncOperation::class) === []
+            ) {
                 continue;
             }
             $groups[self::methodSignatureKey($method)][] = $method;
         }
 
-        foreach ($iface->getInterfaces() as $parentIface) {
-            self::collectMethodsRecursive($parentIface, $groups, $visited);
+        foreach ($contract->getInterfaces() as $parentInterface) {
+            self::collectMethodsRecursive($parentInterface, $groups, $visited);
         }
     }
 
     private static function methodSignatureKey(\ReflectionMethod $method): string
     {
-        $paramTypes = [];
-        foreach ($method->getParameters() as $p) {
-            $paramTypes[] = self::reflectionTypeKey($p->getType());
+        $parameterTypes = [];
+        foreach ($method->getParameters() as $parameter) {
+            $parameterTypes[] = self::reflectionTypeKey($parameter->getType());
         }
-        return $method->getName() . '(' . \implode(',', $paramTypes) . ')';
+        return $method->getName() . '(' . \implode(',', $parameterTypes) . ')';
     }
 
     private static function reflectionTypeKey(?\ReflectionType $type): string

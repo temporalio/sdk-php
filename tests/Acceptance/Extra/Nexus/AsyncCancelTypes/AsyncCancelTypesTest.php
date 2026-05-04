@@ -116,14 +116,9 @@ class AsyncCancelTypesTest extends TestCase
 // ── Service A: long-running handler that catches cancel ────────────
 
 #[Service(name: 'CancelTypesService')]
-interface CancelTypesService
+class CancelTypesService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo;
-}
-
-class CancelTypesServiceImpl implements CancelTypesService
-{
     public function longRunning(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();
@@ -165,14 +160,9 @@ class LongRunningHandlerWorkflow
 // natural completion. A 1s timer keeps the test fast.
 
 #[Service(name: 'AbandonService')]
-interface AbandonService
+class AbandonService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo;
-}
-
-class AbandonServiceImpl implements AbandonService
-{
     public function run(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();

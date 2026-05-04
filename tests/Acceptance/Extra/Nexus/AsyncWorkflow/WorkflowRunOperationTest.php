@@ -99,14 +99,9 @@ class WorkflowRunOperationTest extends TestCase
 // ── Nexus service ──────────────────────────────────────────────────
 
 #[Service(name: 'AsyncWorkflowService')]
-interface AsyncWorkflowService
+class AsyncWorkflowService
 {
     #[AsyncOperation(output: 'string')]
-    public function hello(string $input): OperationInfo;
-}
-
-class AsyncWorkflowServiceImpl implements AsyncWorkflowService
-{
     public function hello(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();

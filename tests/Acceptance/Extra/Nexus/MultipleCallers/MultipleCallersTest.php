@@ -89,14 +89,9 @@ class MultipleCallersTest extends TestCase
 }
 
 #[Service(name: 'SharedAsyncService')]
-interface SharedAsyncService
+class SharedAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo;
-}
-
-class SharedAsyncServiceImpl implements SharedAsyncService
-{
     public function run(string $input): OperationInfo
     {
         // Fixed handler workflow ID so both callers join the same execution.

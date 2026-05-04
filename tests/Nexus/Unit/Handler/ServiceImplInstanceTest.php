@@ -19,6 +19,7 @@ use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Service\GreetingServiceInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ChildInheritingHandler;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\NoServiceImplAnnotation;
+use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceAsClassImpl;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceImplWithExtraNonOperationMethod;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,8 +35,17 @@ final class ServiceImplInstanceTest extends TestCase
     public function testMissingContractInterfaceRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/must implement an interface annotated with #\[.+Service\]/');
+        $this->expectExceptionMessageMatches('/Missing #\[Service\] attribute/');
         ServiceImplInstance::fromInstance(new NoServiceImplAnnotation());
+    }
+
+    public function testServiceAttributeOnClassIsAccepted(): void
+    {
+        $instance = ServiceImplInstance::fromInstance(new ServiceAsClassImpl());
+
+        self::assertSame('ServiceAsClassImpl', $instance->definition->name);
+        self::assertCount(1, $instance->operationHandlers);
+        self::assertArrayHasKey('classOperation', $instance->operationHandlers);
     }
 
     public function testInheritedHandlerIsDiscovered(): void

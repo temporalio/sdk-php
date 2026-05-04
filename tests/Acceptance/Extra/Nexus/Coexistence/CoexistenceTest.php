@@ -107,14 +107,9 @@ class CoexistenceBootstrapWorkflow
 // ── Nexus service (coexists with workflow + activity) ─────────────
 
 #[Service(name: 'CoexistService')]
-interface CoexistServiceInterface
+class CoexistService
 {
     #[Operation]
-    public function ping(string $word): string;
-}
-
-class CoexistServiceImpl implements CoexistServiceInterface
-{
     public function ping(string $word): string
     {
         return "pong-{$word}";

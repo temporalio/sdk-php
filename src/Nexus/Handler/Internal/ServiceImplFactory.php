@@ -21,10 +21,10 @@ use Temporal\Nexus\ServiceDefinition;
 /**
  * @internal Reflection-driven construction of {@see ServiceImplInstance}.
  *
- * Mirrors Workflow/Activity discovery: the impl class implements a single
- * interface annotated with {@see Service}; that interface IS the contract.
- * Operation methods are matched by name; cancel methods are bound via
- * {@see OperationCancel} attributes.
+ * Mirrors Workflow/Activity discovery: the impl class either carries
+ * {@see Service} directly (acting as its own contract) or implements a single
+ * interface annotated with {@see Service}. Operation methods are matched by
+ * name; cancel methods are bound via {@see OperationCancel} attributes.
  */
 final class ServiceImplFactory
 {
@@ -37,58 +37,19 @@ final class ServiceImplFactory
     {
         $reflection = new \ReflectionClass($instance);
 
-        $contract = self::findContractFromInterfaces($reflection);
-
-        try {
-            $serviceDefinition = ServiceDefinition::fromClass($contract->getName());
-        } catch (\Exception $e) {
-            throw new NexusException(
-                "Failed loading Nexus service contract {$contract->getName()} on {$reflection->getName()}",
-                0,
-                $e,
-            );
+        if ($reflection->isInterface() || $reflection->isAbstract()) {
+            throw new InvalidArgumentException(\sprintf(
+                'Service implementation %s must be an instantiable class',
+                $reflection->getName(),
+            ));
         }
+
+        $serviceDefinition = ServiceDefinition::fromClass($reflection->getName());
 
         $cancelMethods = self::collectCancelMethods($reflection);
         $operationHandlers = self::collectOperationHandlers($reflection, $serviceDefinition, $instance, $cancelMethods);
 
         return new ServiceImplInstance($serviceDefinition, $operationHandlers);
-    }
-
-    /**
-     * Walk the implemented interfaces and return the single one carrying {@see Service}.
-     * Reject zero or multiple matches — the contract must be unambiguous.
-     *
-     * @param \ReflectionClass<object> $reflection
-     * @return \ReflectionClass<object>
-     */
-    private static function findContractFromInterfaces(\ReflectionClass $reflection): \ReflectionClass
-    {
-        $matches = [];
-        foreach ($reflection->getInterfaces() as $interface) {
-            if ($interface->getAttributes(Service::class) !== []) {
-                $matches[$interface->getName()] = $interface;
-            }
-        }
-
-        if ($matches === []) {
-            throw new InvalidArgumentException(\sprintf(
-                'Service implementation %s must implement an interface annotated with #[%s]',
-                $reflection->getName(),
-                Service::class,
-            ));
-        }
-
-        if (\count($matches) > 1) {
-            throw new InvalidArgumentException(\sprintf(
-                'Service implementation %s implements multiple #[%s] interfaces (%s); ambiguous',
-                $reflection->getName(),
-                Service::class,
-                \implode(', ', \array_keys($matches)),
-            ));
-        }
-
-        return \reset($matches);
     }
 
     /**

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Attribute;
 
 /**
- * Marks a method on a {@see Service}-annotated interface as a Nexus operation.
+ * Marks a method on a {@see Service}-annotated type (interface or class) as a Nexus operation.
  *
  * The method signature defines the operation's input and output types. By default, the
  * operation name is the method name; override it via {@see self::$name}.
