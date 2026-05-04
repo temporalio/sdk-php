@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\WorkflowRunOperationToken;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Workflow\OnConflictOptions;
 
 /**
  * Helpers that back a Nexus operation with a Temporal workflow run.
@@ -70,6 +72,11 @@ final class WorkflowRunOperation
 
             $options = $options->withNexusCompletionCallback($details->callbackUrl, $headers);
         }
+
+        // Required so a retried StartWorkflow attaches the new completion-callback to the existing run.
+        $options = $options
+            ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting)
+            ->withOnConflictOptions(new OnConflictOptions());
 
         // Pin requestId so retried Nexus starts dedupe server-side.
         $options = $options->withRequestId($details->requestId);

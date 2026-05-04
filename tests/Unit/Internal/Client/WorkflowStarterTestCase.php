@@ -10,10 +10,12 @@ use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionResponse;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow\OnConflictOptions;
 
 /**
  * @internal
@@ -68,6 +70,55 @@ final class WorkflowStarterTestCase extends TestCase
         self::assertNotNull($request->getWorkflowStartDelay());
         self::assertSame(0, $request->getWorkflowStartDelay()->getSeconds());
         self::assertSame(42000, $request->getWorkflowStartDelay()->getNanos());
+    }
+
+    public function testOnConflictOptionsAbsentByDefault(): void
+    {
+        $request = $this->startRequest('test-workflow', new WorkflowOptions());
+
+        self::assertNull($request->getOnConflictOptions());
+    }
+
+    public function testOnConflictOptionsSerializedToProtoWithAllFlags(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withOnConflictOptions(new OnConflictOptions());
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $proto = $request->getOnConflictOptions();
+        self::assertNotNull($proto);
+        self::assertTrue($proto->getAttachRequestId());
+        self::assertTrue($proto->getAttachCompletionCallbacks());
+        self::assertTrue($proto->getAttachLinks());
+    }
+
+    public function testOnConflictOptionsSerializedToProtoWithMixedFlags(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withOnConflictOptions(new OnConflictOptions(
+                attachRequestId: false,
+                attachCompletionCallbacks: true,
+                attachLinks: false,
+            ));
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $proto = $request->getOnConflictOptions();
+        self::assertNotNull($proto);
+        self::assertFalse($proto->getAttachRequestId());
+        self::assertTrue($proto->getAttachCompletionCallbacks());
+        self::assertFalse($proto->getAttachLinks());
+    }
+
+    public function testWorkflowIdConflictPolicyUseExistingFlowsToProto(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        self::assertSame(WorkflowIdConflictPolicy::UseExisting->value, $request->getWorkflowIdConflictPolicy());
     }
 
     private function startRequest(

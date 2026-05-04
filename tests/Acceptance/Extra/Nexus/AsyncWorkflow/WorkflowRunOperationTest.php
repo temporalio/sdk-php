@@ -29,35 +29,12 @@ use Temporal\Workflow\WorkflowMethod;
  * End-to-end async Nexus operation:
  *   caller workflow → Nexus stub → WorkflowRunOperation → handler workflow → completion.
  *
- * **Expected (happy path):**
- *   1. Caller workflow starts; calls `nexusStub->hello($input)`.
- *   2. PHP sends ExecuteNexusOperation; RR invokes `wp.env.ExecuteNexusOperation`.
- *   3. RR's started callback fires (token != "") → pushes
- *      `NexusStartEnvelope{async:true, token}` back to PHP.
- *   4. PHP gets the envelope, kicks the `Workflow::async` polling loop.
- *   5. Handler workflow runs (50 ms timer + return "HELLO, …!"), completes.
- *   6. Server records `NexusOperationCompleted` on the caller workflow.
- *   7. Caller gets a new task; SDK fires the completion callback →
- *      `state.done = true` in nexusOps.
- *   8. Next `GetNexusOperationResult` poll picks up the result.
- *   9. Caller workflow returns the result; client gets "HELLO, WORLD!".
- *
- * **Actual (currently broken):**
- *   Steps 1–5 happen normally. Step 6 NEVER occurs — the caller workflow only
- *   ever receives 4 tasks (start, NexusOperationStarted, polling timer scheduled,
- *   timer fired) and the workflow times out waiting for completion.
- *
- * **Hypothesis:** completion callback URL plumbing missing in the dev-server
- * setup OR `WorkflowRunOperation::start()` isn't wiring the callback (see
- * {@see \Temporal\Nexus\WorkflowRunOperation::start()} where `$details->callbackUrl`
- * is checked — likely empty here). Caller never gets `NexusOperationCompleted`
- * in its history, so the SDK's completion callback in RR never fires and
- * `state.done` stays `false` → polling returns "not ready" forever.
- *
- * The execution timeout below is intentionally tight (5 s) so this test
- * fails fast while the underlying issue is open. Handler completes in ~2.5 s,
- * so a passing run finishes in well under 5 s. Once the completion path is
- * fixed, no further changes here are needed.
+ * Flow: PHP issues `ExecuteNexusOperation` and `GetNexusOperationStarted` in
+ * the same task; RR's nexusStarted registry pushes the start envelope when
+ * the SDK ack's the start, RR's completion callback resolves the
+ * `ExecuteNexusOperation` response when the handler workflow finishes.
+ * Tight 5s execution timeout — handler completes in ~50ms so passing runs
+ * finish well under 5s.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class WorkflowRunOperationTest extends TestCase

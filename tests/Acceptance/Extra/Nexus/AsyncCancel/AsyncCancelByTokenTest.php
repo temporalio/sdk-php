@@ -32,26 +32,11 @@ use Temporal\Workflow\WorkflowMethod;
  * Caller cancels an in-flight async Nexus operation; the rejection surfaces
  * as a {@see NexusOperationFailure} with a {@see CanceledFailure} cause.
  *
- * **Expected (happy path):**
- *   1. Caller workflow starts; `Workflow::async` spawns a scope that calls
- *      `nexusStub->longRunning('payload')`.
- *   2. PHP sends ExecuteNexusOperation; RR registers the op; started callback
- *      fires (token != "") → caller gets `NexusStartEnvelope{async:true, token}`.
- *   3. Caller cancels the async scope.
- *   4. RR sends CancelNexusOperation to the handler; handler workflow's
- *      `Workflow::timer(30s)` is cancelled, handler returns `"cancelled:payload"`.
- *   5. Server records `NexusOperationCanceled` on caller; SDK fires completion
- *      callback with a CanceledFailure cause.
- *   6. Polling loop catches `CanceledFailure`, sends CancelNexusOperationResult
- *      to RR (cleanup), result-deferred rejects with NexusOperationFailure
- *      (cause = CanceledFailure).
- *   7. Caller catches the failure, returns `'cancelled'`.
- *
- * **Actual (currently broken):** same root cause as
- * {@see \Temporal\Tests\Acceptance\Extra\Nexus\AsyncWorkflow\WorkflowRunOperationTest} —
- * the caller workflow never receives the `NexusOperationCanceled` (or any
- * completion) event. Polling stays in "not ready" forever and the workflow
- * times out. Tight 5 s timeout below makes the failure fast.
+ * Cancel propagates through the standard promise chain:
+ * cancel on the result promise → cancels the underlying `ExecuteNexusOperation`
+ * request via {@see RequestCancelNexusOperation}. The completion callback
+ * eventually fires with a CanceledFailure, the result promise rejects, and
+ * the caller catches `NexusOperationFailure` and returns `'cancelled'`.
  *
  * Exercises:
  *   - {@see NexusOperationCancellationType::WaitRequested} — caller resumes

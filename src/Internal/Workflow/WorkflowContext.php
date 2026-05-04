@@ -493,7 +493,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     ): NexusOperationStubInterface {
         return new NexusOperationStub(
             $this->services->marshaller,
-            $this->services->dataConverter,
             $options,
             $this->getHeader(),
         );

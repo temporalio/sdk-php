@@ -14,6 +14,7 @@ namespace Temporal\Internal\Client;
 use Temporal\Api\Common\V1\Callback;
 use Temporal\Api\Common\V1\Callback\Nexus as NexusCallback;
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Workflow\V1\OnConflictOptions as OnConflictOptionsProto;
 use Temporal\Api\Deployment\V1\WorkerDeploymentVersion;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
@@ -52,6 +53,7 @@ use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\CompletionCallback;
+use Temporal\Workflow\OnConflictOptions;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -278,6 +280,28 @@ final class WorkflowStarter
         );
     }
 
+    private static function completionCallbackToProto(CompletionCallback $callback): Callback
+    {
+        $nexus = new NexusCallback();
+        $nexus->setUrl($callback->url);
+        if ($callback->headers !== []) {
+            $nexus->setHeader($callback->headers);
+        }
+
+        $proto = new Callback();
+        $proto->setNexus($nexus);
+        return $proto;
+    }
+
+    private static function onConflictOptionsToProto(OnConflictOptions $options): OnConflictOptionsProto
+    {
+        $proto = new OnConflictOptionsProto();
+        $proto->setAttachRequestId($options->attachRequestId);
+        $proto->setAttachCompletionCallbacks($options->attachCompletionCallbacks);
+        $proto->setAttachLinks($options->attachLinks);
+        return $proto;
+    }
+
     /**
      * @param StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request
      *        use {@see configureExecutionRequest()} to prepare request
@@ -398,14 +422,15 @@ final class WorkflowStarter
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);
 
-            // Completion callbacks are only valid on the start path —
-            // SignalWithStartWorkflowExecutionRequest does not carry the
-            // `completion_callbacks` field. Used by Nexus WorkflowRunOperation
-            // handlers to register the caller's callback URL on the workflow.
+            // SignalWithStart's proto has no completion_callbacks / on_conflict_options field — start path only.
             if ($options->completionCallbacks !== []) {
                 $req->setCompletionCallbacks(
                     \array_map(self::completionCallbackToProto(...), $options->completionCallbacks),
                 );
+            }
+
+            if ($options->onConflictOptions !== null) {
+                $req->setOnConflictOptions(self::onConflictOptionsToProto($options->onConflictOptions));
             }
         }
 
@@ -414,18 +439,5 @@ final class WorkflowStarter
         }
 
         return $req;
-    }
-
-    private static function completionCallbackToProto(CompletionCallback $callback): Callback
-    {
-        $nexus = new NexusCallback();
-        $nexus->setUrl($callback->url);
-        if ($callback->headers !== []) {
-            $nexus->setHeader($callback->headers);
-        }
-
-        $proto = new Callback();
-        $proto->setNexus($nexus);
-        return $proto;
     }
 }

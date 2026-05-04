@@ -36,6 +36,7 @@ use Temporal\Internal\Support\Options;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Workflow\CompletionCallback;
+use Temporal\Workflow\OnConflictOptions;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -215,6 +216,18 @@ final class WorkflowOptions extends Options
      * @since Nexus support
      */
     public array $completionCallbacks = [];
+
+    /**
+     * Controls what server attaches to an existing run when
+     * {@see $workflowIdConflictPolicy} is {@see WorkflowIdConflictPolicy::UseExisting}.
+     * Required for Nexus completion-callback delivery to survive idempotent
+     * `StartWorkflow` retries.
+     *
+     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
+     *
+     * @since Nexus support
+     */
+    public ?OnConflictOptions $onConflictOptions = null;
 
     /**
      * @throws \Exception
@@ -678,6 +691,21 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
         $self->completionCallbacks = \array_values($callbacks);
+        return $self;
+    }
+
+    /**
+     * Set the on-conflict attachment flags applied when {@see $workflowIdConflictPolicy}
+     * is {@see WorkflowIdConflictPolicy::UseExisting}. Pass `null` to clear.
+     *
+     * @return $this
+     * @since Nexus support
+     */
+    #[Pure]
+    public function withOnConflictOptions(?OnConflictOptions $options): self
+    {
+        $self = clone $this;
+        $self->onConflictOptions = $options;
         return $self;
     }
 }

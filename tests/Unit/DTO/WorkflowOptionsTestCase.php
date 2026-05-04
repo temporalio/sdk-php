@@ -20,6 +20,7 @@ use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
+use Temporal\Workflow\OnConflictOptions;
 
 class WorkflowOptionsTestCase extends AbstractDTOMarshalling
 {
@@ -62,6 +63,7 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             // Nexus-specific overrides; not marshalled to Go.
             $result['requestId'],
             $result['completionCallbacks'],
+            $result['onConflictOptions'],
         );
 
         $this->assertSame($expected, $result);
@@ -246,5 +248,34 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
 
         $this->assertInstanceOf(SearchAttributes::class, $result);
         $this->assertCount(1, $result->getIndexedFields());
+    }
+
+    public function testOnConflictOptionsDefaultsToNull(): void
+    {
+        $dto = new WorkflowOptions();
+
+        $this->assertNull($dto->onConflictOptions);
+    }
+
+    public function testWithOnConflictOptionsDoesNotMutate(): void
+    {
+        $dto = new WorkflowOptions();
+        $options = new OnConflictOptions();
+
+        $newDto = $dto->withOnConflictOptions($options);
+
+        $this->assertNotSame($dto, $newDto);
+        $this->assertNull($dto->onConflictOptions);
+        $this->assertSame($options, $newDto->onConflictOptions);
+    }
+
+    public function testWithOnConflictOptionsAcceptsNull(): void
+    {
+        $dto = (new WorkflowOptions())->withOnConflictOptions(new OnConflictOptions());
+
+        $cleared = $dto->withOnConflictOptions(null);
+
+        $this->assertNotNull($dto->onConflictOptions);
+        $this->assertNull($cleared->onConflictOptions);
     }
 }
