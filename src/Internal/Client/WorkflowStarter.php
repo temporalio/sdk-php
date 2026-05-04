@@ -290,6 +290,9 @@ final class WorkflowStarter
 
         $proto = new Callback();
         $proto->setNexus($nexus);
+        if ($callback->links !== []) {
+            $proto->setLinks($callback->links);
+        }
         return $proto;
     }
 
@@ -431,6 +434,10 @@ final class WorkflowStarter
 
             if ($options->onConflictOptions !== null) {
                 $req->setOnConflictOptions(self::onConflictOptionsToProto($options->onConflictOptions));
+            }
+
+            if ($options->links !== []) {
+                $req->setLinks($options->links);
             }
         }
 

@@ -31,8 +31,10 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Nexus\Link as NexusLink;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Workflow\CompletionCallback;
@@ -228,6 +230,18 @@ final class WorkflowOptions extends Options
      * @since Nexus support
      */
     public ?OnConflictOptions $onConflictOptions = null;
+
+    /**
+     * Proto Link[] propagated as `StartWorkflowExecutionRequest.links` for
+     * legacy compat with servers that don't read links from completion
+     * callbacks. Populated by Nexus caller-side; empty for normal workflows.
+     *
+     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
+     *
+     * @var list<\Temporal\Api\Common\V1\Link>
+     * @since Nexus support
+     */
+    public array $links = [];
 
     /**
      * @throws \Exception
@@ -706,6 +720,23 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
         $self->onConflictOptions = $options;
+        return $self;
+    }
+
+    /**
+     * Replace the link list with proto Link[] derived from Nexus-level URIs.
+     *
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @param iterable<NexusLink> $nexusLinks
+     * @return $this
+     * @since Nexus support
+     */
+    #[Pure]
+    public function withLinks(iterable $nexusLinks): self
+    {
+        $self = clone $this;
+        $self->links = NexusLinkConverter::toProtoLinks($nexusLinks);
         return $self;
     }
 }

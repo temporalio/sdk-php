@@ -20,6 +20,8 @@ use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
+use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Nexus\Link as NexusLink;
 use Temporal\Workflow\OnConflictOptions;
 
 class WorkflowOptionsTestCase extends AbstractDTOMarshalling
@@ -64,6 +66,7 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             $result['requestId'],
             $result['completionCallbacks'],
             $result['onConflictOptions'],
+            $result['links'],
         );
 
         $this->assertSame($expected, $result);
@@ -267,6 +270,24 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertNotSame($dto, $newDto);
         $this->assertNull($dto->onConflictOptions);
         $this->assertSame($options, $newDto->onConflictOptions);
+    }
+
+    public function testLinksDefaultEmpty(): void
+    {
+        $dto = new WorkflowOptions();
+        $this->assertSame([], $dto->links);
+    }
+
+    public function testWithLinksImmutability(): void
+    {
+        $uri = 'temporal:///namespaces/n/workflows/w/r/history'
+            . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
+        $dto = new WorkflowOptions();
+        $newDto = $dto->withLinks([new NexusLink($uri, NexusLinkConverter::TYPE_WORKFLOW_EVENT)]);
+
+        $this->assertNotSame($dto, $newDto);
+        $this->assertSame([], $dto->links);
+        $this->assertCount(1, $newDto->links);
     }
 
     public function testWithOnConflictOptionsAcceptsNull(): void

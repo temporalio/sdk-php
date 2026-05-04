@@ -14,7 +14,10 @@ use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Nexus\Link as NexusLink;
+use Temporal\Workflow\CompletionCallback;
 use Temporal\Workflow\OnConflictOptions;
 
 /**
@@ -119,6 +122,40 @@ final class WorkflowStarterTestCase extends TestCase
         $request = $this->startRequest('test-workflow', $options);
 
         self::assertSame(WorkflowIdConflictPolicy::UseExisting->value, $request->getWorkflowIdConflictPolicy());
+    }
+
+    public function testStartRequestCarriesTopLevelLinks(): void
+    {
+        $uri = 'temporal:///namespaces/n/workflows/w/r/history'
+            . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
+        $options = (new WorkflowOptions())
+            ->withLinks([new NexusLink($uri, NexusLinkConverter::TYPE_WORKFLOW_EVENT)]);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $links = \iterator_to_array($request->getLinks());
+        self::assertCount(1, $links);
+        self::assertNotNull($links[0]->getWorkflowEvent());
+    }
+
+    public function testCompletionCallbackProtoIncludesLinks(): void
+    {
+        $uri = 'temporal:///namespaces/n/workflows/w/r/history'
+            . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
+        $callback = CompletionCallback::withNexusLinks(
+            'http://cb',
+            [],
+            [new NexusLink($uri, NexusLinkConverter::TYPE_WORKFLOW_EVENT)],
+        );
+        $options = (new WorkflowOptions())->withCompletionCallbacks($callback);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $callbacks = \iterator_to_array($request->getCompletionCallbacks());
+        self::assertCount(1, $callbacks);
+        $links = \iterator_to_array($callbacks[0]->getLinks());
+        self::assertCount(1, $links);
+        self::assertNotNull($links[0]->getWorkflowEvent());
     }
 
     private function startRequest(

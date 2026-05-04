@@ -13,6 +13,7 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Internal\Nexus\WorkflowRunOperationToken;
+use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Nexus\WorkflowHandle;
@@ -39,6 +40,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         $this->client = $this->createMock(WorkflowClientInterface::class);
         Nexus::setCurrentContext(new NexusContext(
             operation: new NexusOperationContext(self::NS, 'tq', $this->client),
+            current: new OperationContext(service: 'svc', operation: 'op'),
         ));
     }
 
@@ -170,6 +172,33 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
 
         self::assertSame('explicit-queue', $captured->taskQueue);
+    }
+
+    public function testStartAddsSelfLinkToOperationContext(): void
+    {
+        $stub = $this->createMock(WorkflowStubInterface::class);
+        $this->client->method('newWorkflowStub')->willReturn($stub);
+
+        $run = $this->createMock(\Temporal\Workflow\WorkflowRunInterface::class);
+        $run->method('getExecution')->willReturn(
+            new \Temporal\Workflow\WorkflowExecution(self::WID, 'run-xyz'),
+        );
+        $this->client->method('start')->willReturn($run);
+
+        WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                FakeWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId(self::WID),
+            ),
+            new OperationStartDetails(requestId: 'req-1', callbackUrl: null, callbackHeaders: [], links: []),
+        );
+
+        $links = Nexus::getCurrentContext()->links->all();
+        self::assertCount(1, $links);
+        self::assertSame(\Temporal\Internal\Nexus\NexusLinkConverter::TYPE_WORKFLOW_EVENT, $links[0]->type);
+        self::assertStringContainsString('/namespaces/' . self::NS . '/', $links[0]->uri);
+        self::assertStringContainsString('/workflows/' . self::WID . '/run-xyz/history', $links[0]->uri);
+        self::assertStringContainsString('eventType=WorkflowExecutionStarted', $links[0]->uri);
     }
 
     public function testStartFailsWithoutWorkflowId(): void
