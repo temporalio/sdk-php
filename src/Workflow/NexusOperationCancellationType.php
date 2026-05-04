@@ -18,6 +18,18 @@ namespace Temporal\Workflow;
 enum NexusOperationCancellationType: int
 {
     case Unspecified = self::UNSPECIFIED;
+
+    /**
+     * Do not request cancellation of the operation. The handler workflow
+     * keeps running; the caller workflow continues to await its natural
+     * completion (the SDK suppresses the wire-level cancel command, so the
+     * server is never notified of the caller's cancel request).
+     *
+     * Note: only the cancel-suppression part is implemented. The Java/Go
+     * semantics also let the caller resume *immediately* after the local
+     * cancel without awaiting the handler — that requires plumbing through
+     * `Internal\Workflow\Process\Scope::onRequest` and is not yet supported.
+     */
     case Abandon = self::ABANDON;
     case TryCancel = self::TRY_CANCEL;
     case WaitRequested = self::WAIT_REQUESTED;

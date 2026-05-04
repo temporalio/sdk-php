@@ -29,28 +29,20 @@ use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
- * P1 #6–7 — async-cancel matrix (subset that's well-defined on PHP today).
+ * P1 #6–8 — async-cancel matrix.
  *
- * The existing {@see \Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel\AsyncCancelByTokenTest}
- * covers only `WaitRequested`. This suite covers two more:
+ * Existing {@see \Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel\AsyncCancelByTokenTest}
+ * covers `WaitRequested`. This suite covers the rest:
  *   - `TryCancel`     — caller resumes after cancel is sent; handler observes
  *                       a CanceledFailure too.
  *   - `WaitCompleted` — caller waits until the handler workflow has fully
  *                       finished after the cancel.
+ *   - `Abandon`       — caller's cancel is suppressed, handler runs to natural
+ *                       completion, caller observes the handler's result.
  *
- * Two scenarios that the original plan listed are deferred:
- *
- *   - `Abandon` (P1 #8) — the spec calls for cancel to NOT be propagated to
- *     the handler workflow. In PHP today, `Workflow::async()->cancel()` still
- *     reaches the handler regardless of `cancellationType`. Either the PHP
- *     caller-side API needs to honor Abandon, or this scenario needs a
- *     different test vector. Tracked as a gap in nexus_plan.md.
- *
- *   - "Cancel before handler started" (P1 #9) — `Workflow::async() + immediate
- *     cancel()` raced and the caller workflow failed with
- *     retryState=NON_RETRYABLE. Needs a different primitive (cancel between
- *     `start()` schedule and the workflow task that issues the start command).
- *     Tracked as a gap in nexus_plan.md.
+ * P1 #9 ("cancel before handler started") is still deferred — `Workflow::async()
+ * + immediate cancel()` raced and the caller workflow failed with
+ * retryState=NON_RETRYABLE. Needs a different primitive. Tracked in nexus_plan.md.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class AsyncCancelTypesTest extends TestCase
@@ -82,6 +74,18 @@ class AsyncCancelTypesTest extends TestCase
         self::assertSame(
             'cancelled:payload',
             $this->runCancelScenario($state, $client, 'wait-completed'),
+        );
+    }
+
+    #[Test]
+    public function abandon(State $state, WorkflowClientInterface $client): void
+    {
+        // Abandon: caller's cancel is suppressed at the wire level. The handler
+        // workflow never sees a CanceledFailure and runs to natural completion;
+        // the caller observes the handler's normal return value.
+        self::assertSame(
+            'completed:payload',
+            $this->runCancelScenario($state, $client, 'abandon'),
         );
     }
 
@@ -155,6 +159,56 @@ class LongRunningHandlerWorkflow
     }
 }
 
+// ── Service B: short handler for Abandon scenario ──────────────────
+//
+// Abandon suppresses the wire cancel, so the caller awaits the handler's
+// natural completion. A 1s timer keeps the test fast.
+
+#[Service(name: 'AbandonService')]
+interface AbandonService
+{
+    #[AsyncOperation(output: 'string')]
+    public function run(string $input): OperationInfo;
+}
+
+class AbandonServiceImpl implements AbandonService
+{
+    public function run(string $input): OperationInfo
+    {
+        $details = Nexus::getStartDetails();
+        return WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                AbandonHandlerWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId($details->requestId),
+                $input,
+            ),
+            $details,
+        );
+    }
+
+    #[OperationCancel(operation: 'run')]
+    public function cancel(string $token): void
+    {
+        WorkflowRunOperation::cancel($token);
+    }
+}
+
+#[WorkflowInterface]
+class AbandonHandlerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_AsyncCancelTypes_AbandonHandler')]
+    public function handle(string $input)
+    {
+        try {
+            yield Workflow::timer(CarbonInterval::seconds(1));
+            return "completed:{$input}";
+        } catch (CanceledFailure) {
+            // Should NOT reach here in the Abandon scenario.
+            return "WRONG-cancelled:{$input}";
+        }
+    }
+}
+
 // ── Caller workflow ────────────────────────────────────────────────
 
 #[WorkflowInterface]
@@ -184,12 +238,14 @@ class CancelTypesCallerWorkflow
         $scope->cancel();
 
         try {
-            // For TryCancel/WaitCompleted: handler observes cancel and rejects
-            // with CanceledFailure. For Abandon: cancel never reaches handler,
-            // so the operation resolves with the handler's natural result.
+            // For TryCancel: handler observes cancel and rejects via
+            // CanceledFailure (caller catches it before handler completes).
+            // For WaitCompleted: caller awaits the handler's CanceledFailure-
+            // recovery path, which returns "cancelled:payload" naturally.
+            // For Abandon: cancel is suppressed at the wire level, handler
+            // runs to completion and returns its natural result.
             $result = yield $promise;
 
-            // Expected only for Abandon — returned to the test verbatim.
             return $result;
         } catch (NexusOperationFailure $e) {
             $cause = $e->getPrevious();
@@ -218,6 +274,12 @@ class CancelTypesCallerWorkflow
                 CancelTypesService::class,
                 'longRunning',
                 500,
+            ],
+            'abandon' => [
+                NexusOperationCancellationType::Abandon->value,
+                AbandonService::class,
+                'run',
+                300,
             ],
             default => throw new \InvalidArgumentException("unknown scenario: {$scenario}"),
         };

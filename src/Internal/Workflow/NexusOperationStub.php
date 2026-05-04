@@ -16,6 +16,7 @@ use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
 use Temporal\Internal\Transport\Request\GetNexusOperationStarted;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
+use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationHandle;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\NexusOperationStubInterface;
@@ -70,9 +71,26 @@ final class NexusOperationStub implements NexusOperationStubInterface
 
         $startId = $startRequest->getID();
 
+        // For `Abandon`: caller scope cancellation must NOT propagate a cancel
+        // request to the server (Java/Go SDK semantics). We achieve this by
+        // marking the start request as non-cancellable on the workflow scope —
+        // see {@see \Temporal\Internal\Workflow\Process\Scope::onRequest()} where
+        // a `cancellable=false` request short-circuits the `Cancel` command.
+        // Result-promise wiring is unchanged: the handler workflow runs to its
+        // natural completion and the caller observes the result.
+        //
+        // Note: this is a partial implementation. The Go SDK's `Abandon`
+        // additionally lets the caller workflow resume *immediately* after the
+        // local cancel rather than awaiting the handler's natural completion.
+        // Achieving that requires rejecting the local promise on scope cancel
+        // without notifying the server — currently no PHP API surface to do so
+        // cleanly without touching `Scope::onRequest`. Mirrors the same gap
+        // documented on {@see \Temporal\Workflow\ChildWorkflowCancellationType::Abandon}.
+        $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::ABANDON;
+
         // Two parallel requests, mirroring ChildWorkflowStub::start(): the start request waits for completion, GetNexusOperationStarted waits for the started ack via RR's nexusStarted registry.
         $resultPromise = $this->normalizeFailure(
-            $this->request($startRequest),
+            $this->request($startRequest, cancellable: $cancellable),
             $endpoint,
             $service,
             $operation,
@@ -88,9 +106,9 @@ final class NexusOperationStub implements NexusOperationStubInterface
         );
     }
 
-    protected function request(RequestInterface $request): PromiseInterface
+    protected function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
-        return Workflow::getCurrentContext()->request($request);
+        return Workflow::getCurrentContext()->request($request, $cancellable);
     }
 
     /**
