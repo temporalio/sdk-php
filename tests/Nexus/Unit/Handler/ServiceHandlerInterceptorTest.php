@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
@@ -18,14 +21,12 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\Trait\NexusOperationInboundCallsInterceptorTrait;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
-use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -58,7 +59,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         };
 
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$record('A'), $record('B'), $record('C')]),
         );
@@ -66,7 +67,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $handler->startOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('User'),
+            self::encode('User'),
         );
 
         // First registered interceptor is the outermost.
@@ -90,7 +91,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         };
 
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$overriding]),
         );
@@ -98,10 +99,10 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $result = $handler->startOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('Alice'),
+            self::encode('Alice'),
         );
 
-        self::assertSame('rewritten-Alice', $result->value->data);
+        self::assertSame('rewritten-Alice', $result->value->getValue(0, 'string'));
     }
 
     public function testInterceptorExceptionPropagates(): void
@@ -118,7 +119,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         };
 
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$exploding]),
         );
@@ -128,7 +129,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $handler->startOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('X'),
+            self::encode('X'),
         );
     }
 
@@ -151,7 +152,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         // The injected apiClient is invoked by the async sayHello2 path; we make it throw.
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(
                 static fn(string $n): string => throw HandlerException::create(ErrorType::Internal, 'boom'),
             ))],
@@ -161,10 +162,10 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $result = $handler->startOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('X'),
+            self::encode('X'),
         );
 
-        self::assertSame('fallback', $result->value->data);
+        self::assertSame('fallback', $result->value->getValue(0, 'string'));
     }
 
     public function testCancelInterceptorReceivesContext(): void
@@ -184,7 +185,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         };
 
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$observer]),
         );
@@ -192,7 +193,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $started = $handler->startOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('User'),
+            self::encode('User'),
         );
 
         $token = $started->info->token;
@@ -204,5 +205,15 @@ final class ServiceHandlerInterceptorTest extends TestCase
         );
 
         self::assertSame(["sayHello2:{$token}"], $seen);
+    }
+
+    private static function dataConverter(): DataConverterInterface
+    {
+        return DataConverter::createDefault();
+    }
+
+    private static function encode(mixed $value): EncodedValues
+    {
+        return EncodedValues::fromValues([$value], self::dataConverter());
     }
 }

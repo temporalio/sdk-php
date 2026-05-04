@@ -22,7 +22,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Nexus\PayloadSerializer;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -176,7 +175,6 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     {
         $handler = new NexusTaskHandler(
             $this->services->nexusServices,
-            new PayloadSerializer($this->services->dataConverter),
             $this->services->dataConverter,
             interceptorProvider: $this->services->interceptorProvider,
         );

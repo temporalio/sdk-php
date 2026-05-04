@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\DataConverter\DataConverter;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
-use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +27,7 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No service instances defined');
         ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: DataConverter::createDefault(),
             instances: [],
         );
     }
@@ -39,22 +39,22 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Multiple instances registered for service name");
         ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: DataConverter::createDefault(),
             instances: [$instance, $instance],
         );
     }
 
     public function testGetters(): void
     {
-        $serializer = new StringOnlySerializer();
+        $dataConverter = DataConverter::createDefault();
         $instance = ServiceImplInstance::fromInstance(new VoidServiceImpl());
 
         $handler = ServiceHandler::create(
-            serializer: $serializer,
+            dataConverter: $dataConverter,
             instances: [$instance],
         );
 
-        self::assertSame($serializer, $handler->getSerializer());
+        self::assertSame($dataConverter, $handler->getDataConverter());
         self::assertCount(1, $handler->getInstances());
     }
 }

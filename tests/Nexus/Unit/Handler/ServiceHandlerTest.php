@@ -11,17 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
-use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
@@ -44,10 +45,10 @@ final class ServiceHandlerTest extends TestCase
         $result = $handler->startOperation(
             self::newGreetingContext('sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('SomeUser'),
+            self::encode('SomeUser'),
         );
 
-        self::assertSame('Hello, SomeUser!', $result->value->data);
+        self::assertSame('Hello, SomeUser!', $result->value->getValue(0, 'string'));
     }
 
     public function testAsyncHandlerReturnsToken(): void
@@ -57,7 +58,7 @@ final class ServiceHandlerTest extends TestCase
         $result = $handler->startOperation(
             self::newGreetingContext('sayHello2'),
             new OperationStartDetails(requestId: 'r3'),
-            new HandlerInputContent('SomeUser'),
+            self::encode('SomeUser'),
         );
 
         $token = $result->info->token;
@@ -73,7 +74,7 @@ final class ServiceHandlerTest extends TestCase
         $result = $handler->startOperation(
             $context,
             new OperationStartDetails(requestId: 'r4'),
-            new HandlerInputContent('SomeUser-link'),
+            self::encode('SomeUser-link'),
         );
 
         self::assertNotNull($result->info->token);
@@ -98,10 +99,10 @@ final class ServiceHandlerTest extends TestCase
                 headers: [AuthInterceptor::AUTH_HEADER => $token],
             ),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('SomeUser'),
+            self::encode('SomeUser'),
         );
 
-        self::assertSame('Hello, SomeUser!', $result->value->data);
+        self::assertSame('Hello, SomeUser!', $result->value->getValue(0, 'string'));
     }
 
     public function testAuthInterceptorRejectsCallWithMissingToken(): void
@@ -118,7 +119,7 @@ final class ServiceHandlerTest extends TestCase
                 operation: 'sayHello1',
             ),
             new OperationStartDetails(requestId: 'r2'),
-            new HandlerInputContent('SomeUser'),
+            self::encode('SomeUser'),
         );
     }
 
@@ -138,7 +139,7 @@ final class ServiceHandlerTest extends TestCase
                 headers: [AuthInterceptor::AUTH_HEADER => $token],
             ),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('SomeUser'),
+            self::encode('SomeUser'),
         );
 
         // Auth is before logging, so an unauthorized call never reaches the logger.
@@ -148,7 +149,7 @@ final class ServiceHandlerTest extends TestCase
     public function testUnrecognizedService(): void
     {
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
         );
 
@@ -156,14 +157,14 @@ final class ServiceHandlerTest extends TestCase
         $handler->startOperation(
             new OperationContext(service: 'NonExistent', operation: 'op'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent(''),
+            EncodedValues::empty(),
         );
     }
 
     public function testUnrecognizedOperation(): void
     {
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
         );
 
@@ -171,14 +172,14 @@ final class ServiceHandlerTest extends TestCase
         $handler->startOperation(
             new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent'),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent(''),
+            EncodedValues::empty(),
         );
     }
 
     public function testCancelOnSyncHandlerThrowsNotImplemented(): void
     {
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
         );
 
@@ -195,7 +196,7 @@ final class ServiceHandlerTest extends TestCase
         $apiClient = static fn(string $name): string => "greeting-{$name}";
 
         return ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl($apiClient))],
             interceptorProvider: $interceptorProvider ?? new SimplePipelineProvider(),
         );
@@ -204,5 +205,15 @@ final class ServiceHandlerTest extends TestCase
     private static function newGreetingContext(string $operation): OperationContext
     {
         return new OperationContext(service: 'GreetingServiceInterface', operation: $operation);
+    }
+
+    private static function dataConverter(): DataConverterInterface
+    {
+        return DataConverter::createDefault();
+    }
+
+    private static function encode(mixed $value): EncodedValues
+    {
+        return EncodedValues::fromValues([$value], self::dataConverter());
     }
 }

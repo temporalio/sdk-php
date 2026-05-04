@@ -20,7 +20,7 @@ use Temporal\Workflow\WorkflowMethod;
 /**
  * Acceptance test: Nexus operations with varying input/output shapes
  * (void, scalar, int, DTO). Validates that the reflection-based OperationDefinition
- * correctly registers the types and PayloadSerializer round-trips each one.
+ * correctly registers the types and the data converter round-trips each one.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class InputTypesTest extends TestCase

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
@@ -24,7 +25,7 @@ interface HandlerInterface
     /**
      * Handle the start of an operation.
      *
-     * @return OperationStartResult<HandlerResultContent>
+     * @return OperationStartResult<ValuesInterface>
      *
      * @throws OperationException
      * @throws HandlerException
@@ -32,7 +33,7 @@ interface HandlerInterface
     public function startOperation(
         OperationContext $context,
         OperationStartDetails $details,
-        HandlerInputContent $input,
+        ValuesInterface $input,
         ?NexusOperationContext $nexusOperation = null,
     ): OperationStartResult;
 

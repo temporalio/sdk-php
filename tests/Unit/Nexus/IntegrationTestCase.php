@@ -23,7 +23,6 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
-use Temporal\Nexus\PayloadSerializer;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
@@ -131,21 +130,19 @@ final class IntegrationTestCase extends AbstractUnit
 {
     private InvokeNexusOperation $invokeRoute;
     private CancelNexusOperation $cancelRoute;
-    private PayloadSerializer $serializer;
     private DataConverter $dataConverter;
     private EchoServiceImpl $serviceImpl;
 
     protected function setUp(): void
     {
         $this->dataConverter = DataConverter::createDefault();
-        $this->serializer = new PayloadSerializer($this->dataConverter);
 
         $this->serviceImpl = new EchoServiceImpl();
 
         $repository = new \Temporal\Internal\Nexus\NexusServiceRepository();
         $repository->add(\Temporal\Nexus\Handler\Internal\ServiceImplInstance::fromInstance($this->serviceImpl));
 
-        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->serializer, $this->dataConverter);
+        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
 
         $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry());
         $this->cancelRoute = new CancelNexusOperation($taskHandler);

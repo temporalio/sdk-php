@@ -14,8 +14,6 @@ namespace Temporal\Internal\Nexus;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\AsyncOperationStartResult;
-use Temporal\Nexus\Handler\Internal\HandlerInputContent;
-use Temporal\Nexus\Handler\Internal\HandlerResultContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
@@ -24,7 +22,6 @@ use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Header as NexusHeader;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\LinkParser;
-use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
@@ -39,6 +36,7 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Nexus\NexusOperationContext;
 
@@ -59,7 +57,6 @@ final class NexusTaskHandler
      */
     public function __construct(
         private readonly NexusServiceRepository $repository,
-        private readonly SerializerInterface $serializer,
         private readonly DataConverterInterface $dataConverter,
         private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
@@ -133,16 +130,7 @@ final class NexusTaskHandler
             links: $links,
         );
 
-        $inputData = '';
-        $inputHeaders = [];
-        $payload = $startRequest->getPayload();
-        if ($payload !== null) {
-            $inputData = $payload->getData();
-            foreach ($payload->getMetadata() as $key => $value) {
-                $inputHeaders[(string) $key] = (string) $value;
-            }
-        }
-        $input = new HandlerInputContent($inputData, $inputHeaders);
+        $input = $this->buildInputFromPayload($startRequest->getPayload());
 
         try {
             $result = $this->getServiceHandler()->startOperation(
@@ -157,13 +145,8 @@ final class NexusTaskHandler
             if ($result instanceof SyncOperationStartResult) {
                 $syncResponse = new StartOperationResponse\Sync();
 
-                $content = $result->value;
-                if ($content instanceof HandlerResultContent) {
-                    $resultPayload = new Payload();
-                    $resultPayload->setData($content->data);
-                    if ($content->headers !== []) {
-                        $resultPayload->setMetadata($content->headers);
-                    }
+                $resultPayload = self::extractFirstPayload($result->value);
+                if ($resultPayload !== null) {
                     $syncResponse->setPayload($resultPayload);
                 }
 
@@ -245,8 +228,8 @@ final class NexusTaskHandler
     public function startOperationDirect(
         OperationContext $context,
         OperationStartDetails $details,
-        HandlerInputContent $input,
-    ): EncodedValues {
+        ValuesInterface $input,
+    ): ValuesInterface {
         $result = $this->getServiceHandler()->startOperation(
             $context,
             $details,
@@ -258,17 +241,10 @@ final class NexusTaskHandler
         $linksJson = self::encodeLinksMetadata($context->links->all());
 
         if ($result instanceof SyncOperationStartResult) {
-            $payload = new Payload();
-            $metadata = [];
-            $content = $result->value;
-            if ($content instanceof HandlerResultContent) {
-                $payload->setData($content->data);
-                $metadata = $content->headers;
-            }
+            $payload = self::extractFirstPayload($result->value) ?? new Payload();
             if ($linksJson !== null) {
+                $metadata = \iterator_to_array($payload->getMetadata());
                 $metadata[RrMetadata::LINKS_KEY] = $linksJson;
-            }
-            if ($metadata !== []) {
                 $payload->setMetadata($metadata);
             }
 
@@ -321,6 +297,30 @@ final class NexusTaskHandler
         return \json_encode($out, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
+    private static function extractFirstPayload(mixed $value): ?Payload
+    {
+        if (!$value instanceof ValuesInterface) {
+            return null;
+        }
+        $payloads = $value->toPayloads()->getPayloads();
+        if ($payloads->count() === 0) {
+            return null;
+        }
+        return $payloads[0];
+    }
+
+    /**
+     * Wrap a single proto Payload (or none) into a ValuesInterface for ServiceHandler.
+     */
+    private function buildInputFromPayload(?Payload $payload): ValuesInterface
+    {
+        $payloads = new Payloads();
+        if ($payload !== null) {
+            $payloads->setPayloads([$payload]);
+        }
+        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
+    }
+
     private function buildNexusOperationContext(): ?NexusOperationContext
     {
         if ($this->workerEnvironment === null) {
@@ -340,7 +340,7 @@ final class NexusTaskHandler
             }
 
             $this->serviceHandler = ServiceHandler::create(
-                serializer: $this->serializer,
+                dataConverter: $this->dataConverter,
                 instances: $instances,
                 interceptorProvider: $this->interceptorProvider,
             );

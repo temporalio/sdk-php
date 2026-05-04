@@ -23,10 +23,10 @@ use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusServiceRepository;
 use Temporal\Internal\Nexus\NexusTaskHandler;
-use Temporal\Nexus\PayloadSerializer;
 use Temporal\Tests\Unit\AbstractUnit;
 
 #[Service]
@@ -94,7 +94,7 @@ class TestGreetingServiceImpl implements TestGreetingService
 final class NexusTaskHandlerTestCase extends AbstractUnit
 {
     private NexusTaskHandler $handler;
-    private PayloadSerializer $serializer;
+    private DataConverterInterface $dataConverter;
 
     public function testStartSyncOperation(): void
     {
@@ -109,13 +109,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $payload = $startResp->getSyncSuccess()->getPayload();
         self::assertNotNull($payload);
 
-        $result = $this->serializer->deserialize(
-            new \Temporal\Nexus\Serializer\Internal\Content(
-                $payload->getData(),
-                \iterator_to_array($payload->getMetadata()),
-            ),
-            'string',
-        );
+        $result = $this->dataConverter->fromPayload($payload, 'string');
         self::assertSame('Hello, World!', $result);
     }
 
@@ -180,8 +174,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
         $handler = new NexusTaskHandler(
             $repository,
-            $this->serializer,
-            DataConverter::createDefault(),
+            $this->dataConverter,
             includeTracebackInFailure: false,
         );
 
@@ -252,12 +245,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $startReq->setRequestId('req-123');
         $startReq->setCallback('http://callback.example.com/complete');
         $startReq->setCallbackHeader(['Authorization' => 'Bearer token']);
-
-        $payload = $this->serializer->serialize('World');
-        $protoPayload = new Payload();
-        $protoPayload->setData($payload->data);
-        $protoPayload->setMetadata($payload->headers);
-        $startReq->setPayload($protoPayload);
+        $startReq->setPayload($this->dataConverter->toPayload('World'));
 
         $request = new Request();
         $request->setStartOperation($startReq);
@@ -293,12 +281,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $startReq->setOperation('sayHello');
         $startReq->setRequestId('req-456');
         $startReq->setLinks([$link]);
-
-        $payload = $this->serializer->serialize('World');
-        $protoPayload = new Payload();
-        $protoPayload->setData($payload->data);
-        $protoPayload->setMetadata($payload->headers);
-        $startReq->setPayload($protoPayload);
+        $startReq->setPayload($this->dataConverter->toPayload('World'));
 
         $request = new Request();
         $request->setStartOperation($startReq);
@@ -309,28 +292,21 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
     protected function setUp(): void
     {
-        $dataConverter = DataConverter::createDefault();
-        $this->serializer = new PayloadSerializer($dataConverter);
+        $this->dataConverter = DataConverter::createDefault();
 
         $repository = new NexusServiceRepository();
         $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
 
-        $this->handler = new NexusTaskHandler($repository, $this->serializer, $dataConverter);
+        $this->handler = new NexusTaskHandler($repository, $this->dataConverter);
     }
 
     private function buildStartRequest(string $service, string $operation, string $input): Request
     {
-        $content = $this->serializer->serialize($input);
-
-        $payload = new Payload();
-        $payload->setData($content->data);
-        $payload->setMetadata($content->headers);
-
         $startReq = new StartOperationRequest();
         $startReq->setService($service);
         $startReq->setOperation($operation);
         $startReq->setRequestId('test-request-id');
-        $startReq->setPayload($payload);
+        $startReq->setPayload($this->dataConverter->toPayload($input));
 
         $request = new Request();
         $request->setStartOperation($startReq);
@@ -343,15 +319,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $payload = $startResp->getSyncSuccess()->getPayload();
         self::assertNotNull($payload);
 
-        $result = $this->serializer->deserialize(
-            new \Temporal\Nexus\Serializer\Internal\Content(
-                $payload->getData(),
-                \iterator_to_array($payload->getMetadata()),
-            ),
-            'string',
-        );
-
-        return (string) $result;
+        return (string) $this->dataConverter->fromPayload($payload, 'string');
     }
 
     private function buildCancelRequest(string $service, string $operation, string $token): Request

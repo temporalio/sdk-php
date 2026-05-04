@@ -11,16 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
-use Temporal\Tests\Nexus\Fixture\Serializer\StringOnlySerializer;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
@@ -33,7 +34,7 @@ final class CancelOperationTest extends TestCase
     public function testCancelUnrecognizedService(): void
     {
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [
                 ServiceImplInstance::fromInstance(new VoidServiceImpl()),
             ],
@@ -49,7 +50,7 @@ final class CancelOperationTest extends TestCase
     public function testCancelUnrecognizedOperation(): void
     {
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [
                 ServiceImplInstance::fromInstance(new VoidServiceImpl()),
             ],
@@ -69,7 +70,7 @@ final class CancelOperationTest extends TestCase
         $loggingInterceptor = new LoggingInterceptor();
 
         $handler = ServiceHandler::create(
-            serializer: new StringOnlySerializer(),
+            dataConverter: self::dataConverter(),
             instances: [
                 ServiceImplInstance::fromInstance(new GreetingServiceImpl($apiClient)),
             ],
@@ -87,7 +88,7 @@ final class CancelOperationTest extends TestCase
                 headers: [AuthInterceptor::AUTH_HEADER => $authToken],
             ),
             new OperationStartDetails(requestId: 'r1'),
-            new HandlerInputContent('SomeUser'),
+            EncodedValues::fromValues(['SomeUser'], self::dataConverter()),
         );
 
         $token = $result->info->token;
@@ -105,5 +106,10 @@ final class CancelOperationTest extends TestCase
 
         // Logging interceptor saw both start and cancel.
         self::assertSame(['sayHello2', 'sayHello2'], $loggingInterceptor->getOperations());
+    }
+
+    private static function dataConverter(): DataConverterInterface
+    {
+        return DataConverter::createDefault();
     }
 }

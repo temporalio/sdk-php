@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
@@ -27,8 +31,6 @@ use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
-use Temporal\Nexus\Serializer\Internal\Content;
-use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 
 /**
  * Handler that delegates to service implementations.
@@ -40,7 +42,7 @@ final class ServiceHandler implements HandlerInterface
      */
     public function __construct(
         private readonly array $instances,
-        private readonly SerializerInterface $serializer,
+        private readonly DataConverterInterface $dataConverter,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
     ) {}
 
@@ -48,7 +50,7 @@ final class ServiceHandler implements HandlerInterface
      * @param ServiceImplInstance[] $instances
      */
     public static function create(
-        SerializerInterface $serializer,
+        DataConverterInterface $dataConverter,
         array $instances,
         PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
     ): self {
@@ -67,7 +69,7 @@ final class ServiceHandler implements HandlerInterface
             $instancesByName[$name] = $instance;
         }
 
-        return new self($instancesByName, $serializer, $interceptorProvider);
+        return new self($instancesByName, $dataConverter, $interceptorProvider);
     }
 
     /**
@@ -78,15 +80,15 @@ final class ServiceHandler implements HandlerInterface
         return $this->instances;
     }
 
-    public function getSerializer(): SerializerInterface
+    public function getDataConverter(): DataConverterInterface
     {
-        return $this->serializer;
+        return $this->dataConverter;
     }
 
     public function startOperation(
         OperationContext $context,
         OperationStartDetails $details,
-        HandlerInputContent $input,
+        ValuesInterface $input,
         ?NexusOperationContext $nexusOperation = null,
     ): OperationStartResult {
         [$instance, $handler] = $this->resolveHandler($context);
@@ -95,8 +97,9 @@ final class ServiceHandler implements HandlerInterface
         $definition = $instance->definition->operations[$context->operation];
 
         try {
-            $content = new Content($input->data, $input->headers);
-            $inputObject = $this->serializer->deserialize($content, $definition->inputType);
+            $inputObject = $definition->inputType === 'void'
+                ? null
+                : $input->getValue(0, $definition->inputType);
         } catch (\Throwable $e) {
             throw HandlerException::create(
                 ErrorType::BadRequest,
@@ -139,7 +142,7 @@ final class ServiceHandler implements HandlerInterface
         }
 
         return OperationStartResult::sync(
-            $this->resultToContent(
+            $this->encodeResult(
                 $result->value,
                 $contextWithServiceDefinition,
                 $definition->outputType,
@@ -212,14 +215,15 @@ final class ServiceHandler implements HandlerInterface
         return [$instance, $handler];
     }
 
-    private function resultToContent(
+    private function encodeResult(
         mixed $result,
         OperationContext $context,
         string $outputType,
-    ): HandlerResultContent {
+    ): ValuesInterface {
         try {
-            $output = $this->serializer->serialize($result);
-            return new HandlerResultContent($output->data, $output->headers);
+            $payload = $this->dataConverter->toPayload($result);
+            $payloads = new Payloads(['payloads' => [$payload]]);
+            return EncodedValues::fromPayloads($payloads, $this->dataConverter);
         } catch (\Throwable $e) {
             throw HandlerException::create(
                 ErrorType::Internal,

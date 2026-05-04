@@ -11,13 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\LinkParser;
 use React\Promise\Deferred;
-use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -66,20 +64,7 @@ final class InvokeNexusOperation extends Route
             methodCanceller: $canceller,
         );
 
-        $inputData = '';
-        $inputHeaders = [];
-        $payloads = $request->getPayloads();
-        if ($payloads instanceof EncodedValues) {
-            $protoPayloads = $payloads->toPayloads();
-            if ($protoPayloads->getPayloads()->count() > 0) {
-                $firstPayload = $protoPayloads->getPayloads()[0];
-                $inputData = $firstPayload->getData();
-                foreach ($firstPayload->getMetadata() as $k => $v) {
-                    $inputHeaders[(string) $k] = (string) $v;
-                }
-            }
-        }
-        $input = new HandlerInputContent($inputData, $inputHeaders);
+        $input = $request->getPayloads();
 
         try {
             // Strict link parsing: malformed → BadRequest.
