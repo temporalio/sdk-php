@@ -19,7 +19,7 @@ use Temporal\Nexus\Handler\OperationContext;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Link;
-use Temporal\Tests\Nexus\Fixture\ServiceDefinition\ValidServiceWithOperationsForContext;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\ValidServiceWithOperationsForContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;

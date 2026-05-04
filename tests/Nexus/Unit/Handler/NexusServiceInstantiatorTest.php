@@ -19,11 +19,11 @@ use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
-use Temporal\Tests\Nexus\Fixture\Service\GreetingServiceInterface;
-use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ChildInheritingHandler;
-use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\NoServiceImplAnnotation;
-use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceAsClassImpl;
-use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceImplWithExtraNonOperationMethod;
+use Temporal\Tests\Nexus\Fixtures\Service\GreetingServiceInterface;
+use Temporal\Tests\Nexus\Fixtures\ServiceImplInstance\ChildInheritingHandler;
+use Temporal\Tests\Nexus\Fixtures\ServiceImplInstance\NoServiceAnnotation;
+use Temporal\Tests\Nexus\Fixtures\ServiceImplInstance\ServiceAsClass;
+use Temporal\Tests\Nexus\Fixtures\ServiceImplInstance\ServiceWithExtraNonOperationMethod;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -42,14 +42,14 @@ final class NexusServiceInstantiatorTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Missing #\[Service\] attribute/');
-        self::bind(new NoServiceImplAnnotation());
+        self::bind(new NoServiceAnnotation());
     }
 
     public function testServiceAttributeOnClassIsAccepted(): void
     {
-        $instance = self::bind(new ServiceAsClassImpl());
+        $instance = self::bind(new ServiceAsClass());
 
-        self::assertSame('ServiceAsClassImpl', $instance->prototype->getID());
+        self::assertSame('ServiceAsClass', $instance->prototype->getID());
         self::assertCount(1, $instance->operationHandlers);
         self::assertArrayHasKey('classOperation', $instance->operationHandlers);
     }
@@ -60,9 +60,9 @@ final class NexusServiceInstantiatorTest extends TestCase
         self::assertArrayHasKey('operation', $instance->operationHandlers);
     }
 
-    public function testServiceImplWithExtraNonOperationMethodIsAccepted(): void
+    public function testServiceWithExtraNonOperationMethodIsAccepted(): void
     {
-        $instance = self::bind(new ServiceImplWithExtraNonOperationMethod());
+        $instance = self::bind(new ServiceWithExtraNonOperationMethod());
 
         self::assertCount(1, $instance->operationHandlers);
         self::assertArrayHasKey('operation', $instance->operationHandlers);

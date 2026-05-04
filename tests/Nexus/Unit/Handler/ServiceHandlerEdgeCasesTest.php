@@ -14,7 +14,7 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +36,7 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
 
     public function testDuplicateServiceNames(): void
     {
-        $instance = self::bindNexusService(new VoidServiceImpl());
+        $instance = self::bindNexusService(new VoidService());
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Multiple instances registered for service name");
@@ -49,7 +49,7 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
     public function testGetters(): void
     {
         $dataConverter = DataConverter::createDefault();
-        $instance = self::bindNexusService(new VoidServiceImpl());
+        $instance = self::bindNexusService(new VoidService());
 
         $handler = ServiceHandler::create(
             dataConverter: $dataConverter,

@@ -22,7 +22,7 @@ use Temporal\Nexus\Exception\RetryBehavior;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Tests\Nexus\Fixture\Impl\ThrowingGreetingImpl;
+use Temporal\Tests\Nexus\Fixtures\Service\ThrowingGreetingService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -85,7 +85,7 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
         $converter = DataConverter::createDefault();
         $handler = self::newHandler(
             $converter,
-            new ThrowingGreetingImpl(hello1Throw: OperationException::failed('intentional business failure')),
+            new ThrowingGreetingService(hello1Throw: OperationException::failed('intentional business failure')),
         );
 
         $this->expectException(OperationException::class);
@@ -102,7 +102,7 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
         $converter = DataConverter::createDefault();
         $handler = self::newHandler(
             $converter,
-            new ThrowingGreetingImpl(hello1Throw: HandlerException::create(
+            new ThrowingGreetingService(hello1Throw: HandlerException::create(
                 ErrorType::Unauthorized,
                 'no auth',
                 retryBehavior: RetryBehavior::NonRetryable,
@@ -152,11 +152,11 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
 
     private static function newHandler(
         DataConverterInterface $dataConverter,
-        ?ThrowingGreetingImpl $instance = null,
+        ?ThrowingGreetingService $instance = null,
     ): ServiceHandler {
         return ServiceHandler::create(
             dataConverter: $dataConverter,
-            instances: [self::bindNexusService($instance ?? new ThrowingGreetingImpl())],
+            instances: [self::bindNexusService($instance ?? new ThrowingGreetingService())],
         );
     }
 

@@ -20,10 +20,10 @@ use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\LoggingInterceptor;
-use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
+use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\AuthInterceptor;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +38,7 @@ final class CancelOperationTest extends TestCase
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
             instances: [
-                self::bindNexusService(new VoidServiceImpl()),
+                self::bindNexusService(new VoidService()),
             ],
         );
 
@@ -54,7 +54,7 @@ final class CancelOperationTest extends TestCase
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
             instances: [
-                self::bindNexusService(new VoidServiceImpl()),
+                self::bindNexusService(new VoidService()),
             ],
         );
 
@@ -74,7 +74,7 @@ final class CancelOperationTest extends TestCase
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
             instances: [
-                self::bindNexusService(new GreetingServiceImpl($apiClient)),
+                self::bindNexusService(new GreetingService($apiClient)),
             ],
             interceptorProvider: new SimplePipelineProvider([
                 new AuthInterceptor($authToken),
