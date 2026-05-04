@@ -29,7 +29,6 @@ use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
-use Temporal\Api\Nexus\V1\Link as ProtoLink;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
@@ -170,7 +169,7 @@ final class NexusTaskHandler
 
                 $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
-                    $syncResponse->setLinks($this->convertLinksToProto($contextLinks));
+                    $syncResponse->setLinks(NexusLinkConverter::toNexusProtoLinks($contextLinks));
                 }
 
                 $startResponse->setSyncSuccess($syncResponse);
@@ -181,7 +180,7 @@ final class NexusTaskHandler
 
                 $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
-                    $asyncResponse->setLinks($this->convertLinksToProto($contextLinks));
+                    $asyncResponse->setLinks(NexusLinkConverter::toNexusProtoLinks($contextLinks));
                 }
 
                 $startResponse->setAsyncSuccess($asyncResponse);
@@ -369,21 +368,5 @@ final class NexusTaskHandler
             NexusFailureConverter::handlerExceptionToProto($e, $this->includeTracebackInFailure),
             $e,
         );
-    }
-
-    /**
-     * @param Link[] $links
-     * @return ProtoLink[]
-     */
-    private function convertLinksToProto(array $links): array
-    {
-        $protoLinks = [];
-        foreach ($links as $link) {
-            $protoLink = new ProtoLink();
-            $protoLink->setUrl($link->uri);
-            $protoLink->setType($link->type);
-            $protoLinks[] = $protoLink;
-        }
-        return $protoLinks;
     }
 }

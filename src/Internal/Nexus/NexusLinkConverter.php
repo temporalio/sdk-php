@@ -16,16 +16,28 @@ use Temporal\Api\Common\V1\Link\WorkflowEvent;
 use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
 use Temporal\Api\Common\V1\Link\WorkflowEvent\RequestIdReference;
 use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Nexus\V1\Link as NexusProtoLink;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Link as NexusLink;
 
 /**
- * URI ↔ proto Link.WorkflowEvent converter, mirror of Go SDK
- * `temporalnexus/link_converter.go`. Handles only the WorkflowEvent variant —
- * other Nexus-Link types (custom user types) are silently skipped per Go SDK
- * semantics in `convertNexusLinks`.
+ * Single source of truth for Nexus link ↔ proto conversion. Mirror of Go SDK
+ * `temporalnexus/link_converter.go`.
  *
- * Wire format: temporal:///namespaces/{ns}/workflows/{wf}/{run}/history?referenceType=…&…
+ * Two directions sit here because Temporal serves two different proto wires:
+ *
+ * - {@see self::toProtoLinks()} — `Common\V1\Link` with a parsed `WorkflowEvent`
+ *   message. Used on the caller side (`StartWorkflowExecutionRequest.links`,
+ *   `Callback.links`). Non-WorkflowEvent link types are silently dropped, per
+ *   Go/TS SDK semantics.
+ *
+ * - {@see self::toNexusProtoLinks()} — `Nexus\V1\Link` carrying bare
+ *   `url` + `type`. Used on the handler side
+ *   (`StartOperationResponse.{Sync,Async}.links`); server re-parses the URI on
+ *   its side when forwarding to the caller. Custom link types pass through.
+ *
+ * Wire format for WorkflowEvent URIs:
+ *   temporal:///namespaces/{ns}/workflows/{wf}/{run}/history?referenceType=…&…
  *
  * @internal
  */
@@ -70,6 +82,33 @@ final class NexusLinkConverter
                 continue;
             }
             $out[] = self::convertOne($link);
+        }
+        return $out;
+    }
+
+    /**
+     * Convert high-level Nexus links to {@see NexusProtoLink}[] for
+     * {@see \Temporal\Api\Nexus\V1\StartOperationResponse} bodies.
+     *
+     * Unlike {@see self::toProtoLinks()} this is a *bare* form: the wire only
+     * carries `url` + `type`, no parsed `WorkflowEvent` message. It is the
+     * shape Temporal server accepts in handler-side responses; the server
+     * re-parses the URI on its side when forwarding to the caller.
+     *
+     * Custom (non-WorkflowEvent) link types pass through unchanged — the
+     * Nexus.V1 wire is a free-form union of (url, type) pairs.
+     *
+     * @param iterable<NexusLink> $links
+     * @return list<NexusProtoLink>
+     */
+    public static function toNexusProtoLinks(iterable $links): array
+    {
+        $out = [];
+        foreach ($links as $link) {
+            $proto = new NexusProtoLink();
+            $proto->setUrl($link->uri);
+            $proto->setType($link->type);
+            $out[] = $proto;
         }
         return $out;
     }

@@ -467,4 +467,35 @@ final class NexusLinkConverterTestCase extends TestCase
             self::assertSame($runId, $decoded->getRunId(), "case #$i: runId");
         }
     }
+
+    public function testToNexusProtoLinksPassesUrlAndTypeThrough(): void
+    {
+        $uri = 'temporal:///namespaces/default/workflows/wf/run/history'
+            . '?referenceType=EventReference&eventType=WorkflowExecutionStarted';
+        $result = NexusLinkConverter::toNexusProtoLinks([new NexusLink($uri, self::TYPE)]);
+
+        self::assertCount(1, $result);
+        self::assertSame($uri, $result[0]->getUrl());
+        self::assertSame(self::TYPE, $result[0]->getType());
+    }
+
+    public function testToNexusProtoLinksKeepsCustomLinkTypes(): void
+    {
+        $custom = new NexusLink('https://example.com/x', 'custom.user.type');
+        $event = new NexusLink(
+            'temporal:///namespaces/n/workflows/w/r/history?referenceType=EventReference&eventType=WorkflowExecutionStarted',
+            self::TYPE,
+        );
+
+        $result = NexusLinkConverter::toNexusProtoLinks([$custom, $event]);
+
+        self::assertCount(2, $result);
+        self::assertSame('custom.user.type', $result[0]->getType());
+        self::assertSame(self::TYPE, $result[1]->getType());
+    }
+
+    public function testToNexusProtoLinksReturnsEmptyArrayForEmptyInput(): void
+    {
+        self::assertSame([], NexusLinkConverter::toNexusProtoLinks([]));
+    }
 }
