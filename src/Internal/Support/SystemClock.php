@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler;
+namespace Temporal\Internal\Support;
 
 use Psr\Clock\ClockInterface;
 

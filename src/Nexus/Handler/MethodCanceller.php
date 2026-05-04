@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Handler;
 
 use Psr\Clock\ClockInterface;
+use Temporal\Internal\Support\SystemClock;
 
 /**
  * Idempotent cancellation of an in-flight handler *method* (not the Nexus

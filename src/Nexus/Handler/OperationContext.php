@@ -11,10 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
+use Psr\Clock\ClockInterface;
+use Temporal\Internal\Support\SystemClock;
 use Temporal\Nexus\Internal\Headers;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\ServiceDefinition;
-use Psr\Clock\ClockInterface;
 
 /**
  * Context for operation handling.

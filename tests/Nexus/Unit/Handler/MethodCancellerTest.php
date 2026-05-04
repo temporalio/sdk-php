@@ -14,7 +14,7 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 use Temporal\Nexus\Handler\ClosureMethodCancellationListener;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\MethodCancellationListenerInterface;
-use Temporal\Tests\Nexus\Support\FrozenClock;
+use Temporal\Tests\Support\FrozenClock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

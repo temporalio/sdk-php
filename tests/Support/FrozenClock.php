@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Support;
+namespace Temporal\Tests\Support;
 
 use Psr\Clock\ClockInterface;
 

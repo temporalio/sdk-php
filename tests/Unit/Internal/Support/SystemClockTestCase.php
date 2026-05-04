@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Unit\Handler;
+namespace Temporal\Tests\Unit\Internal\Support;
 
-use Temporal\Nexus\Handler\SystemClock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Temporal\Internal\Support\SystemClock;
 
 #[CoversClass(SystemClock::class)]
-final class SystemClockTest extends TestCase
+final class SystemClockTestCase extends TestCase
 {
     public function testNowReturnsUtcMoment(): void
     {
