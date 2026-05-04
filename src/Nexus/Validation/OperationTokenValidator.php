@@ -14,10 +14,7 @@ namespace Temporal\Nexus\Validation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
- * Validates an Operation Token per the Nexus spec.
- *
- * Opaque identifier carried in the `Nexus-Operation-Token` header, so only
- * printable non-whitespace ASCII (0x21–0x7E) is accepted.
+ * Operation token — printable non-whitespace ASCII (Nexus spec).
  */
 final class OperationTokenValidator
 {

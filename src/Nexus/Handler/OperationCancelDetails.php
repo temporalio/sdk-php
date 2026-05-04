@@ -13,9 +13,6 @@ namespace Temporal\Nexus\Handler;
 
 use Temporal\Nexus\Validation\OperationTokenValidator;
 
-/**
- * Details for handling operation cancel.
- */
 final class OperationCancelDetails
 {
     public function __construct(

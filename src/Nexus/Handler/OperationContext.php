@@ -17,11 +17,7 @@ use Temporal\Nexus\ServiceDefinition;
 use Psr\Clock\ClockInterface;
 
 /**
- * Context for operation handling. Immutable except for {@see $links}, which
- * is shared so interceptor-produced links stay visible across
- * `withServiceDefinition()`. If `$deadline` is given without an explicit
- * `$methodCanceller`, one is auto-created from it — so deadline expiry trips
- * registered cancellation listeners.
+ * Context for operation handling.
  */
 final class OperationContext
 {

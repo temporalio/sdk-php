@@ -202,8 +202,6 @@ final class WorkflowOptions extends Options
      * Used by Nexus WorkflowRunOperation for caller-driven idempotency.
      *
      * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
-     *
-     * @since Nexus support
      */
     public ?string $requestId = null;
 
@@ -215,7 +213,6 @@ final class WorkflowOptions extends Options
      * which handles the proto envelope translation.
      *
      * @var list<CompletionCallback>
-     * @since Nexus support
      */
     public array $completionCallbacks = [];
 
@@ -226,8 +223,6 @@ final class WorkflowOptions extends Options
      * `StartWorkflow` retries.
      *
      * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
-     *
-     * @since Nexus support
      */
     public ?OnConflictOptions $onConflictOptions = null;
 
@@ -239,7 +234,6 @@ final class WorkflowOptions extends Options
      * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
      *
      * @var list<\Temporal\Api\Common\V1\Link>
-     * @since Nexus support
      */
     public array $links = [];
 
@@ -667,7 +661,6 @@ final class WorkflowOptions extends Options
      * Pin gRPC `request_id`. `null` = fresh UUID per call.
      *
      * @return $this
-     * @since Nexus support
      */
     #[Pure]
     public function withRequestId(?string $requestId): self
@@ -684,7 +677,6 @@ final class WorkflowOptions extends Options
      * @param non-empty-string $url
      * @param array<string, string> $headers
      * @return $this
-     * @since Nexus support
      */
     #[Pure]
     public function withNexusCompletionCallback(string $url, array $headers = []): self
@@ -698,7 +690,6 @@ final class WorkflowOptions extends Options
      * Replace the full list of completion callbacks.
      *
      * @return $this
-     * @since Nexus support
      */
     #[Pure]
     public function withCompletionCallbacks(CompletionCallback ...$callbacks): self
@@ -713,7 +704,6 @@ final class WorkflowOptions extends Options
      * is {@see WorkflowIdConflictPolicy::UseExisting}. Pass `null` to clear.
      *
      * @return $this
-     * @since Nexus support
      */
     #[Pure]
     public function withOnConflictOptions(?OnConflictOptions $options): self
@@ -730,7 +720,6 @@ final class WorkflowOptions extends Options
      *
      * @param iterable<NexusLink> $nexusLinks
      * @return $this
-     * @since Nexus support
      */
     #[Pure]
     public function withLinks(iterable $nexusLinks): self

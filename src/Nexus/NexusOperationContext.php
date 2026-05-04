@@ -17,8 +17,6 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
 /**
  * Temporal-side context exposed to a Nexus operation handler.
  * Set by NexusTaskHandler around each dispatch, read via {@see Nexus::getOperationContext()}.
- *
- * @since Nexus support
  */
 final class NexusOperationContext
 {

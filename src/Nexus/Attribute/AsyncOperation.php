@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Attribute;
 
+use Doctrine\Common\Annotations\Annotation\Target;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Nexus\OperationInfo;
 
 /**
@@ -20,8 +22,12 @@ use Temporal\Nexus\OperationInfo;
  * The annotated method must declare its return type as {@see OperationInfo}. Because the
  * return type does not carry the eventual wire output, declare it via {@see self::$output}
  * (a fully-qualified type name or `'void'` if there is no payload).
+ *
+ * @Annotation
+ * @NamedArgumentConstructor
+ * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class AsyncOperation
 {
     /**

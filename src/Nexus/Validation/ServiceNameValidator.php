@@ -14,10 +14,7 @@ namespace Temporal\Nexus\Validation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
- * Validates a Service Name per the Nexus spec.
- *
- * Travels in the request URL path and the `Nexus-Service` header, so only
- * printable non-whitespace ASCII (0x21–0x7E) is accepted.
+ * Service name — printable non-whitespace ASCII (Nexus spec).
  */
 final class ServiceNameValidator
 {

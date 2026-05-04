@@ -43,10 +43,10 @@ final class PrintableAsciiValidator
         }
     }
 
-    private static function firstBadOffset(string $s): int
+    private static function firstBadOffset(string $value): int
     {
-        for ($i = 0, $n = \strlen($s); $i < $n; $i++) {
-            $c = \ord($s[$i]);
+        for ($i = 0, $n = \strlen($value); $i < $n; $i++) {
+            $c = \ord($value[$i]);
             if ($c < 0x21 || $c > 0x7E) {
                 return $i;
             }

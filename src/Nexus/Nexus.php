@@ -18,19 +18,7 @@ use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 
 /**
- * Static accessors for the active Nexus dispatch state.
- *
- * Inside an `#[Operation]` / `#[AsyncOperation]` / `#[OperationCancel]` method body
- * use the helpers below to reach the surrounding Nexus environment instead of
- * accepting it as parameters (the impl method signature must stay identical to
- * its contract method).
- *
- * Like {@see \Temporal\Workflow} and {@see \Temporal\Activity}, this facade extends
- * {@see Facade} and stores the dispatch state in the shared single-slot context.
- * The state is process-global and assumes a single active dispatch — running two
- * Nexus dispatches concurrently in the same process will trample each other.
- *
- * @since Nexus support
+ * Static accessors for the active Nexus dispatch state. Use these inside operation method bodies instead of threading the context through parameters.
  */
 final class Nexus extends Facade
 {

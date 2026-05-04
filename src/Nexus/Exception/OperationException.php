@@ -13,9 +13,6 @@ namespace Temporal\Nexus\Exception;
 
 use Temporal\Nexus\OperationState;
 
-/**
- * An operation has failed or was canceled.
- */
 final class OperationException extends NexusException
 {
     private function __construct(

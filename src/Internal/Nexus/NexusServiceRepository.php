@@ -52,13 +52,13 @@ final class NexusServiceRepository
         return \array_values($this->byName);
     }
 
-    private static function describeInstance(ServiceImplInstance $i): string
+    private static function describeInstance(ServiceImplInstance $instance): string
     {
-        $ops = \array_keys($i->definition->operations);
+        $operationNames = \array_keys($instance->definition->operations);
         return \sprintf(
             '%s (ops: %s)',
-            $i->definition->name,
-            \implode(', ', $ops) ?: '<none>',
+            $instance->definition->name,
+            \implode(', ', $operationNames) ?: '<none>',
         );
     }
 }

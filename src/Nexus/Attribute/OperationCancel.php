@@ -11,14 +11,21 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Attribute;
 
+use Doctrine\Common\Annotations\Annotation\Target;
+use Spiral\Attributes\NamedArgumentConstructor;
+
 /**
  * Marks a method on a service implementation class as the cancel routine for a named
  * {@see AsyncOperation}.
  *
  * The annotated method must be public and non-static. It receives the operation token
  * as its sole argument and returns `void`.
+ *
+ * @Annotation
+ * @NamedArgumentConstructor
+ * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class OperationCancel
 {
     /**

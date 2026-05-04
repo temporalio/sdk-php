@@ -25,11 +25,7 @@ use Temporal\Workflow\WorkflowExecution;
 
 /**
  * Helpers that back a Nexus operation with a Temporal workflow run.
- *
- * Use {@see self::start()} from inside an `#[AsyncOperation]` method to start
- * the backing workflow and return the {@see OperationInfo} the framework needs.
- * Use {@see self::cancel()} from inside an `#[OperationCancel]` method to cancel
- * the workflow by operation token.
+ * Use ::start() inside #[AsyncOperation], use ::cancel() inside #[OperationCancel].
  */
 final class WorkflowRunOperation
 {
@@ -59,7 +55,7 @@ final class WorkflowRunOperation
             ));
         }
 
-        // Default task queue to the handler's queue (Java parity); avoids silent hang on `default`.
+        // Default task queue to the handler's queue; avoids silent hang on `default`.
         if ($options->taskQueue === \Temporal\Worker\WorkerFactoryInterface::DEFAULT_TASK_QUEUE) {
             $options = $options->withTaskQueue($nexusContext->taskQueue);
         }

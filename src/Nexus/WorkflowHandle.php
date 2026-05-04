@@ -15,12 +15,6 @@ use Temporal\Client\WorkflowOptions;
 
 /**
  * Description of the workflow that backs a Nexus operation.
- *
- * Built by the user inside a `WorkflowRunOperation::fromWorkflowMethod()`
- * factory; the runtime layers Nexus-specific options (request id, completion
- * callback, task-queue defaults) on top.
- *
- * @since Nexus support
  */
 final class WorkflowHandle
 {

@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Attribute;
 
+use Doctrine\Common\Annotations\Annotation\Target;
+use Spiral\Attributes\NamedArgumentConstructor;
+
 /**
  * Marks a class or interface as a Nexus service.
  *
@@ -22,8 +25,12 @@ namespace Temporal\Nexus\Attribute;
  *
  * By default, the service name is the type's short name; override it via {@see self::$name}
  * to decouple the wire contract from the PHP class name.
+ *
+ * @Annotation
+ * @NamedArgumentConstructor
+ * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
 final class Service
 {
     /**

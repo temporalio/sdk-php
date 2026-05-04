@@ -14,8 +14,7 @@ namespace Temporal\Nexus\Exception;
 use Temporal\Nexus\FailureInfo;
 
 /**
- * Thrown from a handler. Use {@see self::create()}, {@see self::fromCause()},
- * or {@see self::fromRawType()} as factories.
+ * Thrown from a handler.
  */
 final class HandlerException extends NexusException
 {

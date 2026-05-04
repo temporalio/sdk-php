@@ -66,14 +66,31 @@ class AsyncOperationTest extends TestCase
             ],
         );
 
-        // Temporal returns 201 Created with the operation token for async starts.
-        // We accept any 2xx — the specific code is less important than the non-error.
-        self::assertTrue(
-            $code >= 200 && $code < 300,
-            "Expected 2xx for async start, got {$code}. Body: {$resp}",
-        );
+        // Per Nexus spec (and the Go reference handler in nexus-rpc/sdk-go), an
+        // async StartOperation returns `201 Created` with a JSON OperationInfo
+        // body carrying the token. Pin both the status and the token shape so
+        // the test name actually matches what is asserted.
+        self::assertSame(201, $code, "Expected 201 Created for async start, got {$code}. Body: {$resp}");
+
+        $decoded = \json_decode($resp, true);
+        self::assertIsArray($decoded, "Async start body must be JSON OperationInfo. Body: {$resp}");
+        // Spec field is `token`; tolerate `operationToken` for forward-compat
+        // with any future server rename.
+        $token = $decoded['token'] ?? $decoded['operationToken'] ?? null;
+        self::assertIsString($token, "Async start body must carry a token field. Body: {$resp}");
+        self::assertNotSame('', $token, 'Operation token must be non-empty.');
     }
 
+    /**
+     * Async start without `Nexus-Callback-Url`. Whether Temporal accepts
+     * callback-less async starts is policy on the server side: it can return
+     * either `201 Created` (accepted) or a 4xx (refused for missing required
+     * header). What we lock down here is:
+     *   - the SDK handler itself never produces a 5xx (no internal crash),
+     *   - on success (any 2xx) the body is a real OperationInfo with a
+     *     non-empty token — i.e. the handler genuinely produced a token,
+     *     not just an opaque 200.
+     */
     #[Test]
     public function asyncOperationWithoutCallbackStillStarts(
         State $state,
@@ -89,9 +106,6 @@ class AsyncOperationTest extends TestCase
             'nexus-cancel-nocb',
         );
 
-        // Some Nexus clients skip the callback header; handler must still receive the
-        // request and produce a token. Temporal may or may not reject — we just want
-        // to verify the handler itself does not crash (no 5xx from our PHP side).
         [$code, $resp] = $helper->postOperation(
             $endpointId,
             'AsyncJobService',
@@ -99,7 +113,15 @@ class AsyncOperationTest extends TestCase
             'payload-no-cb',
         );
 
-        self::assertLessThan(500, $code, "Unexpected server error {$code}. Body: {$resp}");
+        self::assertLessThan(500, $code, "Handler must not crash with 5xx. Body: {$resp}");
+
+        if ($code >= 200 && $code < 300) {
+            $decoded = \json_decode($resp, true);
+            self::assertIsArray($decoded, "2xx async start must carry JSON OperationInfo. Body: {$resp}");
+            $token = $decoded['token'] ?? $decoded['operationToken'] ?? null;
+            self::assertIsString($token, "2xx async start must carry a token field. Body: {$resp}");
+            self::assertNotSame('', $token, 'Operation token must be non-empty on a 2xx response.');
+        }
     }
 }
 

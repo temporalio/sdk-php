@@ -13,9 +13,6 @@ namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Nexus\Internal\Headers;
 
-/**
- * Content as a result of an operation.
- */
 final class HandlerResultContent
 {
     /** @var array<string, string> Lowercased keys. */

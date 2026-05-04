@@ -53,7 +53,7 @@ final class InvokeNexusOperation extends Route
 
         $canceller = null;
         if ($invocationId !== 0) {
-            // Canceller fires listeners on deadline expiry too (Java parity).
+            // Canceller fires listeners on deadline expiry too.
             $canceller = new MethodCanceller($deadline);
             $this->invocations->register($invocationId, $canceller);
         }
@@ -82,7 +82,7 @@ final class InvokeNexusOperation extends Route
         $input = new HandlerInputContent($inputData, $inputHeaders);
 
         try {
-            // Strict link parsing: malformed → BadRequest (Java parity).
+            // Strict link parsing: malformed → BadRequest.
             $links = LinkParser::fromRaw($options['links'] ?? null);
 
             $details = new OperationStartDetails(

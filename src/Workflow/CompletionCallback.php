@@ -20,8 +20,6 @@ use Temporal\Nexus\Link as NexusLink;
  * at workflow start. Decouples the caller-facing API from the
  * {@see \Temporal\Api\Common\V1\Callback} protobuf — the proto envelope is
  * built by {@see \Temporal\Internal\Client\WorkflowStarter} on the way out.
- *
- * @since Nexus support
  */
 final class CompletionCallback
 {

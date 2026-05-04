@@ -70,11 +70,25 @@ class WorkflowRunOperationTest extends TestCase
         self::assertSame('HELLO, WORLD!', $stub->getResult('string'));
     }
 
+    /**
+     * Verifies the request-id → handler-workflow-id mapping that
+     * {@see AsyncWorkflowService::hello()} sets up via
+     * `WorkflowOptions::withWorkflowId($details->requestId)`.
+     *
+     * Strategy: the handler stashes the start-details requestId into a
+     * file-backed marker (same trick as the interceptor cancel test, since
+     * the handler may run in a different RR worker process than PHPUnit).
+     * After the caller workflow completes, the test reads the marker and
+     * asserts that a workflow execution with that exact ID exists in
+     * Temporal — i.e. the requestId really did become the workflow ID.
+     */
     #[Test]
     public function requestIdIsPropagatedToHandlerWorkflowId(
         State $state,
         WorkflowClientInterface $client,
     ): void {
+        RequestIdMarker::clear();
+
         $endpoint = NexusHelper::for($state)->setupEndpointWithName(
             $state->namespace,
             __NAMESPACE__,
@@ -90,9 +104,59 @@ class WorkflowRunOperationTest extends TestCase
 
         $client->start($stub, $endpoint['name'], 'idempotent');
 
-        // Result should still arrive — same flow as the happy path; this just
-        // exercises the same code with a distinct endpoint to keep tests independent.
+        // End-to-end completion still works (regression on top of the mapping check).
         self::assertSame('HELLO, IDEMPOTENT!', $stub->getResult('string'));
+
+        $requestId = RequestIdMarker::read();
+        self::assertNotNull($requestId, 'Handler never recorded the Nexus start requestId.');
+        self::assertNotSame('', $requestId, 'Recorded Nexus requestId must be non-empty.');
+
+        // The handler set its workflow-id to the requestId via
+        // `WorkflowOptions::withWorkflowId($details->requestId)`. Asking the
+        // client for the result of that workflow id proves a workflow with
+        // exactly that id ran (and matches the caller's result, which is
+        // what gets relayed through Nexus).
+        $handlerStub = $client->newUntypedRunningWorkflowStub(
+            $requestId,
+            workflowType: 'Extra_Nexus_AsyncWorkflow_Handler',
+        );
+        self::assertSame('HELLO, IDEMPOTENT!', $handlerStub->getResult('string', timeout: 10));
+
+        RequestIdMarker::clear();
+    }
+}
+
+/**
+ * File-backed marker for the request-id captured inside the Nexus handler.
+ *
+ * The handler runs in a RoadRunner worker process that is separate from the
+ * PHPUnit process; a process-local static would not be visible to the test,
+ * so we use the same filesystem hand-off pattern as
+ * {@see \Temporal\Tests\Acceptance\Extra\Nexus\Interceptor\WorkerLocalMarker}.
+ */
+final class RequestIdMarker
+{
+    public const FILE = '/tmp/nexus-async-wf-request-id-marker';
+
+    public static function record(string $requestId): void
+    {
+        \file_put_contents(self::FILE, $requestId);
+    }
+
+    public static function read(): ?string
+    {
+        if (!\is_file(self::FILE)) {
+            return null;
+        }
+        $contents = \file_get_contents(self::FILE);
+        return $contents === false ? null : $contents;
+    }
+
+    public static function clear(): void
+    {
+        if (\is_file(self::FILE)) {
+            \unlink(self::FILE);
+        }
     }
 }
 
@@ -105,6 +169,10 @@ class AsyncWorkflowService
     public function hello(string $input): OperationInfo
     {
         $details = Nexus::getStartDetails();
+        // Side-channel: stash the requestId so the PHPUnit process can later
+        // assert that the handler workflow was started under exactly this id.
+        // See RequestIdMarker for the cross-process rationale.
+        RequestIdMarker::record($details->requestId);
         return WorkflowRunOperation::start(
             WorkflowHandle::fromWorkflowMethod(
                 AsyncHandlerWorkflow::class,

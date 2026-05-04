@@ -18,13 +18,17 @@ use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
- * Acceptance test: all three ways to build a synchronous Nexus operation handler
- * produce identical wire-level behaviour.
+ * Acceptance test: baseline synchronous Nexus operation behaviour.
  *
- *   1. `new SynchronousOperationHandler(callable)`              — BC constructor form.
- *   2. `SynchronousOperationHandler::fromCallable(callable)`    — explicit callable factory.
- *   3. `SynchronousOperationHandler::fromFunction($functor)`    — explicit functor factory,
- *      backed by SynchronousOperationFunctionInterface.
+ * Originally this file covered four "construction styles" for
+ * {@see \Temporal\Nexus\Handler\SynchronousOperationHandler} (constructor,
+ * `::fromCallable()`, functor constructor, `::fromFunction()`). Those handler-
+ * factory shapes have been removed in favour of the `#[Service]` /
+ * `#[Operation]` interface-implementation pattern documented in CLAUDE.md, so
+ * there is now only one way to declare a sync operation. The test was
+ * collapsed to a single happy-path case to honestly reflect that — keeping
+ * four byte-identical methods would have implied differentiation that no
+ * longer exists.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class SyncOperationStylesTest extends TestCase
@@ -38,66 +42,13 @@ class SyncOperationStylesTest extends TestCase
     }
 
     #[Test]
-    public function callableViaConstructor(
+    public function syncOperationReturnsResult(
         State $state,
         #[Stub('Extra_Nexus_SyncStyles_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'viaCallableCtor', 'alpha');
-
-        self::assertSame(200, $code, "Response: {$resp}");
-        self::assertStringContainsString('ALPHA!', $resp);
-    }
-
-    #[Test]
-    public function callableViaFromCallableFactory(
-        State $state,
-        #[Stub('Extra_Nexus_SyncStyles_Bootstrap2')]
-        WorkflowStubInterface $stub,
-    ): void {
-        $stub->getResult('string');
-
-        [$code, $resp] = $this->invoke($state, 'viaFromCallable', 'beta');
-
-        self::assertSame(200, $code, "Response: {$resp}");
-        self::assertStringContainsString('BETA!', $resp);
-    }
-
-    #[Test]
-    public function functorViaConstructor(
-        State $state,
-        #[Stub('Extra_Nexus_SyncStyles_Bootstrap3')]
-        WorkflowStubInterface $stub,
-    ): void {
-        $stub->getResult('string');
-
-        [$code, $resp] = $this->invoke($state, 'viaFunctorCtor', 'gamma');
-
-        self::assertSame(200, $code, "Response: {$resp}");
-        self::assertStringContainsString('GAMMA!', $resp);
-    }
-
-    #[Test]
-    public function functorViaFromFunctionFactory(
-        State $state,
-        #[Stub('Extra_Nexus_SyncStyles_Bootstrap4')]
-        WorkflowStubInterface $stub,
-    ): void {
-        $stub->getResult('string');
-
-        [$code, $resp] = $this->invoke($state, 'viaFromFunction', 'delta');
-
-        self::assertSame(200, $code, "Response: {$resp}");
-        self::assertStringContainsString('DELTA!', $resp);
-    }
-
-    /**
-     * @return array{int, string}
-     */
-    private function invoke(State $state, string $operation, string $input): array
-    {
         $helper = NexusHelper::for($state);
         $endpointId = $helper->setupEndpoint(
             $state->namespace,
@@ -105,7 +56,10 @@ class SyncOperationStylesTest extends TestCase
             'nexus-sync-styles',
         );
 
-        return $helper->postOperation($endpointId, 'ShoutService', $operation, $input);
+        [$code, $resp] = $helper->postOperation($endpointId, 'ShoutService', 'shout', 'alpha');
+
+        self::assertSame(200, $code, "Response: {$resp}");
+        self::assertStringContainsString('ALPHA!', $resp);
     }
 }
 
@@ -115,66 +69,18 @@ class SyncOperationStylesTest extends TestCase
 class ShoutService
 {
     #[Operation]
-    public function viaCallableCtor(string $input): string
-    {
-        return \strtoupper($input) . '!';
-    }
-
-    #[Operation]
-    public function viaFromCallable(string $input): string
-    {
-        return \strtoupper($input) . '!';
-    }
-
-    #[Operation]
-    public function viaFunctorCtor(string $input): string
-    {
-        return \strtoupper($input) . '!';
-    }
-
-    #[Operation]
-    public function viaFromFunction(string $input): string
+    public function shout(string $input): string
     {
         return \strtoupper($input) . '!';
     }
 }
 
-// ── Bootstrap workflows (one per #[Test] that needs a worker tickle) ──
+// ── Bootstrap workflow (worker tickle) ────────────────────────────────
 
 #[WorkflowInterface]
 class SyncStylesBootstrapWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Nexus_SyncStyles_Bootstrap')]
-    public function run(): string
-    {
-        return 'ready';
-    }
-}
-
-#[WorkflowInterface]
-class SyncStylesBootstrapWorkflow2
-{
-    #[WorkflowMethod(name: 'Extra_Nexus_SyncStyles_Bootstrap2')]
-    public function run(): string
-    {
-        return 'ready';
-    }
-}
-
-#[WorkflowInterface]
-class SyncStylesBootstrapWorkflow3
-{
-    #[WorkflowMethod(name: 'Extra_Nexus_SyncStyles_Bootstrap3')]
-    public function run(): string
-    {
-        return 'ready';
-    }
-}
-
-#[WorkflowInterface]
-class SyncStylesBootstrapWorkflow4
-{
-    #[WorkflowMethod(name: 'Extra_Nexus_SyncStyles_Bootstrap4')]
     public function run(): string
     {
         return 'ready';

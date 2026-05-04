@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.16.0@7cf3e8b988edd75e0766963b0b9e671b220f5785">
+<files psalm-version="6.16.1@f1f5de594dc76faf8784e02d3dc4716c91c6f6ac">
   <file src="src/Activity/ActivityInterface.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -900,6 +900,12 @@
       <code><![CDATA[ActivityContext]]></code>
     </UnnecessaryVarAnnotation>
   </file>
+  <file src="src/Internal/Transport/Router/InvokeNexusOperation.php">
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$callback]]></code>
+      <code><![CDATA[$options['requestId'] ?? '']]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
   <file src="src/Internal/Transport/Router/InvokeQuery.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$request->getID()]]></code>
@@ -1003,6 +1009,12 @@
       <code><![CDATA[$header ?? Header::empty()]]></code>
     </PropertyTypeCoercion>
   </file>
+  <file src="src/Internal/Workflow/NexusOperationStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$endpoint]]></code>
+      <code><![CDATA[$service]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
     <UnevaluatedCode>
       <code><![CDATA[yield;]]></code>
@@ -1061,6 +1073,9 @@
       <code><![CDATA[$input->maxSupported]]></code>
       <code><![CDATA[$input->minSupported]]></code>
       <code><![CDATA[$input->type]]></code>
+      <code><![CDATA[$operation]]></code>
+      <code><![CDATA[$options->service]]></code>
+      <code><![CDATA[$service->name]]></code>
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
@@ -1101,6 +1116,77 @@
       <code><![CDATA[$clone->awaits = &$this->awaits]]></code>
       <code><![CDATA[$clone->trace = &$this->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
+  </file>
+  <file src="src/Nexus/Attribute/AsyncOperation.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Attribute/Operation.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Attribute/OperationCancel.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Attribute/Service.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/FailureInfo.php">
+    <PossiblyFalseOperand>
+      <code><![CDATA[\json_encode($this->metadata)]]></code>
+    </PossiblyFalseOperand>
+  </file>
+  <file src="src/Nexus/Handler/Internal/ServiceImplFactory.php">
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[OperationCancel]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Nexus/Handler/LinkCollection.php">
+    <PropertyTypeCoercion>
+      <code><![CDATA[$links]]></code>
+    </PropertyTypeCoercion>
+    <RedundantCondition>
+      <code><![CDATA[\is_int($i)]]></code>
+    </RedundantCondition>
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+    <TypeDoesNotContainType>
+      <code><![CDATA[\var_export($i, true)]]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Nexus/Header.php">
+    <InaccessibleProperty>
+      <code><![CDATA[$interval->f]]></code>
+    </InaccessibleProperty>
+  </file>
+  <file src="src/Nexus/LinkParser.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[\is_string($headerValue)]]></code>
+    </DocblockTypeContradiction>
+  </file>
+  <file src="src/Nexus/OperationDefinition.php">
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[AsyncOperation]]></code>
+      <code><![CDATA[Operation]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Nexus/ServiceDefinition.php">
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[Service]]></code>
+      <code><![CDATA[Service]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Nexus/WorkflowRunOperation.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$decoded->workflowId]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Promise.php">
     <InvalidArgument>

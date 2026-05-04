@@ -17,9 +17,6 @@ use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Validation\ServiceNameValidator;
 
-/**
- * Definition of a service with operations.
- */
 final class ServiceDefinition
 {
     /**
@@ -56,16 +53,16 @@ final class ServiceDefinition
             if ($parentInterface->getName() === $contract->getName()) {
                 continue;
             }
-            $subAttributes = $parentInterface->getAttributes(Service::class);
-            if (\count($subAttributes) === 0) {
+            $parentAttributes = $parentInterface->getAttributes(Service::class);
+            if (\count($parentAttributes) === 0) {
                 continue;
             }
-            /** @var Service $subService */
-            $subService = $subAttributes[0]->newInstance();
-            $subName = $subService->name !== '' ? $subService->name : $parentInterface->getShortName();
-            if ($subName !== $name) {
+            /** @var Service $parentService */
+            $parentService = $parentAttributes[0]->newInstance();
+            $parentName = $parentService->name !== '' ? $parentService->name : $parentInterface->getShortName();
+            if ($parentName !== $name) {
                 throw new InvalidArgumentException(
-                    "Interface {$parentInterface->getName()} has a service attribute whose name ({$subName}) "
+                    "Interface {$parentInterface->getName()} has a service attribute whose name ({$parentName}) "
                     . "does not match the expected name on the contract ({$name})",
                 );
             }

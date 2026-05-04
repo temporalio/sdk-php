@@ -19,9 +19,6 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\NexusOperationContext;
 
-/**
- * Top-level handler for service calls.
- */
 interface HandlerInterface
 {
     /**

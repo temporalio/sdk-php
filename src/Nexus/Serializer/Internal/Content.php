@@ -13,9 +13,6 @@ namespace Temporal\Nexus\Serializer\Internal;
 
 use Temporal\Nexus\Internal\Headers;
 
-/**
- * Data + headers used by serializers.
- */
 final class Content
 {
     /** @var array<string, string> Lowercased keys. */

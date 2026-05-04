@@ -16,9 +16,6 @@ use Temporal\Nexus\Serializer\Internal\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverterInterface;
 
-/**
- * Bridges Nexus SDK serialization to Temporal DataConverter.
- */
 final class PayloadSerializer implements SerializerInterface
 {
     public function __construct(

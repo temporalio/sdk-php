@@ -16,9 +16,6 @@ use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Validation\OperationNameValidator;
 
-/**
- * Definition of an operation on a service.
- */
 final class OperationDefinition
 {
     public function __construct(
@@ -79,6 +76,7 @@ final class OperationDefinition
                 "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
                 untypedFallback: 'void',
             );
+            // Accept ?OperationInfo / leading-slash forms — the wire is the same.
             if (\ltrim($declaredReturn, '?\\') !== OperationInfo::class) {
                 throw new InvalidArgumentException(\sprintf(
                     '#[AsyncOperation] method %s::%s() must declare return type %s, got %s',

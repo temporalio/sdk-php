@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
@@ -39,7 +46,12 @@ final class ExecuteNexusOperationInput
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
         ?array $nexusHeaders = null,
     ): self {
-        /** @psalm-suppress ArgumentTypeCoercion non-empty contract preserved by ?? fallback */
+        if ($service !== null && $service === '') {
+            throw new \InvalidArgumentException('$service must be a non-empty string.');
+        }
+        if ($operation !== null && $operation === '') {
+            throw new \InvalidArgumentException('$operation must be a non-empty string.');
+        }
         return new self(
             $service ?? $this->service,
             $operation ?? $this->operation,

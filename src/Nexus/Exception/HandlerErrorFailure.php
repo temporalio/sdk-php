@@ -40,12 +40,7 @@ final class HandlerErrorFailure
     private function __construct() {}
 
     /**
-     * Package a {@see HandlerException} into the wire `HandlerError` shape.
-     * `details.retryableOverride` is emitted only for explicit Retryable /
-     * NonRetryable; Unspecified omits the key.
-     *
-     * @param array<string, mixed> $extraDetails Merged into `details`. The
-     *        `type` and `retryableOverride` keys are not overridable.
+     * Emits `details.retryableOverride` only for explicit values; ignores `type`/`retryableOverride` in $extraDetails.
      */
     public static function from(HandlerException $e, array $extraDetails = []): FailureInfo
     {

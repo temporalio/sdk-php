@@ -14,9 +14,6 @@ namespace Temporal\Nexus\Handler;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Link;
 
-/**
- * Details for handling operation start.
- */
 final class OperationStartDetails
 {
     /**

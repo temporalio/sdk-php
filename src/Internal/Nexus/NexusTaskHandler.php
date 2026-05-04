@@ -74,10 +74,10 @@ final class NexusTaskHandler
      */
     public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
     {
-        $lc = \array_change_key_case($headers, \CASE_LOWER);
+        $lowerHeaders = \array_change_key_case($headers, \CASE_LOWER);
 
-        $value = NexusHeader::get($lc, NexusHeader::OPERATION_TIMEOUT)
-            ?? NexusHeader::get($lc, NexusHeader::REQUEST_TIMEOUT);
+        $value = NexusHeader::get($lowerHeaders, NexusHeader::OPERATION_TIMEOUT)
+            ?? NexusHeader::get($lowerHeaders, NexusHeader::REQUEST_TIMEOUT);
 
         if ($value === null || $value === '') {
             return null;
@@ -104,39 +104,39 @@ final class NexusTaskHandler
 
     public function handleStartOperation(Request $request): Response
     {
-        $startReq = $request->getStartOperation();
-        \assert($startReq instanceof StartOperationRequest);
+        $startRequest = $request->getStartOperation();
+        \assert($startRequest instanceof StartOperationRequest);
 
         $headers = [];
         foreach ($request->getHeader() as $key => $value) {
             $headers[(string) $key] = (string) $value;
         }
 
-        // Strict link parsing: malformed → BadRequest (Java parity).
-        $links = LinkParser::fromProto($startReq->getLinks());
+        // Strict link parsing: malformed → BadRequest.
+        $links = LinkParser::fromProto($startRequest->getLinks());
 
         $callbackHeaders = [];
-        foreach ($startReq->getCallbackHeader() as $key => $value) {
+        foreach ($startRequest->getCallbackHeader() as $key => $value) {
             $callbackHeaders[(string) $key] = (string) $value;
         }
 
         $context = new OperationContext(
-            service: $startReq->getService(),
-            operation: $startReq->getOperation(),
+            service: $startRequest->getService(),
+            operation: $startRequest->getOperation(),
             headers: $headers,
             deadline: self::deadlineFromHeaders($headers),
         );
 
         $details = new OperationStartDetails(
-            requestId: $startReq->getRequestId(),
-            callbackUrl: $startReq->getCallback() ?: null,
+            requestId: $startRequest->getRequestId(),
+            callbackUrl: $startRequest->getCallback() ?: null,
             callbackHeaders: $callbackHeaders,
             links: $links,
         );
 
         $inputData = '';
         $inputHeaders = [];
-        $payload = $startReq->getPayload();
+        $payload = $startRequest->getPayload();
         if ($payload !== null) {
             $inputData = $payload->getData();
             foreach ($payload->getMetadata() as $key => $value) {
@@ -153,10 +153,10 @@ final class NexusTaskHandler
                 $this->buildNexusOperationContext(),
             );
 
-            $startResp = new StartOperationResponse();
+            $startResponse = new StartOperationResponse();
 
             if ($result instanceof SyncOperationStartResult) {
-                $syncResp = new StartOperationResponse\Sync();
+                $syncResponse = new StartOperationResponse\Sync();
 
                 $content = $result->value;
                 if ($content instanceof HandlerResultContent) {
@@ -165,30 +165,30 @@ final class NexusTaskHandler
                     if ($content->headers !== []) {
                         $resultPayload->setMetadata($content->headers);
                     }
-                    $syncResp->setPayload($resultPayload);
+                    $syncResponse->setPayload($resultPayload);
                 }
 
                 $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
-                    $syncResp->setLinks($this->convertLinksToProto($contextLinks));
+                    $syncResponse->setLinks($this->convertLinksToProto($contextLinks));
                 }
 
-                $startResp->setSyncSuccess($syncResp);
+                $startResponse->setSyncSuccess($syncResponse);
             } else {
                 \assert($result instanceof AsyncOperationStartResult);
-                $asyncResp = new StartOperationResponse\Async();
-                $asyncResp->setOperationToken($result->info->token);
+                $asyncResponse = new StartOperationResponse\Async();
+                $asyncResponse->setOperationToken($result->info->token);
 
                 $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
-                    $asyncResp->setLinks($this->convertLinksToProto($contextLinks));
+                    $asyncResponse->setLinks($this->convertLinksToProto($contextLinks));
                 }
 
-                $startResp->setAsyncSuccess($asyncResp);
+                $startResponse->setAsyncSuccess($asyncResponse);
             }
 
             $response = new Response();
-            $response->setStartOperation($startResp);
+            $response->setStartOperation($startResponse);
             return $response;
         } catch (OperationException $e) {
             return $this->buildOperationErrorResponse($e);
@@ -199,8 +199,8 @@ final class NexusTaskHandler
 
     public function handleCancelOperation(Request $request): Response
     {
-        $cancelReq = $request->getCancelOperation();
-        \assert($cancelReq instanceof CancelOperationRequest);
+        $cancelRequest = $request->getCancelOperation();
+        \assert($cancelRequest instanceof CancelOperationRequest);
 
         $headers = [];
         foreach ($request->getHeader() as $key => $value) {
@@ -208,15 +208,15 @@ final class NexusTaskHandler
         }
 
         $context = new OperationContext(
-            service: $cancelReq->getService(),
-            operation: $cancelReq->getOperation(),
+            service: $cancelRequest->getService(),
+            operation: $cancelRequest->getOperation(),
             headers: $headers,
         );
 
-        $token = $cancelReq->getOperationToken();
+        $token = $cancelRequest->getOperationToken();
         if ($token === '') {
             /** @psalm-suppress DeprecatedMethod — back-compat fallback */
-            $token = $cancelReq->getOperationId();
+            $token = $cancelRequest->getOperationId();
         }
 
         $details = new OperationCancelDetails(operationToken: $token);
@@ -352,14 +352,14 @@ final class NexusTaskHandler
 
     private function buildOperationErrorResponse(OperationException $e): Response
     {
-        $startResp = new StartOperationResponse();
-        $startResp->setOperationError(NexusFailureConverter::operationExceptionToProto(
+        $startResponse = new StartOperationResponse();
+        $startResponse->setOperationError(NexusFailureConverter::operationExceptionToProto(
             $e,
             $this->includeTracebackInFailure,
         ));
 
         $response = new Response();
-        $response->setStartOperation($startResp);
+        $response->setStartOperation($startResponse);
         return $response;
     }
 

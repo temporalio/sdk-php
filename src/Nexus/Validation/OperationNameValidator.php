@@ -14,10 +14,7 @@ namespace Temporal\Nexus\Validation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
- * Validates an Operation Name per the Nexus spec.
- *
- * Travels in the request URL path and the `Nexus-Operation` header, so only
- * printable non-whitespace ASCII (0x21–0x7E) is accepted.
+ * Operation name — printable non-whitespace ASCII (Nexus spec).
  */
 final class OperationNameValidator
 {
