@@ -36,6 +36,8 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Interceptor\PipelineProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
@@ -61,6 +63,7 @@ final class NexusTaskHandler
         private readonly SerializerInterface $serializer,
         private readonly DataConverterInterface $dataConverter,
         private readonly bool $includeTracebackInFailure = true,
+        private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
     ) {}
 
     /**
@@ -340,6 +343,7 @@ final class NexusTaskHandler
             $this->serviceHandler = ServiceHandler::create(
                 serializer: $this->serializer,
                 instances: $instances,
+                interceptorProvider: $this->interceptorProvider,
             );
         }
 

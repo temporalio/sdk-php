@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
@@ -61,7 +62,7 @@ final class CancelOperationTest extends TestCase
         );
     }
 
-    public function testCancelWithMiddleware(): void
+    public function testCancelWithInterceptor(): void
     {
         $apiClient = fn(string $name): string => "greeting-{$name}";
         $authToken = 'auth-token';
@@ -72,13 +73,13 @@ final class CancelOperationTest extends TestCase
             instances: [
                 ServiceImplInstance::fromInstance(new GreetingServiceImpl($apiClient)),
             ],
-            middlewares: [
+            interceptorProvider: new SimplePipelineProvider([
                 new AuthInterceptor($authToken),
                 $loggingInterceptor,
-            ],
+            ]),
         );
 
-        // Start an async operation first
+        // Start an async operation first.
         $result = $handler->startOperation(
             new OperationContext(
                 service: 'GreetingServiceInterface',
@@ -92,7 +93,7 @@ final class CancelOperationTest extends TestCase
         $token = $result->info->token;
         self::assertNotNull($token);
 
-        // Cancel it
+        // Cancel it.
         $handler->cancelOperation(
             new OperationContext(
                 service: 'GreetingServiceInterface',
@@ -102,7 +103,7 @@ final class CancelOperationTest extends TestCase
             new OperationCancelDetails(operationToken: $token),
         );
 
-        // Verify logging interceptor saw the cancel
-        self::assertContains('sayHello2', $loggingInterceptor->getOperations());
+        // Logging interceptor saw both start and cancel.
+        self::assertSame(['sayHello2', 'sayHello2'], $loggingInterceptor->getOperations());
     }
 }

@@ -56,6 +56,5 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
 
         self::assertSame($serializer, $handler->getSerializer());
         self::assertCount(1, $handler->getInstances());
-        self::assertCount(0, $handler->getOperationMiddlewares());
     }
 }

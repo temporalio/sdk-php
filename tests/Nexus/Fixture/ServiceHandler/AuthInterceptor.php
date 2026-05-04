@@ -11,16 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixture\ServiceHandler;
 
+use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
+use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\Internal\OperationHandlerInterface;
-use Temporal\Nexus\Handler\Internal\OperationMiddlewareInterface;
+use Temporal\Nexus\Handler\OperationStartResult;
 
 /**
- * Rejects operations missing the expected auth token. Short-circuits in `intercept()`.
+ * Rejects operations missing the expected auth token. Short-circuits before
+ * the underlying handler is invoked.
  */
-final class AuthInterceptor implements OperationMiddlewareInterface
+final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
 {
     public const AUTH_HEADER = 'authorization';
 
@@ -28,13 +30,22 @@ final class AuthInterceptor implements OperationMiddlewareInterface
         private readonly string $authToken,
     ) {}
 
-    public function intercept(
-        OperationContext $context,
-        OperationHandlerInterface $next,
-    ): OperationHandlerInterface {
-        if (($context->headers[self::AUTH_HEADER] ?? null) !== $this->authToken) {
+    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+    {
+        $this->assertAuthorized($input->context->headers[self::AUTH_HEADER] ?? null);
+        return $next($input);
+    }
+
+    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+    {
+        $this->assertAuthorized($input->context->headers[self::AUTH_HEADER] ?? null);
+        $next($input);
+    }
+
+    private function assertAuthorized(?string $token): void
+    {
+        if ($token !== $this->authToken) {
             throw HandlerException::create(ErrorType::Unauthorized, 'Unauthorized');
         }
-        return $next;
     }
 }

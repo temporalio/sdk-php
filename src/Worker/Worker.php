@@ -178,6 +178,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
             $this->services->nexusServices,
             new PayloadSerializer($this->services->dataConverter),
             $this->services->dataConverter,
+            interceptorProvider: $this->services->interceptorProvider,
         );
 
         // Skip when no client — context-needing handlers fail fast via Nexus::getOperationContext().

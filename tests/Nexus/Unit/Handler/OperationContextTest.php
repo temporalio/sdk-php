@@ -104,7 +104,7 @@ final class OperationContextTest extends TestCase
         $ctx2->links->add(new Link('url2', 't2'));
 
         // The collection is deliberately shared: both contexts observe the same list
-        // so that links emitted inside middlewares flow back to the transport.
+        // so that links emitted inside interceptors flow back to the transport.
         self::assertSame($ctx->links, $ctx2->links);
         self::assertCount(2, $ctx->links->all());
         self::assertSame('url2', $ctx->links->all()[1]->uri);

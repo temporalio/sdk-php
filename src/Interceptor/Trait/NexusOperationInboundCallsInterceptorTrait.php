@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Fixture\ServiceHandler;
+namespace Temporal\Interceptor\Trait;
 
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
 use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
@@ -17,28 +17,29 @@ use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Nexus\Handler\OperationStartResult;
 
 /**
- * Test interceptor that records each operation it sees.
+ * Trait that provides a default interceptor implementation.
+ *
+ * @see NexusOperationInboundCallsInterceptor
  */
-final class LoggingInterceptor implements NexusOperationInboundCallsInterceptor
+trait NexusOperationInboundCallsInterceptorTrait
 {
-    /** @var list<string> */
-    private array $operations = [];
-
-    /** @return list<string> */
-    public function getOperations(): array
-    {
-        return $this->operations;
-    }
-
+    /**
+     * Default implementation of the `startNexusOperation` method.
+     *
+     * @see NexusOperationInboundCallsInterceptor::startNexusOperation()
+     */
     public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
     {
-        $this->operations[] = $input->context->operation;
         return $next($input);
     }
 
+    /**
+     * Default implementation of the `cancelNexusOperation` method.
+     *
+     * @see NexusOperationInboundCallsInterceptor::cancelNexusOperation()
+     */
     public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
     {
-        $this->operations[] = $input->context->operation;
         $next($input);
     }
 }

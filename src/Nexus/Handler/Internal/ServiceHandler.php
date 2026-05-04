@@ -11,6 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
+use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
+use Temporal\Interceptor\PipelineProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
@@ -32,22 +37,20 @@ final class ServiceHandler implements HandlerInterface
 {
     /**
      * @param array<string, ServiceImplInstance> $instances
-     * @param OperationMiddlewareInterface[] $middlewares
      */
     public function __construct(
         private readonly array $instances,
         private readonly SerializerInterface $serializer,
-        private readonly array $middlewares = [],
+        private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
     ) {}
 
     /**
      * @param ServiceImplInstance[] $instances
-     * @param OperationMiddlewareInterface[] $middlewares
      */
     public static function create(
         SerializerInterface $serializer,
         array $instances,
-        array $middlewares = [],
+        PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
     ): self {
         if (\count($instances) === 0) {
             throw new InvalidArgumentException('No service instances defined');
@@ -64,7 +67,7 @@ final class ServiceHandler implements HandlerInterface
             $instancesByName[$name] = $instance;
         }
 
-        return new self($instancesByName, $serializer, $middlewares);
+        return new self($instancesByName, $serializer, $interceptorProvider);
     }
 
     /**
@@ -80,14 +83,6 @@ final class ServiceHandler implements HandlerInterface
         return $this->serializer;
     }
 
-    /**
-     * @return OperationMiddlewareInterface[]
-     */
-    public function getOperationMiddlewares(): array
-    {
-        return $this->middlewares;
-    }
-
     public function startOperation(
         OperationContext $context,
         OperationStartDetails $details,
@@ -97,7 +92,6 @@ final class ServiceHandler implements HandlerInterface
         [$instance, $handler] = $this->resolveHandler($context);
 
         $contextWithServiceDefinition = $context->withServiceDefinition($instance->definition);
-        $interceptedHandler = $this->interceptOperationHandler($contextWithServiceDefinition, $handler);
         $definition = $instance->definition->operations[$context->operation];
 
         try {
@@ -123,10 +117,22 @@ final class ServiceHandler implements HandlerInterface
             startDetails: $details,
         ));
         try {
-            $result = $interceptedHandler->start($contextWithServiceDefinition, $details, $inputObject);
+            $result = $this->interceptorProvider
+                ->getPipeline(NexusOperationInboundCallsInterceptor::class)
+                ->with(
+                    static fn(NexusOperationStartInput $input): OperationStartResult => $handler->start(
+                        $input->context,
+                        $input->details,
+                        $input->input,
+                    ),
+                    /** @see NexusOperationInboundCallsInterceptor::startNexusOperation() */
+                    'startNexusOperation',
+                )(new NexusOperationStartInput($contextWithServiceDefinition, $details, $inputObject));
         } finally {
             Nexus::setCurrentContext(null);
         }
+
+        \assert($result instanceof OperationStartResult);
 
         if (!$result instanceof SyncOperationStartResult) {
             return $result;
@@ -168,8 +174,15 @@ final class ServiceHandler implements HandlerInterface
             cancelDetails: $details,
         ));
         try {
-            $this->interceptOperationHandler($contextWithServiceDefinition, $handler)
-                ->cancel($contextWithServiceDefinition, $details);
+            $this->interceptorProvider
+                ->getPipeline(NexusOperationInboundCallsInterceptor::class)
+                ->with(
+                    static function (NexusOperationCancelInput $input) use ($handler): void {
+                        $handler->cancel($input->context, $input->details);
+                    },
+                    /** @see NexusOperationInboundCallsInterceptor::cancelNexusOperation() */
+                    'cancelNexusOperation',
+                )(new NexusOperationCancelInput($contextWithServiceDefinition, $details));
         } finally {
             Nexus::setCurrentContext(null);
         }
@@ -197,17 +210,6 @@ final class ServiceHandler implements HandlerInterface
         }
 
         return [$instance, $handler];
-    }
-
-    private function interceptOperationHandler(
-        OperationContext $context,
-        OperationHandlerInterface $rootHandler,
-    ): OperationHandlerInterface {
-        $handler = $rootHandler;
-        for ($i = \count($this->middlewares) - 1; $i >= 0; $i--) {
-            $handler = $this->middlewares[$i]->intercept($context, $handler);
-        }
-        return $handler;
     }
 
     private function resultToContent(

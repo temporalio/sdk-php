@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Temporal package.
+ * This file is part of Nexus RPC SDK for PHP package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Interceptor\PipelineProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\Internal\HandlerInputContent;
 use Temporal\Nexus\Handler\OperationCancelDetails;
@@ -84,10 +86,10 @@ final class ServiceHandlerTest extends TestCase
     public function testAuthInterceptorAllowsCallWithValidToken(): void
     {
         $token = 'auth-token';
-        $handler = self::newGreetingHandler([
+        $handler = self::newGreetingHandler(new SimplePipelineProvider([
             new AuthInterceptor($token),
             new LoggingInterceptor(),
-        ]);
+        ]));
 
         $result = $handler->startOperation(
             new OperationContext(
@@ -104,10 +106,10 @@ final class ServiceHandlerTest extends TestCase
 
     public function testAuthInterceptorRejectsCallWithMissingToken(): void
     {
-        $handler = self::newGreetingHandler([
+        $handler = self::newGreetingHandler(new SimplePipelineProvider([
             new AuthInterceptor('auth-token'),
             new LoggingInterceptor(),
-        ]);
+        ]));
 
         $this->expectException(HandlerException::class);
         $handler->startOperation(
@@ -124,10 +126,10 @@ final class ServiceHandlerTest extends TestCase
     {
         $token = 'auth-token';
         $logger = new LoggingInterceptor();
-        $handler = self::newGreetingHandler([
+        $handler = self::newGreetingHandler(new SimplePipelineProvider([
             new AuthInterceptor($token),
             $logger,
-        ]);
+        ]));
 
         $handler->startOperation(
             new OperationContext(
@@ -188,17 +190,14 @@ final class ServiceHandlerTest extends TestCase
         );
     }
 
-    /**
-     * @param list<\Temporal\Nexus\Handler\Internal\OperationMiddlewareInterface> $middlewares
-     */
-    private static function newGreetingHandler(array $middlewares = []): ServiceHandler
+    private static function newGreetingHandler(?PipelineProvider $interceptorProvider = null): ServiceHandler
     {
         $apiClient = static fn(string $name): string => "greeting-{$name}";
 
         return ServiceHandler::create(
             serializer: new StringOnlySerializer(),
             instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl($apiClient))],
-            middlewares: $middlewares,
+            interceptorProvider: $interceptorProvider ?? new SimplePipelineProvider(),
         );
     }
 
