@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit;
 
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Nexus\ServiceDefinition;
 use Temporal\Tests\Nexus\Fixture\Service\UnionInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\UntypedInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\DiamondFinalInterface;
@@ -26,99 +28,101 @@ use Temporal\Tests\Nexus\Fixture\ServiceDefinition\OperationOverrideMismatchServ
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\ServiceWithPlainParentInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\ValidServiceWithOperations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(ServiceDefinition::class)]
-final class ServiceDefinitionTest extends TestCase
+#[CoversClass(NexusServiceReader::class)]
+#[UsesClass(NexusServicePrototype::class)]
+final class NexusServiceReaderTest extends TestCase
 {
     public function testInvalidServiceNoAnnotation(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing #[Service] attribute');
-        ServiceDefinition::fromClass(InvalidServiceNoAnnotation::class);
+        self::reader()->fromClass(InvalidServiceNoAnnotation::class);
     }
 
     public function testServiceAttributeOnClassIsAccepted(): void
     {
-        $defn = ServiceDefinition::fromClass(ServiceAsClass::class);
+        $proto = self::reader()->fromClass(ServiceAsClass::class);
 
-        self::assertSame('ServiceAsClass', $defn->name);
-        self::assertCount(1, $defn->operations);
-        self::assertArrayHasKey('classOperation', $defn->operations);
-        self::assertSame('string', $defn->operations['classOperation']->inputType);
-        self::assertSame('string', $defn->operations['classOperation']->outputType);
+        self::assertSame('ServiceAsClass', $proto->getID());
+        self::assertCount(1, $proto->getOperations());
+        self::assertArrayHasKey('classOperation', $proto->getOperations());
+        self::assertSame('string', $proto->getOperations()['classOperation']->inputType);
+        self::assertSame('string', $proto->getOperations()['classOperation']->outputType);
     }
 
     public function testInvalidSubServiceNameMismatch(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('does not match the expected name on the contract');
-        ServiceDefinition::fromClass(InvalidSubService::class);
+        self::reader()->fromClass(InvalidSubService::class);
     }
 
     public function testInvalidServiceWithOperations(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('operation(s) were invalid');
-        ServiceDefinition::fromClass(InvalidServiceWithOperations::class);
+        self::reader()->fromClass(InvalidServiceWithOperations::class);
     }
 
     public function testInvalidServiceDuplicateOperation(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Multiple operations named 'duplicateWhenNameOverridden1'");
-        ServiceDefinition::fromClass(InvalidServiceDuplicateOperation::class);
+        self::reader()->fromClass(InvalidServiceDuplicateOperation::class);
     }
 
     public function testValidService(): void
     {
-        $defn = ServiceDefinition::fromClass(ValidServiceWithOperations::class);
+        $proto = self::reader()->fromClass(ValidServiceWithOperations::class);
 
-        self::assertSame('ValidServiceWithOperations', $defn->name);
+        self::assertSame('ValidServiceWithOperations', $proto->getID());
 
-        self::assertOperation($defn, 'superMethod',           input: 'void',   output: 'void');
-        self::assertOperation($defn, 'superInterfaceOnly',    input: 'void',   output: 'void');
-        self::assertOperation($defn, 'noParamNoReturn',       input: 'void',   output: 'void');
-        self::assertOperation($defn, 'noParamSingleReturn',   input: 'void',   output: 'string');
-        self::assertOperation($defn, 'singleParamNoReturn',   input: 'string', output: 'void');
-        self::assertOperation($defn, 'singleParamSingleReturn', input: 'string', output: 'string');
-        self::assertOperation($defn, 'custom-name',           input: 'void',   output: 'void');
+        self::assertOperation($proto, 'superMethod',           input: 'void',   output: 'void');
+        self::assertOperation($proto, 'superInterfaceOnly',    input: 'void',   output: 'void');
+        self::assertOperation($proto, 'noParamNoReturn',       input: 'void',   output: 'void');
+        self::assertOperation($proto, 'noParamSingleReturn',   input: 'void',   output: 'string');
+        self::assertOperation($proto, 'singleParamNoReturn',   input: 'string', output: 'void');
+        self::assertOperation($proto, 'singleParamSingleReturn', input: 'string', output: 'string');
+        self::assertOperation($proto, 'custom-name',           input: 'void',   output: 'void');
     }
 
     public function testEmptyServiceRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No operations defined');
-        ServiceDefinition::fromClass(EmptyService::class);
+        self::reader()->fromClass(EmptyService::class);
     }
 
     public function testParentInterfaceWithoutServiceAttributeIsSkipped(): void
     {
-        $defn = ServiceDefinition::fromClass(ServiceWithPlainParentInterface::class);
-        self::assertSame('ServiceWithPlainParentInterface', $defn->name);
-        self::assertArrayHasKey('ownOperation', $defn->operations);
-        self::assertArrayHasKey('inheritedOperation', $defn->operations);
+        $proto = self::reader()->fromClass(ServiceWithPlainParentInterface::class);
+        self::assertSame('ServiceWithPlainParentInterface', $proto->getID());
+        self::assertArrayHasKey('ownOperation', $proto->getOperations());
+        self::assertArrayHasKey('inheritedOperation', $proto->getOperations());
     }
 
     public function testOperationOverrideWithMismatchingNameIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('mismatches against another operation');
-        ServiceDefinition::fromClass(OperationOverrideMismatchService::class);
+        self::reader()->fromClass(OperationOverrideMismatchService::class);
     }
 
     public function testDiamondInheritanceIsHandled(): void
     {
-        $defn = ServiceDefinition::fromClass(DiamondFinalInterface::class);
-        self::assertSame('Diamond', $defn->name);
-        self::assertCount(1, $defn->operations);
-        self::assertArrayHasKey('commonOp', $defn->operations);
+        $proto = self::reader()->fromClass(DiamondFinalInterface::class);
+        self::assertSame('Diamond', $proto->getID());
+        self::assertCount(1, $proto->getOperations());
+        self::assertArrayHasKey('commonOp', $proto->getOperations());
     }
 
     public function testUntypedParameterFallsBackToMixed(): void
     {
-        $defn = ServiceDefinition::fromClass(UntypedInputServiceInterface::class);
-        self::assertSame('mixed', $defn->operations['operation']->inputType);
+        $proto = self::reader()->fromClass(UntypedInputServiceInterface::class);
+        self::assertSame('mixed', $proto->getOperations()['operation']->inputType);
     }
 
     public function testUnionParameterIsRejectedAtFromMethod(): void
@@ -127,17 +131,23 @@ final class ServiceDefinitionTest extends TestCase
         // composite branch) before fromMethod rejects it.
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Union types');
-        ServiceDefinition::fromClass(UnionInputServiceInterface::class);
+        self::reader()->fromClass(UnionInputServiceInterface::class);
+    }
+
+    private static function reader(): NexusServiceReader
+    {
+        return new NexusServiceReader(new AttributeReader());
     }
 
     private static function assertOperation(
-        ServiceDefinition $defn,
+        NexusServicePrototype $proto,
         string $name,
         string $input,
         string $output,
     ): void {
-        self::assertArrayHasKey($name, $defn->operations);
-        $op = $defn->operations[$name];
+        $operations = $proto->getOperations();
+        self::assertArrayHasKey($name, $operations);
+        $op = $operations[$name];
         self::assertSame($name, $op->name);
         self::assertSame($input, $op->inputType, "inputType for {$name}");
         self::assertSame($output, $op->outputType, "outputType for {$name}");

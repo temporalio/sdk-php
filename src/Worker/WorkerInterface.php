@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\Identifiable;
 
@@ -91,9 +92,9 @@ interface WorkerInterface extends Identifiable
     public function registerNexusServiceImplementation(object ...$services): self;
 
     /**
-     * Returns list of registered Nexus service info for worker info reporting.
+     * Returns list of registered Nexus service prototypes.
      *
-     * @return list<array{name: string, operations: list<string>}>
+     * @return iterable<NexusServicePrototype>
      */
-    public function getNexusServices(): array;
+    public function getNexusServices(): iterable;
 }

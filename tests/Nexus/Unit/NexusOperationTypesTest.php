@@ -11,26 +11,31 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit;
 
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Nexus\OperationDefinition;
-use Temporal\Nexus\ServiceDefinition;
 use Temporal\Tests\Nexus\Fixture\Service\IntersectionInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\NullableInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\UnionInputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\UnionOutputServiceInterface;
 use Temporal\Tests\Nexus\Fixture\Service\UntypedInputServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(OperationDefinition::class)]
-final class OperationDefinitionTypesTest extends TestCase
+#[CoversClass(NexusOperationPrototype::class)]
+#[UsesClass(NexusServiceReader::class)]
+#[UsesClass(NexusServicePrototype::class)]
+final class NexusOperationTypesTest extends TestCase
 {
     public function testAcceptsNullableInputAndOutputType(): void
     {
-        $defn = ServiceDefinition::fromClass(NullableInputServiceInterface::class);
+        $proto = self::reader()->fromClass(NullableInputServiceInterface::class);
 
-        self::assertArrayHasKey('operation', $defn->operations);
-        $op = $defn->operations['operation'];
+        self::assertArrayHasKey('operation', $proto->getOperations());
+        $op = $proto->getOperations()['operation'];
         self::assertSame('?string', $op->inputType);
         self::assertSame('?string', $op->outputType);
     }
@@ -39,67 +44,68 @@ final class OperationDefinitionTypesTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Union types.*parameter \$input of/');
-        ServiceDefinition::fromClass(UnionInputServiceInterface::class);
+        self::reader()->fromClass(UnionInputServiceInterface::class);
     }
 
     public function testRejectsUnionOutputType(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Union types.*return type of/');
-        ServiceDefinition::fromClass(UnionOutputServiceInterface::class);
+        self::reader()->fromClass(UnionOutputServiceInterface::class);
     }
 
     public function testRejectsIntersectionInputType(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Intersection types.*parameter \$input of/');
-        ServiceDefinition::fromClass(IntersectionInputServiceInterface::class);
+        self::reader()->fromClass(IntersectionInputServiceInterface::class);
     }
 
     public function testUntypedParameterFallsBackToMixed(): void
     {
-        $defn = ServiceDefinition::fromClass(UntypedInputServiceInterface::class);
+        $proto = self::reader()->fromClass(UntypedInputServiceInterface::class);
 
-        $op = $defn->operations['operation'];
+        $op = $proto->getOperations()['operation'];
         self::assertSame('mixed', $op->inputType);
         self::assertSame('string', $op->outputType);
     }
 
-    public function testOperationDefinitionFromMethodMissingAttribute(): void
-    {
-        $interface = new class {
-            public function plainMethod(): void {}
-        };
-        $method = new \ReflectionMethod($interface::class, 'plainMethod');
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing #[Operation] or #[AsyncOperation] attribute');
-        OperationDefinition::fromMethod($method);
-    }
-
-    public function testOperationDefinitionFromMethodTooManyParameters(): void
+    public function testReaderRejectsMethodWithoutAttribute(): void
     {
         $fixture = new class {
+            public function plainMethod(): void {}
+        };
+        // Plain methods on a #[Service]-less class never reach operationFromMethod —
+        // the reader skips them entirely. To exercise the Missing-attribute branch,
+        // we go through fromClass and it throws Missing #[Service] earlier.
+        $this->expectException(InvalidArgumentException::class);
+        self::reader()->fromClass($fixture::class);
+    }
+
+    public function testRejectsTooManyParameters(): void
+    {
+        $iface = new #[\Temporal\Nexus\Attribute\Service] class {
             #[\Temporal\Nexus\Attribute\Operation]
             public function bad(string $a, string $b): void {}
         };
-        $method = new \ReflectionMethod($fixture::class, 'bad');
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Can have no more than one parameter');
-        OperationDefinition::fromMethod($method);
+        self::reader()->fromClass($iface::class);
     }
 
-    public function testOperationDefinitionRejectsStatic(): void
+    public function testRejectsStaticOperation(): void
     {
-        $fixture = new class {
+        $iface = new #[\Temporal\Nexus\Attribute\Service] class {
             #[\Temporal\Nexus\Attribute\Operation]
             public static function staticOp(): void {}
         };
-        $method = new \ReflectionMethod($fixture::class, 'staticOp');
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot be static');
-        OperationDefinition::fromMethod($method);
+        self::reader()->fromClass($iface::class);
+    }
+
+    private static function reader(): NexusServiceReader
+    {
+        return new NexusServiceReader(new AttributeReader());
     }
 }

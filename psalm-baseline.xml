@@ -1075,7 +1075,6 @@
       <code><![CDATA[$input->type]]></code>
       <code><![CDATA[$operation]]></code>
       <code><![CDATA[$options->service]]></code>
-      <code><![CDATA[$service->name]]></code>
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
@@ -1142,11 +1141,6 @@
       <code><![CDATA[\json_encode($this->metadata)]]></code>
     </PossiblyFalseOperand>
   </file>
-  <file src="src/Nexus/Handler/Internal/ServiceImplFactory.php">
-    <UnnecessaryVarAnnotation>
-      <code><![CDATA[OperationCancel]]></code>
-    </UnnecessaryVarAnnotation>
-  </file>
   <file src="src/Nexus/Handler/LinkCollection.php">
     <PropertyTypeCoercion>
       <code><![CDATA[$links]]></code>
@@ -1170,18 +1164,6 @@
     <DocblockTypeContradiction>
       <code><![CDATA[\is_string($headerValue)]]></code>
     </DocblockTypeContradiction>
-  </file>
-  <file src="src/Nexus/OperationDefinition.php">
-    <UnnecessaryVarAnnotation>
-      <code><![CDATA[AsyncOperation]]></code>
-      <code><![CDATA[Operation]]></code>
-    </UnnecessaryVarAnnotation>
-  </file>
-  <file src="src/Nexus/ServiceDefinition.php">
-    <UnnecessaryVarAnnotation>
-      <code><![CDATA[Service]]></code>
-      <code><![CDATA[Service]]></code>
-    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Nexus/WorkflowRunOperation.php">
     <ArgumentTypeCoercion>

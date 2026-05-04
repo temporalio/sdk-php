@@ -11,11 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Instantiator\NexusServiceInstantiator;
+use Temporal\Internal\Declaration\NexusServiceInstance;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
-use Temporal\Nexus\Handler\Internal\ServiceImplFactory;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Service\GreetingServiceInterface;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ChildInheritingHandler;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\NoServiceImplAnnotation;
@@ -23,12 +26,15 @@ use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceAsClassImpl;
 use Temporal\Tests\Nexus\Fixture\ServiceImplInstance\ServiceImplWithExtraNonOperationMethod;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(ServiceImplInstance::class)]
-#[CoversClass(ServiceImplFactory::class)]
+#[CoversClass(NexusServiceInstantiator::class)]
+#[CoversClass(NexusServiceInstance::class)]
 #[CoversClass(MethodOperationHandler::class)]
-final class ServiceImplInstanceTest extends TestCase
+#[UsesClass(NexusServiceReader::class)]
+#[UsesClass(NexusServicePrototype::class)]
+final class NexusServiceInstantiatorTest extends TestCase
 {
     use ExceptionAssertions;
 
@@ -36,27 +42,27 @@ final class ServiceImplInstanceTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Missing #\[Service\] attribute/');
-        ServiceImplInstance::fromInstance(new NoServiceImplAnnotation());
+        self::bind(new NoServiceImplAnnotation());
     }
 
     public function testServiceAttributeOnClassIsAccepted(): void
     {
-        $instance = ServiceImplInstance::fromInstance(new ServiceAsClassImpl());
+        $instance = self::bind(new ServiceAsClassImpl());
 
-        self::assertSame('ServiceAsClassImpl', $instance->definition->name);
+        self::assertSame('ServiceAsClassImpl', $instance->prototype->getID());
         self::assertCount(1, $instance->operationHandlers);
         self::assertArrayHasKey('classOperation', $instance->operationHandlers);
     }
 
     public function testInheritedHandlerIsDiscovered(): void
     {
-        $impl = ServiceImplInstance::fromInstance(new ChildInheritingHandler());
-        self::assertArrayHasKey('operation', $impl->operationHandlers);
+        $instance = self::bind(new ChildInheritingHandler());
+        self::assertArrayHasKey('operation', $instance->operationHandlers);
     }
 
     public function testServiceImplWithExtraNonOperationMethodIsAccepted(): void
     {
-        $instance = ServiceImplInstance::fromInstance(new ServiceImplWithExtraNonOperationMethod());
+        $instance = self::bind(new ServiceImplWithExtraNonOperationMethod());
 
         self::assertCount(1, $instance->operationHandlers);
         self::assertArrayHasKey('operation', $instance->operationHandlers);
@@ -64,7 +70,7 @@ final class ServiceImplInstanceTest extends TestCase
 
     public function testCancelMethodTargetingUnknownOperationRejected(): void
     {
-        $impl = new class implements GreetingServiceInterface {
+        $instance = new class implements GreetingServiceInterface {
             public function sayHello1(string $name): string
             {
                 return '';
@@ -81,7 +87,7 @@ final class ServiceImplInstanceTest extends TestCase
 
         $e = self::assertThrown(
             NexusException::class,
-            static fn() => ServiceImplInstance::fromInstance($impl),
+            static fn() => self::bind($instance),
         );
 
         self::assertStringContainsString('targets unknown operation', $e->getMessage());
@@ -89,7 +95,7 @@ final class ServiceImplInstanceTest extends TestCase
 
     public function testMultipleCancelMethodsForSameOperationRejected(): void
     {
-        $impl = new class implements GreetingServiceInterface {
+        $instance = new class implements GreetingServiceInterface {
             public function sayHello1(string $name): string
             {
                 return '';
@@ -109,7 +115,7 @@ final class ServiceImplInstanceTest extends TestCase
 
         $e = self::assertThrown(
             NexusException::class,
-            static fn() => ServiceImplInstance::fromInstance($impl),
+            static fn() => self::bind($instance),
         );
 
         self::assertStringContainsString('Multiple #[', $e->getMessage());
@@ -117,7 +123,7 @@ final class ServiceImplInstanceTest extends TestCase
 
     public function testCancelMethodTargetingSyncOperationRejectedAtRegistration(): void
     {
-        $impl = new class implements GreetingServiceInterface {
+        $instance = new class implements GreetingServiceInterface {
             public function sayHello1(string $name): string
             {
                 return '';
@@ -136,7 +142,7 @@ final class ServiceImplInstanceTest extends TestCase
 
         $e = self::assertThrown(
             NexusException::class,
-            static fn() => ServiceImplInstance::fromInstance($impl),
+            static fn() => self::bind($instance),
         );
 
         self::assertStringContainsString('targets a synchronous operation', $e->getMessage());
@@ -145,7 +151,7 @@ final class ServiceImplInstanceTest extends TestCase
 
     public function testCancelMethodMustAcceptToken(): void
     {
-        $impl = new class implements GreetingServiceInterface {
+        $instance = new class implements GreetingServiceInterface {
             public function sayHello1(string $name): string
             {
                 return '';
@@ -162,9 +168,20 @@ final class ServiceImplInstanceTest extends TestCase
 
         $e = self::assertThrown(
             InvalidArgumentException::class,
-            static fn() => ServiceImplInstance::fromInstance($impl),
+            static fn() => self::bind($instance),
         );
 
         self::assertStringContainsString('must accept the operation token', $e->getMessage());
+    }
+
+    /**
+     * Helper that wires Reader+Instantiator together — the same flow the
+     * Worker uses at registration time.
+     */
+    private static function bind(object $instance): NexusServiceInstance
+    {
+        $reader = new NexusServiceReader(new AttributeReader());
+        $prototype = $reader->fromClass(\get_class($instance))->withInstance($instance);
+        return (new NexusServiceInstantiator())->instantiate($prototype);
     }
 }

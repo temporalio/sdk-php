@@ -22,8 +22,8 @@ use Temporal\Nexus\Exception\RetryBehavior;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\ThrowingGreetingImpl;
+use Temporal\Tests\Nexus\Support\BindNexusService;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ServiceHandler::class)]
 final class ServiceHandlerSerdeErrorsTest extends TestCase
 {
+    use BindNexusService;
     use ExceptionAssertions;
 
     public function testDeserializeFailureWrapsAsBadRequestHandlerException(): void
@@ -151,11 +152,11 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
 
     private static function newHandler(
         DataConverterInterface $dataConverter,
-        ?ThrowingGreetingImpl $impl = null,
+        ?ThrowingGreetingImpl $instance = null,
     ): ServiceHandler {
         return ServiceHandler::create(
             dataConverter: $dataConverter,
-            instances: [ServiceImplInstance::fromInstance($impl ?? new ThrowingGreetingImpl())],
+            instances: [self::bindNexusService($instance ?? new ThrowingGreetingImpl())],
         );
     }
 

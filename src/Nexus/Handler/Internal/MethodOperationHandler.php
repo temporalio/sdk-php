@@ -11,13 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
-use Temporal\Nexus\OperationDefinition;
 use Temporal\Nexus\OperationInfo;
 
 /**
@@ -35,8 +35,7 @@ final class MethodOperationHandler implements OperationHandlerInterface
     public function __construct(
         private readonly object $instance,
         private readonly \ReflectionMethod $startMethod,
-        private readonly OperationDefinition $operation,
-        private readonly ?\ReflectionMethod $cancelMethod = null,
+        private readonly NexusOperationPrototype $operation,
     ) {}
 
     public function start(
@@ -61,7 +60,9 @@ final class MethodOperationHandler implements OperationHandlerInterface
         OperationContext $context,
         OperationCancelDetails $details,
     ): void {
-        if ($this->cancelMethod === null) {
+        $cancelMethod = $this->operation->cancelHandler;
+
+        if ($cancelMethod === null) {
             throw HandlerException::create(
                 ErrorType::NotImplemented,
                 \sprintf(
@@ -72,6 +73,6 @@ final class MethodOperationHandler implements OperationHandlerInterface
             );
         }
 
-        $this->cancelMethod->invoke($this->instance, $details->operationToken);
+        $cancelMethod->invoke($this->instance, $details->operationToken);
     }
 }

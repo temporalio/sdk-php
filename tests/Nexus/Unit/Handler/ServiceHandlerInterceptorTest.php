@@ -22,17 +22,19 @@ use Temporal\Interceptor\Trait\NexusOperationInboundCallsInterceptorTrait;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
+use Temporal\Tests\Nexus\Support\BindNexusService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ServiceHandler::class)]
 final class ServiceHandlerInterceptorTest extends TestCase
 {
+    use BindNexusService;
+
     public function testMultipleInterceptorsAreAppliedInRegistrationOrder(): void
     {
         $log = [];
@@ -60,7 +62,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$record('A'), $record('B'), $record('C')]),
         );
 
@@ -92,7 +94,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$overriding]),
         );
 
@@ -120,7 +122,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$exploding]),
         );
 
@@ -153,7 +155,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
         // The injected apiClient is invoked by the async sayHello2 path; we make it throw.
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(
+            instances: [self::bindNexusService(new GreetingServiceImpl(
                 static fn(string $n): string => throw HandlerException::create(ErrorType::Internal, 'boom'),
             ))],
             interceptorProvider: new SimplePipelineProvider([$swallowing]),
@@ -186,7 +188,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingServiceImpl(fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$observer]),
         );
 

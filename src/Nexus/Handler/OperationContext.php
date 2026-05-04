@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Handler;
 
 use Psr\Clock\ClockInterface;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Support\SystemClock;
 use Temporal\Nexus\Internal\Headers;
 use Temporal\Nexus\Link;
-use Temporal\Nexus\ServiceDefinition;
 
 /**
  * Context for operation handling.
@@ -38,7 +38,7 @@ final class OperationContext
         public readonly string $operation,
         array $headers = [],
         public readonly ?\DateTimeImmutable $deadline = null,
-        public readonly ?ServiceDefinition $serviceDefinition = null,
+        public readonly ?NexusServicePrototype $serviceDefinition = null,
         array|LinkCollection $links = [],
         ?MethodCanceller $methodCanceller = null,
         ?ClockInterface $clock = null,
@@ -89,9 +89,9 @@ final class OperationContext
     }
 
     /**
-     * New context with a different service definition. Shares links, canceller, clock.
+     * New context with a different service prototype. Shares links, canceller, clock.
      */
-    public function withServiceDefinition(ServiceDefinition $serviceDefinition): self
+    public function withServiceDefinition(NexusServicePrototype $serviceDefinition): self
     {
         return new self(
             $this->service,

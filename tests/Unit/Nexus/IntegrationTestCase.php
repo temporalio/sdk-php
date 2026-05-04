@@ -139,8 +139,11 @@ final class IntegrationTestCase extends AbstractUnit
 
         $this->serviceImpl = new EchoServiceImpl();
 
-        $repository = new \Temporal\Internal\Nexus\NexusServiceRepository();
-        $repository->add(\Temporal\Nexus\Handler\Internal\ServiceImplInstance::fromInstance($this->serviceImpl));
+        $reader = new \Temporal\Internal\Declaration\Reader\NexusServiceReader(new \Spiral\Attributes\AttributeReader());
+        $prototype = $reader->fromClass($this->serviceImpl::class)->withInstance($this->serviceImpl);
+
+        $repository = new \Temporal\Internal\Declaration\Prototype\NexusServiceCollection();
+        $repository->add($prototype, false);
 
         $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
 

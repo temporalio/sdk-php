@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Common\SdkVersion;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -57,6 +58,11 @@ final class GetWorkerInfo extends Route
             'Name' => $activity->getID(),
         ];
 
+        $nexusServiceMap = static fn(NexusServicePrototype $service): array => [
+            'name' => $service->getID(),
+            'operations' => \array_keys($service->getOperations()),
+        ];
+
         $map = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
             'Name' => $plugin->getName(),
             'Version' => null,
@@ -72,7 +78,7 @@ final class GetWorkerInfo extends Route
             'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
             // Key matches RR's `json:"nexusServices,omitempty"` — do not rename.
-            'nexusServices' => $worker->getNexusServices(),
+            'nexusServices' => $this->map($worker->getNexusServices(), $nexusServiceMap),
         ];
     }
 

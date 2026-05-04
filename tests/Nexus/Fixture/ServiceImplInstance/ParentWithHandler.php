@@ -15,7 +15,7 @@ use Temporal\Tests\Nexus\Fixture\Service\GenericServiceInterface;
 
 /**
  * Parent declares the operation method; subclass inherits without redeclaring it.
- * Exercises the inheritance traversal in {@see \Temporal\Nexus\Handler\Internal\ServiceImplFactory}.
+ * Exercises the inheritance traversal in {@see \Temporal\Internal\Declaration\Instantiator\NexusServiceInstantiator}.
  */
 class ParentWithHandler implements GenericServiceInterface
 {

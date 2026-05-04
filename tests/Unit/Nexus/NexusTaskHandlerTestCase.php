@@ -12,8 +12,10 @@ use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationErrorFailure;
 use Temporal\Nexus\Exception\OperationException;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
@@ -25,7 +27,6 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
-use Temporal\Internal\Nexus\NexusServiceRepository;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -170,8 +171,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
     public function testTracebackCanBeStrippedViaConstructorFlag(): void
     {
-        $repository = new NexusServiceRepository();
-        $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
+        $repository = self::buildRepository(new TestGreetingServiceImpl());
         $handler = new NexusTaskHandler(
             $repository,
             $this->dataConverter,
@@ -294,10 +294,26 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $this->dataConverter = DataConverter::createDefault();
 
-        $repository = new NexusServiceRepository();
-        $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
+        $this->handler = new NexusTaskHandler(
+            self::buildRepository(new TestGreetingServiceImpl()),
+            $this->dataConverter,
+        );
+    }
 
-        $this->handler = new NexusTaskHandler($repository, $this->dataConverter);
+    /**
+     * Build a {@see NexusServiceCollection} populated with the given service instances,
+     * using the same Reader wiring as the Worker.
+     */
+    private static function buildRepository(object ...$instances): NexusServiceCollection
+    {
+        $reader = new NexusServiceReader(new AttributeReader());
+
+        $collection = new NexusServiceCollection();
+        foreach ($instances as $instance) {
+            $prototype = $reader->fromClass(\get_class($instance))->withInstance($instance);
+            $collection->add($prototype, false);
+        }
+        return $collection;
     }
 
     private function buildStartRequest(string $service, string $operation, string $input): Request

@@ -20,6 +20,7 @@ use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Internal\Declaration\NexusServiceInstance;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
@@ -38,7 +39,7 @@ use Temporal\Nexus\NexusOperationContext;
 final class ServiceHandler implements HandlerInterface
 {
     /**
-     * @param array<string, ServiceImplInstance> $instances
+     * @param array<string, NexusServiceInstance> $instances
      */
     public function __construct(
         private readonly array $instances,
@@ -47,7 +48,7 @@ final class ServiceHandler implements HandlerInterface
     ) {}
 
     /**
-     * @param ServiceImplInstance[] $instances
+     * @param NexusServiceInstance[] $instances
      */
     public static function create(
         DataConverterInterface $dataConverter,
@@ -60,7 +61,7 @@ final class ServiceHandler implements HandlerInterface
 
         $instancesByName = [];
         foreach ($instances as $instance) {
-            $name = $instance->definition->name;
+            $name = $instance->prototype->getID();
             if (isset($instancesByName[$name])) {
                 throw new InvalidArgumentException(
                     "Multiple instances registered for service name '{$name}'",
@@ -73,7 +74,7 @@ final class ServiceHandler implements HandlerInterface
     }
 
     /**
-     * @return array<string, ServiceImplInstance>
+     * @return array<string, NexusServiceInstance>
      */
     public function getInstances(): array
     {
@@ -93,8 +94,9 @@ final class ServiceHandler implements HandlerInterface
     ): OperationStartResult {
         [$instance, $handler] = $this->resolveHandler($context);
 
-        $contextWithServiceDefinition = $context->withServiceDefinition($instance->definition);
-        $definition = $instance->definition->operations[$context->operation];
+        $contextWithServiceDefinition = $context->withServiceDefinition($instance->prototype);
+        $operations = $instance->prototype->getOperations();
+        $definition = $operations[$context->operation];
 
         try {
             $inputObject = $definition->inputType === 'void'
@@ -157,7 +159,7 @@ final class ServiceHandler implements HandlerInterface
     ): void {
         [$instance, $handler] = $this->resolveHandler($context);
 
-        $definition = $instance->definition->operations[$context->operation];
+        $definition = $instance->prototype->getOperations()[$context->operation];
         if (!$definition->async) {
             throw HandlerException::create(
                 ErrorType::NotImplemented,
@@ -169,7 +171,7 @@ final class ServiceHandler implements HandlerInterface
             );
         }
 
-        $contextWithServiceDefinition = $context->withServiceDefinition($instance->definition);
+        $contextWithServiceDefinition = $context->withServiceDefinition($instance->prototype);
 
         Nexus::setCurrentContext(new NexusContext(
             operation: $nexusOperation,
@@ -192,7 +194,7 @@ final class ServiceHandler implements HandlerInterface
     }
 
     /**
-     * @return array{ServiceImplInstance, OperationHandlerInterface}
+     * @return array{NexusServiceInstance, OperationHandlerInterface}
      */
     private function resolveHandler(OperationContext $context): array
     {

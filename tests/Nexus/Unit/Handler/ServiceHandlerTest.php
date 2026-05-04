@@ -21,20 +21,22 @@ use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Tests\Nexus\Fixture\Impl\GreetingServiceImpl;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixture\ServiceHandler\VoidServiceImpl;
+use Temporal\Tests\Nexus\Support\BindNexusService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ServiceHandler::class)]
 final class ServiceHandlerTest extends TestCase
 {
+    use BindNexusService;
+
     public function testVoidService(): void
     {
-        $serviceImpl = ServiceImplInstance::fromInstance(new VoidServiceImpl());
+        $serviceImpl = self::bindNexusService(new VoidServiceImpl());
         self::assertCount(1, $serviceImpl->operationHandlers);
     }
 
@@ -150,7 +152,7 @@ final class ServiceHandlerTest extends TestCase
     {
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
+            instances: [self::bindNexusService(new VoidServiceImpl())],
         );
 
         $this->expectException(HandlerException::class);
@@ -165,7 +167,7 @@ final class ServiceHandlerTest extends TestCase
     {
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
+            instances: [self::bindNexusService(new VoidServiceImpl())],
         );
 
         $this->expectException(HandlerException::class);
@@ -180,7 +182,7 @@ final class ServiceHandlerTest extends TestCase
     {
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new VoidServiceImpl())],
+            instances: [self::bindNexusService(new VoidServiceImpl())],
         );
 
         $this->expectException(HandlerException::class);
@@ -197,7 +199,7 @@ final class ServiceHandlerTest extends TestCase
 
         return ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [ServiceImplInstance::fromInstance(new GreetingServiceImpl($apiClient))],
+            instances: [self::bindNexusService(new GreetingServiceImpl($apiClient))],
             interceptorProvider: $interceptorProvider ?? new SimplePipelineProvider(),
         );
     }

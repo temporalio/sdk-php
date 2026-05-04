@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Nexus\Handler\Internal\ServiceImplInstance;
 use Temporal\Client\WorkflowClient;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
@@ -126,22 +125,16 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     public function registerNexusServiceImplementation(object ...$services): WorkerInterface
     {
         foreach ($services as $service) {
-            $this->services->nexusServices->add(ServiceImplInstance::fromInstance($service));
+            $prototype = $this->services->nexusServicesReader->fromClass(\get_class($service));
+            $this->services->nexusServices->add($prototype->withInstance($service), false);
         }
 
         return $this;
     }
 
-    public function getNexusServices(): array
+    public function getNexusServices(): RepositoryInterface
     {
-        $result = [];
-        foreach ($this->services->nexusServices->getInstances() as $instance) {
-            $result[] = [
-                'name' => $instance->definition->name,
-                'operations' => \array_keys($instance->definition->operations),
-            ];
-        }
-        return $result;
+        return $this->services->nexusServices;
     }
 
     protected function createRouter(): RouterInterface

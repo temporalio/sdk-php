@@ -11,17 +11,22 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Nexus\Handler\ClosureMethodCancellationListener;
 use Temporal\Nexus\Handler\LinkCollection;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\OperationContext;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Link;
-use Temporal\Nexus\ServiceDefinition;
 use Temporal\Tests\Nexus\Fixture\ServiceDefinition\ValidServiceWithOperationsForContext;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(OperationContext::class)]
+#[UsesClass(NexusServiceReader::class)]
+#[UsesClass(NexusServicePrototype::class)]
 final class OperationContextTest extends TestCase
 {
     public function testLinksAddAndSet(): void
@@ -80,7 +85,7 @@ final class OperationContextTest extends TestCase
             deadline: $deadline,
         );
 
-        $def = ServiceDefinition::fromClass(ValidServiceWithOperationsForContext::class);
+        $def = (new NexusServiceReader(new AttributeReader()))->fromClass(ValidServiceWithOperationsForContext::class);
         $ctx2 = $ctx->withServiceDefinition($def);
 
         self::assertSame($ctx->service, $ctx2->service);
@@ -92,7 +97,7 @@ final class OperationContextTest extends TestCase
 
     public function testWithServiceDefinitionSharesLinksBuffer(): void
     {
-        $def = ServiceDefinition::fromClass(ValidServiceWithOperationsForContext::class);
+        $def = (new NexusServiceReader(new AttributeReader()))->fromClass(ValidServiceWithOperationsForContext::class);
 
         $ctx = new OperationContext(
             service: 's',
@@ -242,7 +247,7 @@ final class OperationContextTest extends TestCase
             operation: 'o',
             methodCanceller: $canceller,
         );
-        $def = ServiceDefinition::fromClass(ValidServiceWithOperationsForContext::class);
+        $def = (new NexusServiceReader(new AttributeReader()))->fromClass(ValidServiceWithOperationsForContext::class);
 
         $ctx2 = $ctx->withServiceDefinition($def);
         $canceller->cancel('reload');

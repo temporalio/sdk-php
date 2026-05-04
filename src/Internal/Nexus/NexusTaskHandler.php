@@ -34,6 +34,8 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Internal\Declaration\Instantiator\NexusServiceInstantiator;
+use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -56,7 +58,7 @@ final class NexusTaskHandler
      *        deployments — traces leak filesystem paths and argument values.
      */
     public function __construct(
-        private readonly NexusServiceRepository $repository,
+        private readonly NexusServiceCollection $repository,
         private readonly DataConverterInterface $dataConverter,
         private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
@@ -334,7 +336,11 @@ final class NexusTaskHandler
     private function getServiceHandler(): ServiceHandler
     {
         if ($this->serviceHandler === null) {
-            $instances = $this->repository->getInstances();
+            $instantiator = new NexusServiceInstantiator();
+            $instances = [];
+            foreach ($this->repository as $prototype) {
+                $instances[] = $instantiator->instantiate($prototype);
+            }
             if ($instances === []) {
                 throw new \RuntimeException('No Nexus service implementations registered');
             }
