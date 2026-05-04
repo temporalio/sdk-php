@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Nexus;
+namespace Temporal\Nexus\Internal;
 
 /**
  * Workflow-run operation token: base64url(JSON{t:1, ns, wid}).

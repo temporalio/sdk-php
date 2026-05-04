@@ -36,7 +36,7 @@ final class ServiceNameValidatorTest extends TestCase
         ServiceNameValidator::assert('com.example/Greeting');
         ServiceNameValidator::assert('a');
 
-        $this->expectNotToPerformAssertions();
+        self::assertTrue(true, 'ServiceNameValidator::assert() must not throw on valid printable ASCII.');
     }
 
     #[DataProvider('invalidNameProvider')]

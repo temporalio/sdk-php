@@ -37,7 +37,7 @@ final class OperationTokenValidatorTest extends TestCase
     {
         OperationTokenValidator::assert('job-abc123-XYZ_~.!');
 
-        $this->expectNotToPerformAssertions();
+        self::assertTrue(true, 'OperationTokenValidator::assert() must not throw on valid printable ASCII.');
     }
 
     public function testAcceptsFullPrintableRange(): void
@@ -49,7 +49,7 @@ final class OperationTokenValidatorTest extends TestCase
 
         OperationTokenValidator::assert($token);
 
-        $this->expectNotToPerformAssertions();
+        self::assertTrue(true, 'OperationTokenValidator::assert() must not throw on the full printable ASCII range.');
     }
 
     #[DataProvider('invalidTokenProvider')]

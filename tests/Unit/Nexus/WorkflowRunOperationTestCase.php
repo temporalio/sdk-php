@@ -12,7 +12,7 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Nexus\NexusContext;
-use Temporal\Internal\Nexus\WorkflowRunOperationToken;
+use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;

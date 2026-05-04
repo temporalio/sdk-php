@@ -16,7 +16,7 @@ use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\NexusLinkConverter;
-use Temporal\Internal\Nexus\WorkflowRunOperationToken;
+use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Workflow\CompletionCallback;

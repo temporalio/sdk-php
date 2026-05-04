@@ -36,7 +36,7 @@ final class OperationNameValidatorTest extends TestCase
         OperationNameValidator::assert('custom-name');
         OperationNameValidator::assert('a');
 
-        $this->expectNotToPerformAssertions();
+        self::assertTrue(true, 'OperationNameValidator::assert() must not throw on valid printable ASCII.');
     }
 
     #[DataProvider('invalidNameProvider')]

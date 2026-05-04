@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
-use Temporal\Internal\Nexus\WorkflowRunOperationToken;
+use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Tests\Unit\AbstractUnit;
 
 /**
