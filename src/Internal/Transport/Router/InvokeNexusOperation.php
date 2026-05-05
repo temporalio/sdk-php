@@ -44,7 +44,9 @@ final class InvokeNexusOperation extends Route
         $callback = $options['callback'] ?? null;
         $callbackHeaders = $options['callbackHeaders'] ?? [];
         $requestHeaders = $options['headers'] ?? [];
-        // 0 = no canceller (legacy RR).
+        // Modern rrtemporal always emits a non-zero invocationId for Nexus
+        // workers. 0 = back-compat path for pre-merge RR plugins that did not
+        // yet send the field — no canceller is registered in that case.
         $invocationId = (int) ($options['invocationId'] ?? 0);
 
         $deadline = NexusTaskHandler::deadlineFromHeaders($requestHeaders);
