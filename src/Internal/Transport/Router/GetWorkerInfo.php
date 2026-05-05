@@ -77,8 +77,7 @@ final class GetWorkerInfo extends Route
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
             'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
-            // Key matches RR's `json:"nexusServices,omitempty"` — do not rename.
-            'nexusServices' => $this->map($worker->getNexusServices(), $nexusServiceMap),
+            'NexusServices' => $this->map($worker->getNexusServices(), $nexusServiceMap),
         ];
     }
 
@@ -100,8 +99,6 @@ final class GetWorkerInfo extends Route
     {
         return [
             'ApiKey' => $this->credentials->apiKey,
-            // Tells RR this worker handles CancelNexusOperationMethod.
-            'nexus_method_cancel' => 'true',
         ];
     }
 }
