@@ -6,6 +6,7 @@ namespace Temporal\Tests\Acceptance\App;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\LocalActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Testing\DeprecationCollector;
 use Temporal\Testing\Command;
@@ -29,6 +30,10 @@ final class RuntimeBuilder
 
                     # Register Activity
                     $class->getAttributes(ActivityInterface::class) === [] or $runtime
+                        ->addActivity($feature, $classString);
+
+                    # Register Local Activity
+                    $class->getAttributes(LocalActivityInterface::class) === [] or $runtime
                         ->addActivity($feature, $classString);
 
                     # Register Converters
