@@ -71,7 +71,7 @@ final class Header
     /** Standard HTTP `Content-Type` header. */
     public const CONTENT_TYPE = 'Content-Type';
 
-    /** Required `Content-Type` for spec JSON envelopes ({@see \Temporal\Nexus\OperationInfo} / {@see \Temporal\Nexus\FailureInfo}). */
+    /** Required `Content-Type` for spec JSON envelopes (see {@see \Temporal\Nexus\OperationInfo} and the Nexus `Failure` shape). */
     public const CONTENT_TYPE_JSON = 'application/json';
 
     /**

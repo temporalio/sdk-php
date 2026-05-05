@@ -11,15 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Internal\Failure;
 
-use Temporal\Api\Nexus\V1\Failure as NexusProtoFailure;
 use Temporal\Nexus\Exception\ErrorType;
-use Temporal\Nexus\Exception\HandlerErrorFailure;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\NexusException;
-use Temporal\Nexus\Exception\OperationErrorFailure;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Exception\RetryBehavior;
-use Temporal\Nexus\FailureInfo;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -27,14 +23,11 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(NexusFailureConverter::class)]
 #[UsesClass(OperationException::class)]
-#[UsesClass(OperationErrorFailure::class)]
 #[UsesClass(HandlerException::class)]
-#[UsesClass(HandlerErrorFailure::class)]
 #[UsesClass(NexusException::class)]
-#[UsesClass(FailureInfo::class)]
 final class NexusFailureConverterTest extends TestCase
 {
-    public function testOperationExceptionRoutesThroughCanonicalBuilder(): void
+    public function testOperationExceptionIsPackedDirectlyIntoProto(): void
     {
         $e = OperationException::failed('boom');
 
@@ -49,11 +42,11 @@ final class NexusFailureConverterTest extends TestCase
 
         // metadata.type carries the canonical Nexus-spec marker, NOT the PHP class
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(OperationErrorFailure::TYPE, $meta['type']);
+        self::assertSame(NexusFailureConverter::OPERATION_ERROR_TYPE, $meta['type']);
 
         // details JSON has canonical state + flat traceback
         $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
-        self::assertSame('failed', $details['state']);
+        self::assertSame('failed', $details[NexusFailureConverter::DETAILS_STATE_KEY]);
         self::assertArrayHasKey(NexusFailureConverter::DETAILS_TRACEBACK_KEY, $details);
     }
 
@@ -67,7 +60,7 @@ final class NexusFailureConverterTest extends TestCase
         self::assertSame(['state' => 'canceled'], $details);
     }
 
-    public function testHandlerExceptionRoutesThroughCanonicalBuilder(): void
+    public function testHandlerExceptionIsPackedDirectlyIntoProto(): void
     {
         $e = HandlerException::create(ErrorType::BadRequest, 'bad input');
 
@@ -80,10 +73,10 @@ final class NexusFailureConverterTest extends TestCase
         self::assertSame('bad input', $failure->getMessage());
 
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(HandlerErrorFailure::TYPE, $meta['type']);
+        self::assertSame(NexusFailureConverter::HANDLER_ERROR_TYPE, $meta['type']);
 
         $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
-        self::assertSame(ErrorType::BadRequest->value, $details['type']);
+        self::assertSame(ErrorType::BadRequest->value, $details[NexusFailureConverter::DETAILS_TYPE_KEY]);
         self::assertArrayHasKey(NexusFailureConverter::DETAILS_TRACEBACK_KEY, $details);
     }
 
@@ -98,7 +91,31 @@ final class NexusFailureConverterTest extends TestCase
         $handlerError = NexusFailureConverter::handlerExceptionToProto($e, includeTraceback: false);
         $details = \json_decode($handlerError->getFailure()->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
 
-        self::assertTrue($details[HandlerErrorFailure::DETAILS_RETRYABLE_OVERRIDE_KEY]);
+        self::assertTrue($details[NexusFailureConverter::DETAILS_RETRYABLE_OVERRIDE_KEY]);
+    }
+
+    public function testHandlerExceptionNonRetryableOverrideSurfacesInDetails(): void
+    {
+        $e = HandlerException::create(
+            ErrorType::BadRequest,
+            'never retry',
+            retryBehavior: RetryBehavior::NonRetryable,
+        );
+
+        $handlerError = NexusFailureConverter::handlerExceptionToProto($e, includeTraceback: false);
+        $details = \json_decode($handlerError->getFailure()->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+
+        self::assertFalse($details[NexusFailureConverter::DETAILS_RETRYABLE_OVERRIDE_KEY]);
+    }
+
+    public function testHandlerExceptionUnspecifiedRetryBehaviorOmitsOverride(): void
+    {
+        $e = HandlerException::create(ErrorType::Internal, 'no override');
+
+        $handlerError = NexusFailureConverter::handlerExceptionToProto($e, includeTraceback: false);
+        $details = \json_decode($handlerError->getFailure()->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+
+        self::assertArrayNotHasKey(NexusFailureConverter::DETAILS_RETRYABLE_OVERRIDE_KEY, $details);
     }
 
     public function testFlattenCauseChainPacksAllLevels(): void
@@ -129,48 +146,5 @@ final class NexusFailureConverterTest extends TestCase
         self::assertCount(2, $chain);
         self::assertSame('level-1', $chain[0]['message']);
         self::assertSame('level-2', $chain[1]['message']);
-    }
-
-    public function testFailureInfoToProtoOmitsEmptyMetadataAndDetails(): void
-    {
-        $info = new FailureInfo(message: 'just a message');
-
-        $proto = NexusFailureConverter::failureInfoToProto($info);
-
-        self::assertSame('just a message', $proto->getMessage());
-        self::assertCount(0, $proto->getMetadata());
-        self::assertSame('', $proto->getDetails());
-    }
-
-    public function testFailureInfoToProtoCarriesMetadataAndDetailsBytesVerbatim(): void
-    {
-        $info = new FailureInfo(
-            message: 'm',
-            metadata: ['type' => 'nexus.HandlerError', 'extra' => 'value'],
-            detailsJson: '{"type":"INTERNAL"}',
-        );
-
-        $proto = NexusFailureConverter::failureInfoToProto($info);
-
-        $meta = \iterator_to_array($proto->getMetadata());
-        self::assertSame('nexus.HandlerError', $meta['type']);
-        self::assertSame('value', $meta['extra']);
-        self::assertSame('{"type":"INTERNAL"}', $proto->getDetails());
-    }
-
-    public function testFailureInfoToProtoIgnoresRecursiveCauseField(): void
-    {
-        // Proto envelope has no `cause` field; recursive FailureInfo.cause is
-        // intentionally dropped — callers wishing to preserve it must inline
-        // the data in details via flattenCauseChain.
-        $info = new FailureInfo(
-            message: 'outer',
-            cause: new FailureInfo(message: 'inner'),
-        );
-
-        $proto = NexusFailureConverter::failureInfoToProto($info);
-
-        self::assertInstanceOf(NexusProtoFailure::class, $proto);
-        self::assertSame('outer', $proto->getMessage());
     }
 }

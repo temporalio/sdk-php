@@ -10,7 +10,6 @@ use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Exception\OperationErrorFailure;
 use Temporal\Nexus\Exception\OperationException;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
@@ -166,7 +165,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertSame('Something went wrong', $chain[0]['message']);
 
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(OperationErrorFailure::TYPE, $meta['type']);
+        self::assertSame(NexusFailureConverter::OPERATION_ERROR_TYPE, $meta['type']);
     }
 
     public function testTracebackCanBeStrippedViaConstructorFlag(): void
@@ -187,7 +186,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertSame(['state' => 'failed'], $details);
 
         $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(OperationErrorFailure::TYPE, $meta['type']);
+        self::assertSame(NexusFailureConverter::OPERATION_ERROR_TYPE, $meta['type']);
         self::assertSame('Something went wrong', $failure->getMessage());
     }
 

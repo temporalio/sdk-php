@@ -1136,11 +1136,6 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
   </file>
-  <file src="src/Nexus/FailureInfo.php">
-    <PossiblyFalseOperand>
-      <code><![CDATA[\json_encode($this->metadata)]]></code>
-    </PossiblyFalseOperand>
-  </file>
   <file src="src/Nexus/Handler/LinkCollection.php">
     <PropertyTypeCoercion>
       <code><![CDATA[$links]]></code>

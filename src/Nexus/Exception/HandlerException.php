@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Exception;
 
-use Temporal\Nexus\FailureInfo;
-
 /**
  * Thrown from a handler.
  */
@@ -21,14 +19,12 @@ final class HandlerException extends NexusException
     public readonly string $rawErrorType;
     public readonly ErrorType $errorType;
     public readonly RetryBehavior $retryBehavior;
-    public readonly ?FailureInfo $originalFailure;
 
     private function __construct(
         ErrorType|string $errorType,
         string $message,
         ?\Throwable $cause,
         RetryBehavior $retryBehavior,
-        ?FailureInfo $originalFailure,
     ) {
         if ($errorType instanceof ErrorType) {
             $this->rawErrorType = $errorType->value;
@@ -38,7 +34,6 @@ final class HandlerException extends NexusException
             $this->errorType = ErrorType::tryFrom($errorType) ?? ErrorType::Unknown;
         }
         $this->retryBehavior = $retryBehavior;
-        $this->originalFailure = $originalFailure;
 
         parent::__construct($message, 0, $cause);
     }
@@ -48,9 +43,8 @@ final class HandlerException extends NexusException
         string $message,
         ?\Throwable $cause = null,
         RetryBehavior $retryBehavior = RetryBehavior::Unspecified,
-        ?FailureInfo $originalFailure = null,
     ): self {
-        return new self($errorType, $message, $cause, $retryBehavior, $originalFailure);
+        return new self($errorType, $message, $cause, $retryBehavior);
     }
 
     /**
@@ -60,12 +54,11 @@ final class HandlerException extends NexusException
         ErrorType $errorType,
         \Throwable $cause,
         RetryBehavior $retryBehavior = RetryBehavior::Unspecified,
-        ?FailureInfo $originalFailure = null,
     ): self {
         $message = $cause->getMessage() !== ''
             ? "handler error: {$cause->getMessage()}"
             : 'handler error';
-        return new self($errorType, $message, $cause, $retryBehavior, $originalFailure);
+        return new self($errorType, $message, $cause, $retryBehavior);
     }
 
     /**
@@ -76,9 +69,8 @@ final class HandlerException extends NexusException
         string $message,
         ?\Throwable $cause = null,
         RetryBehavior $retryBehavior = RetryBehavior::Unspecified,
-        ?FailureInfo $originalFailure = null,
     ): self {
-        return new self($rawErrorType, $message, $cause, $retryBehavior, $originalFailure);
+        return new self($rawErrorType, $message, $cause, $retryBehavior);
     }
 
     public function isRetryable(): bool

@@ -15,7 +15,6 @@ use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Exception\RetryBehavior;
-use Temporal\Nexus\FailureInfo;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -31,7 +30,6 @@ final class HandlerExceptionTest extends TestCase
         self::assertSame('BAD_REQUEST', $ex->rawErrorType);
         self::assertNull($ex->getPrevious());
         self::assertSame(RetryBehavior::Unspecified, $ex->retryBehavior);
-        self::assertNull($ex->originalFailure);
     }
 
     public function testCreateWithCause(): void
@@ -54,19 +52,6 @@ final class HandlerExceptionTest extends TestCase
 
         self::assertSame(RetryBehavior::NonRetryable, $ex->retryBehavior);
         self::assertFalse($ex->isRetryable());
-    }
-
-    public function testCreateWithOriginalFailure(): void
-    {
-        $failure = new FailureInfo(message: 'Original', stackTrace: 'stack');
-        $ex = HandlerException::create(
-            ErrorType::Internal,
-            'Wrapped',
-            originalFailure: $failure,
-        );
-
-        self::assertSame($failure, $ex->originalFailure);
-        self::assertSame('Original', $ex->originalFailure->message);
     }
 
     public function testFromCauseBuildsMessage(): void
@@ -115,18 +100,6 @@ final class HandlerExceptionTest extends TestCase
 
         self::assertSame('BAD_REQUEST', $ex->rawErrorType);
         self::assertSame(ErrorType::BadRequest, $ex->errorType);
-    }
-
-    public function testFromRawTypePreservesOriginalFailure(): void
-    {
-        $failure = new FailureInfo(message: 'wire');
-        $ex = HandlerException::fromRawType(
-            'MY_TYPE',
-            'message',
-            originalFailure: $failure,
-        );
-
-        self::assertSame($failure, $ex->originalFailure);
     }
 
     public function testIsRetryableFromErrorType(): void
