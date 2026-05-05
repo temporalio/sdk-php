@@ -15,10 +15,10 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Internal\Nexus\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Nexus\Link as NexusLink;
 use Temporal\Workflow\CompletionCallback;
-use Temporal\Workflow\OnConflictOptions;
 
 /**
  * @internal
@@ -85,7 +85,7 @@ final class WorkflowStarterTestCase extends TestCase
     public function testOnConflictOptionsSerializedToProtoWithAllFlags(): void
     {
         $options = (new WorkflowOptions())
-            ->withOnConflictOptions(new OnConflictOptions());
+            ->withOnConflictOptionsInternal(OnConflictOptions::forNexusCompletionCallback());
 
         $request = $this->startRequest('test-workflow', $options);
 
@@ -99,7 +99,7 @@ final class WorkflowStarterTestCase extends TestCase
     public function testOnConflictOptionsSerializedToProtoWithMixedFlags(): void
     {
         $options = (new WorkflowOptions())
-            ->withOnConflictOptions(new OnConflictOptions(
+            ->withOnConflictOptionsInternal(new OnConflictOptions(
                 attachRequestId: false,
                 attachCompletionCallbacks: true,
                 attachLinks: false,

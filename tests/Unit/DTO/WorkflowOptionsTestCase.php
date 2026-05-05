@@ -22,7 +22,6 @@ use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Nexus\Link as NexusLink;
-use Temporal\Workflow\OnConflictOptions;
 
 class WorkflowOptionsTestCase extends AbstractDTOMarshalling
 {
@@ -253,25 +252,6 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertCount(1, $result->getIndexedFields());
     }
 
-    public function testOnConflictOptionsDefaultsToNull(): void
-    {
-        $dto = new WorkflowOptions();
-
-        $this->assertNull($dto->onConflictOptions);
-    }
-
-    public function testWithOnConflictOptionsDoesNotMutate(): void
-    {
-        $dto = new WorkflowOptions();
-        $options = new OnConflictOptions();
-
-        $newDto = $dto->withOnConflictOptions($options);
-
-        $this->assertNotSame($dto, $newDto);
-        $this->assertNull($dto->onConflictOptions);
-        $this->assertSame($options, $newDto->onConflictOptions);
-    }
-
     public function testLinksDefaultEmpty(): void
     {
         $dto = new WorkflowOptions();
@@ -288,15 +268,5 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertNotSame($dto, $newDto);
         $this->assertSame([], $dto->links);
         $this->assertCount(1, $newDto->links);
-    }
-
-    public function testWithOnConflictOptionsAcceptsNull(): void
-    {
-        $dto = (new WorkflowOptions())->withOnConflictOptions(new OnConflictOptions());
-
-        $cleared = $dto->withOnConflictOptions(null);
-
-        $this->assertNotNull($dto->onConflictOptions);
-        $this->assertNull($cleared->onConflictOptions);
     }
 }

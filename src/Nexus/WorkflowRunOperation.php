@@ -16,11 +16,11 @@ use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Internal\Nexus\OnConflictOptions;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Workflow\CompletionCallback;
-use Temporal\Workflow\OnConflictOptions;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -79,7 +79,7 @@ final class WorkflowRunOperation
         // Required so a retried StartWorkflow attaches the new completion-callback to the existing run.
         $options = $options
             ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting)
-            ->withOnConflictOptions(new OnConflictOptions())
+            ->withOnConflictOptionsInternal(OnConflictOptions::forNexusCompletionCallback())
             ->withLinks($details->links);
 
         // Pin requestId so retried Nexus starts dedupe server-side.

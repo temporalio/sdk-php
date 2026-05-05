@@ -32,13 +32,13 @@ use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Internal\Nexus\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Nexus\Link as NexusLink;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Workflow\CompletionCallback;
-use Temporal\Workflow\OnConflictOptions;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -217,12 +217,12 @@ final class WorkflowOptions extends Options
     public array $completionCallbacks = [];
 
     /**
-     * Controls what server attaches to an existing run when
-     * {@see $workflowIdConflictPolicy} is {@see WorkflowIdConflictPolicy::UseExisting}.
-     * Required for Nexus completion-callback delivery to survive idempotent
-     * `StartWorkflow` retries.
-     *
      * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
+     *
+     * @internal Set only by the Nexus caller-side path via
+     *           {@see self::withOnConflictOptionsInternal()}; not part of the
+     *           public WorkflowOptions API. Mirrors Go SDK's intentional choice
+     *           to keep this hidden from user code.
      */
     public ?OnConflictOptions $onConflictOptions = null;
 
@@ -700,13 +700,14 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Set the on-conflict attachment flags applied when {@see $workflowIdConflictPolicy}
-     * is {@see WorkflowIdConflictPolicy::UseExisting}. Pass `null` to clear.
+     * @internal Used only by the Nexus caller-side path. Not part of the
+     *           public WorkflowOptions API — Go SDK keeps the equivalent
+     *           setter package-private for the same reason.
      *
      * @return $this
      */
     #[Pure]
-    public function withOnConflictOptions(?OnConflictOptions $options): self
+    public function withOnConflictOptionsInternal(?OnConflictOptions $options): self
     {
         $self = clone $this;
         $self->onConflictOptions = $options;

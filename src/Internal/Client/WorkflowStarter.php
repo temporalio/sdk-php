@@ -51,9 +51,9 @@ use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Nexus\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\CompletionCallback;
-use Temporal\Workflow\OnConflictOptions;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
