@@ -13,63 +13,38 @@ use Temporal\Workflow\NexusOperationCancellationType;
  */
 final class NexusOperationCancellationTypeTestCase extends AbstractUnit
 {
-    public function testEnumCasesMatchConstants(): void
+    public function testEnumValuesMatchSdkGoIotaOrder(): void
     {
-        // The enum cases are declared as `case Name = self::CONSTANT` so the
-        // integer wire values stay in sync with sdk-go's iota order. Drift
-        // here is a wire-level break — pin both sides explicitly.
-        self::assertSame(
-            NexusOperationCancellationType::UNSPECIFIED,
-            NexusOperationCancellationType::Unspecified->value,
-        );
-        self::assertSame(
-            NexusOperationCancellationType::ABANDON,
-            NexusOperationCancellationType::Abandon->value,
-        );
-        self::assertSame(
-            NexusOperationCancellationType::TRY_CANCEL,
-            NexusOperationCancellationType::TryCancel->value,
-        );
-        self::assertSame(
-            NexusOperationCancellationType::WAIT_REQUESTED,
-            NexusOperationCancellationType::WaitRequested->value,
-        );
-        self::assertSame(
-            NexusOperationCancellationType::WAIT_COMPLETED,
-            NexusOperationCancellationType::WaitCompleted->value,
-        );
-    }
-
-    public function testConstantValuesMatchSdkGoIotaOrder(): void
-    {
-        self::assertSame(0, NexusOperationCancellationType::UNSPECIFIED);
-        self::assertSame(1, NexusOperationCancellationType::ABANDON);
-        self::assertSame(2, NexusOperationCancellationType::TRY_CANCEL);
-        self::assertSame(3, NexusOperationCancellationType::WAIT_REQUESTED);
-        self::assertSame(4, NexusOperationCancellationType::WAIT_COMPLETED);
+        // Wire-level integers must stay aligned with sdk-go's iota order;
+        // drift here is a wire-level break.
+        self::assertSame(0, NexusOperationCancellationType::Unspecified->value);
+        self::assertSame(1, NexusOperationCancellationType::Abandon->value);
+        self::assertSame(2, NexusOperationCancellationType::TryCancel->value);
+        self::assertSame(3, NexusOperationCancellationType::WaitRequested->value);
+        self::assertSame(4, NexusOperationCancellationType::WaitCompleted->value);
     }
 
     public function testFromIntProducesExpectedCase(): void
     {
         self::assertSame(
             NexusOperationCancellationType::Unspecified,
-            NexusOperationCancellationType::from(NexusOperationCancellationType::UNSPECIFIED),
+            NexusOperationCancellationType::from(0),
         );
         self::assertSame(
             NexusOperationCancellationType::Abandon,
-            NexusOperationCancellationType::from(NexusOperationCancellationType::ABANDON),
+            NexusOperationCancellationType::from(1),
         );
         self::assertSame(
             NexusOperationCancellationType::TryCancel,
-            NexusOperationCancellationType::from(NexusOperationCancellationType::TRY_CANCEL),
+            NexusOperationCancellationType::from(2),
         );
         self::assertSame(
             NexusOperationCancellationType::WaitRequested,
-            NexusOperationCancellationType::from(NexusOperationCancellationType::WAIT_REQUESTED),
+            NexusOperationCancellationType::from(3),
         );
         self::assertSame(
             NexusOperationCancellationType::WaitCompleted,
-            NexusOperationCancellationType::from(NexusOperationCancellationType::WAIT_COMPLETED),
+            NexusOperationCancellationType::from(4),
         );
     }
 }

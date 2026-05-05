@@ -93,7 +93,7 @@ final class NexusOperationStub implements NexusOperationStubInterface
         // without notifying the server — currently no PHP API surface to do so
         // cleanly without touching `Scope::onRequest`. Mirrors the same gap
         // documented on {@see \Temporal\Workflow\ChildWorkflowCancellationType::Abandon}.
-        $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::ABANDON;
+        $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::Abandon->value;
 
         // Two parallel requests, mirroring ChildWorkflowStub::start(): the start request waits for completion, GetNexusOperationStarted waits for the started ack via RR's nexusStarted registry.
         $resultPromise = $this->normalizeFailure(

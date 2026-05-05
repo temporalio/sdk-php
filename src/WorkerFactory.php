@@ -37,6 +37,7 @@ use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\ArrayRepository;
@@ -114,7 +115,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected EnvironmentInterface $env;
     protected PluginRegistry $pluginRegistry;
 
-    /** Reused for the NexusOperationContext on each dispatch. */
     protected ?WorkflowClient $workflowClient = null;
 
     public function __construct(
@@ -194,6 +194,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
+        /** @psalm-suppress ArgumentTypeCoercion — taskQueue emptiness is asserted in NexusEnvironment ctor */
+        $nexusEnvironment = $this->workflowClient !== null
+            ? new NexusEnvironment(
+                $this->workflowClient->getClientOptions()->namespace,
+                $taskQueue,
+                $this->workflowClient,
+            )
+            : null;
+
         $worker = new Worker(
             $taskQueue,
             $options,
@@ -208,7 +217,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 ),
             ),
             $this->rpc,
-            $this->workflowClient,
+            $nexusEnvironment,
         );
 
         // Call initializeWorker hooks (forward order)

@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\WorkflowClient;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
@@ -38,22 +38,22 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
 
-    /** Wired by WorkerFactory; backs NexusOperationContext for handlers. */
-    private ?WorkflowClient $workflowClient = null;
+    /** Wired by WorkerFactory; carries the WorkflowClient that backs Nexus async operations. */
+    private ?NexusEnvironment $nexusEnvironment;
 
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
-        ?WorkflowClient $workflowClient = null,
+        ?NexusEnvironment $nexusEnvironment = null,
     ) {
         EntityNameValidator::validateTaskQueue($taskQueue);
 
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
-        $this->workflowClient = $workflowClient;
+        $this->nexusEnvironment = $nexusEnvironment;
 
         $this->services = $serviceContainer;
         $this->router = $this->createRouter();
@@ -172,13 +172,9 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
             interceptorProvider: $this->services->interceptorProvider,
         );
 
-        // Skip when no client — context-needing handlers fail fast via Nexus::getOperationContext().
-        if ($this->workflowClient !== null) {
-            $handler->withWorkerEnvironment(
-                $this->workflowClient->getClientOptions()->namespace,
-                $this->name,
-                $this->workflowClient,
-            );
+        // Skip when no env — context-needing handlers fail fast via Nexus::getOperationContext().
+        if ($this->nexusEnvironment !== null) {
+            $handler->withNexusEnvironment($this->nexusEnvironment);
         }
 
         return $handler;

@@ -12,6 +12,7 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
@@ -39,7 +40,8 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
     {
         $this->client = $this->createMock(WorkflowClientInterface::class);
         Nexus::setCurrentContext(new NexusContext(
-            operation: new NexusOperationContext(self::NS, 'tq', $this->client),
+            operation: new NexusOperationContext(self::NS, 'tq'),
+            environment: new NexusEnvironment(self::NS, 'tq', $this->client),
             current: new OperationContext(service: 'svc', operation: 'op'),
         ));
     }

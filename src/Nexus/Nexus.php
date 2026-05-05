@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Nexus;
 
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Support\Facade;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
@@ -66,6 +67,23 @@ final class Nexus extends Facade
     {
         return self::getDispatchContext()?->cancelDetails ?? throw new \LogicException(
             'Nexus::getCancelDetails() called outside a cancel-operation dispatch.',
+        );
+    }
+
+    /**
+     * Worker-bound execution environment backing Nexus async helpers
+     * (carries the WorkflowClient, namespace, taskQueue).
+     *
+     * @internal Plumbing for {@see \Temporal\Nexus\WorkflowRunOperation}; user code
+     *           should drive backing workflows through the helper API rather than
+     *           reaching for the client directly.
+     *
+     * @throws \LogicException when called outside a Nexus operation dispatch.
+     */
+    public static function getEnvironment(): NexusEnvironment
+    {
+        return self::getDispatchContext()?->environment ?? throw new \LogicException(
+            'Nexus::getEnvironment() called outside a Nexus handler dispatch.',
         );
     }
 

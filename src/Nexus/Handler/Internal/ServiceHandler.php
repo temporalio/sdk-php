@@ -22,6 +22,7 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\NexusServiceInstance;
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
@@ -90,7 +91,7 @@ final class ServiceHandler implements HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         ValuesInterface $input,
-        ?NexusOperationContext $nexusOperation = null,
+        ?NexusEnvironment $environment = null,
     ): OperationStartResult {
         [$instance, $handler] = $this->resolveHandler($context);
 
@@ -117,7 +118,8 @@ final class ServiceHandler implements HandlerInterface
         }
 
         Nexus::setCurrentContext(new NexusContext(
-            operation: $nexusOperation,
+            operation: self::buildPublicOperationContext($environment),
+            environment: $environment,
             current: $contextWithServiceDefinition,
             startDetails: $details,
         ));
@@ -155,7 +157,7 @@ final class ServiceHandler implements HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
-        ?NexusOperationContext $nexusOperation = null,
+        ?NexusEnvironment $environment = null,
     ): void {
         [$instance, $handler] = $this->resolveHandler($context);
 
@@ -174,7 +176,8 @@ final class ServiceHandler implements HandlerInterface
         $contextWithServiceDefinition = $context->withServiceDefinition($instance->prototype);
 
         Nexus::setCurrentContext(new NexusContext(
-            operation: $nexusOperation,
+            operation: self::buildPublicOperationContext($environment),
+            environment: $environment,
             current: $contextWithServiceDefinition,
             cancelDetails: $details,
         ));
@@ -191,6 +194,14 @@ final class ServiceHandler implements HandlerInterface
         } finally {
             Nexus::setCurrentContext(null);
         }
+    }
+
+    private static function buildPublicOperationContext(?NexusEnvironment $environment): ?NexusOperationContext
+    {
+        if ($environment === null) {
+            return null;
+        }
+        return new NexusOperationContext($environment->namespace, $environment->taskQueue);
     }
 
     /**

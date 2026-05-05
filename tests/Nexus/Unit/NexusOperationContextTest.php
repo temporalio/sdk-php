@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit;
 
-use Temporal\Client\WorkflowClientInterface;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\NexusOperationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,12 +23,10 @@ final class NexusOperationContextTest extends TestCase
 {
     public function testConstructStoresFields(): void
     {
-        $client = $this->createMock(WorkflowClientInterface::class);
-        $ctx = new NexusOperationContext('ns', 'tq', $client);
+        $ctx = new NexusOperationContext('ns', 'tq');
 
         self::assertSame('ns', $ctx->namespace);
         self::assertSame('tq', $ctx->taskQueue);
-        self::assertSame($client, $ctx->workflowClient);
     }
 
     public function testRejectsEmptyNamespace(): void
@@ -37,7 +34,7 @@ final class NexusOperationContextTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('namespace must not be empty');
 
-        new NexusOperationContext('', 'tq', $this->createMock(WorkflowClientInterface::class));
+        new NexusOperationContext('', 'tq');
     }
 
     public function testRejectsEmptyTaskQueue(): void
@@ -45,6 +42,16 @@ final class NexusOperationContextTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('taskQueue must not be empty');
 
-        new NexusOperationContext('ns', '', $this->createMock(WorkflowClientInterface::class));
+        new NexusOperationContext('ns', '');
+    }
+
+    public function testDoesNotExposeWorkflowClient(): void
+    {
+        $ctx = new NexusOperationContext('ns', 'tq');
+
+        self::assertFalse(
+            \property_exists($ctx, 'workflowClient'),
+            'public NexusOperationContext must not leak the WorkflowClient',
+        );
     }
 }

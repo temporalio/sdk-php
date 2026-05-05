@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Nexus;
 use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -35,22 +36,31 @@ final class NexusContextAccessorTestCase extends AbstractUnit
     {
         /** @var WorkflowClientInterface&MockObject $client */
         $client = $this->createMock(WorkflowClientInterface::class);
-        $ctx = new NexusOperationContext('ns', 'tq', $client);
+        $ctx = new NexusOperationContext('ns', 'tq');
 
-        Nexus::setCurrentContext(new NexusContext(operation: $ctx));
+        Nexus::setCurrentContext(new NexusContext(
+            operation: $ctx,
+            environment: new NexusEnvironment('ns', 'tq', $client),
+        ));
 
         self::assertSame($ctx, Nexus::getOperationContext());
         self::assertSame('ns', Nexus::getOperationContext()->namespace);
         self::assertSame('tq', Nexus::getOperationContext()->taskQueue);
-        self::assertSame($client, Nexus::getOperationContext()->workflowClient);
+    }
+
+    public function testPublicContextDoesNotExposeWorkflowClient(): void
+    {
+        $ctx = new NexusOperationContext('ns', 'tq');
+
+        self::assertFalse(
+            \property_exists($ctx, 'workflowClient'),
+            'NexusOperationContext must not leak the WorkflowClient into public API surface',
+        );
     }
 
     public function testClearingRestoresOutsideBehavior(): void
     {
-        /** @var WorkflowClientInterface&MockObject $client */
-        $client = $this->createMock(WorkflowClientInterface::class);
-
-        Nexus::setCurrentContext(new NexusContext(operation: new NexusOperationContext('ns', 'tq', $client)));
+        Nexus::setCurrentContext(new NexusContext(operation: new NexusOperationContext('ns', 'tq')));
         Nexus::setCurrentContext(null);
 
         $this->expectException(\LogicException::class);

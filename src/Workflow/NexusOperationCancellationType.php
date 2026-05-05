@@ -17,7 +17,7 @@ namespace Temporal\Workflow;
  */
 enum NexusOperationCancellationType: int
 {
-    case Unspecified = self::UNSPECIFIED;
+    case Unspecified = 0;
 
     /**
      * Do not request cancellation of the operation. The handler workflow
@@ -30,15 +30,8 @@ enum NexusOperationCancellationType: int
      * cancel without awaiting the handler — that requires plumbing through
      * `Internal\Workflow\Process\Scope::onRequest` and is not yet supported.
      */
-    case Abandon = self::ABANDON;
-    case TryCancel = self::TRY_CANCEL;
-    case WaitRequested = self::WAIT_REQUESTED;
-    case WaitCompleted = self::WAIT_COMPLETED;
-
-    // Int mirrors used in property defaults — `EnumCase->value` in const-expr requires PHP 8.2+, project targets 8.1.
-    public const UNSPECIFIED = 0;
-    public const ABANDON = 1;
-    public const TRY_CANCEL = 2;
-    public const WAIT_REQUESTED = 3;
-    public const WAIT_COMPLETED = 4;
+    case Abandon = 1;
+    case TryCancel = 2;
+    case WaitRequested = 3;
+    case WaitCompleted = 4;
 }

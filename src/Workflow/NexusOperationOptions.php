@@ -43,14 +43,15 @@ final class NexusOperationOptions extends Options
 
     /**
      * @see NexusOperationCancellationType
-     * Default UNSPECIFIED → server uses WaitCompleted.
+     * Default Unspecified → server uses WaitCompleted.
      */
     #[Marshal(name: 'cancellationType')]
-    public int $cancellationType = NexusOperationCancellationType::UNSPECIFIED;
+    public int $cancellationType;
 
     public function __construct()
     {
         $this->scheduleToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
+        $this->cancellationType = NexusOperationCancellationType::Unspecified->value;
         parent::__construct();
     }
 

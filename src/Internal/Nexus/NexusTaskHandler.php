@@ -30,7 +30,6 @@ use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
-use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -40,7 +39,6 @@ use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
-use Temporal\Nexus\NexusOperationContext;
 
 /**
  * Bridges Temporal RoadRunner tasks to the Nexus SDK ServiceHandler.
@@ -49,9 +47,7 @@ use Temporal\Nexus\NexusOperationContext;
 final class NexusTaskHandler
 {
     private ?ServiceHandler $serviceHandler = null;
-
-    /** @var array{string, string, WorkflowClientInterface}|null */
-    private ?array $workerEnvironment = null;
+    private ?NexusEnvironment $environment = null;
 
     /**
      * @param bool $includeTracebackInFailure Disable in cross-trust-boundary
@@ -89,14 +85,11 @@ final class NexusTaskHandler
     }
 
     /**
-     * Bind worker context for {@see \Temporal\Nexus\Nexus::getOperationContext()}. Idempotent.
+     * Bind worker environment for {@see \Temporal\Nexus\Nexus::getOperationContext()}. Idempotent.
      */
-    public function withWorkerEnvironment(
-        string $namespace,
-        string $taskQueue,
-        WorkflowClientInterface $workflowClient,
-    ): self {
-        $this->workerEnvironment = [$namespace, $taskQueue, $workflowClient];
+    public function withNexusEnvironment(NexusEnvironment $environment): self
+    {
+        $this->environment = $environment;
         return $this;
     }
 
@@ -139,7 +132,7 @@ final class NexusTaskHandler
                 $context,
                 $details,
                 $input,
-                $this->buildNexusOperationContext(),
+                $this->environment,
             );
 
             $startResponse = new StartOperationResponse();
@@ -209,7 +202,7 @@ final class NexusTaskHandler
             $this->getServiceHandler()->cancelOperation(
                 $context,
                 $details,
-                $this->buildNexusOperationContext(),
+                $this->environment,
             );
 
             $response = new Response();
@@ -236,7 +229,7 @@ final class NexusTaskHandler
             $context,
             $details,
             $input,
-            $this->buildNexusOperationContext(),
+            $this->environment,
         );
 
         // Handler links travel via reserved payload metadata (no StartOperationResponse here).
@@ -279,7 +272,7 @@ final class NexusTaskHandler
         $this->getServiceHandler()->cancelOperation(
             $context,
             $details,
-            $this->buildNexusOperationContext(),
+            $this->environment,
         );
     }
 
@@ -321,16 +314,6 @@ final class NexusTaskHandler
             $payloads->setPayloads([$payload]);
         }
         return EncodedValues::fromPayloads($payloads, $this->dataConverter);
-    }
-
-    private function buildNexusOperationContext(): ?NexusOperationContext
-    {
-        if ($this->workerEnvironment === null) {
-            return null;
-        }
-        [$namespace, $taskQueue, $client] = $this->workerEnvironment;
-        /** @psalm-suppress ArgumentTypeCoercion — runtime asserts non-empty in NexusOperationContext */
-        return new NexusOperationContext($namespace, $taskQueue, $client);
     }
 
     private function getServiceHandler(): ServiceHandler
