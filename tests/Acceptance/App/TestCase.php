@@ -79,11 +79,13 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         return $container->runScope(
             new Scope(name: 'feature', bindings: $bindings),
             function (Container $container): mixed {
-                $reflection = new \ReflectionMethod($this, $this->name());
-                $args = $container->resolveArguments($reflection);
-                $this->setDependencyInput($args);
+                $args = [];
 
                 try {
+                    $reflection = new \ReflectionMethod($this, $this->name());
+                    $args = $container->resolveArguments($reflection);
+                    $this->setDependencyInput($args);
+
                     return parent::runTest();
                 } catch (\Throwable $e) {
                     if ($e instanceof TemporalException) {
@@ -115,8 +117,21 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     }
 
                     if (!$e instanceof SkippedTest) {
-                        // Restart RR if a Error occurs
                         $roadRunnerStarter = $container->get(RRStarter::class);
+
+                        $rrStdout = $roadRunnerStarter->getOutput();
+                        $rrStderr = $roadRunnerStarter->getErrorOutput();
+
+                        if ($rrStdout !== '') {
+                            echo "\n=== RoadRunner stdout ===\n";
+                            echo $rrStdout;
+                        }
+                        if ($rrStderr !== '') {
+                            echo "\n=== RoadRunner stderr ===\n";
+                            echo $rrStderr;
+                        }
+
+                        // Restart RR if a Error occurs
                         $roadRunnerStarter->stop();
                         $roadRunnerStarter->start();
                     }

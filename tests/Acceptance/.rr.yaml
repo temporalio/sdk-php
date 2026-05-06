@@ -18,4 +18,4 @@ kv:
         config: { }
 
 logs:
-    mode: none
+    level: info

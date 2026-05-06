@@ -59,6 +59,16 @@ final class RRStarter
         $this->environment->stopRoadRunner();
     }
 
+    public function getOutput(): string
+    {
+        return $this->environment->getRoadRunnerOutput();
+    }
+
+    public function getErrorOutput(): string
+    {
+        return $this->environment->getRoadRunnerErrorOutput();
+    }
+
     public function __destruct()
     {
         $this->stop();

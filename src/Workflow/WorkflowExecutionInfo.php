@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Common\WorkerVersionStamp;
 use Temporal\DataConverter\EncodedCollection;
@@ -117,19 +118,21 @@ final class WorkflowExecutionInfo
         return [
             'execution' => $this->execution,
             'type' => $this->type,
-            'startTime' => $this->startTime,
-            'closeTime' => $this->closeTime,
+            'startTime' => $this->startTime?->format(\DateTimeInterface::ATOM),
+            'closeTime' => $this->closeTime?->format(\DateTimeInterface::ATOM),
             'status' => $this->status,
             'historyLength' => $this->historyLength,
             'parentNamespaceId' => $this->parentNamespaceId,
             'parentExecution' => $this->parentExecution,
-            'executionTime' => $this->executionTime,
+            'executionTime' => $this->executionTime?->format(\DateTimeInterface::ATOM),
             'autoResetPoints' => $this->autoResetPoints,
             'taskQueue' => $this->taskQueue,
             'stateTransitionCount' => $this->stateTransitionCount,
             'historySizeBytes' => $this->historySizeBytes,
             'mostRecentWorkerVersionStamp' => $this->mostRecentWorkerVersionStamp,
-            'executionDuration' => $this->executionDuration,
+            'executionDuration' => $this->executionDuration === null
+                ? null
+                : CarbonInterval::instance($this->executionDuration)->spec(),
             'rootExecution' => $this->rootExecution,
             'firstRunId' => $this->firstRunId,
         ];

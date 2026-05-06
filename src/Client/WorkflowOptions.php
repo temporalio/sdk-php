@@ -729,4 +729,39 @@ final class WorkflowOptions extends Options
         $self->links = NexusLinkConverter::toProtoLinks($nexusLinks);
         return $self;
     }
+
+    /**
+     * Snapshot of the DTO for `var_dump`/`print_r`/Xdebug pretty-printing.
+     *
+     * Renders {@see \DateInterval} fields as ISO 8601 spec strings (e.g.
+     * `PT60S`); the default dump expands them into nine zero components and
+     * buries the actual values.
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'workflowId' => $this->workflowId,
+            'taskQueue' => $this->taskQueue,
+            'eagerStart' => $this->eagerStart,
+            'workflowExecutionTimeout' => CarbonInterval::instance($this->workflowExecutionTimeout)->spec(),
+            'workflowRunTimeout' => CarbonInterval::instance($this->workflowRunTimeout)->spec(),
+            'workflowStartDelay' => CarbonInterval::instance($this->workflowStartDelay)->spec(),
+            'workflowTaskTimeout' => CarbonInterval::instance($this->workflowTaskTimeout)->spec(),
+            'workflowIdReusePolicy' => $this->workflowIdReusePolicy,
+            'workflowIdConflictPolicy' => $this->workflowIdConflictPolicy,
+            'retryOptions' => $this->retryOptions,
+            'cronSchedule' => $this->cronSchedule,
+            'memo' => $this->memo,
+            'searchAttributes' => $this->searchAttributes,
+            'typedSearchAttributes' => $this->typedSearchAttributes,
+            'staticDetails' => $this->staticDetails,
+            'staticSummary' => $this->staticSummary,
+            'priority' => $this->priority,
+            'versioningOverride' => $this->versioningOverride,
+            'requestId' => $this->requestId,
+            'completionCallbacks' => $this->completionCallbacks,
+            'onConflictOptions' => $this->onConflictOptions,
+            'links' => $this->links,
+        ];
+    }
 }
