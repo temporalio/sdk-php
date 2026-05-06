@@ -19,6 +19,8 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 
 /**
+ * @internal
+ *
  * @template T The parameter type of the operation.
  * @template R The return type of the operation.
  */

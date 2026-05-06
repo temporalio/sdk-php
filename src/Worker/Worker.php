@@ -37,8 +37,6 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     private RouterInterface $router;
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
-
-    /** Wired by WorkerFactory; carries the WorkflowClient that backs Nexus async operations. */
     private ?NexusEnvironment $nexusEnvironment;
 
     public function __construct(
@@ -172,7 +170,6 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
             interceptorProvider: $this->services->interceptorProvider,
         );
 
-        // Skip when no env — context-needing handlers fail fast via Nexus::getOperationContext().
         if ($this->nexusEnvironment !== null) {
             $handler->withNexusEnvironment($this->nexusEnvironment);
         }

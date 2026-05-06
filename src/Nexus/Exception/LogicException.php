@@ -11,4 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Exception;
 
-class LogicException extends NexusException {}
+class LogicException extends \LogicException {}

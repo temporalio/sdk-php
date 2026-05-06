@@ -26,6 +26,7 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -91,6 +92,7 @@ class TestGreetingServiceImpl implements TestGreetingService
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusTaskHandler::class)]
 final class NexusTaskHandlerTestCase extends AbstractUnit
 {
     private NexusTaskHandler $handler;

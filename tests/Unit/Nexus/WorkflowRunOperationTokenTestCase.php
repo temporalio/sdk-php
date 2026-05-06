@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -11,6 +12,7 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(WorkflowRunOperationToken::class)]
 final class WorkflowRunOperationTokenTestCase extends AbstractUnit
 {
     /**

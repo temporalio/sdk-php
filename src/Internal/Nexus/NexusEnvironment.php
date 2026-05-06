@@ -15,12 +15,6 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
- * Worker-bound execution environment for Nexus operation handlers.
- *
- * Holds the WorkflowClient that backs {@see \Temporal\Nexus\WorkflowRunOperation}
- * helpers together with the namespace/taskQueue under which the worker is
- * polling. Lives behind the internal channel — user code does not see this VO.
- *
  * @internal
  */
 final class NexusEnvironment

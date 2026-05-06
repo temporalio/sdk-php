@@ -23,6 +23,7 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
@@ -126,6 +127,7 @@ class EchoServiceImpl implements EchoServiceInterface
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusTaskHandler::class)]
 final class IntegrationTestCase extends AbstractUnit
 {
     private InvokeNexusOperation $invokeRoute;

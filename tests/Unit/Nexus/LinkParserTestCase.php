@@ -6,6 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\LinkParser;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -13,6 +14,7 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(LinkParser::class)]
 final class LinkParserTestCase extends AbstractUnit
 {
     // ── fromRaw() — absent input ──────────────────────────────────
@@ -95,15 +97,12 @@ final class LinkParserTestCase extends AbstractUnit
 
     public function testFromRawReportsIndexOfBadEntry(): void
     {
-        try {
-            LinkParser::fromRaw([
-                ['url' => 'https://ok/', 'type' => 't'],
-                ['url' => 'https://ok2/', 'type' => ''],
-            ]);
-            self::fail('expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('index 1', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at index 1 has missing or empty "type"');
+        LinkParser::fromRaw([
+            ['url' => 'https://ok/', 'type' => 't'],
+            ['url' => 'https://ok2/', 'type' => ''],
+        ]);
     }
 
     // ── fromProto() ────────────────────────────────────────────────
@@ -138,15 +137,12 @@ final class LinkParserTestCase extends AbstractUnit
 
     public function testFromProtoReportsIndexOfBadEntry(): void
     {
-        try {
-            LinkParser::fromProto([
-                new FakeProtoLink('https://ok/', 't'),
-                new FakeProtoLink('https://ok2/', ''),
-            ]);
-            self::fail('expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('proto index 1', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at proto index 1 has missing or empty "type"');
+        LinkParser::fromProto([
+            new FakeProtoLink('https://ok/', 't'),
+            new FakeProtoLink('https://ok2/', ''),
+        ]);
     }
 
     public function testFromProtoObjectWithoutGettersThrowsBadRequest(): void
@@ -170,7 +166,7 @@ final class LinkParserTestCase extends AbstractUnit
     private function expectHandlerBadRequest(string $messageFragment): void
     {
         $this->expectException(HandlerException::class);
-        $this->expectExceptionMessageMatches('/' . \preg_quote($messageFragment, '/') . '/');
+        $this->expectExceptionMessage($messageFragment);
     }
 }
 

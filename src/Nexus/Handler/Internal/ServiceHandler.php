@@ -35,7 +35,7 @@ use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
- * Handler that delegates to service implementations.
+ * @internal
  */
 final class ServiceHandler implements HandlerInterface
 {

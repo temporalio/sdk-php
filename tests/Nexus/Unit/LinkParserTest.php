@@ -98,32 +98,23 @@ final class LinkParserTest extends TestCase
 
     public function testFromRawRejectsEmptyUrl(): void
     {
-        try {
-            LinkParser::fromRaw([['url' => '', 'type' => 't']]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('"url"', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at index 0 has missing or empty "url"');
+        LinkParser::fromRaw([['url' => '', 'type' => 't']]);
     }
 
     public function testFromRawRejectsEmptyType(): void
     {
-        try {
-            LinkParser::fromRaw([['url' => 'https://a', 'type' => '']]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('"type"', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at index 0 has missing or empty "type"');
+        LinkParser::fromRaw([['url' => 'https://a', 'type' => '']]);
     }
 
     public function testFromRawStringIndexInError(): void
     {
-        try {
-            LinkParser::fromRaw(['key1' => 'bad']);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString("index 'key1'", $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage("Nexus link at index 'key1' is not an object (got string)");
+        LinkParser::fromRaw(['key1' => 'bad']);
     }
 
     public function testFromProtoEmpty(): void
@@ -169,12 +160,9 @@ final class LinkParserTest extends TestCase
             public function getType(): string { return ''; }
         };
 
-        try {
-            LinkParser::fromProto([$good, $good, $bad]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('proto index 2', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at proto index 2 has missing or empty "type"');
+        LinkParser::fromProto([$good, $good, $bad]);
     }
 
     public function testFromHeaderSpecExample(): void
@@ -279,56 +267,41 @@ final class LinkParserTest extends TestCase
 
     public function testFromHeaderRejectsBareUri(): void
     {
-        try {
-            LinkParser::fromHeader('<https://a>');
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('"type"', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus-Link entry at header index 0 is missing required "type" parameter');
+        LinkParser::fromHeader('<https://a>');
     }
 
     public function testFromHeaderRejectsMissingAngleBrackets(): void
     {
-        try {
-            LinkParser::fromHeader('https://a; type="t"');
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('"<URI>"', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus-Link entry at header index 0 must start with "<URI>"');
+        LinkParser::fromHeader('https://a; type="t"');
     }
 
     public function testFromHeaderRejectsMissingClosingBracket(): void
     {
-        try {
-            LinkParser::fromHeader('<https://a; type="t"');
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('closing ">"', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus-Link entry at header index 0 is missing the closing ">"');
+        LinkParser::fromHeader('<https://a; type="t"');
     }
 
     public function testFromHeaderRejectsEmptyUri(): void
     {
-        try {
-            LinkParser::fromHeader('<>; type="t"');
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('empty URI', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus-Link entry at header index 0 has an empty URI');
+        LinkParser::fromHeader('<>; type="t"');
     }
 
     public function testFromHeaderIndexCountsAcrossValues(): void
     {
         // Second header value, first entry → index 2 overall (0,1 from first value).
-        try {
-            LinkParser::fromHeader([
-                '<https://a>; type="t", <https://b>; type="u"',
-                '<https://c>; rel="x"',
-            ]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertStringContainsString('header index 2', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus-Link entry at header index 2 is missing required "type" parameter');
+        LinkParser::fromHeader([
+            '<https://a>; type="t", <https://b>; type="u"',
+            '<https://c>; rel="x"',
+        ]);
     }
 
     public function testFromHeaderRejectsNonStringInIterable(): void

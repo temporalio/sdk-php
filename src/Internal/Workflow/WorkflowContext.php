@@ -506,7 +506,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     ): PromiseInterface {
         $options ??= NexusOperationOptions::new();
 
-        // Empty endpoint/service/operation are validated downstream in NexusOperationStub::start.
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
                 ->newUntypedNexusOperationStub($input->options)

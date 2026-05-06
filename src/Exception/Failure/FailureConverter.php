@@ -13,11 +13,10 @@ namespace Temporal\Exception\Failure;
 
 use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
 use Temporal\Nexus\Exception\OperationException as NexusOperationException;
-use Temporal\Nexus\Exception\RetryBehavior as NexusRetryBehavior;
+use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
-use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Failure\V1\ActivityFailureInfo;
 use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\CanceledFailureInfo;
@@ -35,9 +34,6 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
-    /**
-     * @internal Wire prefix: Nexus OperationException → "nexus.OperationError.<state>".
-     */
     public const NEXUS_OPERATION_ERROR_TYPE_PREFIX = 'nexus.OperationError.';
 
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
@@ -162,7 +158,7 @@ final class FailureConverter
             case $e instanceof NexusHandlerException:
                 $info = new NexusHandlerFailureInfo();
                 $info->setType($e->rawErrorType);
-                $info->setRetryBehavior(self::mapNexusRetryBehavior($e->retryBehavior));
+                $info->setRetryBehavior(NexusFailureConverter::mapRetryBehavior($e->retryBehavior));
 
                 $failure->setNexusHandlerFailureInfo($info);
                 break;
@@ -184,18 +180,6 @@ final class FailureConverter
         }
 
         return $failure;
-    }
-
-    /**
-     * Translate a Nexus SDK RetryBehavior enum to the Temporal proto enum value.
-     */
-    public static function mapNexusRetryBehavior(NexusRetryBehavior $behavior): int
-    {
-        return match ($behavior) {
-            NexusRetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
-            NexusRetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
-            NexusRetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
-        };
     }
 
     private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure

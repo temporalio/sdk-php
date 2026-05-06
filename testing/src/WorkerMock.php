@@ -90,7 +90,7 @@ final class WorkerMock implements WorkerInterface, EventListenerInterface, Dispa
         return $this;
     }
 
-    public function getNexusServices(): array
+    public function getNexusServices(): iterable
     {
         return $this->wrapped->getNexusServices();
     }

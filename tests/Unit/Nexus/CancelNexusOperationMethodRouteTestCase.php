@@ -9,6 +9,7 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Transport\Router\CancelNexusOperationMethod;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
@@ -19,6 +20,7 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
  * @group unit
  * @group nexus
  */
+#[CoversClass(CancelNexusOperationMethod::class)]
 final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
 {
     public function testRouteName(): void

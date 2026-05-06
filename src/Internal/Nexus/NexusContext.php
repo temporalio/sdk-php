@@ -17,17 +17,6 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
- * Composite Nexus dispatch state held in the {@see \Temporal\Nexus\Nexus} facade slot.
- *
- * Outer scope (per RoadRunner task) carries {@see $operation} and {@see $environment};
- * inner scope (per start/cancel dispatch) layers in {@see $current},
- * {@see $startDetails}, {@see $cancelDetails} via the `with*` helpers.
- *
- * {@see $operation} is the slim user-visible context (namespace, taskQueue).
- * {@see $environment} is the internal-only carrier of the WorkflowClient that
- * backs {@see \Temporal\Nexus\WorkflowRunOperation} helpers; it is never
- * exposed via the public {@see \Temporal\Nexus\Nexus} accessors.
- *
  * @internal
  */
 final class NexusContext

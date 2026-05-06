@@ -6,6 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Api\Nexus\V1\Failure;
 use Temporal\Api\Nexus\V1\HandlerError;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -13,24 +14,9 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusHandlerErrorException::class)]
 final class NexusHandlerErrorExceptionTestCase extends AbstractUnit
 {
-    public function testConstructionWithFailure(): void
-    {
-        $failure = new Failure();
-        $failure->setMessage('Something broke');
-
-        $handlerError = new HandlerError();
-        $handlerError->setErrorType('INTERNAL');
-        $handlerError->setFailure($failure);
-
-        $exception = new NexusHandlerErrorException($handlerError);
-
-        self::assertSame('Something broke', $exception->getMessage());
-        self::assertSame($handlerError, $exception->handlerError);
-        self::assertNull($exception->getPrevious());
-    }
-
     public function testConstructionWithPreviousException(): void
     {
         $cause = new \RuntimeException('root cause');

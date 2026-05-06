@@ -78,24 +78,8 @@ final class NexusOperationStub implements NexusOperationStubInterface
 
         $startId = $startRequest->getID();
 
-        // For `Abandon`: caller scope cancellation must NOT propagate a cancel
-        // request to the server (Java/Go SDK semantics). We achieve this by
-        // marking the start request as non-cancellable on the workflow scope —
-        // see {@see \Temporal\Internal\Workflow\Process\Scope::onRequest()} where
-        // a `cancellable=false` request short-circuits the `Cancel` command.
-        // Result-promise wiring is unchanged: the handler workflow runs to its
-        // natural completion and the caller observes the result.
-        //
-        // Note: this is a partial implementation. The Go SDK's `Abandon`
-        // additionally lets the caller workflow resume *immediately* after the
-        // local cancel rather than awaiting the handler's natural completion.
-        // Achieving that requires rejecting the local promise on scope cancel
-        // without notifying the server — currently no PHP API surface to do so
-        // cleanly without touching `Scope::onRequest`. Mirrors the same gap
-        // documented on {@see \Temporal\Workflow\ChildWorkflowCancellationType::Abandon}.
         $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::Abandon->value;
 
-        // Two parallel requests, mirroring ChildWorkflowStub::start(): the start request waits for completion, GetNexusOperationStarted waits for the started ack via RR's nexusStarted registry.
         $resultPromise = $this->normalizeFailure(
             $this->request($startRequest, cancellable: $cancellable),
             $endpoint,
@@ -118,10 +102,6 @@ final class NexusOperationStub implements NexusOperationStubInterface
         return Workflow::getCurrentContext()->request($request, $cancellable);
     }
 
-    /**
-     * Surface "missing endpoint/service/operation" locally — the server returns
-     * an opaque "not found" otherwise.
-     */
     private function assertOperationParams(string $endpoint, string $service, string $operation): void
     {
         if ($endpoint === '') {
@@ -140,9 +120,6 @@ final class NexusOperationStub implements NexusOperationStubInterface
         }
     }
 
-    /**
-     * Build the handle from the start envelope; rawResult is the completion promise (sync resolves shortly after start, async resolves on handler finish).
-     */
     private function buildHandle(
         ValuesInterface $startValues,
         PromiseInterface $resultPromise,
@@ -156,11 +133,6 @@ final class NexusOperationStub implements NexusOperationStubInterface
         );
     }
 
-    /**
-     * Wrap bare CanceledFailure / local rejections in a NexusOperationFailure so
-     * workflow code can match a single type. Server-side failures pass through
-     * untouched; locally wrapped ones have empty scheduledEventId/operationToken.
-     */
     private function normalizeFailure(
         PromiseInterface $promise,
         string $endpoint,

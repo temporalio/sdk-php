@@ -114,7 +114,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected EnvironmentInterface $env;
     protected PluginRegistry $pluginRegistry;
-
     protected ?WorkflowClient $workflowClient = null;
 
     public function __construct(
@@ -194,7 +193,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
-        /** @psalm-suppress ArgumentTypeCoercion — taskQueue emptiness is asserted in NexusEnvironment ctor */
+        /** @psalm-suppress ArgumentTypeCoercion */
         $nexusEnvironment = $this->workflowClient !== null
             ? new NexusEnvironment(
                 $this->workflowClient->getClientOptions()->namespace,

@@ -12,16 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Exception;
 
 /**
- * Predefined Nexus handler error types and their canonical HTTP status mapping.
- *
- * Wire values match SPEC.md verbatim. Use {@see self::httpStatus()} on the
- * producing side and {@see self::fromHttpStatus()} on the consuming side so
- * every transport agrees on the same status ↔ type table.
- *
- * Codes not enumerated by the spec resolve to {@see self::Unknown} on the
- * inbound path; {@see self::Unknown} maps to `500` outbound — the safest
- * default for an unrecognized server-side condition.
- *
  * @see https://github.com/nexus-rpc/api/blob/main/SPEC.md
  */
 enum ErrorType: string

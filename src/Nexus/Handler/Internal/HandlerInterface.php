@@ -20,6 +20,9 @@ use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 
+/**
+ * @internal
+ */
 interface HandlerInterface
 {
     /**

@@ -197,44 +197,15 @@ final class WorkflowOptions extends Options
     #[Marshal(name: 'VersioningOverride')]
     public ?VersioningOverride $versioningOverride = null;
 
-    /**
-     * Override for `StartWorkflowExecutionRequest.request_id`. `null` = fresh UUID.
-     * Used by Nexus WorkflowRunOperation for caller-driven idempotency.
-     *
-     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
-     */
     public ?string $requestId = null;
 
-    /**
-     * Completion callbacks attached at start. Used by Nexus to register the
-     * caller's callback URL.
-     *
-     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter},
-     * which handles the proto envelope translation.
-     *
-     * @var list<CompletionCallback>
-     */
+    /** @var list<CompletionCallback> */
     public array $completionCallbacks = [];
 
-    /**
-     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
-     *
-     * @internal Set only by the Nexus caller-side path via
-     *           {@see self::withOnConflictOptionsInternal()}; not part of the
-     *           public WorkflowOptions API. Mirrors Go SDK's intentional choice
-     *           to keep this hidden from user code.
-     */
+    /** @internal */
     public ?OnConflictOptions $onConflictOptions = null;
 
-    /**
-     * Proto Link[] propagated as `StartWorkflowExecutionRequest.links` for
-     * legacy compat with servers that don't read links from completion
-     * callbacks. Populated by Nexus caller-side; empty for normal workflows.
-     *
-     * Not marshalled — applied in {@see \Temporal\Internal\Client\WorkflowStarter}.
-     *
-     * @var list<\Temporal\Api\Common\V1\Link>
-     */
+    /** @var list<\Temporal\Api\Common\V1\Link> */
     public array $links = [];
 
     /**
@@ -700,10 +671,7 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @internal Used only by the Nexus caller-side path. Not part of the
-     *           public WorkflowOptions API — Go SDK keeps the equivalent
-     *           setter package-private for the same reason.
-     *
+     * @internal
      * @return $this
      */
     #[Pure]

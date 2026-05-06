@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Workflow;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Workflow\NexusOperationCancellationType;
 
@@ -11,6 +12,7 @@ use Temporal\Workflow\NexusOperationCancellationType;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusOperationCancellationType::class)]
 final class NexusOperationCancellationTypeTestCase extends AbstractUnit
 {
     public function testEnumValuesMatchSdkGoIotaOrder(): void

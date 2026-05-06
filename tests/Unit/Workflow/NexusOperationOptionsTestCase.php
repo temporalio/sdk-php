@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Workflow;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
@@ -12,6 +13,7 @@ use Temporal\Workflow\NexusOperationOptions;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusOperationOptions::class)]
 final class NexusOperationOptionsTestCase extends AbstractUnit
 {
     public function testNewHasEmptyDefaults(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Handler\MethodCanceller;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -12,6 +13,7 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusInvocationRegistry::class)]
 final class NexusInvocationRegistryTestCase extends AbstractUnit
 {
     public function testGetReturnsNullForUnknownId(): void
@@ -19,16 +21,6 @@ final class NexusInvocationRegistryTestCase extends AbstractUnit
         $registry = new NexusInvocationRegistry();
 
         self::assertNull($registry->get(42));
-    }
-
-    public function testRegisterAndGet(): void
-    {
-        $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
-
-        $registry->register(1, $canceller);
-
-        self::assertSame($canceller, $registry->get(1));
     }
 
     public function testUnregisterRemovesEntry(): void

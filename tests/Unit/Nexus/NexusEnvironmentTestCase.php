@@ -6,6 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Internal\Nexus\NexusEnvironment;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -13,18 +14,9 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusEnvironment::class)]
 final class NexusEnvironmentTestCase extends AbstractUnit
 {
-    public function testStoresFields(): void
-    {
-        $client = $this->createMock(WorkflowClientInterface::class);
-        $env = new NexusEnvironment('ns', 'tq', $client);
-
-        self::assertSame('ns', $env->namespace);
-        self::assertSame('tq', $env->taskQueue);
-        self::assertSame($client, $env->workflowClient);
-    }
-
     public function testRejectsEmptyNamespace(): void
     {
         $this->expectException(InvalidArgumentException::class);

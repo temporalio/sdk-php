@@ -9,6 +9,7 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Nexus;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -16,6 +17,7 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(Nexus::class)]
 final class NexusContextAccessorTestCase extends AbstractUnit
 {
     protected function tearDown(): void

@@ -21,13 +21,7 @@ use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\OperationInfo;
 
 /**
- * @internal Adapter that invokes an impl class's operation method directly.
- *
- * The impl method's signature is the operation contract: a sync method returns the
- * wire output, an async method returns {@see OperationInfo}. This adapter packages
- * the return value into the appropriate {@see OperationStartResult} subclass for
- * the wire layer.
- *
+ * @internal
  * @implements OperationHandlerInterface<mixed, mixed>
  */
 final class MethodOperationHandler implements OperationHandlerInterface

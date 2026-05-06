@@ -97,7 +97,7 @@ final class Nexus extends Facade
      */
     public static function getDispatchContext(): ?NexusContext
     {
-        $ctx = parent::getCurrentContext();
-        return $ctx instanceof NexusContext ? $ctx : null;
+        $context = parent::getCurrentContext();
+        return $context instanceof NexusContext ? $context : null;
     }
 }

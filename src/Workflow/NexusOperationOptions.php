@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Support\DateInterval;
@@ -43,7 +44,6 @@ final class NexusOperationOptions extends Options
 
     /**
      * @see NexusOperationCancellationType
-     * Default Unspecified → server uses WaitCompleted.
      */
     #[Marshal(name: 'cancellationType')]
     public int $cancellationType;
@@ -58,6 +58,7 @@ final class NexusOperationOptions extends Options
     /**
      * @param non-empty-string $endpoint
      */
+    #[Pure]
     public function withEndpoint(string $endpoint): self
     {
         /** @psalm-suppress TypeDoesNotContainType */
@@ -72,6 +73,7 @@ final class NexusOperationOptions extends Options
     /**
      * @param non-empty-string $service
      */
+    #[Pure]
     public function withService(string $service): self
     {
         /** @psalm-suppress TypeDoesNotContainType */
@@ -86,6 +88,7 @@ final class NexusOperationOptions extends Options
     /**
      * @param DateIntervalValue $timeout
      */
+    #[Pure]
     public function withScheduleToCloseTimeout($timeout): self
     {
         $self = clone $this;
@@ -93,10 +96,13 @@ final class NexusOperationOptions extends Options
         return $self;
     }
 
+    #[Pure]
     public function withCancellationType(NexusOperationCancellationType|int $type): self
     {
+        \is_int($type) and $type = NexusOperationCancellationType::from($type);
+
         $self = clone $this;
-        $self->cancellationType = $type instanceof NexusOperationCancellationType ? $type->value : $type;
+        $self->cancellationType = $type->value;
         return $self;
     }
 }

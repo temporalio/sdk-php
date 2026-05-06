@@ -18,6 +18,7 @@ use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Nexus\WorkflowHandle;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -28,6 +29,7 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group nexus
  */
+#[CoversClass(WorkflowRunOperation::class)]
 final class WorkflowRunOperationTestCase extends AbstractUnit
 {
     private const NS = 'sample-ns';

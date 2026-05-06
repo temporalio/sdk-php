@@ -11,35 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Internal\Failure;
 
+use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Nexus\V1\Failure as NexusProtoFailure;
 use Temporal\Api\Nexus\V1\HandlerError;
 use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
-use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Exception\RetryBehavior;
 
 /**
- * Single producer for the Nexus proto envelope, mirroring the Workflow/Activity
- * {@see FailureConverter} pattern: PHP exception → proto without an intermediate
- * PHP-side DTO.
- *
- * The Nexus proto `Failure` is structurally thinner than the Temporal-failure
- * proto used by `FailureConverter`: it has only `message`, `metadata`,
- * `details`, no recursive `cause` field. Cause-chain trace data, if requested,
- * travels inline in `details` under {@see self::DETAILS_TRACEBACK_KEY}.
- *
- * Wire-shape constants (`OPERATION_ERROR_TYPE`, `HANDLER_ERROR_TYPE`,
- * `METADATA_TYPE_KEY`, `DETAILS_*`) are part of the Nexus protocol contract;
- * keep them in lockstep with the spec.
- *
- * @see https://github.com/nexus-rpc/api/blob/main/SPEC.md
- *
  * @internal
  */
 final class NexusFailureConverter
 {
-    /** Value of `metadata.type` that marks an OperationError failure. */
     public const OPERATION_ERROR_TYPE = 'nexus.OperationError';
 
     /** Value of `metadata.type` that marks a HandlerError failure. */
@@ -107,7 +91,7 @@ final class NexusFailureConverter
 
         $handlerError = new HandlerError();
         $handlerError->setErrorType($e->rawErrorType);
-        $handlerError->setRetryBehavior(FailureConverter::mapNexusRetryBehavior($e->retryBehavior));
+        $handlerError->setRetryBehavior(self::mapRetryBehavior($e->retryBehavior));
         $handlerError->setFailure(self::buildProtoFailure(
             $e->getMessage(),
             self::HANDLER_ERROR_TYPE,
@@ -137,6 +121,15 @@ final class NexusFailureConverter
             $cursor = $cursor->getPrevious();
         }
         return $chain;
+    }
+
+    public static function mapRetryBehavior(RetryBehavior $behavior): int
+    {
+        return match ($behavior) {
+            RetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            RetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            RetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
+        };
     }
 
     /**

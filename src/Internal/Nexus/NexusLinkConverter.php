@@ -21,24 +21,6 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Link as NexusLink;
 
 /**
- * Single source of truth for Nexus link ↔ proto conversion. Mirror of Go SDK
- * `temporalnexus/link_converter.go`.
- *
- * Two directions sit here because Temporal serves two different proto wires:
- *
- * - {@see self::toProtoLinks()} — `Common\V1\Link` with a parsed `WorkflowEvent`
- *   message. Used on the caller side (`StartWorkflowExecutionRequest.links`,
- *   `Callback.links`). Non-WorkflowEvent link types are silently dropped, per
- *   Go/TS SDK semantics.
- *
- * - {@see self::toNexusProtoLinks()} — `Nexus\V1\Link` carrying bare
- *   `url` + `type`. Used on the handler side
- *   (`StartOperationResponse.{Sync,Async}.links`); server re-parses the URI on
- *   its side when forwarding to the caller. Custom link types pass through.
- *
- * Wire format for WorkflowEvent URIs:
- *   temporal:///namespaces/{ns}/workflows/{wf}/{run}/history?referenceType=…&…
- *
  * @internal
  */
 final class NexusLinkConverter
@@ -59,17 +41,6 @@ final class NexusLinkConverter
     private function __construct() {}
 
     /**
-     * Convert a list of high-level Nexus links to proto Link[] suitable for
-     * StartWorkflowExecutionRequest.links / Callback.links.
-     *
-     * Policy (matches TypeScript and Go SDKs):
-     * - Non-`temporal.api.common.v1.Link.WorkflowEvent` types — silently dropped
-     *   (a custom user-defined link type is not an error, just not supported here).
-     * - Malformed WorkflowEvent URIs — throw InvalidArgumentException. Java and
-     *   Python SDKs log+drop instead; we follow Go/TS because we have no logger
-     *   wired into this layer and a malformed link is a wire-level bug worth
-     *   surfacing.
-     *
      * @param iterable<NexusLink> $links
      * @return list<Link>
      * @throws InvalidArgumentException on malformed WorkflowEvent URI.
@@ -258,8 +229,8 @@ final class NexusLinkConverter
      */
     private static function buildEventRef(array $query, int $eventType, string $uri): EventReference
     {
-        $ref = new EventReference();
-        $ref->setEventType($eventType);
+        $eventReference = new EventReference();
+        $eventReference->setEventType($eventType);
         if (isset($query[self::QUERY_EVENT_ID]) && $query[self::QUERY_EVENT_ID] !== '') {
             if (!\preg_match('/^\\d+$/', (string) $query[self::QUERY_EVENT_ID])) {
                 throw new InvalidArgumentException(\sprintf(
@@ -267,9 +238,9 @@ final class NexusLinkConverter
                     $uri,
                 ));
             }
-            $ref->setEventId((int) $query[self::QUERY_EVENT_ID]);
+            $eventReference->setEventId((int) $query[self::QUERY_EVENT_ID]);
         }
-        return $ref;
+        return $eventReference;
     }
 
     /**
@@ -281,10 +252,10 @@ final class NexusLinkConverter
         if (!\is_string($requestId)) {
             $requestId = '';
         }
-        $ref = new RequestIdReference();
-        $ref->setRequestId($requestId);
-        $ref->setEventType($eventType);
-        return $ref;
+        $requestIdReference = new RequestIdReference();
+        $requestIdReference->setRequestId($requestId);
+        $requestIdReference->setEventType($eventType);
+        return $requestIdReference;
     }
 
     /**
