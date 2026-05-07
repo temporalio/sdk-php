@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
+use Google\Rpc\Code;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\OperationCancel;
@@ -11,6 +15,7 @@ use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Exception\RetryBehavior;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
@@ -47,6 +52,15 @@ interface TestGreetingService
 
     #[Operation]
     public function shout(string $input): string;
+
+    #[Operation]
+    public function grpcFailingOp(string $input): string;
+
+    #[Operation]
+    public function appFailureOp(string $input): string;
+
+    #[Operation]
+    public function genericFailingOp(string $input): string;
 }
 
 class TestGreetingServiceImpl implements TestGreetingService
@@ -85,6 +99,30 @@ class TestGreetingServiceImpl implements TestGreetingService
     public function shout(string $input): string
     {
         return \strtoupper($input) . '!';
+    }
+
+    public function grpcFailingOp(string $input): string
+    {
+        $status = new \stdClass();
+        $status->code = Code::NOT_FOUND;
+        $status->details = 'workflow vanished';
+        $status->metadata = [];
+        throw new ServiceClientException($status);
+    }
+
+    public function appFailureOp(string $input): string
+    {
+        throw new ApplicationFailure(
+            'business invariant violated',
+            'BusinessError',
+            true, // nonRetryable
+            EncodedValues::empty(),
+        );
+    }
+
+    public function genericFailingOp(string $input): string
+    {
+        throw new \RuntimeException('something blew up');
     }
 }
 
@@ -235,6 +273,55 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
             self::assertNotEmpty($e->handlerError->getFailure()->getMessage());
+        }
+    }
+
+    public function testGrpcServiceClientExceptionMapsToHandlerError(): void
+    {
+        // The outer Throwable catch routes ServiceClientException through
+        // HandlerErrorMapper; gRPC NOT_FOUND must surface as wire NOT_FOUND.
+        $request = $this->buildStartRequest('TestGreetingService', 'grpcFailingOp', 'input');
+
+        try {
+            $this->handler->handleStartOperation($request);
+            self::fail('Expected NexusHandlerErrorException');
+        } catch (NexusHandlerErrorException $e) {
+            self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
+            self::assertInstanceOf(ServiceClientException::class, $e->getPrevious()->getPrevious());
+        }
+    }
+
+    public function testNonRetryableApplicationFailureMapsToInternalNonRetryable(): void
+    {
+        // Non-retryable ApplicationFailure must surface as INTERNAL+NonRetryable
+        // so the caller's retry policy honors the handler's signal.
+        $request = $this->buildStartRequest('TestGreetingService', 'appFailureOp', 'input');
+
+        try {
+            $this->handler->handleStartOperation($request);
+            self::fail('Expected NexusHandlerErrorException');
+        } catch (NexusHandlerErrorException $e) {
+            self::assertSame('INTERNAL', $e->handlerError->getErrorType());
+            self::assertSame(
+                \Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+                $e->handlerError->getRetryBehavior(),
+            );
+        }
+    }
+
+    public function testGenericThrowableNeverEscapesAsRawException(): void
+    {
+        // Anything that escapes user code must be turned into a wire
+        // HandlerError(Internal) — RR's catch-all is a last resort, not
+        // the first line of defence.
+        $request = $this->buildStartRequest('TestGreetingService', 'genericFailingOp', 'input');
+
+        try {
+            $this->handler->handleStartOperation($request);
+            self::fail('Expected NexusHandlerErrorException');
+        } catch (NexusHandlerErrorException $e) {
+            self::assertSame('INTERNAL', $e->handlerError->getErrorType());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious()->getPrevious());
         }
     }
 

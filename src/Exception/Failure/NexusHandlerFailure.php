@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
+use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
+use Temporal\Nexus\Exception\ErrorType;
+use Temporal\Nexus\Exception\RetryBehavior;
+
 /**
  * Transport-level Nexus HandlerError (`BAD_REQUEST`, `INTERNAL`, `NOT_FOUND`, etc.).
  * Maps 1:1 to the `NexusHandlerException` thrown on the handler side.
@@ -40,5 +44,29 @@ class NexusHandlerFailure extends TemporalFailure
     public function getRetryBehavior(): int
     {
         return $this->retryBehavior;
+    }
+
+    /**
+     * Typed view of {@see self::getType()}: known wire values resolve to the
+     * matching {@see ErrorType} case; anything else falls back to
+     * {@see ErrorType::Unknown} while {@see self::getType()} preserves the
+     * raw string.
+     */
+    public function getErrorType(): ErrorType
+    {
+        return ErrorType::tryFrom($this->type) ?? ErrorType::Unknown;
+    }
+
+    /**
+     * Typed view of {@see self::getRetryBehavior()} as the SDK
+     * {@see RetryBehavior} enum.
+     */
+    public function getRetryBehaviorEnum(): RetryBehavior
+    {
+        return match ($this->retryBehavior) {
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE => RetryBehavior::Retryable,
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE => RetryBehavior::NonRetryable,
+            default => RetryBehavior::Unspecified,
+        };
     }
 }

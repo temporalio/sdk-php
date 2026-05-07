@@ -38,6 +38,7 @@ use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 
 /**
@@ -171,6 +172,11 @@ final class NexusTaskHandler
             return $this->buildOperationErrorResponse($e);
         } catch (HandlerException $e) {
             throw $this->convertHandlerException($e);
+        } catch (\Throwable $e) {
+            throw $this->convertHandlerException(
+                HandlerErrorMapper::mapToHandlerException($e)
+                    ?? HandlerException::fromCause(ErrorType::Internal, $e),
+            );
         }
     }
 
@@ -210,6 +216,11 @@ final class NexusTaskHandler
             return $response;
         } catch (HandlerException $e) {
             throw $this->convertHandlerException($e);
+        } catch (\Throwable $e) {
+            throw $this->convertHandlerException(
+                HandlerErrorMapper::mapToHandlerException($e)
+                    ?? HandlerException::fromCause(ErrorType::Internal, $e),
+            );
         }
     }
 
