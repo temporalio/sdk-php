@@ -14,20 +14,19 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\RetryBehavior;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Temporal\Tests\Unit\AbstractUnit;
 
 #[CoversClass(HandlerErrorMapper::class)]
+#[UsesClass(HandlerException::class)]
+#[UsesClass(ErrorType::class)]
+#[UsesClass(RetryBehavior::class)]
 final class HandlerErrorMapperTestCase extends AbstractUnit
 {
-    /**
-     * @return iterable<string, array{0: int, 1: ErrorType, 2: RetryBehavior}>
-     *         Tuple is (gRPC code, expected ErrorType, expected RetryBehavior).
-     *         Mirrors Java NexusTaskHandlerImpl#convertStatusRuntimeExceptionToHandlerException.
-     */
+    /** @return iterable<string, array{0: int, 1: ErrorType, 2: RetryBehavior}> */
     public static function grpcCodeMatrix(): iterable
     {
-        // Per spec mapping (Go: internal_nexus_task_handler.go:592-647,
-        // Java: NexusTaskHandlerImpl.java:236-269).
+        // Mirrors Go internal_nexus_task_handler.go:592-647 and Java NexusTaskHandlerImpl.java:236-269.
         yield 'INVALID_ARGUMENT → BadRequest' => [Code::INVALID_ARGUMENT, ErrorType::BadRequest, RetryBehavior::Unspecified];
         yield 'ALREADY_EXISTS → Internal/NonRetryable' => [Code::ALREADY_EXISTS, ErrorType::Internal, RetryBehavior::NonRetryable];
         yield 'FAILED_PRECONDITION → Internal/NonRetryable' => [Code::FAILED_PRECONDITION, ErrorType::Internal, RetryBehavior::NonRetryable];
@@ -52,22 +51,21 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
         ErrorType $expectedType,
         RetryBehavior $expectedRetry,
     ): void {
-        $sce = self::makeServiceClientException($code, 'wire detail');
+        $exception = self::makeServiceClientException($code, 'wire detail');
 
-        $mapped = HandlerErrorMapper::mapToHandlerException($sce);
+        $mapped = HandlerErrorMapper::mapToHandlerException($exception);
 
         self::assertInstanceOf(HandlerException::class, $mapped);
         self::assertSame($expectedType, $mapped->errorType);
         self::assertSame($expectedRetry, $mapped->retryBehavior);
-        self::assertSame($sce, $mapped->getPrevious(), 'Original gRPC exception preserved as cause');
+        self::assertSame($exception, $mapped->getPrevious(), 'Original gRPC exception preserved as cause');
     }
 
     public function testUnknownGrpcCodeFallsBackToInternal(): void
     {
-        // Stray code outside the canonical 0-16 range.
-        $sce = self::makeServiceClientException(9999, 'weird');
+        $exception = self::makeServiceClientException(9999, 'weird');
 
-        $mapped = HandlerErrorMapper::mapToHandlerException($sce);
+        $mapped = HandlerErrorMapper::mapToHandlerException($exception);
 
         self::assertInstanceOf(HandlerException::class, $mapped);
         self::assertSame(ErrorType::Internal, $mapped->errorType);
@@ -79,7 +77,7 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
         $cause = new ApplicationFailure(
             'business invariant violated',
             'BusinessError',
-            true, // nonRetryable
+            true,
             EncodedValues::empty(),
         );
 
@@ -93,11 +91,10 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
 
     public function testRetryableApplicationFailureIsNotMapped(): void
     {
-        // Default-retryable ApplicationFailure is left for the caller to wrap.
         $cause = new ApplicationFailure(
             'transient',
             'TransientError',
-            false, // nonRetryable=false
+            false,
             EncodedValues::empty(),
         );
 
@@ -106,16 +103,10 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
 
     public function testGenericRuntimeExceptionIsNotMapped(): void
     {
-        // Truly generic exceptions return null so the caller can decide
-        // (typically wrapping into INTERNAL HandlerException at the boundary).
         self::assertNull(HandlerErrorMapper::mapToHandlerException(new \RuntimeException('boom')));
         self::assertNull(HandlerErrorMapper::mapToHandlerException(new \LogicException('boom')));
     }
 
-    /**
-     * Build a {@see ServiceClientException} with a chosen gRPC code without
-     * a real gRPC stack — uses the public constructor's stdClass shape.
-     */
     private static function makeServiceClientException(int $code, string $detail): ServiceClientException
     {
         $status = new \stdClass();

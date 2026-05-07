@@ -19,11 +19,6 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\RetryBehavior;
 
 /**
- * Maps SDK-level exceptions raised inside a Nexus handler to typed
- * {@see HandlerException}. Mirrors the Java SDK's `convertKnownFailures` +
- * `convertStatusRuntimeExceptionToHandlerException` table so wire behaviour
- * is identical across SDKs.
- *
  * @internal
  */
 final class HandlerErrorMapper
@@ -33,13 +28,6 @@ final class HandlerErrorMapper
      */
     private function __construct() {}
 
-    /**
-     * Returns a typed {@see HandlerException} for known shapes:
-     *  - {@see ApplicationFailure} with `nonRetryable=true` → INTERNAL + NonRetryable;
-     *  - {@see ServiceClientException} → table over {@see Code}.
-     * Returns null when nothing matches; the caller decides whether to
-     * wrap in a generic INTERNAL HandlerException or rethrow.
-     */
     public static function mapToHandlerException(\Throwable $e): ?HandlerException
     {
         if ($e instanceof ApplicationFailure && $e->isNonRetryable()) {
@@ -62,9 +50,7 @@ final class HandlerErrorMapper
             Code::OUT_OF_RANGE => HandlerException::fromCause(ErrorType::Internal, $e, RetryBehavior::NonRetryable),
             Code::ABORTED,
             Code::UNAVAILABLE => HandlerException::fromCause(ErrorType::Unavailable, $e),
-            // Unauthenticated/PermissionDenied collapse to Internal: these surface
-            // when the handler itself fails to auth with Temporal, not when the
-            // caller's auth is bad — should be treated as retryable.
+            // Unauthenticated/PermissionDenied collapse to Internal: a handler-side auth failure against Temporal, not a Nexus-caller auth error.
             Code::CANCELLED,
             Code::DATA_LOSS,
             Code::INTERNAL,

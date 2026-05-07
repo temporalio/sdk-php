@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(OperationException::class)]
 #[UsesClass(HandlerException::class)]
 #[UsesClass(NexusException::class)]
+#[UsesClass(OperationState::class)]
 final class NexusFailureConverterTest extends TestCase
 {
     public function testOperationExceptionIsPackedDirectlyIntoProto(): void
@@ -120,28 +121,16 @@ final class NexusFailureConverterTest extends TestCase
         self::assertArrayNotHasKey(NexusFailureConverter::DETAILS_RETRYABLE_OVERRIDE_KEY, $details);
     }
 
-    /**
-     * @return iterable<string, array{0: ErrorType, 1: RetryBehavior, 2: bool|null}>
-     *         Tuple is (errorType, retryBehavior, expectedOverrideValue).
-     *         expectedOverrideValue: null = key must be absent; bool = key must be present with that value.
-     */
+    /** @return iterable<string, array{0: ErrorType, 1: RetryBehavior, 2: bool|null}> */
     public static function errorTypeRetryMatrix(): iterable
     {
-        $types = ErrorType::cases();
-
-        foreach ($types as $type) {
+        foreach (ErrorType::cases() as $type) {
             yield "{$type->value} + Unspecified" => [$type, RetryBehavior::Unspecified, null];
             yield "{$type->value} + Retryable" => [$type, RetryBehavior::Retryable, true];
             yield "{$type->value} + NonRetryable" => [$type, RetryBehavior::NonRetryable, false];
         }
     }
 
-    /**
-     * Parametric pack-side parity: every ErrorType × RetryBehavior combination
-     * produces the wire shape the spec requires — wire `errorType` matches,
-     * `details.type` JSON key matches, and `retryableOverride` is present
-     * only for explicit Retryable / NonRetryable.
-     */
     #[DataProvider('errorTypeRetryMatrix')]
     public function testHandlerExceptionPackingMatrix(
         ErrorType $type,
@@ -176,9 +165,7 @@ final class NexusFailureConverterTest extends TestCase
         }
     }
 
-    /**
-     * @return iterable<string, array{0: OperationState, 1: callable(\Throwable): OperationException}>
-     */
+    /** @return iterable<string, array{0: OperationState, 1: callable(): OperationException}> */
     public static function operationStates(): iterable
     {
         yield 'failed' => [OperationState::Failed, static fn(): OperationException => OperationException::failed('m')];

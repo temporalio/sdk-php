@@ -278,8 +278,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
     public function testGrpcServiceClientExceptionMapsToHandlerError(): void
     {
-        // The outer Throwable catch routes ServiceClientException through
-        // HandlerErrorMapper; gRPC NOT_FOUND must surface as wire NOT_FOUND.
         $request = $this->buildStartRequest('TestGreetingService', 'grpcFailingOp', 'input');
 
         try {
@@ -293,8 +291,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
     public function testNonRetryableApplicationFailureMapsToInternalNonRetryable(): void
     {
-        // Non-retryable ApplicationFailure must surface as INTERNAL+NonRetryable
-        // so the caller's retry policy honors the handler's signal.
         $request = $this->buildStartRequest('TestGreetingService', 'appFailureOp', 'input');
 
         try {
@@ -311,9 +307,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
     public function testGenericThrowableNeverEscapesAsRawException(): void
     {
-        // Anything that escapes user code must be turned into a wire
-        // HandlerError(Internal) — RR's catch-all is a last resort, not
-        // the first line of defence.
         $request = $this->buildStartRequest('TestGreetingService', 'genericFailingOp', 'input');
 
         try {

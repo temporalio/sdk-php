@@ -391,10 +391,7 @@ final class FailureConverterTestCase extends AbstractUnit
         self::assertSame('legacy-id', $exception->getOperationToken());
     }
 
-    /**
-     * @return iterable<string, array{0: NexusErrorType, 1: NexusRetryBehavior, 2: int}>
-     *         Tuple is (errorType, retryBehavior, expectedProtoEnumValue).
-     */
+    /** @return iterable<string, array{0: NexusErrorType, 1: NexusRetryBehavior, 2: int}> */
     public static function nexusHandlerRoundTripMatrix(): iterable
     {
         $protoMap = [
@@ -410,14 +407,6 @@ final class FailureConverterTestCase extends AbstractUnit
         }
     }
 
-    /**
-     * Round-trip: NexusHandlerException → Failure(NexusHandlerFailureInfo) →
-     * NexusHandlerFailure preserves the wire type string, retry behavior, and
-     * message. This pins the symmetry of produce/consume halves at the
-     * Temporal FailureConverter level for every ErrorType × RetryBehavior
-     * combination — drift between the two halves would silently break
-     * caller-side error handling.
-     */
     #[DataProvider('nexusHandlerRoundTripMatrix')]
     public function testNexusHandlerRoundTripParametric(
         NexusErrorType $type,
@@ -433,8 +422,7 @@ final class FailureConverterTestCase extends AbstractUnit
         self::assertInstanceOf(NexusHandlerFailure::class, $restored);
         self::assertSame($type->value, $restored->getType());
         self::assertSame($expectedProtoRetry, $restored->getRetryBehavior());
-        // Round-trip appends the captured stack trace to the message;
-        // the leading text is the only contract.
+        // Stack trace is appended to the message on round-trip; only the leading text is contractual.
         self::assertStringStartsWith('wire round-trip', $restored->getMessage());
     }
 

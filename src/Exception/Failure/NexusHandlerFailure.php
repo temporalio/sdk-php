@@ -46,21 +46,11 @@ class NexusHandlerFailure extends TemporalFailure
         return $this->retryBehavior;
     }
 
-    /**
-     * Typed view of {@see self::getType()}: known wire values resolve to the
-     * matching {@see ErrorType} case; anything else falls back to
-     * {@see ErrorType::Unknown} while {@see self::getType()} preserves the
-     * raw string.
-     */
     public function getErrorType(): ErrorType
     {
         return ErrorType::tryFrom($this->type) ?? ErrorType::Unknown;
     }
 
-    /**
-     * Typed view of {@see self::getRetryBehavior()} as the SDK
-     * {@see RetryBehavior} enum.
-     */
     public function getRetryBehaviorEnum(): RetryBehavior
     {
         return match ($this->retryBehavior) {

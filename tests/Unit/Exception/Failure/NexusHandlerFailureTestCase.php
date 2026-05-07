@@ -14,14 +14,15 @@ use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\RetryBehavior;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Temporal\Tests\Unit\AbstractUnit;
 
 #[CoversClass(NexusHandlerFailure::class)]
+#[UsesClass(ErrorType::class)]
+#[UsesClass(RetryBehavior::class)]
 final class NexusHandlerFailureTestCase extends AbstractUnit
 {
-    /**
-     * @return iterable<string, array{0: string, 1: ErrorType}>
-     */
+    /** @return iterable<string, array{0: string, 1: ErrorType}> */
     public static function knownErrorTypes(): iterable
     {
         foreach (ErrorType::cases() as $case) {
@@ -48,9 +49,7 @@ final class NexusHandlerFailureTestCase extends AbstractUnit
         self::assertSame('FUTURE_TYPE_X', $failure->getType(), 'Raw string preserved');
     }
 
-    /**
-     * @return iterable<string, array{0: int, 1: RetryBehavior}>
-     */
+    /** @return iterable<string, array{0: int, 1: RetryBehavior}> */
     public static function retryBehaviors(): iterable
     {
         yield 'Unspecified' => [
@@ -78,9 +77,6 @@ final class NexusHandlerFailureTestCase extends AbstractUnit
 
     public function testTypedAccessorsOnConsumePathFromProto(): void
     {
-        // Round-trip from a `Failure` proto with NexusHandlerFailureInfo
-        // through the central FailureConverter must yield typed accessors
-        // that match the proto contents.
         $info = new NexusHandlerFailureInfo();
         $info->setType('NOT_FOUND');
         $info->setRetryBehavior(NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE);
