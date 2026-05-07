@@ -105,6 +105,7 @@ final class HandlerExceptionTest extends TestCase
     public function testIsRetryableFromErrorType(): void
     {
         $retryable = [
+            ErrorType::RequestTimeout,
             ErrorType::ResourceExhausted,
             ErrorType::Internal,
             ErrorType::Unavailable,
@@ -128,6 +129,12 @@ final class HandlerExceptionTest extends TestCase
             $ex = HandlerException::create($type, 'x');
             self::assertFalse($ex->isRetryable(), "{$type->value} should be non-retryable");
         }
+
+        // Completeness guard — every ErrorType case must appear above. New
+        // cases shipping without an explicit retryability classification will
+        // trip this assertion.
+        $covered = \count($retryable) + \count($nonRetryable);
+        self::assertSame(\count(ErrorType::cases()), $covered);
     }
 
     public function testIsRetryableOverriddenByRetryable(): void

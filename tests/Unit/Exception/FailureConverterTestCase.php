@@ -23,6 +23,7 @@ use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\NexusHandlerFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Tests\Unit\AbstractUnit;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class FailureConverterTestCase extends AbstractUnit
 {
@@ -388,6 +389,53 @@ final class FailureConverterTestCase extends AbstractUnit
 
         self::assertInstanceOf(NexusOperationFailure::class, $exception);
         self::assertSame('legacy-id', $exception->getOperationToken());
+    }
+
+    /**
+     * @return iterable<string, array{0: NexusErrorType, 1: NexusRetryBehavior, 2: int}>
+     *         Tuple is (errorType, retryBehavior, expectedProtoEnumValue).
+     */
+    public static function nexusHandlerRoundTripMatrix(): iterable
+    {
+        $protoMap = [
+            NexusRetryBehavior::Unspecified->value => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
+            NexusRetryBehavior::Retryable->value => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            NexusRetryBehavior::NonRetryable->value => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+        ];
+
+        foreach (NexusErrorType::cases() as $type) {
+            foreach (NexusRetryBehavior::cases() as $retry) {
+                yield "{$type->value} + {$retry->value}" => [$type, $retry, $protoMap[$retry->value]];
+            }
+        }
+    }
+
+    /**
+     * Round-trip: NexusHandlerException → Failure(NexusHandlerFailureInfo) →
+     * NexusHandlerFailure preserves the wire type string, retry behavior, and
+     * message. This pins the symmetry of produce/consume halves at the
+     * Temporal FailureConverter level for every ErrorType × RetryBehavior
+     * combination — drift between the two halves would silently break
+     * caller-side error handling.
+     */
+    #[DataProvider('nexusHandlerRoundTripMatrix')]
+    public function testNexusHandlerRoundTripParametric(
+        NexusErrorType $type,
+        NexusRetryBehavior $retry,
+        int $expectedProtoRetry,
+    ): void {
+        $original = NexusHandlerException::create($type, 'wire round-trip', null, $retry);
+        $converter = DataConverter::createDefault();
+
+        $failure = FailureConverter::mapExceptionToFailure($original, $converter);
+        $restored = FailureConverter::mapFailureToException($failure, $converter);
+
+        self::assertInstanceOf(NexusHandlerFailure::class, $restored);
+        self::assertSame($type->value, $restored->getType());
+        self::assertSame($expectedProtoRetry, $restored->getRetryBehavior());
+        // Round-trip appends the captured stack trace to the message;
+        // the leading text is the only contract.
+        self::assertStringStartsWith('wire round-trip', $restored->getMessage());
     }
 
     public function testNexusOperationFailurePreservesCauseChain(): void
