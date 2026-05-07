@@ -140,6 +140,10 @@ Web UI will be available at `http://localhost:8000`.
 For advanced autocomplete while coding in PHPStorm, use [Meta Storm plugin](https://github.com/xepozz/meta-storm-idea-plugin).
 The plugin provides better autocomplete and links Workflow and Activity when writing and debugging code.
 
+## Contibuting
+
+We'd love your help improving the Temporal PHP SDK. Please review our [contribution guidelines](./CONTRIBUTING.md).
+
 ## Resources
 
 Read the docs  
