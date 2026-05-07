@@ -14,13 +14,13 @@ namespace Temporal\Internal\Nexus;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\AsyncOperationStartResult;
+use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Header as NexusHeader;
-use Temporal\Nexus\Link;
 use Temporal\Nexus\LinkParser;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
@@ -35,7 +35,6 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Instantiator\NexusServiceInstantiator;
 use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
-use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Exception\ErrorType;
@@ -94,7 +93,7 @@ final class NexusTaskHandler
         return $this;
     }
 
-    public function handleStartOperation(Request $request): Response
+    public function handleStartOperation(Request $request, ?MethodCanceller $methodCanceller = null): Response
     {
         $startRequest = $request->getStartOperation();
         \assert($startRequest instanceof StartOperationRequest);
@@ -117,6 +116,7 @@ final class NexusTaskHandler
             operation: $startRequest->getOperation(),
             headers: $headers,
             deadline: self::deadlineFromHeaders($headers),
+            methodCanceller: $methodCanceller,
         );
 
         $details = new OperationStartDetails(
@@ -222,85 +222,6 @@ final class NexusTaskHandler
                     ?? HandlerException::fromCause(ErrorType::Internal, $e),
             );
         }
-    }
-
-    /**
-     * Start operation, return raw payload. SDK exceptions propagate as-is —
-     * FailureConverter maps them on the way out.
-     *
-     * @throws HandlerException
-     * @throws OperationException
-     */
-    public function startOperationDirect(
-        OperationContext $context,
-        OperationStartDetails $details,
-        ValuesInterface $input,
-    ): ValuesInterface {
-        $result = $this->getServiceHandler()->startOperation(
-            $context,
-            $details,
-            $input,
-            $this->environment,
-        );
-
-        // Handler links travel via reserved payload metadata (no StartOperationResponse here).
-        $linksJson = self::encodeLinksMetadata($context->links->all());
-
-        if ($result instanceof SyncOperationStartResult) {
-            $payload = self::extractFirstPayload($result->value) ?? new Payload();
-            if ($linksJson !== null) {
-                $metadata = \iterator_to_array($payload->getMetadata());
-                $metadata[RrMetadata::LINKS_KEY] = $linksJson;
-                $payload->setMetadata($metadata);
-            }
-
-            $payloads = new Payloads(['payloads' => [$payload]]);
-            return EncodedValues::fromPayloads($payloads, $this->dataConverter);
-        }
-
-        \assert($result instanceof AsyncOperationStartResult);
-        // Async: payload data = token, marker tells RR sync vs async.
-        $payload = new Payload();
-        $payload->setData($result->info->token);
-        $metadata = [
-            RrMetadata::KIND_KEY => RrMetadata::KIND_ASYNC,
-        ];
-        if ($linksJson !== null) {
-            $metadata[RrMetadata::LINKS_KEY] = $linksJson;
-        }
-        $payload->setMetadata($metadata);
-        $payloads = new Payloads(['payloads' => [$payload]]);
-        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
-    }
-
-    /**
-     * @throws HandlerException
-     */
-    public function cancelOperationDirect(
-        OperationContext $context,
-        OperationCancelDetails $details,
-    ): void {
-        $this->getServiceHandler()->cancelOperation(
-            $context,
-            $details,
-            $this->environment,
-        );
-    }
-
-    /**
-     * @param Link[] $links
-     * @return null|string JSON `[{url,type},...]` or null when empty.
-     */
-    private static function encodeLinksMetadata(array $links): ?string
-    {
-        if ($links === []) {
-            return null;
-        }
-        $out = [];
-        foreach ($links as $link) {
-            $out[] = ['url' => $link->uri, 'type' => $link->type];
-        }
-        return \json_encode($out, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
     private static function extractFirstPayload(mixed $value): ?Payload

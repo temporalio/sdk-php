@@ -11,76 +11,83 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Nexus\Handler\MethodCanceller;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\LinkParser;
 use React\Promise\Deferred;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Nexus\V1\Request;
+use Temporal\Api\Nexus\V1\StartOperationRequest;
+use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
+use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Nexus\NexusTaskHandler;
+use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Handler\MethodCanceller;
+use Temporal\Nexus\LinkParser;
+use Temporal\Nexus\OperationState;
+use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
-/**
- * Route for "InvokeNexusOperation" from RR.
- * Registers a MethodCanceller when invocationId is supplied; cleans up in finally.
- */
 final class InvokeNexusOperation extends Route
 {
     public function __construct(
         private readonly NexusTaskHandler $taskHandler,
         private readonly NexusInvocationRegistry $invocations,
+        private readonly DataConverterInterface $dataConverter,
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
-
-        $service = $options['service'] ?? '';
-        $operation = $options['operation'] ?? '';
-        // Generate a fallback when the wire did not supply one: OperationStartDetails
-        // requires a non-empty requestId. Real Nexus traffic always carries it; the
-        // fallback covers HTTP clients that elide the header.
-        $requestId = ($options['requestId'] ?? '') ?: \bin2hex(\random_bytes(8));
-        $callback = $options['callback'] ?? null;
-        $callbackHeaders = $options['callbackHeaders'] ?? [];
-        $requestHeaders = $options['headers'] ?? [];
-        // Modern rrtemporal always emits a non-zero invocationId for Nexus
-        // workers. 0 = back-compat path for pre-merge RR plugins that did not
-        // yet send the field — no canceller is registered in that case.
         $invocationId = (int) ($options['invocationId'] ?? 0);
-
-        $deadline = NexusTaskHandler::deadlineFromHeaders($requestHeaders);
 
         $canceller = null;
         if ($invocationId !== 0) {
-            // Canceller fires listeners on deadline expiry too.
-            $canceller = new MethodCanceller($deadline);
+            $canceller = new MethodCanceller(NexusTaskHandler::deadlineFromHeaders($options['headers'] ?? []));
             $this->invocations->register($invocationId, $canceller);
         }
 
-        $context = new OperationContext(
-            service: $service,
-            operation: $operation,
-            headers: $requestHeaders,
-            deadline: $deadline,
-            methodCanceller: $canceller,
-        );
-
-        $input = $request->getPayloads();
-
         try {
-            // Strict link parsing: malformed → BadRequest.
-            $links = LinkParser::fromRaw($options['links'] ?? null);
+            $protoRequest = self::buildProtoRequest($options, $request->getPayloads());
+            $response = $this->taskHandler->handleStartOperation($protoRequest, $canceller);
 
-            $details = new OperationStartDetails(
-                requestId: $requestId,
-                callbackUrl: $callback ?: null,
-                callbackHeaders: $callbackHeaders,
-                links: $links,
-            );
+            $startResponse = $response->getStartOperation();
+            \assert($startResponse !== null);
 
-            $result = $this->taskHandler->startOperationDirect($context, $details, $input);
-            $resolver->resolve($result);
+            if ($startResponse->hasSyncSuccess()) {
+                $sync = $startResponse->getSyncSuccess();
+                \assert($sync !== null);
+                $resolver->resolve(new NexusOperationStarted(
+                    async: false,
+                    links: self::linksToWire($sync->getLinks()),
+                    payloads: $this->payloadAsValues($sync->getPayload()),
+                ));
+                return;
+            }
+
+            if ($startResponse->hasAsyncSuccess()) {
+                $async = $startResponse->getAsyncSuccess();
+                \assert($async !== null);
+                $resolver->resolve(new NexusOperationStarted(
+                    async: true,
+                    token: $async->getOperationToken(),
+                    links: self::linksToWire($async->getLinks()),
+                ));
+                return;
+            }
+
+            \assert($startResponse->hasOperationError());
+            $operationError = $startResponse->getOperationError();
+            \assert($operationError !== null);
+            $resolver->reject(self::operationErrorToException($operationError));
+        } catch (NexusHandlerErrorException $e) {
+            // Unwrap the proto-shaped wrapper produced by NexusTaskHandler — the
+            // outbound FailureConverter switches on the typed HandlerException
+            // (NexusHandlerException) to emit NexusHandlerFailureInfo on the wire.
+            $resolver->reject($e->getPrevious() ?? $e);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         } finally {
@@ -88,5 +95,76 @@ final class InvokeNexusOperation extends Route
                 $this->invocations->unregister($invocationId);
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function buildProtoRequest(array $options, ValuesInterface $payloads): Request
+    {
+        // Generate a fallback when the wire did not supply a requestId — Nexus
+        // traffic always carries it; the fallback covers HTTP clients that
+        // elide the header.
+        $requestId = ($options['requestId'] ?? '') ?: \bin2hex(\random_bytes(8));
+
+        $startRequest = (new StartOperationRequest())
+            ->setService((string) ($options['service'] ?? ''))
+            ->setOperation((string) ($options['operation'] ?? ''))
+            ->setRequestId($requestId)
+            ->setCallback((string) ($options['callback'] ?? ''))
+            ->setCallbackHeader((array) ($options['callbackHeaders'] ?? []))
+            ->setLinks(NexusLinkConverter::toNexusProtoLinks(
+                LinkParser::fromRaw($options['links'] ?? null),
+            ));
+
+        $inputPayload = self::firstPayload($payloads);
+        if ($inputPayload !== null) {
+            $startRequest->setPayload($inputPayload);
+        }
+
+        return (new Request())
+            ->setHeader((array) ($options['headers'] ?? []))
+            ->setStartOperation($startRequest);
+    }
+
+    private static function firstPayload(ValuesInterface $values): ?Payload
+    {
+        $payloads = $values->toPayloads()->getPayloads();
+        if ($payloads->count() === 0) {
+            return null;
+        }
+        return $payloads[0];
+    }
+
+    /**
+     * @param iterable<\Temporal\Api\Nexus\V1\Link> $links
+     * @return list<array{url: string, type: string}>
+     */
+    private static function linksToWire(iterable $links): array
+    {
+        $out = [];
+        foreach ($links as $link) {
+            $out[] = ['url' => $link->getUrl(), 'type' => $link->getType()];
+        }
+        return $out;
+    }
+
+    private static function operationErrorToException(UnsuccessfulOperationError $error): OperationException
+    {
+        $message = $error->getFailure()?->getMessage() ?? '';
+        $state = OperationState::tryFrom($error->getOperationState()) ?? OperationState::Failed;
+
+        return $state === OperationState::Canceled
+            ? OperationException::canceled($message)
+            : OperationException::failed($message);
+    }
+
+    private function payloadAsValues(?Payload $payload): ValuesInterface
+    {
+        $payloads = new Payloads();
+        if ($payload !== null) {
+            $payloads->setPayloads([$payload]);
+        }
+        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
     }
 }

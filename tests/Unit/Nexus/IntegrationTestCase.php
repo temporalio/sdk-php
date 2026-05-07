@@ -20,11 +20,11 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Nexus\NexusTaskHandler;
-use Temporal\Internal\Nexus\RoadRunner\Metadata as RrMetadata;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
@@ -121,9 +121,6 @@ class EchoServiceImpl implements EchoServiceInterface
 // ── Integration tests ─────────────────────────────────────────────
 
 /**
- * Integration tests exercising the full path matching Go RoadRunner plugin format:
- * ServerRequest(options JSON) → Router → NexusTaskHandler → ServiceHandler → method-adapter → EncodedValues
- *
  * @group unit
  * @group nexus
  */
@@ -149,7 +146,7 @@ final class IntegrationTestCase extends AbstractUnit
 
         $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
 
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry());
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter);
         $this->cancelRoute = new CancelNexusOperation($taskHandler);
     }
 
@@ -157,46 +154,31 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testSyncOperation(): void
     {
-        $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
+        $reply = $this->invoke('echo', 'hello');
 
-        $deferred = new Deferred();
-        $this->invokeRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitResult($deferred);
-        self::assertSame('echo:hello', $result);
+        self::assertFalse($reply->isAsync());
+        self::assertNull($reply->getToken());
+        self::assertSame('echo:hello', $this->decodePayload($reply));
     }
 
     public function testSyncOperationWithDifferentInputs(): void
     {
         foreach (['simple', 'with spaces', 'unicode: привет'] as $input) {
-            $request = $this->makeInvokeRequest('EchoService', 'echo', $input);
-            $deferred = new Deferred();
-            $this->invokeRoute->handle($request, [], $deferred);
-            $result = $this->awaitResult($deferred);
-            self::assertSame("echo:{$input}", $result, "Failed for input: {$input}");
+            $reply = $this->invoke('echo', $input);
+            self::assertFalse($reply->isAsync());
+            self::assertSame("echo:{$input}", $this->decodePayload($reply), "Failed for input: {$input}");
         }
     }
 
     // ── Async operation ──────────────────────────────────────────
 
-    public function testAsyncOperationReturnsTokenTaggedPayload(): void
+    public function testAsyncOperationReturnsTokenInReplyOptions(): void
     {
-        $request = $this->makeInvokeRequest('EchoService', 'asyncEcho', 'test');
-        $deferred = new Deferred();
-        $this->invokeRoute->handle($request, [], $deferred);
+        $reply = $this->invoke('asyncEcho', 'test');
 
-        $values = $this->awaitDeferred($deferred);
-
-        $payloads = $values->toPayloads();
-        self::assertNotNull($payloads);
-        self::assertSame(1, $payloads->getPayloads()->count());
-
-        $payload = $payloads->getPayloads()[0];
-        self::assertSame('async-token-test', $payload->getData());
-
-        $meta = \iterator_to_array($payload->getMetadata());
-        self::assertArrayHasKey(RrMetadata::KIND_KEY, $meta);
-        self::assertSame(RrMetadata::KIND_ASYNC, $meta[RrMetadata::KIND_KEY]);
+        self::assertTrue($reply->isAsync());
+        self::assertSame('async-token-test', $reply->getToken());
+        self::assertNull($reply->getPayloads(), 'async reply must not carry payloads');
     }
 
     // ── Operation error ──────────────────────────────────────────
@@ -209,7 +191,7 @@ final class IntegrationTestCase extends AbstractUnit
         $this->expectException(OperationException::class);
         $this->expectExceptionMessage('fail:reason');
         $this->invokeRoute->handle($request, [], $deferred);
-        $this->awaitResult($deferred);
+        $this->awaitReply($deferred);
     }
 
     // ── Handler error ────────────────────────────────────────────
@@ -220,7 +202,7 @@ final class IntegrationTestCase extends AbstractUnit
         $deferred = new Deferred();
         try {
             $this->invokeRoute->handle($request, [], $deferred);
-            $this->awaitResult($deferred);
+            $this->awaitReply($deferred);
             self::fail('Expected HandlerException');
         } catch (NexusHandlerException $e) {
             self::assertSame(NexusErrorType::NotFound, $e->errorType);
@@ -234,7 +216,7 @@ final class IntegrationTestCase extends AbstractUnit
         $deferred = new Deferred();
         try {
             $this->invokeRoute->handle($request, [], $deferred);
-            $this->awaitResult($deferred);
+            $this->awaitReply($deferred);
             self::fail('Expected HandlerException');
         } catch (NexusHandlerException $e) {
             self::assertSame(NexusErrorType::NotFound, $e->errorType);
@@ -248,7 +230,7 @@ final class IntegrationTestCase extends AbstractUnit
         $request = $this->makeCancelRequest('EchoService', 'cancelOp', 'my-token');
         $deferred = new Deferred();
         $this->cancelRoute->handle($request, [], $deferred);
-        $this->awaitDeferred($deferred);
+        $this->awaitCancelResult($deferred);
         self::assertContains('my-token', $this->serviceImpl->canceledTokens);
     }
 
@@ -258,7 +240,7 @@ final class IntegrationTestCase extends AbstractUnit
         $deferred = new Deferred();
         try {
             $this->cancelRoute->handle($request, [], $deferred);
-            $this->awaitDeferred($deferred);
+            $this->awaitCancelResult($deferred);
             self::fail('Expected HandlerException');
         } catch (NexusHandlerException $e) {
             self::assertSame(NexusErrorType::NotFound, $e->errorType);
@@ -277,8 +259,8 @@ final class IntegrationTestCase extends AbstractUnit
         ], EncodedValues::fromValues(['test'], $this->dataConverter));
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
-        self::assertSame('echo:test', $result);
+        $reply = $this->awaitReply($deferred);
+        self::assertSame('echo:test', $this->decodePayload($reply));
     }
 
     // ── Caller-side Nexus-Link propagation ───────────────────────
@@ -297,7 +279,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('count=2', $result);
         self::assertStringContainsString('https://caller.test/one|example.one', $result);
@@ -356,52 +339,32 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testAbsentLinksMeansEmptyList(): void
     {
-        $request = $this->makeInvokeRequest('EchoService', 'reportCallerLinks', 'x');
-        $deferred = new Deferred();
-        $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->invoke('reportCallerLinks', 'x');
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('count=0', $result);
     }
 
-    // ── Handler-side links → _rr_nexus_links metadata ────────────
+    // ── Handler-side links → reply.options.links ────────────
 
-    public function testHandlerAddedLinksAreSerializedIntoPayloadMetadata(): void
+    public function testHandlerAddedLinksAreSerializedIntoReplyOptions(): void
     {
-        $request = $this->makeInvokeRequest('EchoService', 'echoWithLinks', 'hi');
-        $deferred = new Deferred();
-        $this->invokeRoute->handle($request, [], $deferred);
+        $reply = $this->invoke('echoWithLinks', 'hi');
 
-        $values = $this->awaitDeferred($deferred);
-        $payloads = $values->toPayloads();
-        self::assertNotNull($payloads);
-        self::assertCount(1, $payloads->getPayloads());
+        self::assertFalse($reply->isAsync());
 
-        $meta = $payloads->getPayloads()[0]->getMetadata();
-        self::assertTrue(isset($meta[RrMetadata::LINKS_KEY]));
-
-        $decoded = \json_decode((string) $meta[RrMetadata::LINKS_KEY], true);
-        self::assertIsArray($decoded);
-        self::assertCount(2, $decoded);
-        self::assertSame('http://test.local/resource/1', $decoded[0]['url']);
-        self::assertSame('test.Resource', $decoded[0]['type']);
-        self::assertSame('http://test.local/resource/2', $decoded[1]['url']);
+        $links = $reply->getLinks();
+        self::assertCount(2, $links);
+        self::assertSame('http://test.local/resource/1', $links[0]['url']);
+        self::assertSame('test.Resource', $links[0]['type']);
+        self::assertSame('http://test.local/resource/2', $links[1]['url']);
     }
 
-    public function testNoLinksMeansNoMetadataKey(): void
+    public function testNoLinksMeansEmptyLinksList(): void
     {
-        $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
-        $deferred = new Deferred();
-        $this->invokeRoute->handle($request, [], $deferred);
+        $reply = $this->invoke('echo', 'hello');
 
-        $values = $this->awaitDeferred($deferred);
-        $payloads = $values->toPayloads();
-        self::assertNotNull($payloads);
-        $meta = $payloads->getPayloads()[0]->getMetadata();
-        self::assertFalse(
-            isset($meta[RrMetadata::LINKS_KEY]),
-            '_rr_nexus_links must be omitted when the handler adds no links',
-        );
+        self::assertSame([], $reply->getLinks(), 'links field must be empty when handler adds none');
     }
 
     // ── Deadline from Nexus timeout headers ──────────────────────
@@ -417,7 +380,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('deadline:set', $result);
         self::assertMatchesRegularExpression('/delta_seconds=(2[5-9]|30|31)/', $result);
@@ -434,7 +398,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('deadline:set', $result);
         self::assertMatchesRegularExpression('/delta_seconds=([5-9]|1[0-1])/', $result);
@@ -454,7 +419,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertMatchesRegularExpression('/delta_seconds=1(1[5-9]|2[01])/', $result);
     }
@@ -470,7 +436,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('deadline:none', $result);
     }
@@ -486,7 +453,8 @@ final class IntegrationTestCase extends AbstractUnit
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
+        $reply = $this->awaitReply($deferred);
+        $result = $this->decodePayload($reply);
 
         self::assertStringContainsString('deadline:set', $result);
     }
@@ -504,6 +472,21 @@ final class IntegrationTestCase extends AbstractUnit
     }
 
     // ── Helpers ──────────────────────────────────────────────────
+
+    private function invoke(string $operation, string $input): NexusOperationStarted
+    {
+        $request = $this->makeInvokeRequest('EchoService', $operation, $input);
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        return $this->awaitReply($deferred);
+    }
+
+    private function decodePayload(NexusOperationStarted $reply): string
+    {
+        $payloads = $reply->getPayloads();
+        self::assertNotNull($payloads, 'sync reply must carry a payload');
+        return $payloads->getValue(0, 'string');
+    }
 
     private function makeInvokeRequest(string $service, string $operation, string $input): ServerRequest
     {
@@ -533,13 +516,25 @@ final class IntegrationTestCase extends AbstractUnit
         );
     }
 
-    private function awaitResult(Deferred $deferred): string
+    private function awaitReply(Deferred $deferred): NexusOperationStarted
     {
-        $values = $this->awaitDeferred($deferred);
-        return $values->getValue(0, 'string');
+        $result = null;
+        $error = null;
+
+        $deferred->promise()->then(
+            function ($value) use (&$result): void { $result = $value; },
+            function (\Throwable $e) use (&$error): void { $error = $e; },
+        );
+
+        if ($error !== null) {
+            throw $error;
+        }
+
+        self::assertInstanceOf(NexusOperationStarted::class, $result);
+        return $result;
     }
 
-    private function awaitDeferred(Deferred $deferred): ValuesInterface
+    private function awaitCancelResult(Deferred $deferred): ValuesInterface
     {
         $result = null;
         $error = null;

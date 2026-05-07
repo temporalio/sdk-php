@@ -11,14 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
 use React\Promise\Deferred;
+use Temporal\Api\Nexus\V1\CancelOperationRequest;
+use Temporal\Api\Nexus\V1\Request;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusTaskHandler;
-use Temporal\Nexus\Validation\OperationNameValidator;
-use Temporal\Nexus\Validation\OperationTokenValidator;
-use Temporal\Nexus\Validation\ServiceNameValidator;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
@@ -29,15 +27,15 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
  * `#[OperationCancel]` method. The cancel-routine itself is invoked
  * synchronously and is **not** interrupt-able from the worker side: an
  * `InterruptNexusInvocation` request will not flip
- * {@see OperationContext::isMethodCancelled()} for it, because no canceller
- * is registered for cancel-routines. Authors should keep cancel bodies fast
- * and idempotent.
+ * {@see \Temporal\Nexus\Handler\OperationContext::isMethodCancelled()}
+ * for it, because no canceller is registered for cancel-routines. Authors
+ * should keep cancel bodies fast and idempotent.
  *
- * Pair: {@see InterruptNexusInvocation} interrupts an in-flight handler
+ * Pair: {@see CancelNexusOperationMethod} interrupts an in-flight handler
  * invocation by RR-internal `invocationId` (cooperative interrupt of the
  * PHP call), not by Nexus-spec coordinates.
  *
- * Options: {service, operation, operationToken}.
+ * Options: `{service, operation, operationToken}`.
  */
 final class CancelNexusOperation extends Route
 {
@@ -47,28 +45,30 @@ final class CancelNexusOperation extends Route
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $options = $request->getOptions();
-
-        $service = $options['service'] ?? '';
-        $operation = $options['operation'] ?? '';
-        $operationToken = $options['operationToken'] ?? '';
-
         try {
-            ServiceNameValidator::assert($service);
-            OperationNameValidator::assert($operation);
-            OperationTokenValidator::assert($operationToken);
-
-            $context = new OperationContext(
-                service: $service,
-                operation: $operation,
-            );
-
-            $details = new OperationCancelDetails(operationToken: $operationToken);
-
-            $this->taskHandler->cancelOperationDirect($context, $details);
+            $protoRequest = self::buildProtoRequest($request->getOptions());
+            $this->taskHandler->handleCancelOperation($protoRequest);
             $resolver->resolve(EncodedValues::fromValues([]));
+        } catch (NexusHandlerErrorException $e) {
+            // Unwrap the proto-shaped wrapper produced by NexusTaskHandler — the
+            // outbound FailureConverter switches on the typed HandlerException
+            // (NexusHandlerException) to emit NexusHandlerFailureInfo on the wire.
+            $resolver->reject($e->getPrevious() ?? $e);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function buildProtoRequest(array $options): Request
+    {
+        $cancelRequest = (new CancelOperationRequest())
+            ->setService((string) ($options['service'] ?? ''))
+            ->setOperation((string) ($options['operation'] ?? ''))
+            ->setOperationToken((string) ($options['operationToken'] ?? ''));
+
+        return (new Request())->setCancelOperation($cancelRequest);
     }
 }
