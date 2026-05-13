@@ -8,6 +8,7 @@ use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\NexusHandlerFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
@@ -27,22 +28,7 @@ use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * P0 #1–3 — caller-workflow failure mapping for SYNC Nexus operations.
- *
- * Existing {@see \Temporal\Tests\Acceptance\Extra\Nexus\Errors\ErrorsTest} only
- * checks HTTP status codes from the wire. This suite goes one layer deeper:
- * it verifies that the caller workflow's `try / catch (NexusOperationFailure)`
- * sees the right cause class and message — that's a different code path through
- * {@see \Temporal\Exception\Failure\FailureConverter}.
- *
- * Three scenarios:
- *   1. {@see OperationException::failed()}   → cause is {@see ApplicationFailure}
- *   2. {@see HandlerException}               → cause is {@see NexusHandlerFailure}
- *      with the right `getType()` (BAD_REQUEST / INTERNAL / NOT_FOUND / UNAUTHORIZED)
- *   3. unknown operation name                → cause is {@see NexusHandlerFailure}
- *      with `NOT_FOUND`
- */
+/** Caller-workflow failure mapping for SYNC Nexus operations. */
 #[Worker(options: [self::class, 'workerOptions'])]
 class SyncFailureTest extends TestCase
 {
@@ -99,6 +85,29 @@ class SyncFailureTest extends TestCase
     public function handlerErrorUnauthorized(State $state, WorkflowClientInterface $client): void
     {
         self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, 'unauthorized', 'UNAUTHORIZED'));
+    }
+
+    #[Test]
+    public function applicationFailureCausePreservesTypeMessageAndDetails(
+        State $state,
+        WorkflowClientInterface $client,
+    ): void {
+        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
+            $state->namespace,
+            __NAMESPACE__,
+            'nexus-sync-fail-rich-cause',
+        );
+
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Nexus_SyncFailure_RichCauseCaller',
+            WorkflowOptions::new()
+                ->withTaskQueue(__NAMESPACE__)
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
+        );
+
+        $client->start($stub, $endpoint['name']);
+
+        self::assertSame('ok', $stub->getResult('string'));
     }
 
     #[Test]
@@ -277,6 +286,100 @@ class HandlerErrorCallerWorkflow
         }
 
         return 'unexpected:no-exception';
+    }
+}
+
+// ── Service D: throws OperationException::failed with a rich ApplicationFailure cause ──
+
+#[Service(name: 'SyncFailureRichCauseService')]
+class SyncFailureRichCauseService
+{
+    #[Operation]
+    public function failWithRichCause(string $input): string
+    {
+        throw OperationException::failed(
+            'outer-business-error',
+            new ApplicationFailure(
+                'inner-business-message',
+                'CustomBusinessType',
+                false,
+                EncodedValues::fromValues(['detail-payload-marker']),
+            ),
+        );
+    }
+}
+
+#[WorkflowInterface]
+class RichCauseCallerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_SyncFailure_RichCauseCaller')]
+    public function run(string $endpoint)
+    {
+        $stub = Workflow::newNexusServiceStub(
+            SyncFailureRichCauseService::class,
+            NexusOperationOptions::new()
+                ->withEndpoint($endpoint)
+                ->withScheduleToCloseTimeout(CarbonInterval::seconds(10)),
+        );
+
+        try {
+            yield $stub->failWithRichCause('ignored');
+        } catch (NexusOperationFailure $e) {
+            $innerType = self::findApplicationFailureType($e, 'CustomBusinessType');
+            if ($innerType === null) {
+                return self::dumpChain($e, 'inner-CustomBusinessType-not-found-in-chain');
+            }
+
+            $messageHaystack = $innerType->getOriginalMessage() . '|' . $innerType->getMessage();
+            if (!\str_contains($messageHaystack, 'inner-business-message')) {
+                return "missing-inner-message:haystack={$messageHaystack}";
+            }
+
+            $details = $innerType->getDetails();
+            if ($details->count() === 0) {
+                return 'missing-details:zero-values';
+            }
+
+            $detailValue = $details->getValue(0, 'string');
+            if ($detailValue !== 'detail-payload-marker') {
+                return "wrong-detail-payload:{$detailValue}";
+            }
+
+            return 'ok';
+        }
+
+        return 'unexpected:no-exception';
+    }
+
+    private static function findApplicationFailureType(\Throwable $e, string $type): ?ApplicationFailure
+    {
+        $current = $e;
+        while ($current !== null) {
+            if ($current instanceof ApplicationFailure && $current->getType() === $type) {
+                return $current;
+            }
+            $current = $current->getPrevious();
+        }
+        return null;
+    }
+
+    private static function dumpChain(\Throwable $e, string $reason): string
+    {
+        $entries = [];
+        $current = $e;
+        while ($current !== null) {
+            $entry = $current::class;
+            if ($current instanceof ApplicationFailure) {
+                $entry .= '(type=' . $current->getType()
+                    . ',msg=' . $current->getOriginalMessage()
+                    . ',details=' . $current->getDetails()->count() . ')';
+            } else {
+                $entry .= '(msg=' . $current->getMessage() . ')';
+            }
+            $entries[] = $entry;
+            $current = $current->getPrevious();
+        }
+        return $reason . '|chain=' . \implode('->', $entries);
     }
 }
 
