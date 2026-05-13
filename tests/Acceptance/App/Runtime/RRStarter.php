@@ -10,6 +10,13 @@ use Temporal\Testing\SystemInfo;
 final class RRStarter
 {
     private Environment $environment;
+
+    /** @var list<int> stdout offsets at test boundaries; max 2 entries (previous + current test) */
+    private array $stdoutMarkers = [];
+
+    /** @var list<int> stderr offsets at test boundaries; max 2 entries (previous + current test) */
+    private array $stderrMarkers = [];
+
     public function __construct(
         private State $runtime,
         ?Environment $environment = null,
@@ -23,6 +30,9 @@ final class RRStarter
         if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
+
+        $this->stdoutMarkers = [];
+        $this->stderrMarkers = [];
 
         $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;
@@ -67,6 +77,26 @@ final class RRStarter
     public function getErrorOutput(): string
     {
         return $this->environment->getRoadRunnerErrorOutput();
+    }
+
+    public function markTestBoundary(): void
+    {
+        $this->stdoutMarkers[] = \strlen($this->environment->getRoadRunnerOutput());
+        $this->stderrMarkers[] = \strlen($this->environment->getRoadRunnerErrorOutput());
+        if (\count($this->stdoutMarkers) > 2) {
+            \array_shift($this->stdoutMarkers);
+            \array_shift($this->stderrMarkers);
+        }
+    }
+
+    public function getOutputSinceLastTwoTests(): string
+    {
+        return \substr($this->environment->getRoadRunnerOutput(), $this->stdoutMarkers[0] ?? 0);
+    }
+
+    public function getErrorOutputSinceLastTwoTests(): string
+    {
+        return \substr($this->environment->getRoadRunnerErrorOutput(), $this->stderrMarkers[0] ?? 0);
     }
 
     public function __destruct()

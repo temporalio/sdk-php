@@ -15,6 +15,7 @@ use Temporal\Client\ClientOptions;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\Client\WorkflowException;
 use Temporal\Exception\TemporalException;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\PluginRegistry;
@@ -81,6 +82,8 @@ abstract class TestCase extends \Temporal\Tests\TestCase
             function (Container $container): mixed {
                 $args = [];
 
+                $container->get(RRStarter::class)->markTestBoundary();
+
                 try {
                     $reflection = new \ReflectionMethod($this, $this->name());
                     $args = $container->resolveArguments($reflection);
@@ -98,7 +101,11 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         echo "\n=== Stack trace ===\n";
                         echo $e->getTraceAsString();
                         echo "\n=== Workflow history ===\n";
-                        $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+                        $this->printWorkflowHistory(
+                            $container->get(WorkflowClientInterface::class),
+                            $args,
+                            $e,
+                        );
 
                         $logRecords = $container->get(ClientLogger::class)->getRecords();
                         if ($logRecords !== []) {
@@ -119,15 +126,15 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     if (!$e instanceof SkippedTest) {
                         $roadRunnerStarter = $container->get(RRStarter::class);
 
-                        $rrStdout = $roadRunnerStarter->getOutput();
-                        $rrStderr = $roadRunnerStarter->getErrorOutput();
+                        $rrStdout = $roadRunnerStarter->getOutputSinceLastTwoTests();
+                        $rrStderr = $roadRunnerStarter->getErrorOutputSinceLastTwoTests();
 
                         if ($rrStdout !== '') {
-                            echo "\n=== RoadRunner stdout ===\n";
+                            echo "\n=== RoadRunner stdout (current + previous test) ===\n";
                             echo $rrStdout;
                         }
                         if ($rrStderr !== '') {
-                            echo "\n=== RoadRunner stderr ===\n";
+                            echo "\n=== RoadRunner stderr (current + previous test) ===\n";
                             echo $rrStderr;
                         }
 
@@ -153,18 +160,36 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         );
     }
 
-    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
-    {
+    private function printWorkflowHistory(
+        WorkflowClientInterface $workflowClient,
+        array $args,
+        ?\Throwable $exception = null,
+    ): void {
+        $executions = [];
         foreach ($args as $arg) {
-            if (!$arg instanceof WorkflowStubInterface) {
-                continue;
+            if ($arg instanceof WorkflowStubInterface) {
+                $executions[$arg->getExecution()->getID()] = $arg->getExecution();
             }
+        }
+        if ($exception instanceof WorkflowException) {
+            $execution = $exception->getExecution();
+            $executions[$execution->getID()] ??= $execution;
+        }
 
-            $fnTime = static fn(?Timestamp $ts): float => $ts === null
-                ? 0
-                : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
+        if ($executions === []) {
+            echo "(no workflow executions to inspect — test did not inject WorkflowStubInterface "
+                . "and exception did not carry a WorkflowExecution)\n";
+            return;
+        }
 
-            foreach ($workflowClient->getWorkflowHistory($arg->getExecution()) as $event) {
+        $fnTime = static fn(?Timestamp $ts): float => $ts === null
+            ? 0
+            : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
+
+        foreach ($executions as $execution) {
+            echo "\n--- workflow {$execution->getID()} (run {$execution->getRunID()}) ---\n";
+            unset($start);
+            foreach ($workflowClient->getWorkflowHistory($execution) as $event) {
                 $start ??= $fnTime($event->getEventTime());
                 echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
                 # Calculate delta time

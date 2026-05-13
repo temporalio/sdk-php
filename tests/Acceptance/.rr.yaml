@@ -18,4 +18,6 @@ kv:
         config: { }
 
 logs:
-    level: info
+    level: debug
+    output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/logs/rr.log
+    err_output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/logs/rr.err.log

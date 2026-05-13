@@ -8,6 +8,7 @@ use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
@@ -22,18 +23,10 @@ use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
+use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * P4 #18 — two caller workflows invoke the same async Nexus operation with
- * a shared handler workflow ID. Server-side `WorkflowIdConflictPolicy::UseExisting`
- * (hardcoded in {@see WorkflowRunOperation::start()}) causes the second start
- * to attach to the existing handler workflow instead of failing or starting a
- * new run.
- *
- * Both callers must observe the same single result from the shared handler.
- */
 #[Worker(options: [self::class, 'workerOptions'])]
 class MultipleCallersTest extends TestCase
 {
@@ -56,6 +49,8 @@ class MultipleCallersTest extends TestCase
             'nexus-shared-async',
         );
 
+        $handlerWorkflowId = 'shared-handler-' . \bin2hex(\random_bytes(8));
+
         $callerA = $client->newUntypedWorkflowStub(
             'Extra_Nexus_MultipleCallers_Caller',
             WorkflowOptions::new()
@@ -70,21 +65,22 @@ class MultipleCallersTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        // Start both callers; they target the same shared-handler workflow ID.
-        $client->start($callerA, $endpoint['name']);
-        // Tiny stagger so the second caller is more likely to hit the already-
-        // started handler rather than racing on creation. The conflict policy
-        // (UseExisting) makes either order safe; the stagger just exercises the
-        // "join existing" path more reliably.
-        \usleep(200_000);
-        $client->start($callerB, $endpoint['name']);
+        $client->start($callerA, $endpoint['name'], $handlerWorkflowId);
+        $client->start($callerB, $endpoint['name'], $handlerWorkflowId);
 
-        $resultA = $callerA->getResult('string');
-        $resultB = $callerB->getResult('string');
+        $handlerStub = $client->newUntypedRunningWorkflowStub($handlerWorkflowId);
+        $deadline = \microtime(true) + 5.0;
+        do {
+            try {
+                $handlerStub->signal('unblock');
+                break;
+            } catch (WorkflowNotFoundException) {
+                \usleep(50_000);
+            }
+        } while (\microtime(true) < $deadline);
 
-        // Handler returns "shared-handler-result"; both callers see the same value.
-        self::assertSame('shared-handler-result', $resultA);
-        self::assertSame('shared-handler-result', $resultB);
+        self::assertSame('shared-handler-result', $callerA->getResult('string'));
+        self::assertSame('shared-handler-result', $callerB->getResult('string'));
     }
 }
 
@@ -92,14 +88,13 @@ class MultipleCallersTest extends TestCase
 class SharedAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo
+    public function run(string $handlerWorkflowId): OperationInfo
     {
-        // Fixed handler workflow ID so both callers join the same execution.
         return WorkflowRunOperation::start(
             WorkflowHandle::fromWorkflowMethod(
                 SharedHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId(SharedHandlerWorkflow::ID),
-                $input,
+                WorkflowOptions::new()->withWorkflowId($handlerWorkflowId),
+                $handlerWorkflowId,
             ),
             Nexus::getStartDetails(),
         );
@@ -115,14 +110,19 @@ class SharedAsyncService
 #[WorkflowInterface]
 class SharedHandlerWorkflow
 {
-    public const ID = 'extra-nexus-multiplecallers-shared-handler';
+    private bool $unblocked = false;
 
     #[WorkflowMethod(name: 'Extra_Nexus_MultipleCallers_SharedHandler')]
     public function handle(string $input)
     {
-        // Brief work; result is fixed so both callers verify the same value.
-        yield Workflow::timer(CarbonInterval::milliseconds(200));
+        yield Workflow::await(fn() => $this->unblocked);
         return 'shared-handler-result';
+    }
+
+    #[SignalMethod(name: 'unblock')]
+    public function unblock(): void
+    {
+        $this->unblocked = true;
     }
 }
 
@@ -130,7 +130,7 @@ class SharedHandlerWorkflow
 class MultipleCallersCallerWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Nexus_MultipleCallers_Caller')]
-    public function run(string $endpoint)
+    public function run(string $endpoint, string $handlerWorkflowId)
     {
         $stub = Workflow::newNexusServiceStub(
             SharedAsyncService::class,
@@ -139,6 +139,6 @@ class MultipleCallersCallerWorkflow
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(15)),
         );
 
-        return yield $stub->run('payload');
+        return yield $stub->run($handlerWorkflowId);
     }
 }
