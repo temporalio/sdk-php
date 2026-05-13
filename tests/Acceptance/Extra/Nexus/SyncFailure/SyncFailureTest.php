@@ -186,7 +186,7 @@ class AppFailureCallerWorkflow
         try {
             yield $stub->failAlways('ignored');
         } catch (NexusOperationFailure $e) {
-            $cause = $e->getPrevious()?->getPrevious();
+            $cause = $e->getPrevious();
             if (!$cause instanceof ApplicationFailure) {
                 return 'wrong-cause-type:' . \get_debug_type($cause);
             }

@@ -91,8 +91,10 @@ final class NexusHelper
     public function setupEndpointWithName(string $namespace, string $taskQueue, string $prefix = 'test-nexus'): array
     {
         $name = self::uniqueEndpointName($prefix);
+        $id = $this->createWorkerEndpoint($name, $namespace, $taskQueue);
+
         return [
-            'id' => $this->createWorkerEndpoint($name, $namespace, $taskQueue),
+            'id' => $id,
             'name' => $name,
         ];
     }
