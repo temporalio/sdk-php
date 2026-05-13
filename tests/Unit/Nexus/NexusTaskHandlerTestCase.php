@@ -19,7 +19,6 @@ use Temporal\Nexus\Exception\RetryBehavior;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
-use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
@@ -46,6 +45,9 @@ interface TestGreetingService
 
     #[Operation]
     public function failingOp(string $input): string;
+
+    #[Operation]
+    public function richCauseFailingOp(string $input): string;
 
     #[AsyncOperation(output: 'string')]
     public function cancelableOp(string $input): OperationInfo;
@@ -81,6 +83,19 @@ class TestGreetingServiceImpl implements TestGreetingService
     public function failingOp(string $input): string
     {
         throw OperationException::failed('Something went wrong');
+    }
+
+    public function richCauseFailingOp(string $input): string
+    {
+        throw OperationException::failed(
+            'outer-failure',
+            new ApplicationFailure(
+                'inner-detail',
+                'CustomBusinessType',
+                false,
+                EncodedValues::fromValues(['marker']),
+            ),
+        );
     }
 
     public function cancelableOp(string $input): OperationInfo
@@ -176,58 +191,27 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
 
-        $response = $this->handler->handleStartOperation($request);
-
-        self::assertTrue($response->hasStartOperation());
-        $startResp = $response->getStartOperation();
-        self::assertTrue($startResp->hasOperationError());
-
-        $opError = $startResp->getOperationError();
-        self::assertSame('failed', $opError->getOperationState());
-        self::assertSame('Something went wrong', $opError->getFailure()->getMessage());
+        $this->expectException(OperationException::class);
+        $this->expectExceptionMessage('Something went wrong');
+        $this->handler->handleStartOperation($request);
     }
 
-    public function testTracebackIsAttachedByDefault(): void
+    public function testStartOperationPropagatesOperationExceptionCauseChain(): void
     {
-        $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
+        $request = $this->buildStartRequest('TestGreetingService', 'richCauseFailingOp', 'input');
 
-        $response = $this->handler->handleStartOperation($request);
-        $failure = $response->getStartOperation()->getOperationError()->getFailure();
+        try {
+            $this->handler->handleStartOperation($request);
+            self::fail('Expected OperationException');
+        } catch (OperationException $e) {
+            self::assertSame('outer-failure', $e->getMessage());
 
-        self::assertNotSame('', $failure->getDetails());
-        $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
-        self::assertIsArray($details);
-        self::assertSame('failed', $details['state']);
-
-        $chain = $details[NexusFailureConverter::DETAILS_TRACEBACK_KEY];
-        self::assertIsArray($chain);
-        self::assertSame(OperationException::class, $chain[0]['type']);
-        self::assertSame('Something went wrong', $chain[0]['message']);
-
-        $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(NexusFailureConverter::OPERATION_ERROR_TYPE, $meta['type']);
-    }
-
-    public function testTracebackCanBeStrippedViaConstructorFlag(): void
-    {
-        $repository = self::buildRepository(new TestGreetingServiceImpl());
-        $handler = new NexusTaskHandler(
-            $repository,
-            $this->dataConverter,
-            includeTracebackInFailure: false,
-        );
-
-        $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
-        $response = $handler->handleStartOperation($request);
-        $failure = $response->getStartOperation()->getOperationError()->getFailure();
-
-        // Canonical envelope: details still carries `state` even without traceback.
-        $details = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
-        self::assertSame(['state' => 'failed'], $details);
-
-        $meta = \iterator_to_array($failure->getMetadata());
-        self::assertSame(NexusFailureConverter::OPERATION_ERROR_TYPE, $meta['type']);
-        self::assertSame('Something went wrong', $failure->getMessage());
+            $cause = $e->getPrevious();
+            self::assertInstanceOf(ApplicationFailure::class, $cause);
+            self::assertSame('CustomBusinessType', $cause->getType());
+            self::assertSame('inner-detail', $cause->getOriginalMessage());
+            self::assertSame('marker', $cause->getDetails()->getValue(0, 'string'));
+        }
     }
 
     public function testStartOperationWithUnknownService(): void

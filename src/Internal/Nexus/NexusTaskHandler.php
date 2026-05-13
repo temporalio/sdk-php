@@ -169,7 +169,7 @@ final class NexusTaskHandler
             $response->setStartOperation($startResponse);
             return $response;
         } catch (OperationException $e) {
-            return $this->buildOperationErrorResponse($e);
+            throw $e;
         } catch (HandlerException $e) {
             throw $this->convertHandlerException($e);
         } catch (\Throwable $e) {
@@ -268,19 +268,6 @@ final class NexusTaskHandler
         }
 
         return $this->serviceHandler;
-    }
-
-    private function buildOperationErrorResponse(OperationException $e): Response
-    {
-        $startResponse = new StartOperationResponse();
-        $startResponse->setOperationError(NexusFailureConverter::operationExceptionToProto(
-            $e,
-            $this->includeTracebackInFailure,
-        ));
-
-        $response = new Response();
-        $response->setStartOperation($startResponse);
-        return $response;
     }
 
     private function convertHandlerException(HandlerException $e): NexusHandlerErrorException

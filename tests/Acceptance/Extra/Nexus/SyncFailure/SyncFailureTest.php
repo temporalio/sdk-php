@@ -186,22 +186,16 @@ class AppFailureCallerWorkflow
         try {
             yield $stub->failAlways('ignored');
         } catch (NexusOperationFailure $e) {
-            $cause = $e->getPrevious();
+            $cause = $e->getPrevious()?->getPrevious();
             if (!$cause instanceof ApplicationFailure) {
-                $causeName = $cause === null ? 'null' : $cause::class;
-                return "wrong-cause-type:{$causeName}";
+                return 'wrong-cause-type:' . \get_debug_type($cause);
             }
-
-            $haystack = $cause->getOriginalMessage() . '|' . $cause->getMessage();
-            if (!\str_contains($haystack, 'business-error')) {
-                return "missing-message:{$haystack}";
+            if (!\str_starts_with($cause->getType(), 'nexus.OperationError.')) {
+                return "missing-type-marker:{$cause->getType()}";
             }
-
-            $typeHaystack = $cause->getType() . '|' . $cause->getOriginalMessage();
-            if (!\str_contains($typeHaystack, 'nexus.OperationError.failed')) {
-                return "missing-type-marker:type={$cause->getType()}:msg={$cause->getOriginalMessage()}";
+            if (!\str_contains($cause->getOriginalMessage(), 'business-error')) {
+                return "missing-message:{$cause->getOriginalMessage()}";
             }
-
             return 'ok';
         }
 

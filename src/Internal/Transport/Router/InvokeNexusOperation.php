@@ -16,7 +16,6 @@ use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
-use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -24,10 +23,8 @@ use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Nexus\NexusTaskHandler;
-use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\LinkParser;
-use Temporal\Nexus\OperationState;
 use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -79,14 +76,8 @@ final class InvokeNexusOperation extends Route
                 return;
             }
 
-            \assert($startResponse->hasOperationError());
-            $operationError = $startResponse->getOperationError();
-            \assert($operationError !== null);
-            $resolver->reject(self::operationErrorToException($operationError));
+            $resolver->reject(new \LogicException('NexusTaskHandler returned a response with no success variant'));
         } catch (NexusHandlerErrorException $e) {
-            // Unwrap the proto-shaped wrapper produced by NexusTaskHandler — the
-            // outbound FailureConverter switches on the typed HandlerException
-            // (NexusHandlerException) to emit NexusHandlerFailureInfo on the wire.
             $resolver->reject($e->getPrevious() ?? $e);
         } catch (\Throwable $e) {
             $resolver->reject($e);
@@ -147,16 +138,6 @@ final class InvokeNexusOperation extends Route
             $out[] = ['url' => $link->getUrl(), 'type' => $link->getType()];
         }
         return $out;
-    }
-
-    private static function operationErrorToException(UnsuccessfulOperationError $error): OperationException
-    {
-        $message = $error->getFailure()?->getMessage() ?? '';
-        $state = OperationState::tryFrom($error->getOperationState()) ?? OperationState::Failed;
-
-        return $state === OperationState::Canceled
-            ? OperationException::canceled($message)
-            : OperationException::failed($message);
     }
 
     private function payloadAsValues(?Payload $payload): ValuesInterface
