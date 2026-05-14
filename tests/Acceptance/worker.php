@@ -23,15 +23,30 @@ use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Testing\Command;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
+use Temporal\Tests\Acceptance\App\Runtime\FatalHandler;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
+use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
+use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\WorkerFactory;
 
 \chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
+
+$stderr = new StderrLogger();
+$workerTranscript = TranscriptStore::create(stderr: $stderr)->createWriter(
+    TranscriptStore::currentRunIdFromEnvironment() ?? ('orphan-' . (\getmypid() ?: 0)),
+    'worker',
+);
+FatalHandler::register($workerTranscript, $stderr);
+
 RuntimeBuilder::init();
 StackRenderer::addIgnoredPath(__FILE__);
 
@@ -48,6 +63,9 @@ try {
     $run = $runtime->command;
     // Init container
     $container = new Spiral\Core\Container();
+    ContainerFacade::$container = $container;
+    $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
+    $container->bindSingleton(StderrLogger::class, $stderr);
 
     $converters = [
         new NullConverter(),
@@ -64,7 +82,7 @@ try {
     $container->bindSingleton(DataConverter::class, $converter);
     $container->bindSingleton(WorkerFactoryInterface::class, WorkerFactory::create(converter: $converter));
 
-    $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
+    $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
     $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
         return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
     };
@@ -102,7 +120,18 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $container->get(WorkerFactoryInterface::class)->run();
+    $host = RoadRunner::create();
+    if (\getenv('TEMPORAL_WIRE_TRACE') !== false && \getenv('TEMPORAL_WIRE_TRACE') !== '0') {
+        $host = new RecordingHost($host, $workerTranscript);
+    }
+    $container->get(WorkerFactoryInterface::class)->run($host);
 } catch (\Throwable $e) {
-    td($e);
+    $workerTranscript->writeFatal($e);
+    $workerTranscript->flush();
+    $stderr->critical('fatal', [
+        'class' => $e::class,
+        'message' => $e->getMessage(),
+        'trace' => $e->getTraceAsString(),
+    ]);
+    exit(1);
 }

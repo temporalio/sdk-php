@@ -4,6 +4,9 @@ rpc:
 
 server:
     command: "php worker.php"
+    env:
+        TEMPORAL_WIRE_TRACE: "1"
+        TEMPORAL_TRANSCRIPT_DIR: "runtime/tests/transcripts"
 
 # Workflow and activity mesh service
 temporal:

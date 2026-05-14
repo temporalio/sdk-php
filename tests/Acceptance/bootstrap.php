@@ -21,17 +21,31 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Testing\Command;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Tests\Acceptance\App\Support;
+use Temporal\Worker\Logger\StderrLogger;
 
 \chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
 
 RuntimeBuilder::init();
+
+$stderr = new StderrLogger();
+$transcriptStore = TranscriptStore::create(stderr: $stderr);
+$transcriptRunId = TranscriptStore::generateRunId();
+\putenv('TEMPORAL_TRANSCRIPT_RUN_ID=' . $transcriptRunId);
+$_ENV['TEMPORAL_TRANSCRIPT_RUN_ID'] = $transcriptRunId;
+
+$transcriptStore->pruneOldRuns(10);
+
+$phpunitTranscript = $transcriptStore->createWriter($transcriptRunId, 'phpunit');
+echo "[transcript] run_id={$transcriptRunId} dir={$transcriptStore->runDirectory($transcriptRunId)} merge=\"composer transcripts:last\" list=\"composer transcripts:list\"\n";
 
 $environment = Environment::create();
 $runtime = RuntimeBuilder::createEmpty($environment->command, \getcwd(), [
@@ -93,6 +107,8 @@ $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
 $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
 $container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
 $container->bindSingleton(DataConverterInterface::class, $converter);
+$container->bindSingleton(TranscriptWriter::class, $phpunitTranscript);
+$container->bindSingleton(StderrLogger::class, $stderr);
 $container->bind(RPCInterface::class, static fn() => RPC::create(\getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));
 $container->bind(
     StorageInterface::class,
