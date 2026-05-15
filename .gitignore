@@ -13,6 +13,13 @@ Thumbs.db
 
 # Cache
 .php_cs.cache
+.phpunit.result.cache
+tests/**/.phpunit.result.cache
+
+# Parity test tier artifacts (Phase 1 outputs + Java build dirs)
+tests/Parity/**/fixtures/*.json
+tests/Parity/**/build/
+tests/Parity/**/.gradle/
 
 # Other
 /.rr.yaml

@@ -1,0 +1,19 @@
+version: "3"
+rpc:
+    listen: tcp://127.0.0.1:6001
+
+server:
+    command: "php worker.php"
+
+temporal:
+    address: ${TEMPORAL_ADDRESS:-127.0.0.1:7233}
+    namespace: ${TEMPORAL_NAMESPACE:-default}
+    activities:
+        num_workers: 4
+    codec: json
+    debug_level: 2
+
+logs:
+    level: debug
+    output: stderr
+    err_output: stderr

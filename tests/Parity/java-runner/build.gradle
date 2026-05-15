@@ -1,0 +1,6 @@
+apply plugin: 'java-library'
+
+dependencies {
+    api 'io.temporal:temporal-sdk:1.34.0'
+    api 'ch.qos.logback:logback-classic:1.5.6'
+}

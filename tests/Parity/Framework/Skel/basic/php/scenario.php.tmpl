@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace __PHP_NAMESPACE__;
+
+use Carbon\CarbonInterval;
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Worker\WorkerInterface;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
+
+#[WorkflowInterface]
+final class __SCENARIO_SHORT__Workflow
+{
+    #[WorkflowMethod(name: '__WORKFLOW_TYPE__')]
+    public function run()
+    {
+        return 'todo';
+    }
+}
+
+function parity_php_register(WorkerInterface $worker): void
+{
+    $worker->registerWorkflowTypes(__SCENARIO_SHORT__Workflow::class);
+}
+
+function parity_php_run(WorkflowClientInterface $client, string $taskQueue): string
+{
+    $workflowId = '__SCENARIO_SLUG__-php-' . \bin2hex(\random_bytes(6));
+
+    $stub = $client->newUntypedWorkflowStub(
+        '__WORKFLOW_TYPE__',
+        WorkflowOptions::new()
+            ->withWorkflowId($workflowId)
+            ->withTaskQueue($taskQueue)
+            ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
+    );
+
+    $client->start($stub);
+    $stub->getResult('string');
+
+    return $workflowId;
+}

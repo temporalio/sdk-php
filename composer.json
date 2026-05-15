@@ -104,7 +104,25 @@
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox",
         "test:accept-slow": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Slow\" --color=always --testdox",
-        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox"
+        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox",
+        "test:parity:build": [
+            "Composer\\Config::disableProcessTimeout",
+            "tests/Parity/scripts/build.sh"
+        ],
+        "test:parity:fixtures": [
+            "Composer\\Config::disableProcessTimeout",
+            "tests/Parity/run-fixtures.sh"
+        ],
+        "test:parity:assert": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit -c tests/Parity/phpunit.xml --color=always --testdox"
+        ],
+        "test:parity": [
+            "Composer\\Config::disableProcessTimeout",
+            "@test:parity:build",
+            "@test:parity:fixtures",
+            "@test:parity:assert"
+        ]
     },
     "config": {
         "sort-packages": true,

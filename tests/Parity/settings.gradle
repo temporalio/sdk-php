@@ -1,0 +1,13 @@
+rootProject.name = 'parity'
+
+include 'java-runner'
+
+['Activity', 'ActivityRetry', 'ActivityTimeout', 'ChildWorkflow', 'ConcurrentActivities',
+ 'ContinueAsNew', 'HelloWorld', 'LocalActivity', 'MultipleActivities', 'SideEffect',
+ 'Signal', 'Timer'].each { name ->
+    String path = ":Basic:${name}:java"
+    include path
+    project(path).projectDir = file("Basic/${name}/java")
+}
+
+
