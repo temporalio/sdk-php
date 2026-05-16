@@ -46,6 +46,18 @@ abstract class AbstractSdkNormalizer implements EventNormalizerInterface
     }
 
     /**
+     * @return list<string> Whole event types to drop (per SDK). Use only for
+     *        events that one SDK records and the other does not for the same
+     *        business outcome (e.g. Go SDK emits a TIMER_CANCELED before
+     *        WORKFLOW_EXECUTION_COMPLETED when an `awaitWithTimeout` is
+     *        resolved by the predicate; Java SDK omits it).
+     */
+    protected function dropEventTypes(): array
+    {
+        return [];
+    }
+
+    /**
      * @return list<string> Keys to drop wherever they appear in the event tree.
      *        Use for fields whose presence/shape diverges between SDKs in a way
      *        that can't be smoothed by a field normalizer (e.g. one SDK emits
@@ -78,6 +90,11 @@ abstract class AbstractSdkNormalizer implements EventNormalizerInterface
         $rules = $this->fieldRules();
         $drop = $this->dropKeys();
 
+        if (\in_array(($event['eventType'] ?? null), $this->dropEventTypes(), true)) {
+            $this->logger?->log(LogLevel::DEBUG, "parity: {$this->source()->value} dropped event type \"{$event['eventType']}\"");
+            return [];
+        }
+
         foreach ($drop as $key) {
             if (\array_key_exists($key, $event)) {
                 $this->logger?->log(LogLevel::DEBUG, "parity: {$this->source()->value} dropped top-level key \"{$key}\"");
@@ -85,7 +102,61 @@ abstract class AbstractSdkNormalizer implements EventNormalizerInterface
             }
         }
 
+        $event = $this->collapseLocalActivityMarker($event);
+        $event = $this->collapseVersionMarker($event);
+
         return $this->walk($event, $rules);
+    }
+
+    /**
+     * Java records LocalActivity bookkeeping as granular fields
+     * (`activityId`, `input`, `meta`, `time`, `type`) while Go-based SDKs (RR/PHP)
+     * record it as one opaque `data` blob (already dropped via `dropAnywhereKeys`).
+     * Both carry the same replay state; parity only asserts the activity outcome,
+     * so reduce both sides to just `result`.
+     */
+    private function collapseLocalActivityMarker(array $event): array
+    {
+        if (($event['eventType'] ?? null) !== 'EVENT_TYPE_MARKER_RECORDED') {
+            return $event;
+        }
+        if (($event['markerRecordedEventAttributes']['markerName'] ?? null) !== 'LocalActivity') {
+            return $event;
+        }
+
+        $details = $event['markerRecordedEventAttributes']['details'] ?? [];
+        $event['markerRecordedEventAttributes']['details'] = isset($details['result'])
+            ? ['result' => $details['result']]
+            : [];
+
+        $this->logger?->log(LogLevel::DEBUG, "parity: {$this->source()->value} collapsed LocalActivity marker details to {result}");
+
+        return $event;
+    }
+
+    /**
+     * Java records `Workflow.getVersion()` as `{changeId, version}` in marker details
+     * while Go-based SDKs (RR/PHP) record it as `{change-id, version}`. The change-id
+     * (kebab vs camelCase) is purely a serialization quirk; keep only `version`,
+     * which is the value the workflow code observes.
+     */
+    private function collapseVersionMarker(array $event): array
+    {
+        if (($event['eventType'] ?? null) !== 'EVENT_TYPE_MARKER_RECORDED') {
+            return $event;
+        }
+        if (($event['markerRecordedEventAttributes']['markerName'] ?? null) !== 'Version') {
+            return $event;
+        }
+
+        $details = $event['markerRecordedEventAttributes']['details'] ?? [];
+        $event['markerRecordedEventAttributes']['details'] = isset($details['version'])
+            ? ['version' => $details['version']]
+            : [];
+
+        $this->logger?->log(LogLevel::DEBUG, "parity: {$this->source()->value} collapsed Version marker details to {version}");
+
+        return $event;
     }
 
     /**

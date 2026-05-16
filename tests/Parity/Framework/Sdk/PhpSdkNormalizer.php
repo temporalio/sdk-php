@@ -22,4 +22,12 @@ final class PhpSdkNormalizer extends AbstractSdkNormalizer
     {
         return Source::PHP;
     }
+
+    protected function dropEventTypes(): array
+    {
+        return [
+            'EVENT_TYPE_TIMER_CANCELED',
+            'EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES',
+        ];
+    }
 }

@@ -29,9 +29,14 @@ final class EventHistoryNormalizer
                 "No event normalizer registered for source \"{$history->source->value}\"",
             );
 
-        return \array_values(\array_map(
+        $normalized = \array_map(
             static fn (array $event): array => $normalizer->normalize($event),
             $history->events,
+        );
+
+        return \array_values(\array_filter(
+            $normalized,
+            static fn (array $event): bool => $event !== [],
         ));
     }
 }

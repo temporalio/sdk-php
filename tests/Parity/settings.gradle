@@ -11,3 +11,34 @@ include 'java-runner'
 }
 
 
+
+include ':Basic:Query:java'
+project(':Basic:Query:java').projectDir = file('Basic/Query/java')
+
+include ':Basic:MultipleSignals:java'
+project(':Basic:MultipleSignals:java').projectDir = file('Basic/MultipleSignals/java')
+
+include ':Basic:AwaitWithTimeout:java'
+project(':Basic:AwaitWithTimeout:java').projectDir = file('Basic/AwaitWithTimeout/java')
+
+include ':Basic:ActivityFailure:java'
+project(':Basic:ActivityFailure:java').projectDir = file('Basic/ActivityFailure/java')
+
+include ':Basic:MultipleTimers:java'
+project(':Basic:MultipleTimers:java').projectDir = file('Basic/MultipleTimers/java')
+
+include ':Basic:WorkflowGetVersion:java'
+project(':Basic:WorkflowGetVersion:java').projectDir = file('Basic/WorkflowGetVersion/java')
+
+include ':Basic:ComplexActivityResult:java'
+project(':Basic:ComplexActivityResult:java').projectDir = file('Basic/ComplexActivityResult/java')
+
+include ':Basic:NestedChildWorkflow:java'
+project(':Basic:NestedChildWorkflow:java').projectDir = file('Basic/NestedChildWorkflow/java')
+
+
+include ':Basic:ActivityNonRetryable:java'
+project(':Basic:ActivityNonRetryable:java').projectDir = file('Basic/ActivityNonRetryable/java')
+
+include ':Basic:SignalWithArg:java'
+project(':Basic:SignalWithArg:java').projectDir = file('Basic/SignalWithArg/java')
