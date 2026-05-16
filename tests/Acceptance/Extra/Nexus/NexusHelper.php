@@ -134,19 +134,32 @@ final class NexusHelper
         mixed $body,
         array $extraHeaders = [],
     ): array {
-        $response = $this->http->request(
-            'POST',
-            "/nexus/endpoints/{$endpointId}/services/{$service}/{$operation}",
-            [
-                'headers' => $extraHeaders,
-                'json' => $body,
-                // Total request budget: 30s. `timeout` (idle) defaults to 60s — server-side
-                // Nexus polls can stall for several seconds while the worker picks the task up.
-                'max_duration' => 30,
-            ],
-        );
-
-        return [$response->getStatusCode(), $response->getContent(false), $response->getHeaders(false)];
+        // Retry-on-404 wrapper mirrors Go SDK's test helper:
+        //   sdk-go/test/nexus_test.go:138-151 (10 attempts × 100ms backoff).
+        // The Temporal frontend's HTTP endpoint cache is lazy-loaded —
+        // a freshly-created endpoint may return 404 for a few ms after
+        // CreateNexusEndpoint succeeds. Once the cache reads the new entry,
+        // subsequent calls resolve normally.
+        $attempts = 10;
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            $response = $this->http->request(
+                'POST',
+                "/nexus/endpoints/{$endpointId}/services/{$service}/{$operation}",
+                [
+                    'headers' => $extraHeaders,
+                    'json' => $body,
+                    // Total request budget: 30s. `timeout` (idle) defaults to 60s — server-side
+                    // Nexus polls can stall for several seconds while the worker picks the task up.
+                    'max_duration' => 30,
+                ],
+            );
+            $code = $response->getStatusCode();
+            if ($code !== 404 || $attempt === $attempts) {
+                return [$code, $response->getContent(false), $response->getHeaders(false)];
+            }
+            \usleep(100_000);
+        }
+        throw new \LogicException('Unreachable');
     }
 
     /**
