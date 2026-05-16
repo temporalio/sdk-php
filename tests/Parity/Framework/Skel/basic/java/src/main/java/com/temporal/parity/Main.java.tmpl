@@ -1,0 +1,32 @@
+package com.temporal.parity;
+
+import com.temporal.parity.runner.ParityRunner;
+import io.temporal.workflow.WorkflowInterface;
+import io.temporal.workflow.WorkflowMethod;
+
+public final class Main {
+
+    @WorkflowInterface
+    public interface __SCENARIO_SHORT__Workflow {
+        @WorkflowMethod(name = "__WORKFLOW_TYPE__")
+        String run();
+    }
+
+    public static final class __SCENARIO_SHORT__WorkflowImpl implements __SCENARIO_SHORT__Workflow {
+        @Override
+        public String run() {
+            return "todo";
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        ParityRunner.run(args, "__SCENARIO_SLUG__", "__NAMESPACE__", "__TASK_QUEUE__",
+            __SCENARIO_SHORT__Workflow.class,
+            new Class<?>[]{__SCENARIO_SHORT__WorkflowImpl.class},
+            new Object[]{},
+            (client, stub) -> stub.run(),
+            "todo");
+    }
+
+    private Main() {}
+}

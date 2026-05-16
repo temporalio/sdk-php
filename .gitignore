@@ -24,8 +24,8 @@ tests/Parity/**/.gradle/
 # Other
 /.rr.yaml
 *.exe
-rr
-temporal
-temporal-test-server
+/rr
+/temporal
+/temporal-test-server
 .ai
 .context
