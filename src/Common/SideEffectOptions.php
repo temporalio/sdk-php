@@ -32,7 +32,7 @@ class SideEffectOptions extends Options
      *
      * @since RoadRunner 2025.1.2
      */
-    #[Marshal(name: 'Summary')]
+    #[Marshal(name: 'summary')]
     public string $summary = '';
 
     /**

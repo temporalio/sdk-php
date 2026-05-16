@@ -570,6 +570,7 @@ final class Workflow extends Facade
      */
     public static function sideEffect(callable $value, ?SideEffectOptions $options = null): PromiseInterface
     {
+        /** @psalm-suppress TooManyArguments */
         return self::getCurrentContext()->sideEffect($value, $options);
     }
 
