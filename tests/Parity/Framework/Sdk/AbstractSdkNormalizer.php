@@ -82,6 +82,14 @@ abstract class AbstractSdkNormalizer implements EventNormalizerInterface
             'cause',
             'data',
             'stackTrace',
+            'userMetadata',
+            'workflowExecutionExpirationTime',
+            // signal/child-workflow attrs that one SDK emits and another omits:
+            'runId',
+            'namespace',
+            'namespaceId',
+            'control',
+            'childWorkflowOnly',
         ];
     }
 
@@ -104,8 +112,35 @@ abstract class AbstractSdkNormalizer implements EventNormalizerInterface
 
         $event = $this->collapseLocalActivityMarker($event);
         $event = $this->collapseVersionMarker($event);
+        $event = $this->collapseNullSignalInput($event);
 
         return $this->walk($event, $rules);
+    }
+
+    /**
+     * Go SDK sends `c.SignalWorkflow(..., nil)` as a single payload with
+     * `encoding: binary/null`; PHP omits `input` entirely. Drop the key from
+     * `workflowExecutionSignaledEventAttributes` when all payloads encode null.
+     */
+    private function collapseNullSignalInput(array $event): array
+    {
+        if (($event['eventType'] ?? null) !== 'EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED') {
+            return $event;
+        }
+        $payloads = $event['workflowExecutionSignaledEventAttributes']['input']['payloads'] ?? null;
+        if (!\is_array($payloads) || $payloads === []) {
+            return $event;
+        }
+        foreach ($payloads as $payload) {
+            $encoding = $payload['metadata']['encoding'] ?? null;
+            $decoded = \is_string($encoding) ? \base64_decode($encoding, true) : null;
+            if ($decoded !== 'binary/null') {
+                return $event;
+            }
+        }
+        unset($event['workflowExecutionSignaledEventAttributes']['input']);
+        $this->logger?->log(LogLevel::DEBUG, "parity: {$this->source()->value} dropped null-only signal input");
+        return $event;
     }
 
     /**

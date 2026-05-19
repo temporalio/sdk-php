@@ -1,9 +1,0 @@
-apply plugin: 'application'
-
-dependencies {
-    implementation project(':java-runner')
-}
-
-application {
-    mainClass = 'com.temporal.parity.Main'
-}

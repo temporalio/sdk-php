@@ -33,6 +33,16 @@ final class TaskQueueNormalizer implements FieldNormalizerInterface
             $value['name'] = self::PLACEHOLDER;
         }
 
+        if (\array_key_exists('normalName', $value)) {
+            $this->logger?->log(LogLevel::DEBUG, "parity: {$source->value}/taskQueue.normalName dropped (java/go emit, php omits)");
+            unset($value['normalName']);
+        }
+
+        if (\array_key_exists('kind', $value)) {
+            $this->logger?->log(LogLevel::DEBUG, "parity: {$source->value}/taskQueue.kind \"{$value['kind']}\" dropped (sticky-vs-normal varies per SDK)");
+            unset($value['kind']);
+        }
+
         return $value;
     }
 }

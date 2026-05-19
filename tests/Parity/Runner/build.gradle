@@ -1,0 +1,24 @@
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    if (project.path.startsWith(':Scenarios:')) {
+        apply plugin: 'application'
+
+        dependencies {
+            implementation project(':java-runner')
+        }
+
+        application {
+            mainClass = 'com.temporal.parity.Main'
+        }
+    }
+}

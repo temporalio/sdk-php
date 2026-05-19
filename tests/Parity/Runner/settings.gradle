@@ -1,0 +1,20 @@
+rootProject.name = 'parity'
+
+include 'java-runner'
+
+[
+    // 22 original "Basic" scenarios — flat now
+    'Activity', 'ActivityFailure', 'ActivityNonRetryable', 'ActivityRetry', 'ActivityTimeout',
+    'AwaitWithTimeout', 'ChildWorkflow', 'ComplexActivityResult', 'ConcurrentActivities',
+    'ContinueAsNew', 'HelloWorld', 'LocalActivity', 'MultipleActivities', 'MultipleSignals',
+    'MultipleTimers', 'NestedChildWorkflow', 'Query', 'SideEffect', 'Signal', 'SignalWithArg',
+    'Timer', 'WorkflowGetVersion',
+    // 7 cross-SDK feature ports — formerly under Harness/
+    'ActivityBasicNoWorkflowTimeout', 'ActivityCancelTryCancel', 'ChildWorkflowSignal',
+    'QueryUnexpectedArguments', 'QueryUnexpectedReturnType', 'QueryUnexpectedTypeName',
+    'SignalExternal',
+].each { name ->
+    String path = ":Scenarios:${name}:java"
+    include path
+    project(path).projectDir = file("../Scenarios/${name}/java")
+}

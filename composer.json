@@ -107,15 +107,15 @@
         "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox",
         "test:parity:build": [
             "Composer\\Config::disableProcessTimeout",
-            "tests/Parity/scripts/build.sh"
+            "tests/Parity/Runner/scripts/build.sh"
         ],
         "test:parity:fixtures": [
             "Composer\\Config::disableProcessTimeout",
-            "tests/Parity/run-fixtures.sh"
+            "tests/Parity/Runner/run-fixtures.sh"
         ],
         "test:parity:assert": [
             "Composer\\Config::disableProcessTimeout",
-            "phpunit -c tests/Parity/phpunit.xml --color=always --testdox"
+            "phpunit -c tests/Parity/Runner/phpunit.xml --color=always --testdox"
         ],
         "test:parity": [
             "Composer\\Config::disableProcessTimeout",
