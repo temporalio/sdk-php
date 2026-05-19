@@ -50,11 +50,11 @@ if (!\is_file($phpDir . '/scenario.php')) {
 \putenv("TEMPORAL_ADDRESS={$address}");
 \putenv("TEMPORAL_NAMESPACE={$namespace}");
 \putenv("PARITY_SCENARIO_DIR={$scenarioDir}");
-\putenv("PARITY_PHP_NAMESPACE={$taskQueue}");
+\putenv("PARITY_PHP_TASK_QUEUE={$taskQueue}");
 $_ENV['TEMPORAL_ADDRESS'] = $address;
 $_ENV['TEMPORAL_NAMESPACE'] = $namespace;
 $_ENV['PARITY_SCENARIO_DIR'] = $scenarioDir;
-$_ENV['PARITY_PHP_NAMESPACE'] = $taskQueue;
+$_ENV['PARITY_PHP_TASK_QUEUE'] = $taskQueue;
 
 $logger->info('booting parity launcher', [
     'scenario' => $scenarioDir,

@@ -17,4 +17,9 @@ final class ActivityFailureTest extends AbstractParityScenarioTest
     {
         return __DIR__ . '/fixtures/php.json';
     }
+
+    protected function fixtureGo(): ?string
+    {
+        return __DIR__ . '/fixtures/go.json';
+    }
 }

@@ -16,14 +16,14 @@ Bootstrap::init();
 $logger = new StderrLogger();
 
 $scenarioDir = \getenv('PARITY_SCENARIO_DIR');
-$phpNamespace = \getenv('PARITY_PHP_NAMESPACE');
+$phpTaskQueue = \getenv('PARITY_PHP_TASK_QUEUE');
 
 if ($scenarioDir === false || $scenarioDir === '') {
     $logger->error('PARITY_SCENARIO_DIR env not set');
     exit(1);
 }
-if ($phpNamespace === false || $phpNamespace === '') {
-    $logger->error('PARITY_PHP_NAMESPACE env not set');
+if ($phpTaskQueue === false || $phpTaskQueue === '') {
+    $logger->error('PARITY_PHP_TASK_QUEUE env not set');
     exit(1);
 }
 
@@ -47,7 +47,7 @@ if ($registerFn === null) {
     exit(1);
 }
 
-$taskQueue = $phpNamespace;
+$taskQueue = $phpTaskQueue;
 $logger->info("starting parity worker", ['task_queue' => $taskQueue, 'scenario_dir' => $scenarioDir]);
 
 try {

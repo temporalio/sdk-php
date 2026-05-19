@@ -14,11 +14,12 @@
 #   __SCENARIO_SHORT__        "FailureRetry"
 #   __SCENARIO_SLUG__         "basic-failure-retry"   (kebab-case)
 #   __AREA__                  "Basic"
-#   __NAMESPACE__             "parity-failure-retry"
-#   __TASK_QUEUE__            "Temporal\\Tests\\Parity\\Basic\\FailureRetry\\Php"
 #   __PHP_NAMESPACE__         "Temporal\\Tests\\Parity\\Basic\\FailureRetry\\Php"
 #   __PHP_NAMESPACE_PARENT__  "Temporal\\Tests\\Parity\\Basic\\FailureRetry"
 #   __WORKFLOW_TYPE__         "Parity_Basic_FailureRetry"
+#
+# Namespace + per-language task queues are SHARED (see scripts/lib/constants.sh)
+# and not baked into scenario.env anymore.
 
 set -euo pipefail
 
@@ -72,10 +73,8 @@ AREA_SLUG="$(to_slug "${AREA}")"
 SHORT_SLUG="$(to_slug "${SHORT}")"
 SCENARIO_SLUG="${AREA_SLUG}-${SHORT_SLUG}"
 SCENARIO_NAME="${AREA}/${SHORT}"
-NAMESPACE="parity-${SHORT_SLUG}"
 PHP_NAMESPACE_PARENT="Temporal\\Tests\\Parity\\${AREA}\\${SHORT}"
 PHP_NAMESPACE="${PHP_NAMESPACE_PARENT}\\Php"
-TASK_QUEUE="${PHP_NAMESPACE}"
 WORKFLOW_TYPE="Parity_${AREA}_${SHORT}"
 
 SETTINGS_BACKUP="$(mktemp -t parity-settings.XXXXXX)"
@@ -100,7 +99,7 @@ rollback_scaffold() {
 trap rollback_scaffold EXIT
 
 parity_log "creating ${TARGET}"
-mkdir -p "${TARGET}/php" "${TARGET}/java/src/main/java/com/temporal/parity" "${TARGET}/fixtures"
+mkdir -p "${TARGET}/php" "${TARGET}/java/src/main/java/com/temporal/parity" "${TARGET}/go" "${TARGET}/fixtures"
 TARGET_CREATED=1
 
 INCLUDE_LINE="include ':${AREA}:${SHORT}:java'"
@@ -115,8 +114,6 @@ substitute() {
         -e "s|__SCENARIO_SHORT__|${SHORT}|g" \
         -e "s|__SCENARIO_SLUG__|${SCENARIO_SLUG}|g" \
         -e "s|__AREA__|${AREA}|g" \
-        -e "s|__NAMESPACE__|${NAMESPACE}|g" \
-        -e "s|__TASK_QUEUE__|${TASK_QUEUE}|g" \
         -e "s|__PHP_NAMESPACE__|${PHP_NAMESPACE}|g" \
         -e "s|__PHP_NAMESPACE_PARENT__|${PHP_NAMESPACE_PARENT}|g" \
         -e "s|__WORKFLOW_TYPE__|${WORKFLOW_TYPE}|g" \
@@ -129,6 +126,7 @@ substitute "${SKEL}/php/scenario.php.tmpl" "${TARGET}/php/scenario.php"
 substitute "${SKEL}/java/build.gradle.tmpl" "${TARGET}/java/build.gradle"
 substitute "${SKEL}/java/src/main/java/com/temporal/parity/Main.java.tmpl" \
            "${TARGET}/java/src/main/java/com/temporal/parity/Main.java"
+substitute "${SKEL}/go/main.go.tmpl" "${TARGET}/go/main.go"
 substitute "${SKEL}/ScenarioTest.php.tmpl" "${TARGET}/${SHORT}Test.php"
 
 touch "${TARGET}/fixtures/.gitkeep"
@@ -140,5 +138,6 @@ parity_log "next steps:"
 parity_log "  1. flesh out the scenario in:"
 parity_log "       ${TARGET}/php/scenario.php"
 parity_log "       ${TARGET}/java/src/main/java/com/temporal/parity/Main.java"
+parity_log "       ${TARGET}/go/main.go"
 parity_log "  2. capture fixtures and compare:"
 parity_log "       composer test:parity"

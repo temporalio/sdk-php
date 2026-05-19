@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Phase 1 of the Parity test workflow.
 #
-# Discovers every scenario.env under tests/Parity/, runs setup-temporal.sh,
-# then runs scripts/sdk/run-<sdk>.sh for each SDK declared in $SDKS.
+# Starts the shared Temporal dev server (once, via setup-temporal-once.sh),
+# discovers every scenario.env under tests/Parity/, runs scripts/sdk/run-<sdk>.sh
+# for each SDK declared in $SDKS, and stops the server on exit IFF this run
+# started it (PID-marker convention — see teardown-temporal.sh).
 #
 # Exit code is non-zero if ANY scenario fails.
 set -euo pipefail
@@ -18,17 +20,28 @@ PARITY_PHASE="parity-runner"
 TIMEOUT_SECS="${PARITY_FIXTURE_TIMEOUT:-600}"
 
 CURRENT_SDK_PID=""
-cleanup_runner() {
+
+teardown_temporal() {
+    "${SCRIPT_DIR}/teardown-temporal.sh" || true
+}
+
+cleanup_on_signal() {
     if [[ -n "${CURRENT_SDK_PID}" ]] && kill -0 "${CURRENT_SDK_PID}" 2>/dev/null; then
         parity_log "interrupted — killing scenario pid=${CURRENT_SDK_PID}"
         kill -TERM "${CURRENT_SDK_PID}" 2>/dev/null || true
         sleep 1
         kill -KILL "${CURRENT_SDK_PID}" 2>/dev/null || true
     fi
-    pkill -KILL -f 'com.temporal.parity\|rr serve.*tests/Parity\|gradle.*tests/Parity' 2>/dev/null || true
+    pkill -KILL -f 'com.temporal.parity\|rr serve.*tests/Parity\|gradle.*tests/Parity\|tests/Parity/build/go-bin/' 2>/dev/null || true
+    teardown_temporal
     exit 130
 }
-trap cleanup_runner INT TERM
+trap cleanup_on_signal INT TERM
+trap teardown_temporal EXIT
+
+if ! "${SCRIPT_DIR}/setup-temporal-once.sh"; then
+    parity_die "setup-temporal-once.sh failed"
+fi
 
 parity_log "scanning ${PARITY_ROOT} for scenario manifests"
 if [[ -n "${PARITY_FILTER:-}" ]]; then
@@ -71,13 +84,6 @@ for scenario_dir in "${SCENARIOS[@]}"; do
     parity_log "==> ${rel}"
 
     scenario_failed=0
-
-    if ! "${SCRIPT_DIR}/setup-temporal.sh" "${scenario_dir}"; then
-        parity_warn "    ${rel}: setup-temporal failed"
-        FAILED+=("${rel} (setup)")
-        continue
-    fi
-
     for sdk in ${PARITY_SDKS}; do
         if ! run_sdk "${sdk}" "${scenario_dir}"; then
             rc=$?

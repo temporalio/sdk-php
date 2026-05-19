@@ -49,6 +49,7 @@ declare -a SUCCEEDED=()
 declare -a FAILED=()
 declare -a FILTERED=()
 declare -a JAVA_TASKS=()
+declare -a GO_TASKS=()
 
 for scenario_dir in "${SCENARIOS[@]}"; do
     parity_load_manifest "${scenario_dir}"
@@ -60,16 +61,34 @@ for scenario_dir in "${SCENARIOS[@]}"; do
     fi
     FILTERED+=("${scenario_dir}")
     for sdk in ${PARITY_SDKS}; do
-        if [[ "${sdk}" == "java" ]]; then
-            JAVA_TASKS+=(":${rel//\//:}:java:installDist")
-            break
-        fi
+        case "${sdk}" in
+            java)
+                JAVA_TASKS+=(":${rel//\//:}:java:installDist")
+                ;;
+            go)
+                GO_TASKS+=("./${rel}/${GO_DIR}|${PARITY_GO_BIN}")
+                ;;
+        esac
     done
 done
 
 if [[ ${#JAVA_TASKS[@]} -gt 0 ]]; then
     parity_log "==> building ${#JAVA_TASKS[@]} java scenario(s) via root gradle"
     ( cd "${PARITY_ROOT}" && ./gradlew --no-daemon -q --continue "${JAVA_TASKS[@]}" ) || true
+fi
+
+if [[ ${#GO_TASKS[@]} -gt 0 ]]; then
+    parity_log "==> building ${#GO_TASKS[@]} go scenario(s)"
+    mkdir -p "${PARITY_ROOT}/build/go-bin"
+    for entry in "${GO_TASKS[@]}"; do
+        go_pkg="${entry%%|*}"
+        go_out="${entry##*|}"
+        parity_log "    go build ${go_pkg}"
+        # GOWORK=off keeps this build self-contained — the parent
+        # /Users/.../temporalio/go.work points at a local sdk-go used by velox
+        # builds and would otherwise refuse to build packages outside that workspace.
+        ( cd "${PARITY_ROOT}" && GOWORK=off go build -o "${go_out}" "${go_pkg}" ) || parity_warn "    go build failed for ${go_pkg}"
+    done
 fi
 
 for scenario_dir in ${FILTERED[@]+"${FILTERED[@]}"}; do
@@ -92,6 +111,14 @@ for scenario_dir in ${FILTERED[@]+"${FILTERED[@]}"}; do
                 ;;
             php)
                 parity_log "    php: no per-scenario build (composer-managed)"
+                ;;
+            go)
+                if [[ -x "${PARITY_GO_BIN}" ]]; then
+                    parity_log "    go: binary present (${PARITY_GO_BIN#${PARITY_ROOT}/})"
+                else
+                    scenario_failed=1
+                    parity_warn "    ${rel}: go binary missing at ${PARITY_GO_BIN}"
+                fi
                 ;;
             *)
                 parity_warn "    ${rel}: unknown SDK '${sdk}' (manifest validation should have caught this)"

@@ -1,0 +1,40 @@
+package main
+
+import (
+	"context"
+
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/workflow"
+
+	gorunner "github.com/temporalio/sdk-php/parity/go-runner"
+)
+
+func __SCENARIO_SHORT__Workflow(ctx workflow.Context) (string, error) {
+	return "todo", nil
+}
+
+func main() {
+	gorunner.Run(gorunner.RunArgs{
+		Slug:             "__SCENARIO_SLUG__",
+		DefaultNamespace: "parity",
+		DefaultTaskQueue: "parity-go-task-queue",
+		Workflows: []gorunner.Registration{
+			{Fn: __SCENARIO_SHORT__Workflow, Name: "__WORKFLOW_TYPE__"},
+		},
+		Driver: func(ctx context.Context, c client.Client, workflowID, taskQueue string) (any, error) {
+			run, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+				ID:        workflowID,
+				TaskQueue: taskQueue,
+			}, "__WORKFLOW_TYPE__")
+			if err != nil {
+				return nil, err
+			}
+			var out string
+			if err := run.Get(ctx, &out); err != nil {
+				return nil, err
+			}
+			return out, nil
+		},
+		Expected: "todo",
+	})
+}

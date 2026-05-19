@@ -57,7 +57,7 @@ parity_log "running php launcher: ${LAUNCHER}"
         --scenario "${PARITY_SCENARIO_DIR}" \
         --address "${TEMPORAL_ADDRESS}" \
         --namespace "${PARITY_NAMESPACE}" \
-        --task-queue "${PARITY_TASK_QUEUE}" 2>&1
+        --task-queue "${PARITY_PHP_TASK_QUEUE}" 2>&1
 ) | tee "${LOG}" &
 PHP_CHILD_PID=$!
 wait "${PHP_CHILD_PID}"

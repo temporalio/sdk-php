@@ -66,7 +66,7 @@ parity_log "running ${BIN_SCRIPT}"
     exec "${BIN_SCRIPT}" \
         --address "${TEMPORAL_ADDRESS}" \
         --namespace "${PARITY_NAMESPACE}" \
-        --task-queue "${PARITY_TASK_QUEUE}" 2>&1
+        --task-queue "${PARITY_JAVA_TASK_QUEUE}" 2>&1
 ) | tee "${LOG}" &
 JAVA_CHILD_PID=$!
 wait "${JAVA_CHILD_PID}"

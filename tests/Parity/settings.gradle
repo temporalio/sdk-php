@@ -42,3 +42,24 @@ project(':Basic:ActivityNonRetryable:java').projectDir = file('Basic/ActivityNon
 
 include ':Basic:SignalWithArg:java'
 project(':Basic:SignalWithArg:java').projectDir = file('Basic/SignalWithArg/java')
+
+include ':Harness:ActivityBasicNoWorkflowTimeout:java'
+project(':Harness:ActivityBasicNoWorkflowTimeout:java').projectDir = file('Harness/ActivityBasicNoWorkflowTimeout/java')
+
+include ':Harness:ActivityCancelTryCancel:java'
+project(':Harness:ActivityCancelTryCancel:java').projectDir = file('Harness/ActivityCancelTryCancel/java')
+
+include ':Harness:ChildWorkflowSignal:java'
+project(':Harness:ChildWorkflowSignal:java').projectDir = file('Harness/ChildWorkflowSignal/java')
+
+include ':Harness:QueryUnexpectedArguments:java'
+project(':Harness:QueryUnexpectedArguments:java').projectDir = file('Harness/QueryUnexpectedArguments/java')
+
+include ':Harness:QueryUnexpectedTypeName:java'
+project(':Harness:QueryUnexpectedTypeName:java').projectDir = file('Harness/QueryUnexpectedTypeName/java')
+
+include ':Harness:QueryUnexpectedReturnType:java'
+project(':Harness:QueryUnexpectedReturnType:java').projectDir = file('Harness/QueryUnexpectedReturnType/java')
+
+include ':Harness:SignalExternal:java'
+project(':Harness:SignalExternal:java').projectDir = file('Harness/SignalExternal/java')

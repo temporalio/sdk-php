@@ -1,8 +1,8 @@
 # Parity — cross-SDK behavior parity tests
 
 A new test tier alongside `Unit`, `Functional`, `Acceptance`, `Arch`. **Asserts
-that two Temporal SDKs (PHP, Java, Go, …) produce equivalent event histories
-for the same scenario.**
+that three Temporal SDKs (PHP, Java, Go) produce equivalent event histories
+for the same scenario.** TypeScript stays reserved.
 
 > **Status:** WIP. The whole `tests/Parity/` directory is **gitignored** while
 > the framework matures. Promote to tracked code (and register a `Parity`
@@ -14,7 +14,7 @@ for the same scenario.**
 
 A parity test needs to:
 
-1. Drive **two real SDKs** (Gradle/Java + RoadRunner/PHP) end-to-end against a
+1. Drive **three real SDKs** (Gradle/Java + RoadRunner/PHP + native Go) end-to-end against a
    shared Temporal dev server to capture event histories.
 2. Then compare those histories with full normalization of inherent and
    SDK-attributed variance (timestamps, opaque IDs, identity strings, SDK
@@ -46,16 +46,23 @@ tests/Parity/                                  ← ENTIRE DIR is gitignored (WIP
 ├── run-fixtures.sh                            ← Phase 1 driver (walks scenario manifests)
 ├── phpunit.xml                                ← standalone (NOT in root phpunit.xml.dist)
 ├── bootstrap.php                              ← PSR-4 autoload for Temporal\Tests\Parity\
+├── go.mod / go.sum                            ← single Go module rooted here
+├── go-runner/                                 ← shared Go harness (Run / RunCapturingFirstRun)
+├── java-runner/                               ← shared Java harness (Gradle subproject)
 ├── scripts/                                   ← SHARED scripts, no per-scenario duplicates
 │   ├── lib/
 │   │   ├── log.sh                             ← parity_log / parity_die / parity_debug
+│   │   ├── constants.sh                       ← shared namespace + per-language task queues
 │   │   └── manifest.sh                        ← parity_load_manifest / parity_discover_scenarios
-│   ├── setup-temporal.sh                      ← idempotent Temporal + namespace
+│   ├── setup-temporal-once.sh                 ← Phase 1 start: idempotent server start + namespace
+│   ├── teardown-temporal.sh                   ← Phase 1 stop: kill the server ONLY if we started it (PID-marker)
+│   ├── setup-temporal.sh                      ← DEPRECATED shim — delegates to setup-temporal-once.sh
 │   ├── build.sh                               ← Phase 0: build every SDK fixture-runner
 │   ├── new-scenario.sh                        ← scaffold a new scenario from Framework/Skel
 │   ├── sdk/
 │   │   ├── run-java.sh                        ← gradle run, capture WORKFLOW_ID, dump JSON
 │   │   ├── run-php.sh                         ← CLI launcher, capture WORKFLOW_ID, dump JSON
+│   │   ├── run-go.sh                          ← native Go binary, capture WORKFLOW_ID, dump JSON
 │   │   └── dump-history.sh                    ← single canonical `temporal workflow show`
 │   └── php/
 │       ├── .rr.yaml                           ← parity-only RoadRunner config (slim)
@@ -70,19 +77,22 @@ tests/Parity/                                  ← ENTIRE DIR is gitignored (WIP
 │   ├── EventHistoryNormalizer.php             ← orchestrator
 │   ├── NormalizerRegistry.php                 ← public default() factory
 │   ├── Field/                                 ← per-field normalizers (TimestampNormalizer, …)
-│   ├── Sdk/                                   ← per-SDK strategies (PhpSdkNormalizer, …)
+│   ├── Sdk/                                   ← per-SDK strategies (PhpSdkNormalizer, JavaSdkNormalizer, GoSdkNormalizer)
 │   └── Skel/                                  ← scenario templates used by new-scenario.sh
 │       ├── scenario.env.tmpl
 │       ├── ScenarioTest.php.tmpl
 │       ├── php/scenario.php.tmpl
-│       └── java/…/Main.java.tmpl
+│       ├── java/…/Main.java.tmpl
+│       └── go/main.go.tmpl
 └── Basic/
     └── HelloWorld/                            ← scenario folder — declarative only
-        ├── scenario.env                       ← manifest (namespace, task queue, SDKs)
+        ├── scenario.env                       ← manifest (SDKs, fixture paths, workflow type)
         ├── HelloWorldTest.php                 ← Phase 2 PHPUnit comparison test (pure verifier)
         ├── java/                              ← scenario-local Gradle project + sources
         ├── php/
         │   └── scenario.php                   ← Workflow + parity_php_{register,run}()
+        ├── go/
+        │   └── main.go                        ← native Go binary using go-runner
         └── fixtures/                          ← captured *.json (gitkeep only in repo)
 ```
 
@@ -104,9 +114,15 @@ make build              # or: ./scripts/build.sh
 `scripts/build.sh` discovers every `scenario.env` under `tests/Parity/`, loads
 it, and for each declared SDK runs the matching build step:
 
-- `java` → `./gradlew build` inside `<scenario>/java/`
+- `java` → one root-level `./gradlew installDist` covering every scenario subproject
 - `php`  → composer-managed (sanity-checks `vendor/bin/phpunit` exists)
-- `go` / `ts` → reserved (manifest validation rejects them today)
+- `go`   → `GOWORK=off go build -o build/go-bin/<slug> ./<rel>/go` per scenario
+  (the `GOWORK=off` is necessary because the parent `temporalio/go.work` only declares
+  `./sdk-go` for velox builds; this keeps the parity module self-contained)
+- `ts` / `typescript` → reserved (manifest validation rejects them today)
+
+**Phase 0 prerequisites for Go:** `go 1.25+`, `go.temporal.io/sdk v1.42.0`,
+`github.com/google/uuid v1.6.0`. `go mod download` runs implicitly on first build.
 
 ### Phase 1 — capture fixtures
 
@@ -115,13 +131,51 @@ cd tests/Parity
 make fixtures           # or: ./run-fixtures.sh
 ```
 
-`run-fixtures.sh` discovers every `scenario.env` under `tests/Parity/`,
-runs `scripts/setup-temporal.sh` once per scenario (idempotent — starts the
-local Temporal dev server if not already up and creates the namespace),
-then for each declared SDK invokes `scripts/sdk/run-<sdk>.sh <scenario-dir>`.
+#### Shared Temporal lifecycle
+
+`run-fixtures.sh` manages the dev server once for the whole batch (not
+per-scenario). Sequence:
+
+1. **Start (once)** — `scripts/setup-temporal-once.sh` runs at the top:
+   - If `${TEMPORAL_ADDRESS}` (`127.0.0.1:7233` by default) is **already
+     listening**, leave it alone — useful when you have a dev server running in
+     another terminal.
+   - Otherwise spawn `temporal server start-dev` in the background, wait up to
+     10s for the port to come up, and write the child PID to
+     `/tmp/temporal-parity/server.pid`. The PID-marker is the *only* signal
+     `teardown-temporal.sh` uses to decide whether to stop the server.
+   - In both cases, ensure the shared `parity` namespace exists (idempotent).
+2. **Stop (once)** — `scripts/teardown-temporal.sh` runs on EXIT / INT / TERM
+   via a `trap`. If `/tmp/temporal-parity/server.pid` does **not** exist (the
+   server was already up when we started), it is a no-op — your external dev
+   server survives. If the marker exists, SIGTERM then SIGKILL after 5s grace.
+
+Two convenience targets expose the lifecycle for direct use:
+
+```bash
+make temporal-start     # start + ensure namespace
+make temporal-stop      # stop iff we started it
+```
+
+#### Shared namespace and per-language task queues
+
+A single namespace `parity` and three per-SDK task queues
+(`parity-php-task-queue`, `parity-java-task-queue`, `parity-go-task-queue`) are
+used across all scenarios. The source of truth is
+`scripts/lib/constants.sh`; each value is overridable via env (`PARITY_NAMESPACE`,
+`PARITY_PHP_TASK_QUEUE`, …) — useful for CI partitioning. Per-scenario
+`NAMESPACE=` and `TASK_QUEUE=` lines used to live in `scenario.env`; they have
+been removed (and `manifest.sh` warns if a stray scenario keeps them).
+
+#### Per-scenario execution
+
+After Temporal is up, `run-fixtures.sh` discovers every `scenario.env` and for
+each declared SDK in `SDKS=` invokes `scripts/sdk/run-<sdk>.sh <scenario-dir>`.
 Each SDK runner:
 
-- executes the scenario end-to-end as a real worker on the shared task queue
+- picks the shared namespace + the matching per-language task queue from
+  `lib/constants.sh`
+- executes the scenario as a real worker on that queue
 - prints `WORKFLOW_ID=<id>` on stdout
 - delegates to `scripts/sdk/dump-history.sh` to capture
   `temporal workflow show --output json` into the manifest's `FIXTURE_*` path
@@ -141,12 +195,19 @@ make assert
 ```
 
 Runs `vendor/bin/phpunit -c tests/Parity/phpunit.xml --testdox`. Each
-comparison test calls `HistoryLoader::requireExists()` first (fails loudly
+comparison test runs **two pairwise assertions**:
+
+- `normalizedJavaAndPhpHistoriesMatch` — Java vs PHP (always on; required)
+- `normalizedGoMatchesPhp` — Go vs PHP (auto-skipped when the scenario's
+  `fixtureGo()` returns null, i.e. no Go side declared)
+
+Each assertion calls `HistoryLoader::requireExists()` first (fails loudly
 with a `make -C tests/Parity build && make -C tests/Parity fixtures` hint
 when the JSON is missing), then loads both sides via
 `HistoryLoader::loadJson`, normalizes through `NormalizerRegistry::default()`,
 and asserts equality. PHPUnit's array-diff output points at the exact field
-that still varies.
+that still varies. (Java==PHP and PHP==Go imply Java==Go transitively — no
+separate Java-vs-Go assertion is run.)
 
 ### All phases at once
 
@@ -191,9 +252,18 @@ HelloWorld scenario end-to-end.
 
 ## Example scenarios
 
-12 example scenarios ship with the framework under `Basic/`. Start with
-`Basic/HelloWorld` when adding a new one — it's the smallest end-to-end loop
-that captures a real Temporal event history.
+29 example scenarios ship with the framework, all wired for the three SDKs
+(PHP, Java, Go), in two areas:
+
+- `Basic/` — 22 scenarios, hand-authored to exercise specific Temporal building
+  blocks (activities, timers, signals, queries, child workflows, side-effect,
+  continue-as-new, get-version, etc.). Start with `Basic/HelloWorld` when adding
+  a new one — it's the smallest end-to-end loop that captures a real Temporal
+  event history.
+- `Harness/` — 7 scenarios ported from the upstream
+  [`temporalio/features`](https://github.com/temporalio/features) cross-SDK
+  feature set. Each one traces 1:1 to `features/features/<area>/<name>/feature.{php,java,go}`.
+  See "Cross-SDK feature ports (Harness/)" below.
 
 | Path                                | What it exercises                                                                                            | Notable history events                                            |
 |-------------------------------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
@@ -210,6 +280,32 @@ that captures a real Temporal event history.
 | `Basic/ChildWorkflow/`              | parent workflow spawns a child, awaits its result                                                            | `START_CHILD_WORKFLOW_EXECUTION_INITIATED/STARTED/COMPLETED`      |
 | `Basic/SideEffect/`                 | `Workflow.sideEffect` returning a fixed integer                                                              | `MARKER_RECORDED` (side-effect marker)                            |
 
+### Cross-SDK feature ports (`Harness/`)
+
+Each `Harness/` scenario traces 1:1 to an upstream
+`temporalio/features/features/<upstream-path>/feature.{php,java,go}` triplet.
+Workflow type names follow `Parity_Harness_<ScenarioShort>` and the workflow
+shape mirrors what the upstream features assert, adapted to the parity tier's
+"single workflow, single captured history" shape.
+
+| Path                                            | Upstream feature                                       | What it exercises                                                                                                |
+|-------------------------------------------------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `Harness/ActivityBasicNoWorkflowTimeout/`       | `activity/basic_no_workflow_timeout`                   | Two sequential activity calls with different timeout shapes (`scheduleToCloseTimeout`, `startToCloseTimeout`)    |
+| `Harness/ActivityCancelTryCancel/`              | `activity/cancel_try_cancel`                           | Cancellation scope around an activity with `TRY_CANCEL` semantics; workflow catches the cancellation             |
+| `Harness/ChildWorkflowSignal/`                  | `child_workflow/signal`                                | Parent spawns a child workflow, signals it, returns child result                                                  |
+| `Harness/QueryUnexpectedArguments/`             | `query/unexpected_arguments`                           | Typed query handler; driver issues a valid query, verifies result, finishes workflow                              |
+| `Harness/QueryUnexpectedTypeName/`              | `query/unexpected_query_type_name`                     | Workflow has no query handler with the queried name; driver asserts a `WorkflowQueryException`                    |
+| `Harness/QueryUnexpectedReturnType/`            | `query/unexpected_return_type`                         | Query returns `string`, driver decodes as `int`, asserts `DataConverterException`                                |
+| `Harness/SignalExternal/`                       | `signal/external`                                      | Workflow awaits an external signal carrying a string payload; driver sends it after start                         |
+
+Deferred (cross-SDK features that don't fit the parity tier today; tracked as follow-ups):
+
+- `data_converter/*` (6 features) — needs an external codec-server fixture + payload codec round-trip wiring
+- `schedule/*` (4 features) — Schedules don't produce a single workflow history; capture path would need `temporal schedule describe`
+- `update/*` (9 features) — needs Update API on the dev server + an Update-aware driver shape on each runner
+- `eager_activity/non_remote_activities_worker` — needs PHP/RR to expose `local_activity_worker_only` worker option
+- `query/timeout_due_to_no_active_workers` — needs a controlled worker-stop hook on every SDK runner (PHP runner via RR is the gap)
+
 ---
 
 ## Adding a new parity scenario
@@ -222,11 +318,15 @@ that captures a real Temporal event history.
 ./tests/Parity/scripts/new-scenario.sh Basic FailureRetry
 ```
 
-The scaffolder fills in placeholders (`__SCENARIO_NAME__`, `__NAMESPACE__`,
-`__TASK_QUEUE__`, `__PHP_NAMESPACE__`, `__WORKFLOW_TYPE__`, etc.) from
-`Framework/Skel/basic/` and copies the Gradle wrapper from
-`Basic/HelloWorld/java/`. The generated workflow returns `"todo"` — flesh out
-the actual logic on both sides.
+The scaffolder fills in placeholders (`__SCENARIO_NAME__`, `__SCENARIO_SHORT__`,
+`__SCENARIO_SLUG__`, `__AREA__`, `__PHP_NAMESPACE__`, `__PHP_NAMESPACE_PARENT__`,
+`__WORKFLOW_TYPE__`) from `Framework/Skel/basic/` and registers the new scenario
+in the root `settings.gradle` (Java is a multi-project Gradle build). The Go side
+needs no registration — `tests/Parity/go.mod` is a single module, so
+`go build ./...` picks up the new `<scenario>/go/main.go` automatically.
+Namespace + task queues are *not* baked into the manifest anymore — they come
+from `scripts/lib/constants.sh` at runtime. The generated workflow returns
+`"todo"` on all three sides — flesh out the actual logic on each.
 
 ### Option B — copy an example
 
@@ -236,9 +336,11 @@ Copy `Basic/HelloWorld/` and edit:
 cp -R tests/Parity/Basic/HelloWorld tests/Parity/Basic/<ScenarioShort>
 ```
 
-Then in the copy edit `scenario.env`, `php/scenario.php`, `java/settings.gradle`,
-`java/src/main/java/com/temporal/parity/Main.java`, rename `<Old>Test.php` →
-`<ScenarioShort>Test.php`. Run `composer test:parity` to capture + assert.
+Then in the copy edit `scenario.env`, `php/scenario.php`,
+`java/src/main/java/com/temporal/parity/Main.java`, `go/main.go`, rename
+`<Old>Test.php` → `<ScenarioShort>Test.php`. Also append a new
+`include ':Basic:<ScenarioShort>:java'` line to the root `settings.gradle`.
+Run `composer test:parity` to capture + assert.
 
 ---
 
@@ -258,11 +360,11 @@ A captured event-history JSON has two kinds of variance to neutralize:
 
 ### (b) SDK-attributed values — normalize per `Source`
 
-| Field                       | PHP                       | Java               | Normalization                              |
-|-----------------------------|---------------------------|--------------------|--------------------------------------------|
-| `taskQueue.name`            | derived from PHP class FQN | raw user string    | rewrite `name` to `<TASK_QUEUE>`           |
-| `sdkMetadata`               | `temporal-go` (RR runs Go) | `temporal-java`   | collapse to `{sdkName, sdkVersion}` placeholders, drop `langUsedFlags` |
-| `failure.message` / `failure.stackTrace` | `#0 …` PHP frames embedded | usually empty | replace with `<STACKTRACE_PRESENT>` or `<STACKTRACE_ABSENT>` |
+| Field                       | PHP                       | Java               | Go                | Normalization                              |
+|-----------------------------|---------------------------|--------------------|-------------------|--------------------------------------------|
+| `taskQueue.name`            | `parity-php-task-queue`   | `parity-java-task-queue` | `parity-go-task-queue` | rewrite `name` to `<TASK_QUEUE>` (sourced from `scripts/lib/constants.sh`) |
+| `sdkMetadata`               | `temporal-go` (RR runs Go) | `temporal-java`   | `temporal-go`     | collapse to `{sdkName, sdkVersion}` placeholders, drop `langUsedFlags` |
+| `failure.message` / `failure.stackTrace` | `#0 …` PHP frames embedded | usually empty | Go-style frames embedded | replace with `<STACKTRACE_PRESENT>` or `<STACKTRACE_ABSENT>` |
 
 ### Wiring
 
