@@ -81,6 +81,10 @@
         <testsuite name="Functional">
             <directory suffix="TestCase.php">tests/Functional</directory>
         </testsuite>
+        <testsuite name="Parity">
+            <directory suffix="Test.php">tests/Parity</directory>
+            <exclude>tests/Parity/Framework</exclude>
+        </testsuite>
     </testsuites>
     <groups>
         <exclude>
