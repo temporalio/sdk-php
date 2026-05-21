@@ -101,7 +101,7 @@ final class RuntimeBuilder
             $feature = new Feature(
                 testClass: $class,
                 testNamespace: $namespace,
-                taskQueue: $namespace,
+                taskQueue: TaskQueueResolver::resolve($class, $namespace),
             );
 
             yield $feature => \array_filter(
