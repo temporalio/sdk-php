@@ -1,3 +1,5 @@
+![Temporal PHP SDK](https://raw.githubusercontent.com/temporalio/assets/main/files/w/php.png)
+
 # Temporal PHP SDK
 
 Temporal is a distributed, scalable, durable, and highly available orchestration
