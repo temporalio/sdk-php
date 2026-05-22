@@ -85,6 +85,10 @@ $template = <<<'XML'
          stopOnFailure="false"
          stopOnError="false"
          stderr="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         stopOnDeprecation="true"
+         displayDetailsOnPhpunitDeprecations="true"
          displayDetailsOnIncompleteTests="true"
          displayDetailsOnSkippedTests="true"
          displayDetailsOnTestsThatTriggerDeprecations="true"
@@ -114,6 +118,9 @@ $template = <<<'XML'
             <directory suffix="TestCase.php">tests/Functional</directory>
         </testsuite>
     </testsuites>
+    <extensions>
+        <bootstrap class="Temporal\Tests\Acceptance\AcceptanceBootExtension"/>
+    </extensions>
     <groups>
         <exclude>
             <group>skip-on-test-server</group>

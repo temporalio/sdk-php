@@ -35,28 +35,14 @@ final class SystemInfo
         OperatingSystem::OS_WINDOWS => 'rr.exe',
     ];
 
-    public string $arch;
-    public string $platform;
-    public string $os;
-    public string $temporalServerExecutable;
-    public string $temporalCliExecutable;
-    public string $rrExecutable;
-
     private function __construct(
-        string $arch,
-        string $platform,
-        string $os,
-        string $temporalServerExecutable,
-        string $rrExecutable,
-        string $temporalCliExecutable = 'temporal',
-    ) {
-        $this->arch = $arch;
-        $this->platform = $platform;
-        $this->os = $os;
-        $this->temporalServerExecutable = $temporalServerExecutable;
-        $this->temporalCliExecutable = $temporalCliExecutable;
-        $this->rrExecutable = $rrExecutable;
-    }
+        public string $arch,
+        public string $platform,
+        public string $os,
+        public string $temporalServerExecutable,
+        public string $rrExecutable,
+        public string $temporalCliExecutable,
+    ) {}
 
     public static function detect(): self
     {

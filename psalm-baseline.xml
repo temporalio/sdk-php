@@ -1400,12 +1400,6 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
   </file>
-  <file src="testing/src/Downloader.php">
-    <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$asset['browser_download_url']]]></code>
-      <code><![CDATA[$response->toArray()['assets']]]></code>
-    </PossiblyUndefinedStringArrayOffset>
-  </file>
   <file src="testing/src/Environment.php">
     <PossiblyNullReference>
       <code><![CDATA[stop]]></code>
