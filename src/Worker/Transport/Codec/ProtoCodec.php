@@ -48,6 +48,7 @@ final class ProtoCodec implements CodecInterface
 
             $frame->setMessages($messages);
 
+            /** @var non-empty-string */
             return $frame->serializeToString();
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

@@ -114,8 +114,9 @@ final class StartWorkflow extends Route
 
         try {
             $sa = (new SearchAttributes());
+            $json = \json_encode($param);
             $sa->mergeFromJsonString(
-                \json_encode($param),
+                $json === false ? '{}' : $json,
                 true,
             );
 
@@ -140,8 +141,9 @@ final class StartWorkflow extends Route
 
         try {
             $memo = (new Memo());
+            $json = \json_encode($param);
             $memo->mergeFromJsonString(
-                \json_encode($param),
+                $json === false ? '{}' : $json,
                 true,
             );
 

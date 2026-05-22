@@ -17,7 +17,7 @@ class AbandonedChildWithTimerWorkflow
     #[WorkflowMethod('abandoned_workflow')]
     public function wait(int $timeoutInSeconds)
     {
-        Workflow::timer($timeoutInSeconds);
+        yield Workflow::timer($timeoutInSeconds);
         return 'Hello from child';
     }
 }

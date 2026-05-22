@@ -41,8 +41,8 @@ interface WorkflowRunInterface
      *
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @param int|null $timeout Timeout in seconds. Infinite by the default.
-     * @throws WorkflowFailedException
      * @return ReturnType
+     * @throws WorkflowFailedException
      *
      * @see DateInterval
      */
