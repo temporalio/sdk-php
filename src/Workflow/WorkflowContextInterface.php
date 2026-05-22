@@ -17,6 +17,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+use Temporal\Common\SideEffectOptions;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
@@ -156,7 +157,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param callable(): TReturn $context
      * @return PromiseInterface<TReturn>
      */
-    public function sideEffect(callable $context): PromiseInterface;
+    public function sideEffect(callable $context/*, ?SideEffectOptions $options = null */): PromiseInterface;
 
     /**
      * @internal This is an internal method
