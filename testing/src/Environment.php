@@ -266,17 +266,15 @@ final class Environment
         $process->start();
 
         $deadline = \microtime(true) + (float) $commandTimeout;
-        $processStarted = false;
 
         while ($process->isRunning() && \microtime(true) < $deadline) {
-            $processStarted = $readiness();
-            if ($processStarted) {
+            if ($readiness()) {
                 break;
             }
             \usleep(10_000);
         }
 
-        if (!$processStarted || !$process->isRunning()) {
+        if (!$process->isRunning()) {
             ($onFailure ?? function (Process $process) use ($name): void {
                 $this->io->error(\sprintf(
                     'Failed to start until %s is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',
