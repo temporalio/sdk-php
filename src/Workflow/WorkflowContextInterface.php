@@ -21,6 +21,10 @@ use Temporal\Common\SideEffectOptions;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Workflow\ActivityProxy;
+use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\ContinueAsNewProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowProxy;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Workflow;
@@ -191,9 +195,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newContinueAsNewStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
-     * @return T
+     * @return ContinueAsNewProxy<T>
      */
     public function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object;
 
@@ -216,10 +220,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newChildWorkflowStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ChildWorkflowProxy<T>
      */
     public function newChildWorkflowStub(
         string $class,
@@ -242,9 +246,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newExternalWorkflowStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
-     * @return T
+     * @return ExternalWorkflowProxy<T>
      */
     public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object;
 
@@ -279,10 +283,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newActivityStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ActivityProxy<T>
      */
     public function newActivityStub(
         string $class,
