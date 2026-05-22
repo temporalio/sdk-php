@@ -68,9 +68,9 @@ final class UpdateHandle
      *
      * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
      *
+     * @return ReturnType
      * @throws WorkflowUpdateException
      * @throws WorkflowUpdateRPCTimeoutOrCanceledException
-     * @return ReturnType
      */
     public function getResult(int|float|null $timeout = null): mixed
     {
