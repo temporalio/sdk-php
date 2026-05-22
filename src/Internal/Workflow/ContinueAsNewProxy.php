@@ -17,7 +17,12 @@ use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 
-class ContinueAsNewProxy extends Proxy
+/**
+ * @template-covariant T of object
+ * @mixin T
+ * @internal
+ */
+final class ContinueAsNewProxy extends Proxy
 {
     /**
      * @var string
