@@ -24,6 +24,10 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Workflow\ActivityProxy;
+use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\ContinueAsNewProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -677,10 +681,10 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
-     * @return T
+     * @return ContinueAsNewProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
@@ -780,11 +784,11 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ChildWorkflowProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newChildWorkflowStub(
@@ -860,10 +864,10 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
-     * @return T
+     * @return ExternalWorkflowProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
@@ -968,11 +972,11 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ActivityProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newActivityStub(
