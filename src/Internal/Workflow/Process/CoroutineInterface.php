@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 /**
- * Common interface for Generator-based and Fiber-based coroutine execution.
+ * Common interface for coroutine execution.
  *
- * Both {@see DeferredGenerator} and {@see DeferredFiber} implement this interface,
- * allowing {@see Scope} to drive coroutine execution uniformly.
+ * Currently implemented by {@see DeferredGenerator}, which wraps either a plain
+ * Generator handler or a Fiber-bridge Generator produced by {@see Scope::createFiberHandler()}.
  *
  * @internal
  * @psalm-internal Temporal\Internal

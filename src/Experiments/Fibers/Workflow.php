@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Experiments\Fibers;
 
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+use Temporal\Common\SideEffectOptions;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -138,6 +140,9 @@ final class Workflow
     // Registration (direct pass-through)
     // =========================================================================
 
+    /**
+     * @param non-empty-string $queryType
+     */
     public static function registerQuery(
         string $queryType,
         callable $handler,
@@ -146,6 +151,9 @@ final class Workflow
         return \Temporal\Workflow::registerQuery($queryType, $handler, $description);
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function registerSignal(
         string $name,
         callable $handler,
@@ -154,6 +162,9 @@ final class Workflow
         return \Temporal\Workflow::registerSignal($name, $handler, $description);
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function registerUpdate(
         string $name,
         callable $handler,
@@ -184,7 +195,7 @@ final class Workflow
 
     /**
      * @template TReturn
-     * @param callable(): TReturn $task
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
      * @return CancellationScopeInterface<TReturn>
      */
     public static function async(callable $task): CancellationScopeInterface
@@ -194,7 +205,7 @@ final class Workflow
 
     /**
      * @template TReturn
-     * @param callable(): TReturn $task
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
      * @return CancellationScopeInterface<TReturn>
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
@@ -214,11 +225,14 @@ final class Workflow
     /**
      * @param \DateInterval|string|int $interval
      */
-    public static function awaitWithTimeout($interval, callable|BaseMutex|PromiseInterface ...$conditions): mixed
+    public static function awaitWithTimeout($interval, callable|BaseMutex|Mutex|PromiseInterface ...$conditions): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::awaitWithTimeout($interval, ...$conditions));
     }
 
+    /**
+     * @return int
+     */
     public static function getVersion(string $changeId, int $minSupported, int $maxSupported): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::getVersion($changeId, $minSupported, $maxSupported));
@@ -227,10 +241,11 @@ final class Workflow
     /**
      * @template TReturn
      * @param callable(): TReturn $value
+     * @return TReturn
      */
-    public static function sideEffect(callable $value): mixed
+    public static function sideEffect(callable $value, ?SideEffectOptions $options = null): mixed
     {
-        return FiberHelper::await(\Temporal\Workflow::sideEffect($value));
+        return FiberHelper::await(\Temporal\Workflow::sideEffect($value, $options));
     }
 
     /**
@@ -240,11 +255,18 @@ final class Workflow
     {
         return FiberHelper::await(\Temporal\Workflow::timer($interval, $options));
     }
+
     /**
+     * Returns the raw, unawaited timer promise.
+     *
+     * Use this when you need a `PromiseInterface` handle (e.g. to compose
+     * with `awaitWithTimeout`, `Promise::any`, etc.). For the auto-awaiting
+     * variant, use {@see timer()}.
+     *
      * @param \DateInterval|string|int $interval
-     * @return PromiseInterface<void>
+     * @return PromiseInterface<null>
      */
-    public static function createTimer($interval, ?TimerOptions $options = null): PromiseInterface
+    public static function timerPromise($interval, ?TimerOptions $options = null): PromiseInterface
     {
         return \Temporal\Workflow::timer($interval, $options);
     }
@@ -257,34 +279,61 @@ final class Workflow
         return FiberHelper::await(\Temporal\Workflow::continueAsNew($type, $args, $options));
     }
 
+    /**
+     * @template T of object
+     * @param non-empty-string $type
+     * @param list<mixed> $args
+     * @param Type|string|\ReflectionType|\ReflectionClass<T>|null $returnType
+     * @return T
+     * @psalm-suppress MixedInferredReturnType,MixedReturnStatement
+     */
     public static function executeChildWorkflow(
         string $type,
         array $args = [],
         ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
     ): mixed {
+        /** @psalm-suppress ArgumentTypeCoercion,ImplicitToStringCast */
         return FiberHelper::await(\Temporal\Workflow::executeChildWorkflow($type, $args, $options, $returnType));
     }
 
+    /**
+     * @template T of object
+     * @param non-empty-string $type
+     * @param list<mixed> $args
+     * @param Type|string|\ReflectionType|\ReflectionClass<T>|null $returnType
+     * @return T
+     * @psalm-suppress MixedInferredReturnType,MixedReturnStatement
+     */
     public static function executeActivity(
         string $type,
         array $args = [],
         ?ActivityOptionsInterface $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): mixed {
+        /** @psalm-suppress ArgumentTypeCoercion,PossiblyInvalidArgument */
         return FiberHelper::await(\Temporal\Workflow::executeActivity($type, $args, $options, $returnType));
     }
 
+    /**
+     * @return UuidInterface
+     */
     public static function uuid(): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::uuid());
     }
 
+    /**
+     * @return UuidInterface
+     */
     public static function uuid4(): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::uuid4());
     }
 
+    /**
+     * @return UuidInterface
+     */
     public static function uuid7(?\DateTimeInterface $dateTime = null): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::uuid7($dateTime));
@@ -298,6 +347,7 @@ final class Workflow
      * @template T of object
      * @param class-string<T> $class
      * @return T
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      */
     public static function newActivityStub(
         string $class,
@@ -308,7 +358,7 @@ final class Workflow
 
     public static function newUntypedActivityStub(
         ?ActivityOptionsInterface $options = null,
-    ): FiberActivityStub {
+    ): FiberActivityStubInterface {
         return new FiberActivityStub(
             \Temporal\Workflow::newUntypedActivityStub($options),
         );
@@ -318,6 +368,7 @@ final class Workflow
      * @template T of object
      * @param class-string<T> $class
      * @return T
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      */
     public static function newChildWorkflowStub(
         string $class,
@@ -329,7 +380,7 @@ final class Workflow
     public static function newUntypedChildWorkflowStub(
         string $name,
         ?ChildWorkflowOptions $options = null,
-    ): FiberChildWorkflowStub {
+    ): FiberChildWorkflowStubInterface {
         return new FiberChildWorkflowStub(
             \Temporal\Workflow::newUntypedChildWorkflowStub($name, $options),
         );
@@ -339,6 +390,7 @@ final class Workflow
      * @template T of object
      * @param class-string<T> $class
      * @return T
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      */
     public static function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
     {
@@ -349,13 +401,14 @@ final class Workflow
      * @template T of object
      * @param class-string<T> $class
      * @return T
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      */
     public static function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
         return new FiberProxy(\Temporal\Workflow::newExternalWorkflowStub($class, $execution));
     }
 
-    public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): FiberExternalWorkflowStub
+    public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): FiberExternalWorkflowStubInterface
     {
         return new FiberExternalWorkflowStub(
             \Temporal\Workflow::newUntypedExternalWorkflowStub($execution),
@@ -370,9 +423,9 @@ final class Workflow
      * Run a function while holding a mutex lock.
      *
      * @template T
-     * @param Mutex|BaseMutex $mutex
-     * @param callable(): T $callable
+     * @param callable(): (T|\Generator<mixed, mixed, mixed, T>) $callable
      * @return CancellationScopeInterface<T>
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement,MixedReturnStatement
      */
     public static function runLocked(Mutex|BaseMutex $mutex, callable $callable): CancellationScopeInterface
     {
@@ -384,7 +437,11 @@ final class Workflow
             }
 
             try {
-                return $callable();
+                $result = $callable();
+                if ($result instanceof PromiseInterface) {
+                    $result = FiberHelper::await($result);
+                }
+                return $result;
             } finally {
                 $mutex->unlock();
             }
@@ -401,12 +458,21 @@ final class Workflow
      *  );
      * ```
      *
-     * @return array<mixed>
+     * Cancellation: this helper does NOT expose the underlying scopes, so a
+     * surrounding scope cancellation can stop further iteration of the gather
+     * but cannot individually cancel in-flight inner scopes. If you need
+     * per-task cancellation, hold the `async()` scopes yourself and cancel
+     * them directly.
+     *
+     * @param callable(): mixed ...$tasks
+     * @return array<int, mixed>
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      */
-    public static function gather(callable ...$tasks): mixed
+    public static function gather(callable ...$tasks): array
     {
         $scopes = \array_map(static fn(callable $task) => self::async($task), $tasks);
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         return Promise::all($scopes);
     }
 }

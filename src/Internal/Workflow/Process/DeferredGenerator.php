@@ -174,6 +174,7 @@ final class DeferredGenerator implements \Iterator, CoroutineInterface
      */
     public function catch(callable $handler): static
     {
+        /** @psalm-suppress PropertyTypeCoercion */
         $this->catchers[] = $handler;
         return $this;
     }
