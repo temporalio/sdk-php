@@ -207,7 +207,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     public function cancel(?\Throwable $reason = null): void
     {
         if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
-            // detaches scopes can be offload via memory flush
             return;
         }
 
@@ -229,8 +228,10 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
+        $savedContext = \Temporal\Internal\Support\Facade::getCurrentContext();
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler(...), EncodedValues::empty(), false);
+        \Temporal\Internal\Support\Facade::setCurrentContext($savedContext);
 
         return $scope;
     }
@@ -298,6 +299,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        $this->scopeContext->setFiberMode(false);
         $this->context?->destroy();
         $this->scopeContext?->destroy();
         unset(
@@ -440,7 +442,6 @@ class Scope implements CancellationScopeInterface, Destroyable
                 $this->nextPromise($current->promise());
                 break;
 
-                // todo ->context or ->scopeContext?
             case $current instanceof RequestInterface:
                 $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext));
                 break;
@@ -497,7 +498,6 @@ class Scope implements CancellationScopeInterface, Destroyable
                 return $fiber->getReturn();
             }
 
-            // Fiber suspended — bridge it through a Generator
             return (static function (\Fiber $fiber, mixed $suspendedValue, ScopeContext $scopeContext): \Generator {
                 $value = $suspendedValue;
                 try {
@@ -507,6 +507,9 @@ class Scope implements CancellationScopeInterface, Destroyable
                             $value = $fiber->resume($sent);
                         } catch (\Throwable $e) {
                             $value = $fiber->throw($e);
+                            if ($fiber->isTerminated()) {
+                                break;
+                            }
                         }
                     }
                     return $fiber->getReturn();
@@ -582,7 +585,6 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function onException(\Throwable $e): void
     {
-        trap($e);
         $this->deferred->reject($e);
 
         $this->makeCurrent();
@@ -608,6 +610,8 @@ class Scope implements CancellationScopeInterface, Destroyable
     private function defer(\Closure $tick): void
     {
         $this->services->loop->once($this->layer, $tick);
-        $this->services->queue->count() === 0 and $this->services->loop->tick();
+        if ($this->services->queue->count() === 0) {
+            $this->services->loop->tick();
+        }
     }
 }

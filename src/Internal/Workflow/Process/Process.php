@@ -59,6 +59,7 @@ class Process extends Scope implements ProcessInterface
                             $context = $this->scopeContext
                                 ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
                             $context->setReadonly(true);
+                            $context->setFiberMode(false);
                             Workflow::setCurrentContext($context);
                             return $handler($input->arguments);
                         },

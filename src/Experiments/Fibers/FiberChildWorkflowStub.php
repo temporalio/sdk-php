@@ -4,29 +4,22 @@ declare(strict_types=1);
 
 namespace Temporal\Experiments\Fibers;
 
+use React\Promise\PromiseInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * Fiber-friendly decorator for {@see ChildWorkflowStubInterface}.
- *
- * Wraps all PromiseInterface-returning methods with {@see FiberHelper::await()},
- * so the caller gets resolved values instead of promises.
- *
  * @experimental
  * @internal
  */
-final class FiberChildWorkflowStub
+final class FiberChildWorkflowStub implements FiberChildWorkflowStubInterface
 {
     public function __construct(
         private readonly ChildWorkflowStubInterface $inner,
     ) {}
 
-    /**
-     * @return WorkflowExecution
-     */
-    public function getExecution(): mixed
+    public function getExecution(): WorkflowExecution
     {
         return FiberHelper::await($this->inner->getExecution());
     }
@@ -41,35 +34,45 @@ final class FiberChildWorkflowStub
         return $this->inner->getOptions();
     }
 
-    /**
-     * Start the child workflow and return the {@see WorkflowExecution}.
-     */
-    public function start(mixed ...$args): mixed
+    public function start(mixed ...$args): WorkflowExecution
     {
         return FiberHelper::await($this->inner->start(...$args));
     }
 
-    /**
-     * Get the result of the child workflow.
-     */
     public function getResult(mixed $returnType = null): mixed
     {
         return FiberHelper::await($this->inner->getResult($returnType));
     }
 
-    /**
-     * Execute (start + wait for result) the child workflow.
-     */
     public function execute(array $args = [], mixed $returnType = null): mixed
     {
         return FiberHelper::await($this->inner->execute($args, $returnType));
     }
 
-    /**
-     * Signal the child workflow.
-     */
-    public function signal(string $name, array $args = []): mixed
+    public function signal(string $name, array $args = []): void
     {
-        return FiberHelper::await($this->inner->signal($name, $args));
+        /** @psalm-suppress ArgumentTypeCoercion */
+        FiberHelper::await($this->inner->signal($name, $args));
+    }
+
+    public function startAsync(mixed ...$args): PromiseInterface
+    {
+        return $this->inner->start(...$args);
+    }
+
+    public function getResultAsync(mixed $returnType = null): PromiseInterface
+    {
+        return $this->inner->getResult($returnType);
+    }
+
+    public function executeAsync(array $args = [], mixed $returnType = null): PromiseInterface
+    {
+        return $this->inner->execute($args, $returnType);
+    }
+
+    public function signalAsync(string $name, array $args = []): PromiseInterface
+    {
+        /** @psalm-suppress ArgumentTypeCoercion */
+        return $this->inner->signal($name, $args);
     }
 }

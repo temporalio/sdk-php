@@ -36,7 +36,7 @@ class RawValueTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Extra_DataConverter_Fibers_RawValue')]
-    public function run()
+    public function run(): RawValue
     {
         $rawValue = new RawValue(new Payload(['data' => 'hello world']));
 
@@ -46,11 +46,11 @@ class FeatureWorkflow
                 ->withScheduleToCloseTimeout('1 minute'),
         );
 
-        return yield $activity->bypass($rawValue);
+        return $activity->bypass($rawValue);
     }
 }
 
-#[ActivityInterface(prefix: 'RawValueActivity.')]
+#[ActivityInterface(prefix: 'Fibers_RawValueActivity.')]
 class RawValueActivity
 {
     #[ActivityMethod]

@@ -72,7 +72,7 @@ class TestWorkflow
         );
 
         /** @see TestActivity::sleep() */
-        $run = $stub->createExecution('Extra_Activity_Fibers_ActivityPaused.sleep', args: [100]);
+        $run = $stub->executeAsync('Extra_Activity_Fibers_ActivityPaused.sleep', args: [100]);
 
         $timerFired = ! Workflow::awaitWithTimeout(
             '20 seconds',

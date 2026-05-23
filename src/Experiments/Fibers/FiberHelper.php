@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Experiments\Fibers;
 
 use React\Promise\PromiseInterface;
+use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\ScopeContext;
 
@@ -14,27 +15,36 @@ use Temporal\Internal\Workflow\ScopeContext;
  * In Fiber mode, suspends the current Fiber with a PromiseInterface.
  * The Scope will resume the Fiber when the promise resolves.
  *
- * In Generator mode, returns the PromiseInterface as-is for yielding.
- *
  * @experimental
  * @internal
  */
 final class FiberHelper
 {
     /**
-     * If running inside a workflow Fiber, suspends and returns the resolved value.
-     * Otherwise, returns the PromiseInterface for the caller to yield.
+     * Suspends the current Fiber with the given promise and returns the
+     * resolved value when the Scope resumes it.
+     *
+     * @throws OutOfContextException when called outside a Fiber-mode workflow scope.
      */
     public static function await(PromiseInterface $promise): mixed
     {
-        // Use Facade::getCurrentContext() which returns null outside workflow
-        // (unlike Workflow::getCurrentContext() which throws)
-        $context = Facade::getCurrentContext();
-
-        if ($context instanceof ScopeContext && $context->isFiberMode()) {
-            return \Fiber::suspend($promise);
+        if (!self::isInFiberMode()) {
+            throw new OutOfContextException(
+                'FiberHelper::await() can be used only inside a Fiber-mode workflow scope.',
+            );
         }
 
-        return $promise;
+        return \Fiber::suspend($promise);
+    }
+
+    /**
+     * @internal Sibling Fiber primitives may consume this to gate their own
+     *           passthrough behavior. Not part of the public API.
+     */
+    public static function isInFiberMode(): bool
+    {
+        $context = Facade::getCurrentContext();
+
+        return $context instanceof ScopeContext && $context->isFiberMode();
     }
 }

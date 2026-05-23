@@ -24,7 +24,7 @@ class DynamicUpdateTest extends TestCase
     #[Test]
     public function addUpdateMethodWithoutValidation(
         #[Client(timeout: 15.0)]
-        #[Stub('Extra_Update_DynamicUpdate')]
+        #[Stub('Extra_Update_Fibers_DynamicUpdate')]
         WorkflowStubInterface $stub,
     ): void {
         $idResult = $stub->update(TestWorkflow::UPDATE_METHOD)->getValue(0);
@@ -40,7 +40,7 @@ class DynamicUpdateTest extends TestCase
 
     #[Test]
     public function addUpdateMethodWithValidation(
-        #[Stub('Extra_Update_DynamicUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_Fibers_DynamicUpdate')] WorkflowStubInterface $stub,
     ): void {
         // Valid
         $result = $stub->update(TestWorkflow::UPDATE_METHOD_WV, 42)->getValue(0);
@@ -76,7 +76,7 @@ class TestWorkflow
         });
     }
 
-    #[WorkflowMethod(name: "Extra_Update_DynamicUpdate")]
+    #[WorkflowMethod(name: "Extra_Update_Fibers_DynamicUpdate")]
     public function handle()
     {
         // Update method with validation

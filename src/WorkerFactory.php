@@ -266,7 +266,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 try {
                     $host->send($this->dispatch($msg->messages, $msg->context));
                 } catch (\Throwable $e) {
-                    trap($e);
                     $host->error($e);
                 }
             }

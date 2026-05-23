@@ -18,7 +18,7 @@ class LoggerTest extends TestCase
 {
     #[Test]
     public function loggerBasicLogging(
-        #[Stub('Logger_Test_Workflow')] WorkflowStubInterface $stub,
+        #[Stub('Logger_Test_Fibers_Workflow')] WorkflowStubInterface $stub,
         ClientLogger $logger,
     ): void {
         // Send signal to complete the workflow
@@ -42,7 +42,7 @@ class LoggerTest extends TestCase
 
     #[Test]
     public function loggerWithContext(
-        #[Stub('Logger_Test_Workflow')] WorkflowStubInterface $stub,
+        #[Stub('Logger_Test_Fibers_Workflow')] WorkflowStubInterface $stub,
         ClientLogger $logger,
     ): void {
         // Execute query to log with context
@@ -74,7 +74,7 @@ class LoggerTest extends TestCase
 
     #[Test]
     public function loggerMultipleLevels(
-        #[Stub('Logger_Test_Workflow')] WorkflowStubInterface $stub,
+        #[Stub('Logger_Test_Fibers_Workflow')] WorkflowStubInterface $stub,
         ClientLogger $logger,
         Feature $feature,
     ): void {
@@ -118,7 +118,7 @@ class LoggerTest extends TestCase
 
     #[Test]
     public function loggerDuringSignalProcessing(
-        #[Stub('Logger_Test_Workflow')] WorkflowStubInterface $stub,
+        #[Stub('Logger_Test_Fibers_Workflow')] WorkflowStubInterface $stub,
         ClientLogger $logger,
     ): void {
         // Send signal to trigger logging
@@ -145,7 +145,7 @@ class LoggerTest extends TestCase
 
     #[Test]
     public function loggingInAllHandlers(
-        #[Stub('Logger_Test_Workflow')] WorkflowStubInterface $stub,
+        #[Stub('Logger_Test_Fibers_Workflow')] WorkflowStubInterface $stub,
         ClientLogger $logger,
     ): void {
         // Send signal
@@ -204,7 +204,7 @@ class TestWorkflow
 {
     private bool $exit = false;
 
-    #[WorkflowMethod(name: "Logger_Test_Workflow")]
+    #[WorkflowMethod(name: "Logger_Test_Fibers_Workflow")]
     public function handle()
     {
         $logger = Workflow::getLogger();

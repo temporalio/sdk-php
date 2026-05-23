@@ -28,7 +28,13 @@ final class Mutex
      */
     public function lock(): mixed
     {
-        return FiberHelper::await($this->inner->lock());
+        $promise = $this->inner->lock();
+
+        if (FiberHelper::isInFiberMode()) {
+            return FiberHelper::await($promise);
+        }
+
+        return $promise;
     }
 
     /**

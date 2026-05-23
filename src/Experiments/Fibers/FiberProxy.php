@@ -7,17 +7,17 @@ namespace Temporal\Experiments\Fibers;
 use React\Promise\PromiseInterface;
 
 /**
- * Universal decorator for workflow proxy objects.
- *
- * Wraps any proxy (ActivityProxy, ChildWorkflowProxy, ContinueAsNewProxy,
- * ExternalWorkflowProxy) and auto-suspends the Fiber when the proxied
- * method returns a PromiseInterface.
+ * @template T of object
+ * @mixin T
  *
  * @experimental
  * @internal
  */
 final class FiberProxy
 {
+    /**
+     * @param T $inner
+     */
     public function __construct(
         private readonly object $inner,
     ) {}
@@ -30,6 +30,9 @@ final class FiberProxy
             return FiberHelper::await($result);
         }
 
-        return $result;
+        throw new \LogicException(\sprintf(
+            'FiberProxy expects the inner proxy to return a PromiseInterface; got %s.',
+            \get_debug_type($result),
+        ));
     }
 }

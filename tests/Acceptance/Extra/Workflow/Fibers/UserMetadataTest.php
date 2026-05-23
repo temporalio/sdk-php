@@ -208,7 +208,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_Fibers_UserMetadata")]
     public function handle()
     {
-        $timer = Workflow::createTimer(30, TimerOptions::new()->withSummary('test timer summary'));
+        $timer = Workflow::timerPromise(30, TimerOptions::new()->withSummary('test timer summary'));
         Workflow::await($timer, fn() => $this->exit);
         return $this->result;
     }

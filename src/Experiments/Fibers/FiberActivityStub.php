@@ -10,15 +10,10 @@ use Temporal\DataConverter\Type;
 use Temporal\Workflow\ActivityStubInterface;
 
 /**
- * Fiber-friendly decorator for {@see ActivityStubInterface}.
- *
- * Wraps all PromiseInterface-returning methods with {@see FiberHelper::await()},
- * so the caller gets resolved values instead of promises.
- *
  * @experimental
  * @internal
  */
-final class FiberActivityStub
+final class FiberActivityStub implements FiberActivityStubInterface
 {
     public function __construct(
         private readonly ActivityStubInterface $inner,
@@ -38,7 +33,7 @@ final class FiberActivityStub
         return FiberHelper::await($this->inner->execute($name, $args, $returnType, $isLocalActivity));
     }
 
-    public function createExecution(
+    public function executeAsync(
         string $name,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,

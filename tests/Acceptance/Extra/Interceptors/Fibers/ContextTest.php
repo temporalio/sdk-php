@@ -19,6 +19,7 @@ use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
+use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -40,6 +41,7 @@ class ContextTest extends TestCase
         self::assertSame(TestActivity::class, $result['activity']);
         self::assertSame(TestWorkflow::class, $result['workflow']);
         self::assertTrue($result['assert'], 'Workflow instance in context is not the same as the one in the test');
+        self::assertTrue($result['fiberMode'], 'Workflow body did not run inside a Fiber');
     }
 
     #[Test]
@@ -104,16 +106,21 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Interceptors_Fibers_Context")]
     public function handle(string $class)
     {
-        $activityClass = yield Workflow::executeActivity(
+        $activityClass = Workflow::executeActivity(
             'Extra_Interceptors_Fibers_Context.handler',
             ['foo'],
             Activity\ActivityOptions::new()->withScheduleToCloseTimeout('10 seconds'),
         );
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
+
+        $context = Workflow::getCurrentContext();
+        $fiberMode = $context instanceof ScopeContext && $context->isFiberMode();
+
         return [
             'activity' => $activityClass,
             'workflow' => $class,
             'assert' => Workflow::getInstance() === $this,
+            'fiberMode' => $fiberMode,
         ];
     }
 
