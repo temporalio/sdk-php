@@ -228,10 +228,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
-        $savedContext = \Temporal\Internal\Support\Facade::getCurrentContext();
+        $fiberMode = $this->scopeContext->isFiberMode();
+        $savedContext = $fiberMode ? \Temporal\Internal\Support\Facade::getCurrentContext() : null;
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler(...), EncodedValues::empty(), false);
-        \Temporal\Internal\Support\Facade::setCurrentContext($savedContext);
+        if ($fiberMode) {
+            \Temporal\Internal\Support\Facade::setCurrentContext($savedContext);
+        }
 
         return $scope;
     }
