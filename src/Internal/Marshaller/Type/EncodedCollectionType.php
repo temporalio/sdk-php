@@ -23,7 +23,7 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * Read only type.
- * @extends Type<array|Message>
+ * @extends Type<array|Message, EncodedCollection>
  */
 final class EncodedCollectionType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -52,9 +52,6 @@ final class EncodedCollectionType extends Type implements DetectableTypeInterfac
         return new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * @psalm-assert string $value
-     */
     public function parse(mixed $value, mixed $current): EncodedCollection
     {
         return match (true) {

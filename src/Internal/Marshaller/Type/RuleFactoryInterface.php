@@ -15,10 +15,8 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
  * The type can detect the property type information from its reflection.
- *
- * @extends TypeInterface<mixed>
  */
-interface RuleFactoryInterface extends TypeInterface
+interface RuleFactoryInterface
 {
     /**
      * Make a marshalling rule for the given property.

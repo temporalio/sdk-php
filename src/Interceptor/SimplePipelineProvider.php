@@ -22,14 +22,28 @@ class SimplePipelineProvider implements PipelineProvider
      * @param array<array-key, Interceptor> $interceptors
      */
     public function __construct(
-        private iterable $interceptors = [],
+        private readonly iterable $interceptors = [],
     ) {}
+
+    /**
+     * Create a new provider with additional interceptors prepended.
+     *
+     * @param list<Interceptor> $interceptors Interceptors to prepend before existing ones.
+     */
+    public function withPrependedInterceptors(array $interceptors): self
+    {
+        if ($interceptors === []) {
+            return $this;
+        }
+
+        return new self(\array_merge($interceptors, [...$this->interceptors]));
+    }
 
     public function getPipeline(string $interceptorClass): Pipeline
     {
         return $this->cache[$interceptorClass] ??= Pipeline::prepare(
             \array_filter(
-                $this->interceptors,
+                [...$this->interceptors],
                 static fn(Interceptor $i): bool => $i instanceof $interceptorClass,
             ),
         );

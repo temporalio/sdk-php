@@ -8,7 +8,7 @@ use Google\Protobuf\Duration;
 use Google\Protobuf\Internal\MapField;
 use Google\Protobuf\Internal\Message;
 use Google\Protobuf\Internal\OneofField;
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use Google\Protobuf\Timestamp;
 use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;

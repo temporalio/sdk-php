@@ -100,6 +100,9 @@
             <directory suffix="TestCase.php">tests/Functional</directory>
         </testsuite>
     </testsuites>
+    <extensions>
+        <bootstrap class="Temporal\Tests\Acceptance\AcceptanceBootExtension"/>
+    </extensions>
     <groups>
         <exclude>
             <group>skip-on-test-server</group>

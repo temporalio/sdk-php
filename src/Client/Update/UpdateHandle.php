@@ -20,6 +20,7 @@ use Temporal\Workflow\WorkflowExecution;
 /**
  * UpdateHandle is a handle to an update workflow execution request that can be used to get the
  * status of that update request.
+ * @template ReturnType
  */
 final class UpdateHandle
 {
@@ -67,6 +68,7 @@ final class UpdateHandle
      *
      * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
      *
+     * @return ReturnType
      * @throws WorkflowUpdateException
      * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */

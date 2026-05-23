@@ -15,16 +15,20 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<array>
+ * @template TClass of \UnitEnum
+ * @extends Type<array, TClass>
  */
 class EnumType extends Type implements RuleFactoryInterface
 {
     private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
         . 'array with `name` or `value` keys; a case of the Enum. %s given.';
 
-    /** @var class-string<\UnitEnum> */
+    /** @var class-string<TClass> */
     private string $classFQCN;
 
+    /**
+     * @param class-string<TClass>|null $class
+     */
     public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         if ($class === null) {
@@ -54,22 +58,38 @@ class EnumType extends Type implements RuleFactoryInterface
 
     public function parse($value, $current)
     {
-        if (\is_object($value)) {
+        if ($value instanceof $this->classFQCN) {
             return $value;
         }
 
-        if (\is_scalar($value)) {
-            return $this->classFQCN::from($value);
+        $class = $this->classFQCN;
+
+        if (\is_int($value) || \is_string($value)) {
+            // check if classFQN is backed enum class
+            if (!\is_a($class, \BackedEnum::class, true)) {
+                throw new \InvalidArgumentException(
+                    'Unsupported enum value type. ',
+                );
+            }
+            /** @var TClass */
+            return $class::from($value);
         }
 
         if (\is_array($value)) {
             // Process the `value` key
-            if (\array_key_exists('value', $value)) {
-                return $this->classFQCN::from($value['value']);
+            if (\array_key_exists('value', $value) && (\is_int($value['value']) || \is_string($value['value']))) {
+                // check if classFQN is backed enum class
+                if (!\is_a($class, \BackedEnum::class, true)) {
+                    throw new \InvalidArgumentException(
+                        'Unsupported enum value type. ',
+                    );
+                }
+                /** @var TClass */
+                return $class::from($value['value']);
             }
 
             // Process the `name` key
-            if (\array_key_exists('name', $value)) {
+            if (\array_key_exists('name', $value) && \is_string($value['name'])) {
                 return (new \ReflectionClass($this->classFQCN))
                     ->getConstant($value['name']);
             }
@@ -78,10 +98,6 @@ class EnumType extends Type implements RuleFactoryInterface
         throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \ucfirst(\get_debug_type($value))));
     }
 
-    /**
-     * @psalm-suppress UndefinedDocblockClass
-     * @param mixed $value
-     */
     public function serialize($value): array
     {
         return $value instanceof \BackedEnum

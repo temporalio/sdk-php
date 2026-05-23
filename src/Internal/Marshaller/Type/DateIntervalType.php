@@ -20,7 +20,8 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
- * @extends Type<int|Duration>
+ * @psalm-import-type DateIntervalValue from DateInterval
+ * @extends Type<int|Duration, DateIntervalValue>
  */
 class DateIntervalType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -53,10 +54,6 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
 
     public function serialize($value): int|Duration
     {
-        if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
-            return (int) (DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
-        }
-
         if ($this->format === Duration::class) {
             return match (true) {
                 $value instanceof \DateInterval => DateInterval::toDuration($value),
@@ -69,8 +66,27 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
             };
         }
 
-        $method = 'total' . \ucfirst($this->format);
-        return (int) (DateInterval::parse($value, $this->format)->$method);
+        $interval = DateInterval::parse($value, $this->format);
+
+        return (int) match ($this->format) {
+            DateInterval::FORMAT_YEARS => $interval->totalYears,
+            DateInterval::FORMAT_MONTHS => $interval->totalMonths,
+            DateInterval::FORMAT_WEEKS => $interval->totalWeeks,
+            DateInterval::FORMAT_DAYS => $interval->totalDays,
+            DateInterval::FORMAT_HOURS => $interval->totalHours,
+            DateInterval::FORMAT_MINUTES => $interval->totalMinutes,
+            DateInterval::FORMAT_SECONDS => $interval->totalSeconds,
+            DateInterval::FORMAT_MILLISECONDS => $interval->totalMilliseconds,
+            DateInterval::FORMAT_MICROSECONDS => $interval->totalMicroseconds,
+            DateInterval::FORMAT_NANOSECONDS => (int) \round($interval->totalMicroseconds * 1000),
+            default => throw new \InvalidArgumentException(
+                \sprintf(
+                    'Unsupported format: "%s". See %s for available formats.',
+                    $this->format,
+                    DateInterval::class,
+                ),
+            ),
+        };
     }
 
     public function parse($value, $current): CarbonInterval

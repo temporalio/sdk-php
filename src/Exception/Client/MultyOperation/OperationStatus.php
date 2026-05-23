@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Exception\Client\MultyOperation;
 
 use Google\Protobuf\Any;
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure\OperationStatus as OperationStatusMessage;
 use Temporal\Exception\Client\UnpackDetailsTrait;
 

@@ -20,6 +20,7 @@ use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
+use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -91,9 +92,9 @@ interface WorkflowClientInterface extends ClientContextInterface
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
-     * @return T
+     * @return WorkflowProxy<T>
      */
     public function newWorkflowStub(
         string $class,
@@ -120,10 +121,10 @@ interface WorkflowClientInterface extends ClientContextInterface
     /**
      * Returns workflow stub associated with running workflow.
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @param non-empty-string $workflowID
-     * @return T
+     * @return WorkflowProxy<T>
      */
     public function newRunningWorkflowStub(
         string $class,

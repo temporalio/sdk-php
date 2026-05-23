@@ -18,7 +18,7 @@ abstract class Proxy
     abstract public function __call(string $method, array $args);
 
     /**
-     * @psalm-template T of Prototype
+     * @template T of Prototype
      *
      * @param array<T> $prototypes
      * @return T|null
