@@ -305,7 +305,7 @@ final class Workflow extends Facade
      *  }
      * ```
      */
-    public static function await(callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public static function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return self::getCurrentContext()->await(...$conditions);
     }
@@ -334,7 +334,7 @@ final class Workflow extends Facade
      * @param DateIntervalValue $interval
      * @return PromiseInterface<bool>
      */
-    public static function awaitWithTimeout($interval, callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public static function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return self::getCurrentContext()->awaitWithTimeout($interval, ...$conditions);
     }

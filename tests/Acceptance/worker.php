@@ -124,5 +124,3 @@ try {
 } catch (\Throwable $e) {
     td($e);
 }
-
-$a=1;

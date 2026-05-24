@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Experiments\Fibers;
 
+use React\Promise\PromiseInterface;
 use Temporal\Workflow\Mutex as BaseMutex;
 
 /**
- * Fiber-aware Mutex wrapper.
- *
- * Wraps {@see BaseMutex} so that {@see lock()} auto-suspends the Fiber.
- * Use this instead of the base Mutex in Fiber-based workflows.
+ * Fiber-aware wrapper around {@see BaseMutex}.
  *
  * @experimental
  */
@@ -24,7 +22,13 @@ final class Mutex
     }
 
     /**
-     * Lock the mutex. Suspends the Fiber until the lock is acquired.
+     * Acquire the lock.
+     *
+     * In Fiber mode suspends the current Fiber and returns the resolved
+     * mutex once the lock is acquired. Outside Fiber mode returns the raw
+     * {@see PromiseInterface} so the caller can `yield` it.
+     *
+     * @return BaseMutex|PromiseInterface<BaseMutex>
      */
     public function lock(): mixed
     {
@@ -37,32 +41,24 @@ final class Mutex
         return $promise;
     }
 
-    /**
-     * Try to lock the mutex without waiting.
-     */
     public function tryLock(): bool
     {
         return $this->inner->tryLock();
     }
 
-    /**
-     * Release the lock.
-     */
     public function unlock(): void
     {
         $this->inner->unlock();
     }
 
-    /**
-     * Check if the mutex is locked.
-     */
     public function isLocked(): bool
     {
         return $this->inner->isLocked();
     }
 
     /**
-     * Get the underlying base Mutex for interop with non-Fiber code.
+     * Expose the wrapped {@see BaseMutex} for interop with code that types its
+     * parameter against the base Mutex.
      */
     public function getInner(): BaseMutex
     {

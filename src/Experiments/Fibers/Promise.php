@@ -7,25 +7,26 @@ namespace Temporal\Experiments\Fibers;
 use React\Promise\PromiseInterface;
 
 /**
- * Fiber-based Promise facade.
- *
- * Mirrors {@see \Temporal\Promise} but auto-suspends the current Fiber
- * for combinators (all, any, some, race, map, reduce).
+ * Fiber-aware mirror of {@see \Temporal\Promise}; combinators auto-suspend the Fiber.
  *
  * @experimental
  */
 final class Promise
 {
+    private function __construct() {}
+
     /**
-     * @param iterable<int, PromiseInterface|mixed> $promises
+     * @param iterable<int, PromiseInterface> $promises
+     * @return list<mixed>
      */
-    public static function all(iterable $promises): mixed
+    public static function all(iterable $promises): array
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await(\Temporal\Promise::all($promises));
     }
 
     /**
-     * @param iterable<int, PromiseInterface|mixed> $promises
+     * @param iterable<int, PromiseInterface> $promises
      */
     public static function any(iterable $promises): mixed
     {
@@ -33,32 +34,38 @@ final class Promise
     }
 
     /**
-     * @param iterable<int, PromiseInterface|mixed> $promises
+     * @param iterable<int, PromiseInterface> $promises
+     * @return list<mixed>
      */
-    public static function some(iterable $promises, int $count): mixed
+    public static function some(iterable $promises, int $count): array
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await(\Temporal\Promise::some($promises, $count));
     }
 
     /**
      * @template T
      * @param iterable<PromiseInterface<T>|T> $promisesOrValues
+     * @return T
      */
     public static function race(iterable $promisesOrValues): mixed
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await(\Temporal\Promise::race($promisesOrValues));
     }
 
     /**
-     * @param iterable<int, PromiseInterface|mixed> $promises
+     * @param iterable<int, PromiseInterface> $promises
+     * @return list<mixed>
      */
-    public static function map(iterable $promises, callable $map): mixed
+    public static function map(iterable $promises, callable $map): array
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await(\Temporal\Promise::map($promises, $map));
     }
 
     /**
-     * @param iterable<int, PromiseInterface|mixed> $promises
+     * @param iterable<int, PromiseInterface> $promises
      */
     public static function reduce(iterable $promises, callable $reduce, mixed $initial = null): mixed
     {

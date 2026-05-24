@@ -613,7 +613,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new UpsertTypedSearchAttributesInput($updates));
     }
 
-    public function await(callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
@@ -622,7 +622,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new AwaitInput($conditions));
     }
 
-    public function awaitWithTimeout($interval, callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
@@ -749,15 +749,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->currentDetails = $details;
     }
 
-    protected function awaitRequest(callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface ...$conditions): PromiseInterface
+    protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $result = [];
         $conditionGroupId = Uuid::v4();
         $this->recordTrace();
 
         foreach ($conditions as $condition) {
-            // Wrap Mutex into callable
-            if ($condition instanceof Mutex || $condition instanceof \Temporal\Experiments\Fibers\Mutex) {
+            if ($condition instanceof Mutex) {
                 $condition = static fn(): bool => !$condition->isLocked();
             }
 

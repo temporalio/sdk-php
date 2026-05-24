@@ -65,7 +65,7 @@ final class MutexTestCase extends TestCase
         self::assertTrue($mutex->isLocked());
     }
 
-    public function testLockInsideFiberSuspends(): void
+    public function testLockInsideFiberSuspendsAndReturnsResumedValue(): void
     {
         $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();
         $context->setFiberMode(true);
@@ -82,5 +82,6 @@ final class MutexTestCase extends TestCase
 
         $fiber->resume($mutex->getInner());
         self::assertTrue($fiber->isTerminated());
+        self::assertSame($mutex->getInner(), $fiber->getReturn());
     }
 }

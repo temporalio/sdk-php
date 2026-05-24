@@ -95,27 +95,4 @@ final class WorkflowExecutionInfo
          */
         public readonly string $firstRunId,
     ) {}
-
-    public function __debugInfo(): ?array
-    {
-        return [
-            'execution' => $this->execution,
-            'type' => $this->type,
-            'startTime' => $this->startTime,
-            'closeTime' => $this->closeTime,
-            'status' => $this->status,
-            'historyLength' => $this->historyLength,
-            'parentNamespaceId' => $this->parentNamespaceId,
-            'parentExecution' => $this->parentExecution,
-            'executionTime' => $this->executionTime,
-            'autoResetPoints' => $this->autoResetPoints,
-            'taskQueue' => $this->taskQueue,
-            'stateTransitionCount' => $this->stateTransitionCount,
-            'historySizeBytes' => $this->historySizeBytes,
-            'mostRecentWorkerVersionStamp' => $this->mostRecentWorkerVersionStamp,
-            'executionDuration' => $this->executionDuration,
-            'rootExecution' => $this->rootExecution,
-            'firstRunId' => $this->firstRunId,
-        ];
-    }
 }

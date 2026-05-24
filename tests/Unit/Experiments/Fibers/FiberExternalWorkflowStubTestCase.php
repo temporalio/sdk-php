@@ -87,4 +87,57 @@ final class FiberExternalWorkflowStubTestCase extends TestCase
         $fiber->resume(null);
         self::assertTrue($fiber->isTerminated());
     }
+
+    public function testSignalSuspendsInsideFiber(): void
+    {
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = $this->createMock(ExternalWorkflowStubInterface::class);
+        $inner->expects(self::once())->method('signal')->with('go', ['payload'])->willReturn($promise);
+
+        $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();
+        $context->setFiberMode(true);
+
+        $stub = new FiberExternalWorkflowStub($inner);
+
+        $fiber = new \Fiber(static function () use ($context, $stub): void {
+            Facade::setCurrentContext($context);
+            $stub->signal('go', ['payload']);
+        });
+
+        $suspended = $fiber->start();
+        self::assertSame($promise, $suspended);
+
+        $fiber->resume(null);
+        self::assertTrue($fiber->isTerminated());
+    }
+
+    public function testSignalPropagatesExceptionThrownIntoFiber(): void
+    {
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = $this->createMock(ExternalWorkflowStubInterface::class);
+        $inner->method('signal')->willReturn($promise);
+
+        $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();
+        $context->setFiberMode(true);
+
+        $stub = new FiberExternalWorkflowStub($inner);
+
+        $fiber = new \Fiber(static function () use ($context, $stub): void {
+            Facade::setCurrentContext($context);
+            $stub->signal('go');
+        });
+
+        $fiber->start();
+
+        $thrown = null;
+        try {
+            $fiber->throw(new \RuntimeException('signal-failed'));
+        } catch (\RuntimeException $e) {
+            $thrown = $e;
+        }
+
+        self::assertInstanceOf(\RuntimeException::class, $thrown);
+        self::assertSame('signal-failed', $thrown->getMessage());
+        self::assertTrue($fiber->isTerminated());
+    }
 }

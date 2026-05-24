@@ -97,6 +97,40 @@ final class FiberProxyTestCase extends TestCase
         $proxy->anyMethod();
     }
 
+    public function testCallPropagatesExceptionThrownIntoFiber(): void
+    {
+        $context = $this->makeScopeContextStub(true);
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = new class ($promise) {
+            public function __construct(private readonly PromiseInterface $result) {}
+
+            public function __call(string $method, array $args): mixed
+            {
+                return $this->result;
+            }
+        };
+
+        $proxy = new FiberProxy($inner);
+
+        $fiber = new \Fiber(static function () use ($context, $proxy): mixed {
+            Facade::setCurrentContext($context);
+            return $proxy->doStuff();
+        });
+
+        $fiber->start();
+
+        $thrown = null;
+        try {
+            $fiber->throw(new \RuntimeException('rejected'));
+        } catch (\RuntimeException $e) {
+            $thrown = $e;
+        }
+
+        self::assertInstanceOf(\RuntimeException::class, $thrown);
+        self::assertSame('rejected', $thrown->getMessage());
+        self::assertTrue($fiber->isTerminated());
+    }
+
     private function makeScopeContextStub(bool $fiberMode): ScopeContext
     {
         $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();

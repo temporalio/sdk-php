@@ -13,6 +13,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\ActivityPausedException;
+use Temporal\Experiments\Fibers\FiberHelper;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
@@ -79,7 +80,7 @@ class TestWorkflow
             $run,
         );
 
-        return $timerFired ? 'timeout' : $run;
+        return $timerFired ? 'timeout' : FiberHelper::await($run);
     }
 }
 

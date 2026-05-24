@@ -7,12 +7,18 @@ namespace Temporal\Tests\Unit\Internal\Workflow\Process;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Internal\Workflow\ScopeContext;
 
 #[CoversClass(Scope::class)]
 final class ScopeFiberModeLifecycleTestCase extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Facade::setCurrentContext(null);
+    }
+
     public function testFiberModeResetWhenFiberStartThrowsSynchronously(): void
     {
         $context = $this->makeScopeContext();
@@ -68,6 +74,11 @@ final class ScopeFiberModeLifecycleTestCase extends TestCase
         $generator = $closure($values, $handler);
 
         self::assertInstanceOf(\Generator::class, $generator);
+        self::assertSame(
+            'first-yield',
+            $generator->current(),
+            'Bridge generator must yield the value the Fiber suspended with',
+        );
         self::assertTrue(
             $context->isFiberMode(),
             'fiberMode should still be true while Fiber is suspended',
@@ -79,6 +90,35 @@ final class ScopeFiberModeLifecycleTestCase extends TestCase
         self::assertFalse(
             $context->isFiberMode(),
             'fiberMode must be reset to false after bridge generator finishes',
+        );
+    }
+
+    public function testBridgeGeneratorRelaysMultipleSuspendsAndFinalReturn(): void
+    {
+        $context = $this->makeScopeContext();
+        $values = EncodedValues::empty();
+
+        $handler = static function (): string {
+            $first = \Fiber::suspend('a');
+            $second = \Fiber::suspend('b');
+            return $first . '-' . $second;
+        };
+
+        $closure = $this->getFiberHandler($context);
+        $generator = $closure($values, $handler);
+
+        self::assertSame('a', $generator->current());
+
+        $generator->send('one');
+        self::assertTrue($generator->valid());
+        self::assertSame('b', $generator->current());
+
+        $generator->send('two');
+        self::assertFalse($generator->valid());
+        self::assertSame('one-two', $generator->getReturn());
+        self::assertFalse(
+            $context->isFiberMode(),
+            'fiberMode must be reset to false after multi-step Fiber completes',
         );
     }
 

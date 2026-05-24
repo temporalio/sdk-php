@@ -54,7 +54,8 @@ final class DeferredGenerator implements \Iterator, CoroutineInterface
     /**
      * Throw an exception into the generator.
      *
-     * @note doesn't throw generator's exceptions; use {@see catch()} to handle them.
+     * Does not surface generator-thrown exceptions; register a handler via
+     * {@see self::catch()} to observe them.
      */
     public function throw(\Throwable $exception): void
     {
@@ -72,7 +73,8 @@ final class DeferredGenerator implements \Iterator, CoroutineInterface
     /**
      * Send a value to the generator.
      *
-     * @note doesn't throw generator's exceptions; use {@see catch()} to handle them.
+     * Does not surface generator-thrown exceptions; register a handler via
+     * {@see self::catch()} to observe them.
      */
     public function send(mixed $value): mixed
     {
@@ -144,7 +146,7 @@ final class DeferredGenerator implements \Iterator, CoroutineInterface
     /**
      * Check if the generator is not finished.
      *
-     * @note It starts the Generator.
+     * Starts the Generator on first call.
      */
     public function valid(): bool
     {
@@ -174,8 +176,7 @@ final class DeferredGenerator implements \Iterator, CoroutineInterface
      */
     public function catch(callable $handler): static
     {
-        /** @psalm-suppress PropertyTypeCoercion */
-        $this->catchers[] = $handler;
+        $this->catchers[] = \Closure::fromCallable($handler);
         return $this;
     }
 

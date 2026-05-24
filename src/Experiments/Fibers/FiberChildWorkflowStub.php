@@ -21,6 +21,7 @@ final class FiberChildWorkflowStub implements FiberChildWorkflowStubInterface
 
     public function getExecution(): WorkflowExecution
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await($this->inner->getExecution());
     }
 
@@ -36,6 +37,7 @@ final class FiberChildWorkflowStub implements FiberChildWorkflowStubInterface
 
     public function start(mixed ...$args): WorkflowExecution
     {
+        /** @psalm-suppress MixedReturnStatement */
         return FiberHelper::await($this->inner->start(...$args));
     }
 
@@ -51,7 +53,6 @@ final class FiberChildWorkflowStub implements FiberChildWorkflowStubInterface
 
     public function signal(string $name, array $args = []): void
     {
-        /** @psalm-suppress ArgumentTypeCoercion */
         FiberHelper::await($this->inner->signal($name, $args));
     }
 
@@ -72,7 +73,6 @@ final class FiberChildWorkflowStub implements FiberChildWorkflowStubInterface
 
     public function signalAsync(string $name, array $args = []): PromiseInterface
     {
-        /** @psalm-suppress ArgumentTypeCoercion */
         return $this->inner->signal($name, $args);
     }
 }

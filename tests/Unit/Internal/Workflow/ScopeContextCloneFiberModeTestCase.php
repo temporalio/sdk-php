@@ -29,7 +29,7 @@ final class ScopeContextCloneFiberModeTestCase extends TestCase
         self::assertFalse($context->isFiberMode());
     }
 
-    public function testCloneDoesNotSharefiberModeWithParent(): void
+    public function testCloneDoesNotShareFiberModeWithParent(): void
     {
         $parent = $this->makeScopeContext();
         $parent->setFiberMode(true);

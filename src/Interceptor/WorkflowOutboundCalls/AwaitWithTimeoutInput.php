@@ -23,7 +23,7 @@ final class AwaitWithTimeoutInput
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      *
-     * @param array<callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface> $conditions
+     * @param array<callable|Mutex|PromiseInterface> $conditions
      */
     public function __construct(
         public readonly \DateInterval $interval,
@@ -31,7 +31,7 @@ final class AwaitWithTimeoutInput
     ) {}
 
     /**
-     * @param array<callable|Mutex|\Temporal\Experiments\Fibers\Mutex|PromiseInterface> $conditions
+     * @param array<callable|Mutex|PromiseInterface> $conditions
      */
     public function with(
         ?\DateInterval $interval = null,

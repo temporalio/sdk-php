@@ -31,7 +31,7 @@ final class FiberActivityStubTestCase extends TestCase
 
         $stub = new FiberActivityStub($inner);
 
-        self::assertInstanceOf(ActivityOptionsInterface::class, $stub->getOptions());
+        self::assertSame($options, $stub->getOptions());
     }
 
     public function testExecuteAsyncReturnsRawPromise(): void
@@ -47,6 +47,47 @@ final class FiberActivityStubTestCase extends TestCase
         $stub = new FiberActivityStub($inner);
 
         self::assertSame($promise, $stub->executeAsync('my-activity', ['arg']));
+    }
+
+    public function testExecuteAsyncForwardsReturnTypeAndLocalActivityFlag(): void
+    {
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = $this->createMock(ActivityStubInterface::class);
+        $inner->expects(self::once())
+            ->method('execute')
+            ->with('my-activity', ['arg'], 'string', true)
+            ->willReturn($promise);
+
+        Facade::setCurrentContext(null);
+        $stub = new FiberActivityStub($inner);
+
+        self::assertSame($promise, $stub->executeAsync('my-activity', ['arg'], 'string', true));
+    }
+
+    public function testExecuteForwardsAllArgumentsToInner(): void
+    {
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = $this->createMock(ActivityStubInterface::class);
+        $inner->expects(self::once())
+            ->method('execute')
+            ->with('act', ['payload'], 'string', true)
+            ->willReturn($promise);
+
+        $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();
+        $context->setFiberMode(true);
+
+        $stub = new FiberActivityStub($inner);
+
+        $fiber = new \Fiber(static function () use ($context, $stub): mixed {
+            Facade::setCurrentContext($context);
+            return $stub->execute('act', ['payload'], 'string', true);
+        });
+
+        $suspended = $fiber->start();
+        self::assertSame($promise, $suspended);
+
+        $fiber->resume('done');
+        self::assertSame('done', $fiber->getReturn());
     }
 
     public function testExecuteThrowsOutsideFiber(): void
@@ -83,5 +124,35 @@ final class FiberActivityStubTestCase extends TestCase
 
         $fiber->resume('result');
         self::assertSame('result', $fiber->getReturn());
+    }
+
+    public function testExecutePropagatesExceptionThrownIntoFiber(): void
+    {
+        $promise = $this->createMock(PromiseInterface::class);
+        $inner = $this->createMock(ActivityStubInterface::class);
+        $inner->method('execute')->willReturn($promise);
+
+        $context = (new \ReflectionClass(ScopeContext::class))->newInstanceWithoutConstructor();
+        $context->setFiberMode(true);
+
+        $stub = new FiberActivityStub($inner);
+
+        $fiber = new \Fiber(static function () use ($context, $stub): mixed {
+            Facade::setCurrentContext($context);
+            return $stub->execute('my-activity');
+        });
+
+        $fiber->start();
+
+        $thrown = null;
+        try {
+            $fiber->throw(new \RuntimeException('activity-failed'));
+        } catch (\RuntimeException $e) {
+            $thrown = $e;
+        }
+
+        self::assertInstanceOf(\RuntimeException::class, $thrown);
+        self::assertSame('activity-failed', $thrown->getMessage());
+        self::assertTrue($fiber->isTerminated());
     }
 }

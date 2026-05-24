@@ -35,14 +35,16 @@ interface CoroutineInterface
     /**
      * Resume the coroutine with a resolved value.
      *
-     * @note Does not throw coroutine's exceptions; use {@see catch()} to handle them.
+     * Does not throw the coroutine's own exceptions; register a handler via
+     * {@see self::catch()} to observe them.
      */
     public function send(mixed $value): mixed;
 
     /**
      * Resume the coroutine by throwing an exception into it.
      *
-     * @note Does not throw coroutine's exceptions; use {@see catch()} to handle them.
+     * Does not throw the coroutine's own exceptions; register a handler via
+     * {@see self::catch()} to observe them.
      */
     public function throw(\Throwable $exception): void;
 

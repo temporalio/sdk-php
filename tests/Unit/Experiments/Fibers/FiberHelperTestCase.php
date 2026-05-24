@@ -69,6 +69,9 @@ final class FiberHelperTestCase extends TestCase
         $promise = $this->createMock(PromiseInterface::class);
 
         $this->expectException(OutOfContextException::class);
+        $this->expectExceptionMessage(
+            'FiberHelper::await() can be used only inside a Fiber-mode workflow scope.',
+        );
 
         FiberHelper::await($promise);
     }
@@ -79,6 +82,9 @@ final class FiberHelperTestCase extends TestCase
         $promise = $this->createMock(PromiseInterface::class);
 
         $this->expectException(OutOfContextException::class);
+        $this->expectExceptionMessage(
+            'FiberHelper::await() can be used only inside a Fiber-mode workflow scope.',
+        );
 
         FiberHelper::await($promise);
     }
@@ -100,6 +106,30 @@ final class FiberHelperTestCase extends TestCase
         self::assertNull($returned);
         self::assertTrue($fiber->isTerminated());
         self::assertSame('resolved-value', $fiber->getReturn());
+    }
+
+    public function testAwaitPropagatesExceptionThrownIntoFiber(): void
+    {
+        $context = $this->makeScopeContextStub(true);
+        $promise = $this->createMock(PromiseInterface::class);
+
+        $fiber = new \Fiber(static function () use ($context, $promise): mixed {
+            Facade::setCurrentContext($context);
+            return FiberHelper::await($promise);
+        });
+
+        $fiber->start();
+
+        $thrown = null;
+        try {
+            $fiber->throw(new \RuntimeException('rejection-from-promise'));
+        } catch (\RuntimeException $e) {
+            $thrown = $e;
+        }
+
+        self::assertInstanceOf(\RuntimeException::class, $thrown);
+        self::assertSame('rejection-from-promise', $thrown->getMessage());
+        self::assertTrue($fiber->isTerminated());
     }
 
     private function makeScopeContextStub(bool $fiberMode): ScopeContext

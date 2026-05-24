@@ -23,6 +23,7 @@ use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -229,11 +230,11 @@ class Scope implements CancellationScopeInterface, Destroyable
     public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
         $fiberMode = $this->scopeContext->isFiberMode();
-        $savedContext = $fiberMode ? \Temporal\Internal\Support\Facade::getCurrentContext() : null;
+        $savedContext = $fiberMode ? Facade::getCurrentContext() : null;
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler(...), EncodedValues::empty(), false);
         if ($fiberMode) {
-            \Temporal\Internal\Support\Facade::setCurrentContext($savedContext);
+            Facade::setCurrentContext($savedContext);
         }
 
         return $scope;
@@ -302,7 +303,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
-        $this->scopeContext->setFiberMode(false);
+        $this->scopeContext?->setFiberMode(false);
         $this->context?->destroy();
         $this->scopeContext?->destroy();
         unset(
@@ -463,29 +464,25 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
-    /**
-     * Creates a coroutine from a handler by wrapping it in a Fiber.
-     *
-     * When $deferred is true, the Fiber start is deferred until first access
-     * (via {@see DeferredGenerator::fromHandler()} lazy semantics).
-     * When $deferred is false, the Fiber is started immediately but still
-     * wrapped in the same DeferredGenerator for uniform handling.
-     */
     private function createCoroutine(callable $handler, ValuesInterface $values): CoroutineInterface
     {
-        $scopeContext = $this->scopeContext;
-        $fiberHandler = $this->createFiberHandler($handler, $scopeContext);
+        $fiberHandler = $this->createFiberHandler($handler, $this->scopeContext);
 
         return DeferredGenerator::fromHandler($fiberHandler, $values)
             ->catch($this->onException(...));
     }
 
+    /**
+     * Wraps a user handler in a Fiber and exposes either the Fiber's return value
+     * (sync completion) or a bridge Generator that forwards Fiber suspends as
+     * Generator yields so {@see self::next()} can drive both uniformly.
+     */
     private function createFiberHandler(callable $handler, ScopeContext $scopeContext): \Closure
     {
         return static function (ValuesInterface $values) use ($handler, $scopeContext): mixed {
             $fiber = new \Fiber(static function () use ($handler, $values, $scopeContext): mixed {
                 $scopeContext->setFiberMode(true);
-                \Temporal\Workflow::setCurrentContext($scopeContext);
+                Workflow::setCurrentContext($scopeContext);
                 return $handler($values);
             });
 

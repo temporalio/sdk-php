@@ -11,7 +11,7 @@ class DeprecationCollector
 
     public static function reset(): void
     {
-        static::$deprecations = [];
+        self::$deprecations = [];
     }
 
     public static function register(): void
