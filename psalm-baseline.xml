@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.16.0@7cf3e8b988edd75e0766963b0b9e671b220f5785">
+<files psalm-version="6.16.1@f1f5de594dc76faf8784e02d3dc4716c91c6f6ac">
   <file src="src/Activity/ActivityInterface.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -1025,9 +1025,11 @@
     <RedundantCondition>
       <code><![CDATA[$this->context?->destroy()]]></code>
       <code><![CDATA[$this->scopeContext?->destroy()]]></code>
+      <code><![CDATA[$this->scopeContext?->setFiberMode(false)]]></code>
     </RedundantCondition>
     <TypeDoesNotContainNull>
       <code><![CDATA[$this->context]]></code>
+      <code><![CDATA[$this->scopeContext]]></code>
       <code><![CDATA[$this->scopeContext]]></code>
     </TypeDoesNotContainNull>
     <UnusedClosureParam>

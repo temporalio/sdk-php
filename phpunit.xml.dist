@@ -50,7 +50,6 @@
             <exclude>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Workflow/Fibers/DateTimeZoneWorkflowTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Schedule/Fibers/ScheduleUpdateTest.php</exclude>
             <exclude>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</exclude>
             <exclude>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</exclude>
         </testsuite>
@@ -82,7 +81,6 @@
             <file>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</file>
             <file>tests/Acceptance/Extra/Workflow/Fibers/DateTimeZoneWorkflowTest.php</file>
             <file>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</file>
-            <file>tests/Acceptance/Extra/Schedule/Fibers/ScheduleUpdateTest.php</file>
             <file>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</file>
             <file>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</file>
         </testsuite>
