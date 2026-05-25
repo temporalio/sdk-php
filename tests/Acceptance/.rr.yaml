@@ -19,5 +19,5 @@ kv:
 
 logs:
     level: debug
-    output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/logs/rr.log
-    err_output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/logs/rr.err.log
+    output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/runtime/rr.log
+    err_output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/runtime/rr.err.log
