@@ -86,7 +86,7 @@ class FeatureWorkflow
 
         try {
             $scope->cancel();
-            $scope;
+            $scope->join();
         } catch (CanceledFailure) {
             # Expected
         }

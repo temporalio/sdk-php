@@ -187,7 +187,7 @@ final class Workflow
      */
     public static function async(callable $task): CancellationScopeInterface
     {
-        return \Temporal\Workflow::async($task);
+        return new FiberScope(\Temporal\Workflow::async($task));
     }
 
     /**
@@ -197,7 +197,7 @@ final class Workflow
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
     {
-        return \Temporal\Workflow::asyncDetached($task);
+        return new FiberScope(\Temporal\Workflow::asyncDetached($task));
     }
 
     public static function await(callable|BaseMutex|Mutex|PromiseInterface ...$conditions): mixed

@@ -31,7 +31,7 @@ class FeatureWorkflow
     {
         $wf = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
-            Workflow\ChildWorkflowOptions::new()
+            \Temporal\Workflow\ChildWorkflowOptions::new()
                 // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
                 ->withTaskQueue(Workflow::getInfo()->taskQueue)
         );

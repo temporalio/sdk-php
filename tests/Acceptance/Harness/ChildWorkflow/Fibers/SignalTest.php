@@ -35,7 +35,7 @@ class MainWorkflow
         $workflow = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
             // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
-            Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
+            \Temporal\Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         );
         $handle = $workflow->run();
         $workflow->signal('unblock');

@@ -36,7 +36,7 @@ class FeatureWorkflow
     public function run()
     {
         Workflow::executeActivity(
-            'result',
+            'Fibers_result',
             options: ActivityOptions::new()->withStartToCloseTimeout(10),
         );
 

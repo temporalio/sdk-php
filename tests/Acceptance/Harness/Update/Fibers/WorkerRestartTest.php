@@ -74,7 +74,7 @@ class FeatureWorkflow
     public function doActivities()
     {
         Workflow::executeActivity(
-            'blocks',
+            'Fibers_blocks',
             options: ActivityOptions::new()->withStartToCloseTimeout(10)
         );
         $this->done = true;

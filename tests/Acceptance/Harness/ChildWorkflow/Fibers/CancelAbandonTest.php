@@ -12,6 +12,7 @@ use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Promise;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
+use Temporal\Experiments\Fibers\FiberHelper;
 use Temporal\Experiments\Fibers\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowInterface;
@@ -140,15 +141,15 @@ class MainScopeWorkflow
         /** @see ChildWorkflow */
         $stub = Workflow::newUntypedChildWorkflowStub(
             'Harness_ChildWorkflow_Fibers_CancelAbandon_Child',
-            Workflow\ChildWorkflowOptions::new()
+            \Temporal\Workflow\ChildWorkflowOptions::new()
                 ->withWorkflowRunTimeout('20 seconds')
-                ->withParentClosePolicy(Workflow\ParentClosePolicy::Abandon),
+                ->withParentClosePolicy(\Temporal\Workflow\ParentClosePolicy::Abandon),
         );
 
         $stub->start($input);
 
         try {
-            Promise::race([$stub->getResult(), Workflow::timer(5)]);
+            FiberHelper::await(Promise::race([$stub->getResultAsync(), Workflow::timerPromise(5)]));
             return 'timer';
         } catch (CanceledFailure) {
             return 'cancelled';
@@ -179,9 +180,9 @@ class InnerScopeCancelWorkflow
             /** @see ChildWorkflow */
             $stub = Workflow::newUntypedChildWorkflowStub(
                 'Harness_ChildWorkflow_Fibers_CancelAbandon_Child',
-                Workflow\ChildWorkflowOptions::new()
+                \Temporal\Workflow\ChildWorkflowOptions::new()
                     ->withWorkflowRunTimeout('20 seconds')
-                    ->withParentClosePolicy(Workflow\ParentClosePolicy::Abandon),
+                    ->withParentClosePolicy(\Temporal\Workflow\ParentClosePolicy::Abandon),
             );
             $stub->start($input);
 
@@ -190,7 +191,7 @@ class InnerScopeCancelWorkflow
 
 
         try {
-            Promise::race([Workflow::timer(5) ,$this->scope]);
+            FiberHelper::await(Promise::race([Workflow::timerPromise(5), $this->scope]));
             return 'timer';
         } catch (CanceledFailure) {
             return 'cancelled';

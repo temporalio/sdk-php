@@ -49,7 +49,7 @@ class FeatureWorkflow
         $promises = [];
         for ($i = 0; $i < ACTIVITY_COUNT; ++$i) {
             $promises[] = Workflow::executeActivity(
-                'result',
+                'Fibers_result',
                 options: ActivityOptions::new()->withStartToCloseTimeout(10)
             );
         }
