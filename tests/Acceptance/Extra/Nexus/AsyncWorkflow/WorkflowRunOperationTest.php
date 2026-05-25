@@ -18,7 +18,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -51,12 +51,9 @@ class WorkflowRunOperationTest extends TestCase
     public function asyncWorkflowOperationCompletesAndPropagatesResult(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-wf',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-wf');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncWorkflow_Caller',
@@ -65,7 +62,7 @@ class WorkflowRunOperationTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
 
         self::assertSame('HELLO, WORLD!', $stub->getResult('string'));
     }
@@ -86,14 +83,11 @@ class WorkflowRunOperationTest extends TestCase
     public function requestIdIsPropagatedToHandlerWorkflowId(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
         RequestIdMarker::clear();
 
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-wf-rid',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-wf-rid');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncWorkflow_Caller',
@@ -102,7 +96,7 @@ class WorkflowRunOperationTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
         );
 
-        $client->start($stub, $endpoint['name'], 'idempotent');
+        $client->start($stub, $endpoint->name, 'idempotent');
 
         // End-to-end completion still works (regression on top of the mapping check).
         self::assertSame('HELLO, IDEMPOTENT!', $stub->getResult('string'));

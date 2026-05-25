@@ -13,7 +13,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -35,20 +36,17 @@ class HeadersTest extends TestCase
     #[Test]
     public function customHeadersArePropagated(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Headers_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Headers',
-            'test-nexus-hdr',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'test-nexus-hdr');
 
-        [$code, $resp] = $helper->postOperation(
-            $endpointId,
+        [$code, $resp, ] = $http->post(
+            $endpoint,
             'HeaderEchoService',
             'echoHeader',
             'X-Custom-Header',

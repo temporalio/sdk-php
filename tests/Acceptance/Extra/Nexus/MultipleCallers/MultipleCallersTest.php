@@ -19,7 +19,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -42,12 +42,9 @@ class MultipleCallersTest extends TestCase
     public function twoCallersShareOneAsyncHandlerWorkflow(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-shared-async',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-shared-async');
 
         $handlerWorkflowId = 'shared-handler-' . \bin2hex(\random_bytes(8));
 
@@ -65,8 +62,8 @@ class MultipleCallersTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        $client->start($callerA, $endpoint['name'], $handlerWorkflowId);
-        $client->start($callerB, $endpoint['name'], $handlerWorkflowId);
+        $client->start($callerA, $endpoint->name, $handlerWorkflowId);
+        $client->start($callerB, $endpoint->name, $handlerWorkflowId);
 
         $handlerStub = $client->newUntypedRunningWorkflowStub($handlerWorkflowId);
         $deadline = \microtime(true) + 5.0;

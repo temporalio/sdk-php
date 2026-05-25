@@ -12,7 +12,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -34,25 +35,20 @@ class MultiServiceTest extends TestCase
     #[Test]
     public function bothServicesAreInvokable(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_MultiService_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiService',
-            'test-nexus-multi',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'test-nexus-multi');
 
-        // Service A
-        [$codeA, $respA] = $helper->postOperation($endpointId, 'ServiceA', 'opA', 'foo');
+        [$codeA, $respA, ] = $http->post($endpoint, 'ServiceA', 'opA', 'foo');
         self::assertSame(200, $codeA, "ServiceA: expected 200, got {$codeA}. Response: {$respA}");
         self::assertStringContainsString('A:foo', $respA);
 
-        // Service B
-        [$codeB, $respB] = $helper->postOperation($endpointId, 'ServiceB', 'opB', 'bar');
+        [$codeB, $respB, ] = $http->post($endpoint, 'ServiceB', 'opB', 'bar');
         self::assertSame(200, $codeB, "ServiceB: expected 200, got {$codeB}. Response: {$respB}");
         self::assertStringContainsString('B:bar', $respB);
     }

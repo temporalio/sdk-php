@@ -16,7 +16,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -42,20 +43,17 @@ class AsyncOperationTest extends TestCase
     #[Test]
     public function asyncStartReturnsOperationToken(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Cancel_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Cancel',
-            'nexus-cancel',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-cancel');
 
-        [$code, $resp] = $helper->postOperation(
-            $endpointId,
+        [$code, $resp, ] = $http->post(
+            $endpoint,
             'AsyncJobService',
             'startJob',
             'payload',
@@ -94,20 +92,17 @@ class AsyncOperationTest extends TestCase
     #[Test]
     public function asyncOperationWithoutCallbackStillStarts(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Cancel_Bootstrap2')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Cancel',
-            'nexus-cancel-nocb',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-cancel-nocb');
 
-        [$code, $resp] = $helper->postOperation(
-            $endpointId,
+        [$code, $resp, ] = $http->post(
+            $endpoint,
             'AsyncJobService',
             'startJob',
             'payload-no-cb',

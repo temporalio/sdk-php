@@ -21,7 +21,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -55,12 +55,9 @@ class TimeoutTest extends TestCase
     public function syncOperationTimesOutOnCaller(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-timeout-sync',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-timeout-sync');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Timeout_SyncCaller',
@@ -69,7 +66,7 @@ class TimeoutTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }
@@ -78,12 +75,9 @@ class TimeoutTest extends TestCase
     public function asyncOperationTimesOutOnCaller(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-timeout-async',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-timeout-async');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Timeout_AsyncCaller',
@@ -92,7 +86,7 @@ class TimeoutTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }

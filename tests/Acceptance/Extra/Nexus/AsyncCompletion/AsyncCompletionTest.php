@@ -21,7 +21,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -62,12 +62,9 @@ class AsyncCompletionTest extends TestCase
     public function asyncHandlerCompletesAndDeliversCallback(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-completion-ok',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-completion-ok');
 
         $caller = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncCompletion_WaitCaller',
@@ -76,7 +73,7 @@ class AsyncCompletionTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(60)),
         );
 
-        $client->start($caller, $endpoint['name'], 'payload');
+        $client->start($caller, $endpoint->name, 'payload');
 
         // Caller blocks on the operation result until the handler workflow's
         // 10-second timer fires and the completion callback resolves the
@@ -90,12 +87,9 @@ class AsyncCompletionTest extends TestCase
     public function asyncHandlerCancellationLandsInHistory(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-completion-cancel',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-completion-cancel');
 
         $caller = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncCompletion_CancelCaller',
@@ -104,7 +98,7 @@ class AsyncCompletionTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(60)),
         );
 
-        $client->start($caller, $endpoint['name'], 'payload');
+        $client->start($caller, $endpoint->name, 'payload');
 
         // Caller starts the op then cancels on the next instruction; with
         // WaitRequested it resumes once the handler ack'd the cancel. We

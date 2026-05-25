@@ -12,7 +12,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -36,12 +37,14 @@ class InputTypesTest extends TestCase
     #[Test]
     public function voidInputReturnsString(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_InputTypes_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'pingNoInput', null);
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'pingNoInput', null);
         self::assertSame(200, $code, "Body: {$resp}");
         self::assertStringContainsString('pong', $resp);
     }
@@ -49,12 +52,14 @@ class InputTypesTest extends TestCase
     #[Test]
     public function scalarIntRoundtrip(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_InputTypes_Bootstrap2')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'doubleInt', 21);
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'doubleInt', 21);
         self::assertSame(200, $code, "Body: {$resp}");
         self::assertStringContainsString('42', $resp);
     }
@@ -62,12 +67,14 @@ class InputTypesTest extends TestCase
     #[Test]
     public function dtoInputDtoOutput(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_InputTypes_Bootstrap3')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'echoDto', [
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'echoDto', [
             'name' => 'Ada',
             'value' => 99,
         ]);
@@ -80,16 +87,17 @@ class InputTypesTest extends TestCase
     /**
      * @return array{int, string}
      */
-    private function invoke(State $state, string $operation, mixed $input): array
-    {
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\InputTypes',
-            'nexus-input-types',
-        );
+    private function invoke(
+        State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
+        string $operation,
+        mixed $input,
+    ): array {
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-input-types');
 
-        return $helper->postOperation($endpointId, 'ShapeService', $operation, $input);
+        [$code, $body, ] = $http->post($endpoint, 'ShapeService', $operation, $input);
+        return [$code, $body];
     }
 }
 

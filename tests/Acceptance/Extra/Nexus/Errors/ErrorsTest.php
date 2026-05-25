@@ -15,7 +15,9 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoint;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -37,20 +39,17 @@ class ErrorsTest extends TestCase
     #[Test]
     public function operationFailureReturns424FailedDependency(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'failOp', 'business-error');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'failOp', 'business-error');
 
-        // Per Nexus spec: UnsuccessfulOperationError → 424 Failed Dependency.
-        // This proves OperationException does NOT collapse into HandlerError(Internal),
-        // which was the P0.4 bug. The operation state (failed|canceled) is carried
-        // out-of-band in the Nexus response envelope, not in the failure body.
         self::assertSame(424, $code, "OperationException must map to 424, got {$code}. Body: {$resp}");
         self::assertStringContainsString('business-error', $resp, 'Failure message should be propagated');
     }
@@ -58,49 +57,50 @@ class ErrorsTest extends TestCase
     #[Test]
     public function handlerInternalErrorReturns500(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap2')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'handlerErrorOp', 'infra');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'handlerErrorOp', 'infra');
 
-        // ErrorType::Internal → HTTP 500.
         self::assertSame(500, $code, "Internal handler error must map to 500, got {$code}. Body: {$resp}");
     }
 
     #[Test]
     public function handlerBadRequestReturns400(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap3')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'badRequestOp', 'bad-input');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'badRequestOp', 'bad-input');
 
-        // ErrorType::BadRequest must NOT be collapsed into 500 — this is the P0.1 bug regression test.
         self::assertSame(400, $code, "BadRequest handler error must map to 400, got {$code}. Body: {$resp}");
     }
 
     #[Test]
     public function handlerUnauthorizedReturns403(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap4')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'unauthorizedOp', 'deny');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'unauthorizedOp', 'deny');
 
         self::assertSame(403, $code, "Unauthorized handler error must map to 403, got {$code}. Body: {$resp}");
     }
@@ -108,15 +108,16 @@ class ErrorsTest extends TestCase
     #[Test]
     public function handlerNotFoundReturns404(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap5')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code] = $helper->postOperation($endpointId, 'ErrorService', 'notFoundOp', 'missing');
+        [$code] = $http->post($endpoint, 'ErrorService', 'notFoundOp', 'missing');
 
         self::assertSame(404, $code);
     }
@@ -124,84 +125,63 @@ class ErrorsTest extends TestCase
     #[Test]
     public function unknownOperationReturns404(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap6')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'nonExistentOp', 'whatever');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'nonExistentOp', 'whatever');
 
-        // ServiceHandler::newUnrecognizedOperationException uses ErrorType::NotFound.
         self::assertSame(404, $code, "Unknown op → NOT_FOUND → 404, got {$code}. Body: {$resp}");
     }
 
     #[Test]
     public function operationCanceledFromHandlerPropagates(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap7')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'cancelOp', 'bye');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'cancelOp', 'bye');
 
-        // Canceled operation is still a business-level UnsuccessfulOperationError → 424.
-        // The actual state (canceled vs failed) lives in the Nexus envelope, not body.
         self::assertSame(424, $code, "Canceled → 424, got {$code}. Body: {$resp}");
         self::assertStringContainsString('bye', $resp, 'Failure message should be propagated');
     }
 
     /**
      * Verifies the failure cause/stack-trace forwarding (Fix 3).
-     *
-     * The handler throws a HandlerException whose cause is a runtime
-     * exception with a known marker in its message. sdk-php's
-     * NexusTaskHandler::attachTracebackAsDetails() must JSON-encode the
-     * cause chain into Nexus.Failure.details, so the response body
-     * surfaces both the outer exception type and the inner cause's
-     * message — instead of just the outer message (the pre-Fix-3
-     * behaviour).
      */
     #[Test]
     public function handlerExceptionForwardsCauseChainInResponse(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Errors_Bootstrap8')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+        $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code, $resp] = $helper->postOperation(
-            $endpointId,
-            'ErrorService',
-            'failWithCause',
-            'outer-fail',
-        );
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'failWithCause', 'outer-fail');
 
         self::assertSame(500, $code, "Body: {$resp}");
-        // Outer message must always appear.
         self::assertStringContainsString('outer-fail', $resp);
-        // Cause-chain marker — set in the handler. If our wire dropped the
-        // cause/stack-trace (the pre-Fix-3 behaviour), this string would
-        // not be in the response.
         self::assertStringContainsString('CAUSE_CHAIN_MARKER', $resp);
     }
 
-    private function setupEndpoint(NexusHelper $helper, string $namespace): string
+    private function endpoint(NexusEndpoints $endpoints, string $namespace): NexusEndpoint
     {
-        return $helper->setupEndpoint(
-            $namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Errors',
-            'test-nexus-err',
-        );
+        return $endpoints->register($namespace, __NAMESPACE__, 'test-nexus-err');
     }
 }
 

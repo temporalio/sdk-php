@@ -20,7 +20,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -59,12 +59,9 @@ class AsyncCancelByTokenTest extends TestCase
     public function cancelSurfacesAsCanceledFailureCause(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-cancel',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-cancel');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncWorkflow_CancelCaller',
@@ -73,7 +70,7 @@ class AsyncCancelByTokenTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('cancelled', $stub->getResult('string'));
     }

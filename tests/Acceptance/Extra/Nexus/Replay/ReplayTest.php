@@ -22,7 +22,7 @@ use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -53,12 +53,9 @@ class ReplayTest extends TestCase
     public function asyncWorkflowRunOperationReplaysCleanly(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-replay-async',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-async');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Replay_AsyncCaller',
@@ -67,7 +64,7 @@ class ReplayTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
         self::assertSame('HELLO, WORLD!', $stub->getResult('string'));
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
@@ -92,12 +89,9 @@ class ReplayTest extends TestCase
     public function timerBeforeNexusOperationReplaysCleanly(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-replay-timer',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-timer');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Replay_TimerThenSyncCaller',
@@ -106,7 +100,7 @@ class ReplayTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
         self::assertSame('Hello, world!', $stub->getResult('string'));
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
@@ -132,12 +126,9 @@ class ReplayTest extends TestCase
     public function syncNexusOperationReplaysCleanly(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-replay-sync',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-sync');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Replay_SyncCaller',
@@ -146,7 +137,7 @@ class ReplayTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
         self::assertSame('Hello, world!', $stub->getResult('string'));
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
@@ -170,12 +161,9 @@ class ReplayTest extends TestCase
     public function syncNexusOperationReplaysFromDumpedJsonFile(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-replay-dump',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-dump');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Replay_SyncCaller',
@@ -184,7 +172,7 @@ class ReplayTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
         self::assertSame('Hello, world!', $stub->getResult('string'));
 
         $file = \dirname(__DIR__, 4) . '/runtime/tests/nexus-sync-history.json';
@@ -226,12 +214,9 @@ class ReplayTest extends TestCase
     public function mutatedNexusScheduledEventIsRejectedByReplayer(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-replay-mutate',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-mutate');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Replay_SyncCaller',
@@ -240,7 +225,7 @@ class ReplayTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
         self::assertSame('Hello, world!', $stub->getResult('string'));
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();

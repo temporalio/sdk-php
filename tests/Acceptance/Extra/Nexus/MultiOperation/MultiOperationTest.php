@@ -12,7 +12,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -34,17 +35,14 @@ class MultiOperationTest extends TestCase
     #[Test]
     public function multipleOperationsAreInvokable(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_MultiOp_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
-        // Wait for worker to register
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiOperation',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__);
 
         $cases = [
             ['add', [3, 5], '8'],
@@ -54,9 +52,8 @@ class MultiOperationTest extends TestCase
         ];
 
         foreach ($cases as [$op, $body, $expectedFragment]) {
-            // For ops with multiple args we just send the array
             $payload = \count($body) === 1 ? $body[0] : $body;
-            [$code, $resp] = $helper->postOperation($endpointId, 'MathService', $op, $payload);
+            [$code, $resp, ] = $http->post($endpoint, 'MathService', $op, $payload);
             self::assertSame(200, $code, "Operation {$op}: expected 200, got {$code}. Response: {$resp}");
             self::assertStringContainsString($expectedFragment, $resp, "Operation {$op}: missing expected fragment");
         }

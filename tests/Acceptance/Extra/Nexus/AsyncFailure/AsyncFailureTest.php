@@ -21,7 +21,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -54,12 +54,9 @@ class AsyncFailureTest extends TestCase
     public function callerReceivesFailureWhenHandlerWorkflowThrows(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-handler-fail',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-handler-fail');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncFailure_HandlerFailsCaller',
@@ -68,7 +65,7 @@ class AsyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }
@@ -77,12 +74,9 @@ class AsyncFailureTest extends TestCase
     public function callerReceivesFailureWhenHandlerWorkflowTerminated(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-async-handler-term',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-handler-term');
 
         $callerStub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncFailure_TerminateCaller',
@@ -91,7 +85,7 @@ class AsyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($callerStub, $endpoint['name']);
+        $client->start($callerStub, $endpoint->name);
 
         // Give the handler workflow a chance to start before we terminate it.
         // Same timing pattern as `AsyncCancelByTokenTest`.

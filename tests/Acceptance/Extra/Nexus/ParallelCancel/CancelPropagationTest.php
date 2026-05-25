@@ -25,7 +25,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -49,16 +49,13 @@ class CancelPropagationTest extends TestCase
     public function cancellingScopeWithPromiseAllCancelsAllSiblings(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
         #[Stub('Extra_Nexus_ParallelCancel_Bootstrap')]
         WorkflowStubInterface $bootstrapStub,
     ): void {
         $bootstrapStub->getResult('string');
 
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-cancel-prop',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-cancel-prop');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_ParallelCancel_Caller',
@@ -67,7 +64,7 @@ class CancelPropagationTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(60)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('cancelled', $stub->getResult('string'));
 

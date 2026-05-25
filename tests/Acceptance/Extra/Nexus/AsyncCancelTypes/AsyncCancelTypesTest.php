@@ -20,7 +20,7 @@ use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -56,49 +56,36 @@ class AsyncCancelTypesTest extends TestCase
     }
 
     #[Test]
-    public function tryCancel(State $state, WorkflowClientInterface $client): void
+    public function tryCancel(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        // TryCancel: caller resumes as soon as the cancel is sent. The
-        // handler workflow may still be running — the caller doesn't wait.
-        // Caller's catch block runs first, returns 'ok'.
-        self::assertSame('ok', $this->runCancelScenario($state, $client, 'try-cancel'));
+        self::assertSame('ok', $this->runCancelScenario($state, $client, $endpoints, 'try-cancel'));
     }
 
     #[Test]
-    public function waitCompleted(State $state, WorkflowClientInterface $client): void
+    public function waitCompleted(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        // WaitCompleted: caller waits until the handler workflow has fully
-        // finished after the cancel. Our handler catches CanceledFailure and
-        // returns "cancelled:payload" — the caller observes that value as the
-        // operation result (not a CanceledFailure).
         self::assertSame(
             'cancelled:payload',
-            $this->runCancelScenario($state, $client, 'wait-completed'),
+            $this->runCancelScenario($state, $client, $endpoints, 'wait-completed'),
         );
     }
 
     #[Test]
-    public function abandon(State $state, WorkflowClientInterface $client): void
+    public function abandon(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        // Abandon: caller's cancel is suppressed at the wire level. The handler
-        // workflow never sees a CanceledFailure and runs to natural completion;
-        // the caller observes the handler's normal return value.
         self::assertSame(
             'completed:payload',
-            $this->runCancelScenario($state, $client, 'abandon'),
+            $this->runCancelScenario($state, $client, $endpoints, 'abandon'),
         );
     }
 
     private function runCancelScenario(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
         string $scenario,
     ): string {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-cancel-' . $scenario,
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-cancel-' . $scenario);
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_AsyncCancelTypes_Caller',
@@ -107,7 +94,7 @@ class AsyncCancelTypesTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        $client->start($stub, $endpoint['name'], $scenario);
+        $client->start($stub, $endpoint->name, $scenario);
 
         return $stub->getResult('string');
     }

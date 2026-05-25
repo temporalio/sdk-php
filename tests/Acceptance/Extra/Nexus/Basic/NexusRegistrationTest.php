@@ -12,7 +12,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -44,14 +45,12 @@ class NexusRegistrationTest extends TestCase
     #[Test]
     public function nexusHandlerProcessesRequest(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
     ): void {
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Basic',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__);
 
-        [$code, $resp] = $helper->postOperation($endpointId, 'GreetingService', 'greet', 'World');
+        [$code, $resp, ] = $http->post($endpoint, 'GreetingService', 'greet', 'World');
 
         self::assertSame(200, $code, "Expected HTTP 200, got {$code}. Response: " . \substr($resp, 0, 500));
         self::assertStringContainsString('Hello, World!', $resp);

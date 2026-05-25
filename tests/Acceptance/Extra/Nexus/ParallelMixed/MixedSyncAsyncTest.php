@@ -24,7 +24,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -47,16 +47,13 @@ class MixedSyncAsyncTest extends TestCase
     public function syncAndAsyncOpsResolveTogetherInPromiseAll(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
         #[Stub('Extra_Nexus_ParallelMixed_Bootstrap')]
         WorkflowStubInterface $bootstrapStub,
     ): void {
         $bootstrapStub->getResult('string');
 
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-mixed',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-mixed');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_ParallelMixed_Caller',
@@ -65,7 +62,7 @@ class MixedSyncAsyncTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(45)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('sync=ok-x|async=done-y', $stub->getResult('string'));
 

@@ -32,7 +32,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -69,19 +70,16 @@ class InterceptorTest extends TestCase
     #[Test]
     public function startInvokesInterceptorWithValidToken(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Interceptor_Bootstrap')] WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            __NAMESPACE__,
-            'test-nexus-interceptor',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'test-nexus-interceptor');
 
-        [$code, $body] = $helper->postOperation(
-            $endpointId,
+        [$code, $body, ] = $http->post(
+            $endpoint,
             'GreetingService',
             'sayHello',
             'World',
@@ -99,19 +97,16 @@ class InterceptorTest extends TestCase
     #[Test]
     public function startIsRejectedWithoutAuthToken(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Interceptor_Bootstrap')] WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            __NAMESPACE__,
-            'test-nexus-interceptor',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'test-nexus-interceptor');
 
-        [$code, $body] = $helper->postOperation(
-            $endpointId,
+        [$code, $body, ] = $http->post(
+            $endpoint,
             'GreetingService',
             'sayHello',
             'World',
@@ -138,14 +133,11 @@ class InterceptorTest extends TestCase
     public function cancelInvokesInterceptorAndHandlerSeesMarker(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
         WorkerLocalMarker::clearCancel();
 
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'test-nexus-interceptor-cancel',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'test-nexus-interceptor-cancel');
 
         // Deterministic handler workflow id — we want to fetch its result later.
         $handlerWorkflowId = 'cancel-marker-handler-' . \bin2hex(\random_bytes(4));
@@ -157,7 +149,7 @@ class InterceptorTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($callerStub, $endpoint['name'], $handlerWorkflowId);
+        $client->start($callerStub, $endpoint->name, $handlerWorkflowId);
         self::assertSame('cancelled', $callerStub->getResult('string'));
 
         // Handler workflow caught CanceledFailure and returned 'cancelled:...'.

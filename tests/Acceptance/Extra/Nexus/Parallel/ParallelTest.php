@@ -14,7 +14,7 @@ use Temporal\Promise;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -45,12 +45,9 @@ class ParallelTest extends TestCase
     public function workflowAwaitsMultipleParallelNexusOperations(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-parallel',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-parallel');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_Parallel_Caller',
@@ -59,7 +56,7 @@ class ParallelTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(20)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         // Caller sums the results of N parallel ops; expectation hardcoded
         // to match the workflow body.

@@ -13,7 +13,7 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -42,12 +42,9 @@ class SyncFromWorkflowTest extends TestCase
     public function workflowCallsSyncNexusOperationAndGetsResult(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-sync-from-wf',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-sync-from-wf');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_SyncFromWorkflow_Caller',
@@ -56,7 +53,7 @@ class SyncFromWorkflowTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
-        $client->start($stub, $endpoint['name'], 'world');
+        $client->start($stub, $endpoint->name, 'world');
 
         self::assertSame('Hello, world!', $stub->getResult('string'));
     }

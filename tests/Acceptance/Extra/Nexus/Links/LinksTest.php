@@ -15,7 +15,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -38,16 +39,16 @@ class LinksTest extends TestCase
     #[Test]
     public function handlerCanAttachSingleLinkAndSeeItBack(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Links_Bootstrap')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'attachAndReportSingle', 'session-7');
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'attachAndReportSingle', 'session-7');
 
         self::assertSame(200, $code, "Expected 200, got {$code}. Body: {$resp}");
-        // Body carries a deterministic marker produced from links the handler saw
-        // via OperationContext::$links->all() right after its own links->add() call.
         self::assertStringContainsString('count=1', $resp);
         self::assertStringContainsString('session-7', $resp);
         self::assertStringContainsString('example.session', $resp);
@@ -56,12 +57,14 @@ class LinksTest extends TestCase
     #[Test]
     public function handlerCanAttachMultipleLinksAndSeeThemBack(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Links_Bootstrap2')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'attachAndReportMany', 'job-99');
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'attachAndReportMany', 'job-99');
 
         self::assertSame(200, $code, "Expected 200, got {$code}. Body: {$resp}");
         self::assertStringContainsString('count=2', $resp);
@@ -72,12 +75,14 @@ class LinksTest extends TestCase
     #[Test]
     public function handlerStartsWithNoLinks(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Links_Bootstrap3')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        [$code, $resp] = $this->invoke($state, 'reportNoLinks', 'x');
+        [$code, $resp] = $this->invoke($state, $endpoints, $http, 'reportNoLinks', 'x');
 
         self::assertSame(200, $code, "Body: {$resp}");
         self::assertStringContainsString('count=0', $resp);
@@ -94,20 +99,17 @@ class LinksTest extends TestCase
     #[Test]
     public function handlerLinksAppearInNexusLinkResponseHeader(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Links_Bootstrap4')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
-            'nexus-links-hdr',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-links-hdr');
 
-        [$code, $body, $headers] = $helper->postOperationFull(
-            $endpointId,
+        [$code, $body, $headers] = $http->post(
+            $endpoint,
             'LinkService',
             'attachAndReportMany',
             'order-42',
@@ -138,27 +140,24 @@ class LinksTest extends TestCase
     #[Test]
     public function malformedCallerNexusLinkReturns400(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Links_Bootstrap5')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
-            'nexus-links-bad',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-links-bad');
 
         // A Link header value without the mandatory `type` parameter.
         // RoadRunner parses the raw `Nexus-Link` header, builds options.links,
         // sdk-php's LinkParser then rejects with HandlerException(BadRequest).
-        [$code, $body] = $helper->postOperation(
-            $endpointId,
+        [$code, $body, ] = $http->post(
+            $endpoint,
             'LinkService',
             'reportNoLinks',
             'x',
-            ['Nexus-Link' => '<https://caller.test/orphan>'], // no `type="..."`
+            ['Nexus-Link' => '<https://caller.test/orphan>'],
         );
 
         self::assertSame(400, $code, "Expected 400 BadRequest, got {$code}. Body: {$body}");
@@ -167,16 +166,17 @@ class LinksTest extends TestCase
     /**
      * @return array{int, string}
      */
-    private function invoke(State $state, string $op, string $body): array
-    {
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
-            'nexus-links',
-        );
+    private function invoke(
+        State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
+        string $op,
+        string $body,
+    ): array {
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-links');
 
-        return $helper->postOperation($endpointId, 'LinkService', $op, $body);
+        [$code, $resp, ] = $http->post($endpoint, 'LinkService', $op, $body);
+        return [$code, $resp];
     }
 }
 

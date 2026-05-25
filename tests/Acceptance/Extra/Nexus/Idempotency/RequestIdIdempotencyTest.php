@@ -19,7 +19,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -40,17 +41,14 @@ class RequestIdIdempotencyTest extends TestCase
     #[Test]
     public function sameNexusRequestIdYieldsSameOperationToken(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Idempotency_Bootstrap')]
         WorkflowStubInterface $bootstrapStub,
     ): void {
         $bootstrapStub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-idempotent',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-idempotent');
 
         $sharedRequestId = 'idempotency-test-' . \bin2hex(\random_bytes(4));
 
@@ -59,8 +57,8 @@ class RequestIdIdempotencyTest extends TestCase
             'Nexus-Request-Id' => $sharedRequestId,
         ];
 
-        [$code1, $body1] = $helper->postOperation(
-            $endpointId,
+        [$code1, $body1, ] = $http->post(
+            $endpoint,
             'IdempotentWorkflowService',
             'longRun',
             'payload-1',
@@ -69,8 +67,8 @@ class RequestIdIdempotencyTest extends TestCase
         self::assertSame(201, $code1, "First async start expected 201, got {$code1}. Body: {$body1}");
         $token1 = self::extractOperationToken($body1);
 
-        [$code2, $body2] = $helper->postOperation(
-            $endpointId,
+        [$code2, $body2, ] = $http->post(
+            $endpoint,
             'IdempotentWorkflowService',
             'longRun',
             'payload-2',
@@ -89,23 +87,20 @@ class RequestIdIdempotencyTest extends TestCase
     #[Test]
     public function differentNexusRequestIdsYieldDifferentOperationTokens(
         State $state,
+        NexusEndpoints $endpoints,
+        NexusHttpClient $http,
         #[Stub('Extra_Nexus_Idempotency_Bootstrap')]
         WorkflowStubInterface $bootstrapStub,
     ): void {
         $bootstrapStub->getResult('string');
 
-        $helper = NexusHelper::for($state);
-        $endpointId = $helper->setupEndpoint(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-idempotent-distinct',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-idempotent-distinct');
 
         $requestIdA = 'idempotency-test-A-' . \bin2hex(\random_bytes(4));
         $requestIdB = 'idempotency-test-B-' . \bin2hex(\random_bytes(4));
 
-        [$code1, $body1] = $helper->postOperation(
-            $endpointId,
+        [$code1, $body1, ] = $http->post(
+            $endpoint,
             'IdempotentWorkflowService',
             'longRun',
             'payload-1',
@@ -117,8 +112,8 @@ class RequestIdIdempotencyTest extends TestCase
         self::assertSame(201, $code1);
         $tokenA = self::extractOperationToken($body1);
 
-        [$code2, $body2] = $helper->postOperation(
-            $endpointId,
+        [$code2, $body2, ] = $http->post(
+            $endpoint,
             'IdempotentWorkflowService',
             'longRun',
             'payload-1',

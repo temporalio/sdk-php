@@ -21,7 +21,7 @@ use Temporal\Nexus\Exception\RetryBehavior;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -44,12 +44,9 @@ class SyncFailureTest extends TestCase
     public function callerCatchesNexusOperationFailureWithApplicationFailureCause(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-sync-fail-app',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-sync-fail-app');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_SyncFailure_AppFailureCaller',
@@ -58,45 +55,42 @@ class SyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }
 
     #[Test]
-    public function handlerErrorBadRequest(State $state, WorkflowClientInterface $client): void
+    public function handlerErrorBadRequest(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, 'badRequest', 'BAD_REQUEST'));
+        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, $endpoints, 'badRequest', 'BAD_REQUEST'));
     }
 
     #[Test]
-    public function handlerErrorInternal(State $state, WorkflowClientInterface $client): void
+    public function handlerErrorInternal(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, 'internal', 'INTERNAL'));
+        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, $endpoints, 'internal', 'INTERNAL'));
     }
 
     #[Test]
-    public function handlerErrorNotFound(State $state, WorkflowClientInterface $client): void
+    public function handlerErrorNotFound(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, 'notFound', 'NOT_FOUND'));
+        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, $endpoints, 'notFound', 'NOT_FOUND'));
     }
 
     #[Test]
-    public function handlerErrorUnauthorized(State $state, WorkflowClientInterface $client): void
+    public function handlerErrorUnauthorized(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, 'unauthorized', 'UNAUTHORIZED'));
+        self::assertSame('ok', $this->runHandlerErrorScenario($state, $client, $endpoints, 'unauthorized', 'UNAUTHORIZED'));
     }
 
     #[Test]
     public function applicationFailureCausePreservesTypeMessageAndDetails(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-sync-fail-rich-cause',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-sync-fail-rich-cause');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_SyncFailure_RichCauseCaller',
@@ -105,7 +99,7 @@ class SyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }
@@ -114,12 +108,9 @@ class SyncFailureTest extends TestCase
     public function callerReceivesNotFoundForUnknownOperation(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
     ): void {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
-            $state->namespace,
-            __NAMESPACE__,
-            'nexus-sync-unknown-op',
-        );
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-sync-unknown-op');
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_SyncFailure_UnknownOperationCaller',
@@ -128,7 +119,7 @@ class SyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($stub, $endpoint['name']);
+        $client->start($stub, $endpoint->name);
 
         self::assertSame('ok', $stub->getResult('string'));
     }
@@ -136,10 +127,11 @@ class SyncFailureTest extends TestCase
     private function runHandlerErrorScenario(
         State $state,
         WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
         string $opName,
         string $expectedType,
     ): string {
-        $endpoint = NexusHelper::for($state)->setupEndpointWithName(
+        $endpoint = $endpoints->register(
             $state->namespace,
             __NAMESPACE__,
             'nexus-sync-handler-err-' . \strtolower($opName),
@@ -152,7 +144,7 @@ class SyncFailureTest extends TestCase
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
         );
 
-        $client->start($stub, $endpoint['name'], $opName, $expectedType);
+        $client->start($stub, $endpoint->name, $opName, $expectedType);
 
         return $stub->getResult('string');
     }
