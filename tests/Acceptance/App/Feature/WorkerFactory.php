@@ -10,14 +10,10 @@ use Spiral\Core\Attribute\Singleton;
 use Spiral\Core\Container\InjectorInterface;
 use Spiral\Core\InvokerInterface;
 use Temporal\Client\WorkflowStubInterface;
-use Temporal\Interceptor\PipelineProvider;
-use Temporal\Interceptor\SimplePipelineProvider;
-use Temporal\Plugin\CompositePipelineProvider;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptActivityInterceptor;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptWorkflowInterceptor;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -33,27 +29,24 @@ final class WorkerFactory
     public function __construct(
         private readonly WorkerFactoryInterface $workerFactory,
         private readonly InvokerInterface $invoker,
-    ) {}
+    ) {
+    }
 
     public function createWorker(
         Feature $feature,
     ): WorkerInterface {
-        // Find Worker attribute
         $attr = self::findAttribute(
             ...\array_map(static fn(array $check): string => $check[0], $feature->checks),
             ...$feature->workflows,
             ...$feature->activities,
         );
         $options = $attr?->options === null ? null : $this->invoker->invoke($attr->options);
-        $featureProvider = $attr?->pipelineProvider === null ? null : $this->invoker->invoke($attr->pipelineProvider);
+        $interceptorProvider = $attr?->pipelineProvider === null ? null : $this->invoker->invoke($attr->pipelineProvider);
         $logger = $attr?->logger === null ? null : $this->invoker->invoke($attr->logger);
 
-        // Add plugins from the attribute to the factory's registry (already instantiated, no invoker needed)
         if ($attr?->plugins !== null) {
             $this->workerFactory->getPluginRegistry()->merge($attr->plugins);
         }
-
-        $interceptorProvider = $this->composeTranscriptProvider($featureProvider);
 
         return $this->workerFactory->newWorker(
             $feature->taskQueue,
@@ -61,18 +54,6 @@ final class WorkerFactory
             interceptorProvider: $interceptorProvider,
             logger: $logger ?? $this->buildLoggerForFeature($feature),
         );
-    }
-
-    private function composeTranscriptProvider(?PipelineProvider $base): PipelineProvider
-    {
-        $transcriptInterceptors = [
-            new TranscriptActivityInterceptor(),
-            new TranscriptWorkflowInterceptor(),
-        ];
-        if ($base === null) {
-            return new SimplePipelineProvider($transcriptInterceptors);
-        }
-        return new CompositePipelineProvider($transcriptInterceptors, $base);
     }
 
     private function buildLoggerForFeature(Feature $feature): LoggerInterface
