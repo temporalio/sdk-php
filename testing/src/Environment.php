@@ -307,16 +307,6 @@ final class Environment
         }
     }
 
-    public function getRoadRunnerOutput(): string
-    {
-        return $this->roadRunnerProcess?->getOutput() ?? '';
-    }
-
-    public function getRoadRunnerErrorOutput(): string
-    {
-        return $this->roadRunnerProcess?->getErrorOutput() ?? '';
-    }
-
     /**
      * @psalm-assert Process $this->temporalServerProcess
      */
