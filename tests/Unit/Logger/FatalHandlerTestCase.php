@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Logger;
 
+use JetBrains\PhpStorm\Language;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -73,10 +74,10 @@ final class FatalHandlerTestCase extends TestCase
     {
         return $message
             . "\nfixture stdout/stderr:\n" . $this->lastFixtureOutput()
-            . "\ntranscript content:\n" . (string) @\file_get_contents($logFile);
+            . "\ntranscript content:\n" . @\file_get_contents($logFile);
     }
 
-    private function buildFixtureScript(string $logFile, string $body): string
+    private function buildFixtureScript(string $logFile, #[Language("PHP")]string $body): string
     {
         $baseDir = \dirname(__DIR__, 3);
         $autoloadPath = \var_export($baseDir . '/vendor/autoload.php', true);

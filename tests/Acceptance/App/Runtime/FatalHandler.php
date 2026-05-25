@@ -18,63 +18,56 @@ final class FatalHandler
         \E_USER_ERROR,
     ];
 
-    private static ?TranscriptWriter $writer = null;
-
-    private static ?LoggerInterface $stderr = null;
-
     private static bool $inHandler = false;
 
     private static bool $registered = false;
 
-    public static function register(TranscriptWriter $writer, ?LoggerInterface $stderr = null): void
+    public static function register(TranscriptWriter $writer, LoggerInterface $stderr): void
     {
-        self::$writer = $writer;
-        self::$stderr = $stderr ?? new NullLogger();
-
         if (self::$registered) {
             return;
         }
         self::$registered = true;
 
-        \set_error_handler(static function (int $type, string $message, string $file, int $line): bool {
+        \set_error_handler(static function (int $type, string $message, string $file, int $line) use ($writer): bool {
             if (self::$inHandler) {
                 return false;
             }
             self::$inHandler = true;
             try {
-                self::$writer?->writeError($type, $message, $file, $line);
+                $writer->writeError($type, $message, $file, $line);
             } finally {
                 self::$inHandler = false;
             }
             return false;
         });
 
-        \set_exception_handler(static function (\Throwable $throwable): void {
+        \set_exception_handler(static function (\Throwable $throwable) use ($stderr, $writer): void {
             if (self::$inHandler) {
                 return;
             }
             self::$inHandler = true;
             try {
-                self::$writer?->writeFatal($throwable);
-                self::$writer?->flush();
+                $writer->writeFatal($throwable);
+                $writer->flush();
             } finally {
                 self::$inHandler = false;
             }
-            self::$stderr?->critical('fatal', [
+            $stderr->critical('fatal', [
                 'class' => $throwable::class,
                 'message' => $throwable->getMessage(),
             ]);
             exit(1);
         });
 
-        \register_shutdown_function(static function (): void {
+        \register_shutdown_function(static function () use ($writer): void {
             $error = \error_get_last();
             if ($error === null) {
-                self::$writer?->flush();
+                $writer->flush();
                 return;
             }
             if (!\in_array((int) $error['type'], self::FATAL_ERROR_TYPES, true)) {
-                self::$writer?->flush();
+                $writer->flush();
                 return;
             }
             if (self::$inHandler) {
@@ -82,8 +75,8 @@ final class FatalHandler
             }
             self::$inHandler = true;
             try {
-                self::$writer?->writeFatalFromError($error);
-                self::$writer?->flush();
+                $writer->writeFatalFromError($error);
+                $writer->flush();
             } finally {
                 self::$inHandler = false;
             }

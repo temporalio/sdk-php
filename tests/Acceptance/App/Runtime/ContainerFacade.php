@@ -8,5 +8,5 @@ use Spiral\Core\Container;
 
 final class ContainerFacade
 {
-    public static ?Container $container = null;
+    public static Container $container;
 }

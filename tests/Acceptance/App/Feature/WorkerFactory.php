@@ -23,8 +23,8 @@ final class WorkerFactory
     public function __construct(
         private readonly WorkerFactoryInterface $workerFactory,
         private readonly InvokerInterface $invoker,
+        private readonly LoggerInterface $logger,
         private readonly ?TranscriptWriter $transcript = null,
-        private readonly ?LoggerInterface $stderr = null,
     ) {}
 
     public function createWorker(
@@ -40,6 +40,9 @@ final class WorkerFactory
             ? null
             : $this->invoker->invoke($attribute->pipelineProvider);
         $logger = $attribute?->logger === null ? null : $this->invoker->invoke($attribute->logger);
+        if ($logger !== null && !$logger instanceof LoggerInterface) {
+            throw new \InvalidArgumentException(sprintf("Logger must implement PSR-3 LoggerInterface, got %s", \get_debug_type($logger)));
+        }
 
         if ($attribute?->plugins !== null) {
             $this->workerFactory->getPluginRegistry()->merge($attribute->plugins);
@@ -49,21 +52,19 @@ final class WorkerFactory
             $feature->taskQueue,
             $options ?? WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
             interceptorProvider: $interceptorProvider,
-            logger: $logger ?? $this->buildLoggerForFeature($feature),
+            logger: $this->decorateLogger($logger, $feature),
         );
     }
 
-    private function buildLoggerForFeature(Feature $feature): LoggerInterface
+    private function decorateLogger(?LoggerInterface $logger, Feature $feature): LoggerInterface
     {
         $serverLogger = LoggerFactory::createServerLogger($feature->taskQueue);
-        if ($this->transcript === null || $this->stderr === null) {
-            return $serverLogger;
+        $loggers = [$this->logger, $logger, $serverLogger];
+        if ($this->transcript !== null) {
+            $loggers[] = new TranscriptAdapter($this->transcript, $this->logger);
         }
-        return new FanoutLogger(
-            $this->stderr,
-            $serverLogger,
-            new TranscriptAdapter($this->transcript, $this->stderr),
-        );
+
+        return new FanoutLogger(...array_filter($loggers));
     }
 
     /**

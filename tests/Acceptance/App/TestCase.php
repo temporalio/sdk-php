@@ -56,6 +56,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
             LoggerInterface::class => ClientLogger::class,
             ClientLogger::class => $logger,
         ];
+        $workflowClient = $container->get(WorkflowClientInterface::class);
 
         // Auto-inject plugin-configured client from #[Worker(plugins: [...])] attribute
         $workerAttr = WorkerFactory::findAttribute(static::class);
@@ -63,9 +64,8 @@ abstract class TestCase extends \Temporal\Tests\TestCase
             $pluginRegistry = new PluginRegistry($workerAttr->plugins);
             $clientPlugins = $pluginRegistry->getPlugins(ClientPluginInterface::class);
             if ($clientPlugins !== []) {
-                $existingClient = $container->get(WorkflowClientInterface::class);
                 $pluginClient = WorkflowClient::create(
-                    serviceClient: $existingClient->getServiceClient(),
+                    serviceClient: $workflowClient->getServiceClient(),
                     options: (new ClientOptions())->withNamespace($runtime->namespace),
                     pluginRegistry: new PluginRegistry($workerAttr->plugins),
                 );
@@ -75,7 +75,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
         return $container->runScope(
             new Scope(name: 'feature', bindings: $bindings),
-            function (Container $container): mixed {
+            function (Container $container) use ($workflowClient): mixed {
                 $args = [];
                 $caughtException = null;
                 $startedAt = \microtime(true);
@@ -106,7 +106,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         echo "\n=== Stack trace ===\n";
                         echo $e->getTraceAsString();
                         echo "\n=== Workflow history ===\n";
-                        $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+                        $this->printWorkflowHistory($workflowClient, $args);
 
                         $logRecords = $container->get(ClientLogger::class)->getRecords();
                         if ($logRecords !== []) {
@@ -134,11 +134,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     throw $e;
                 } finally {
                     if ($transcript !== null) {
-                        (new WorkflowHistoryDumper())->dump(
-                            $transcript,
-                            $container->get(WorkflowClientInterface::class),
-                            $args,
-                        );
+                        $dumper = $container->has(WorkflowHistoryDumper::class)
+                            ? $container->get(WorkflowHistoryDumper::class)
+                            : null;
+                        $dumper?->dump($transcript, $workflowClient, $args);
                     }
                     foreach ($args as $arg) {
                         if ($arg instanceof WorkflowStubInterface) {
@@ -153,9 +152,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                             }
                         }
                     }
-                    $stderr = $container->has(StderrLogger::class)
-                        ? $container->get(StderrLogger::class)
-                        : null;
                     if ($transcript !== null) {
                         $status = match (true) {
                             $caughtException === null => 'passed',
@@ -174,6 +170,9 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         $transcript->writeTestBoundary(TranscriptSection::TEST_END, $endAttributes);
                         $transcript->flush();
                         if ($caughtException !== null && !$caughtException instanceof SkippedTest) {
+                            $stderr = $container->has(StderrLogger::class)
+                                ? $container->get(StderrLogger::class)
+                                : null;
                             $stderr?->error('transcript', ['path' => $transcript->getPath()]);
                             $stderr?->info('run `composer transcripts:last` to view the merged stream');
                         }

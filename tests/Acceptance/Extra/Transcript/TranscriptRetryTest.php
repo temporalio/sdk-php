@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\Extra\Transcript\TranscriptRetry;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -73,7 +74,7 @@ class RetryWorkflow
     {
         $activity = Workflow::newActivityStub(
             RetryActivity::class,
-            Activity\ActivityOptions::new()
+            ActivityOptions::new()
                 ->withScheduleToCloseTimeout(30)
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(3)->withInitialInterval(1)),
         );

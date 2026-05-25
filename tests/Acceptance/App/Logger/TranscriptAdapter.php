@@ -6,7 +6,6 @@ namespace Temporal\Tests\Acceptance\App\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
-use Psr\Log\NullLogger;
 
 final class TranscriptAdapter implements LoggerInterface
 {

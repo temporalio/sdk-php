@@ -6,6 +6,7 @@ namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 
 final class RRStarter
 {

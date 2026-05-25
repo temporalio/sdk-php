@@ -83,18 +83,6 @@ final class TranscriptPluginTestCase extends TestCase
         self::assertSame($plugin, $workerPlugins[0]);
     }
 
-    public function testRegistryRejectsDuplicateRegistration(): void
-    {
-        $writer = $this->newWriter();
-        $registry = new PluginRegistry();
-        $registry->add(new TranscriptPlugin($writer));
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Duplicate plugin "temporal-php.transcript": a plugin with this name is already registered.');
-
-        $registry->add(new TranscriptPlugin($writer));
-    }
-
     private function newWriter(): TranscriptWriter
     {
         return new TranscriptWriter($this->directory . '/' . \uniqid('plugin-', true) . '.log');

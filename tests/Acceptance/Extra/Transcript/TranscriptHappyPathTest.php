@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\Extra\Transcript\TranscriptHappyPath;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptLine;
@@ -67,7 +68,7 @@ class HappyPathWorkflow
     {
         $activity = Workflow::newActivityStub(
             HappyPathActivity::class,
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout(10),
+            ActivityOptions::new()->withScheduleToCloseTimeout(10),
         );
         return yield $activity->greet();
     }

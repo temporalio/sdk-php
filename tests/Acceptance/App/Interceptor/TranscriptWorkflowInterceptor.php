@@ -80,7 +80,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             $this->transcript->writeMeta($phase . '_completed', $attributes);
             return $result;
         } catch (\Throwable $exception) {
-            $this->transcript->writeException($phase, $attributes, $exception);
+            $this->transcript->writeException($phase . '_failed', $attributes, $exception);
             throw $exception;
         }
     }
