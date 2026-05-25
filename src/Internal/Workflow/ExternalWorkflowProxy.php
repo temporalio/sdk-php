@@ -16,7 +16,12 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 
-class ExternalWorkflowProxy extends Proxy
+/**
+ * @template-covariant T of object
+ * @mixin T
+ * @internal
+ */
+final class ExternalWorkflowProxy extends Proxy
 {
     /**
      * @var string

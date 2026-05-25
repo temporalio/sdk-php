@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Spiral\Core\Attribute\Proxy;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\Goridge\RPC\RPCInterface;
@@ -30,8 +31,8 @@ use Temporal\Tests\Acceptance\App\Runtime\FatalHandler;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
-use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -50,18 +51,37 @@ FatalHandler::register($workerTranscript, $stderr);
 RuntimeBuilder::init();
 StackRenderer::addIgnoredPath(__FILE__);
 
+$logger = new StderrLogger();
+
+/** @var list<class-string> $allowedTestClasses */
+$allowedTestClasses = [];
+foreach ($argv as $arg) {
+    if (\str_starts_with($arg, 'test-class=')) {
+        $allowedTestClasses[] = \substr($arg, 11);
+    }
+}
+if ($allowedTestClasses === []) {
+    $logger->info('[selection] no test-class= args, registering all features');
+} else {
+    $logger->info('[selection] loaded test classes from CLI args', ['count' => \count($allowedTestClasses)]);
+}
+
 /** @var array<non-empty-string, WorkerInterface> $run */
 $workers = [];
 
 try {
-    // Load runtime options
     $command = Command::fromCommandLine($argv);
-    $runtime = RuntimeBuilder::createState($command, \getcwd(), [
-        'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
-        'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
-    ], workers: (int) (\getenv('ACTIVITY_WORKERS') ?: 2));
+    $runtime = RuntimeBuilder::createState(
+        $command,
+        \getcwd(),
+        [
+            'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
+            'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
+        ],
+        workers: (int) (\getenv('ACTIVITY_WORKERS') ?: 2),
+        allowedTestClasses: $allowedTestClasses,
+    );
     $run = $runtime->command;
-    // Init container
     $container = new Spiral\Core\Container();
     ContainerFacade::$container = $container;
     $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
@@ -74,7 +94,6 @@ try {
         new ProtoConverter(),
         new JsonConverter(),
     ];
-    // Collect converters from all features
     foreach ($runtime->converters() as $feature => $converter) {
         \array_unshift($converters, $container->get($converter));
     }
@@ -87,7 +106,6 @@ try {
         return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
     };
 
-    // Create client services
     $serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
         ? ServiceClient::create($runtime->address)
         : ServiceClient::createSSL(
@@ -99,8 +117,8 @@ try {
     $workflowClient = WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
     $scheduleClient = ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
 
-    // Bind services
     $container->bindSingleton(State::class, $runtime);
+    $container->bindSingleton(LoggerInterface::class, $logger);
     $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
     $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
     $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
@@ -110,12 +128,10 @@ try {
         static fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
     );
 
-    // Register Workflows
     foreach ($runtime->workflows() as $feature => $workflow) {
         $getWorker($feature)->registerWorkflowTypes($workflow);
     }
 
-    // Register Activities
     foreach ($runtime->activities() as $feature => $activity) {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }

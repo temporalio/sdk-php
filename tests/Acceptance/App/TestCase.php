@@ -37,15 +37,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 {
     private const TRANSCRIPT_FLUSH_USLEEP = 500_000;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var State $state */
-        $state = ContainerFacade::$container->get(State::class);
-        $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
-    }
-
     #[\Override]
     protected function runTest(): mixed
     {
