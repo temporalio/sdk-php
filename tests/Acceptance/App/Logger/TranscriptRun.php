@@ -43,6 +43,9 @@ final class TranscriptRun
         if (!\is_dir($mergedDirectory)) {
             @\mkdir($mergedDirectory, 0777, true);
         }
+        if (!\is_dir($mergedDirectory)) {
+            throw new \RuntimeException("Failed to create merged directory: {$mergedDirectory}");
+        }
         $path = $mergedDirectory . '/transcript.log';
         $handle = \fopen($path, 'wb');
         if ($handle === false) {

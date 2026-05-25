@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+/**
+ * Exit codes:
+ *  0 — success (run merged or list printed).
+ *  1 — no runs found / requested run absent / run has no transcript files.
+ *  2 — usage error (unknown flag, conflicting flags, repeated flag, --list/--last combined).
+ */
+
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
@@ -11,21 +18,47 @@ $stderr = new StderrLogger();
 $store = TranscriptStore::create(stderr: $stderr);
 
 $listMode = false;
+$lastMode = false;
 $selector = null;
 foreach (\array_slice($argv, 1) as $arg) {
     if ($arg === '--list' || $arg === 'list') {
+        if ($listMode) {
+            $stderr->error('repeated flag', ['flag' => '--list']);
+            exit(2);
+        }
         $listMode = true;
         continue;
     }
     if ($arg === '--last' || $arg === 'last') {
-        $selector = null;
+        if ($lastMode) {
+            $stderr->error('repeated flag', ['flag' => '--last']);
+            exit(2);
+        }
+        $lastMode = true;
         continue;
     }
     if (\str_starts_with($arg, '-')) {
         $stderr->error('unknown flag', ['flag' => $arg]);
         exit(2);
     }
+    if ($selector !== null) {
+        $stderr->error('only one positional selector accepted', ['previous' => $selector, 'new' => $arg]);
+        exit(2);
+    }
     $selector = $arg;
+}
+
+if ($listMode && $lastMode) {
+    $stderr->error('--list and --last are mutually exclusive');
+    exit(2);
+}
+if ($listMode && $selector !== null) {
+    $stderr->error('--list does not accept a selector', ['selector' => $selector]);
+    exit(2);
+}
+if ($lastMode && $selector !== null) {
+    $stderr->error('--last does not accept a selector', ['selector' => $selector]);
+    exit(2);
 }
 
 if ($listMode) {

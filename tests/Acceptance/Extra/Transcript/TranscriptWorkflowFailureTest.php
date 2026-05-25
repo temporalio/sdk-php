@@ -14,7 +14,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class TranscriptWorkflowFailureTest extends TestCase
+final class TranscriptWorkflowFailureTest extends TestCase
 {
     public function testWorkflowFailureCapturedWithHistory(
         #[Stub('Extra_Transcript_TranscriptWorkflowFailure_run')]
@@ -30,17 +30,20 @@ class TranscriptWorkflowFailureTest extends TestCase
 
         $lines = $this->readCurrentTestTranscript();
 
-        // The workflow execute interceptor wraps the synchronous setup of the workflow scope;
-        // the generator body's throw is delivered asynchronously, so it surfaces via WIRE_OUTBOUND
-        // (failure response to RoadRunner) rather than via the interceptor's catch.
-        $executeMarkers = \array_filter(
+        $executeMarkers = \array_values(\array_filter(
             $lines,
             static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::META
                 && ($line->attributes['event'] ?? null) === 'workflow_execute_start',
-        );
-        $outbound = \array_filter($lines, static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::WIRE_OUTBOUND);
-        self::assertNotEmpty($executeMarkers, 'Expected workflow_execute_start META marker');
-        self::assertNotEmpty($outbound, 'Expected at least one WIRE_OUTBOUND frame');
+        ));
+        self::assertCount(1, $executeMarkers, 'Expected exactly one workflow_execute_start META');
+        self::assertSame('Extra_Transcript_TranscriptWorkflowFailure_run', $executeMarkers[0]->attributes['workflow_type']);
+        self::assertSame($stub->getExecution()->getID(), $executeMarkers[0]->attributes['workflow_id']);
+
+        $outbound = \array_values(\array_filter(
+            $lines,
+            static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::WIRE_OUTBOUND,
+        ));
+        self::assertNotEmpty($outbound, 'Expected at least one WIRE_OUTBOUND frame from the worker');
     }
 }
 

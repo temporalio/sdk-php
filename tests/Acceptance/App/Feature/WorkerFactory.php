@@ -7,45 +7,51 @@ namespace Temporal\Tests\Acceptance\App\Feature;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Spiral\Core\Attribute\Singleton;
-use Spiral\Core\Container\InjectorInterface;
 use Spiral\Core\InvokerInterface;
-use Temporal\Client\WorkflowStubInterface;
+use Temporal\Plugin\PluginInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 
-/**
- * @implements InjectorInterface<WorkflowStubInterface>
- */
 #[Singleton]
 final class WorkerFactory
 {
     public function __construct(
         private readonly WorkerFactoryInterface $workerFactory,
         private readonly InvokerInterface $invoker,
-    ) {
-    }
+    ) {}
 
     public function createWorker(
         Feature $feature,
     ): WorkerInterface {
-        $attr = self::findAttribute(
+        $attribute = self::findAttribute(
             ...\array_map(static fn(array $check): string => $check[0], $feature->checks),
             ...$feature->workflows,
             ...$feature->activities,
         );
-        $options = $attr?->options === null ? null : $this->invoker->invoke($attr->options);
-        $interceptorProvider = $attr?->pipelineProvider === null ? null : $this->invoker->invoke($attr->pipelineProvider);
-        $logger = $attr?->logger === null ? null : $this->invoker->invoke($attr->logger);
+        $options = $attribute?->options === null ? null : $this->invoker->invoke($attribute->options);
+        $interceptorProvider = $attribute?->pipelineProvider === null
+            ? null
+            : $this->invoker->invoke($attribute->pipelineProvider);
+        $logger = $attribute?->logger === null ? null : $this->invoker->invoke($attribute->logger);
 
-        if ($attr?->plugins !== null) {
-            $this->workerFactory->getPluginRegistry()->merge($attr->plugins);
+        if ($attribute?->plugins !== null) {
+            $registry = $this->workerFactory->getPluginRegistry();
+            $registeredNames = \array_map(
+                static fn(PluginInterface $plugin): string => $plugin->getName(),
+                $registry->getPlugins(PluginInterface::class),
+            );
+            foreach ($attribute->plugins as $plugin) {
+                if (!\in_array($plugin->getName(), $registeredNames, true)) {
+                    $registry->add($plugin);
+                    $registeredNames[] = $plugin->getName();
+                }
+            }
         }
 
         return $this->workerFactory->newWorker(

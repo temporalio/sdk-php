@@ -59,7 +59,7 @@ final class TranscriptWriterTestCase extends TestCase
         $writer->flush();
 
         $raw = \file_get_contents($writer->getPath());
-        $bodyLines = \array_values(\array_filter(\explode("\n", $raw), static fn(string $l): bool => $l !== ''));
+        $bodyLines = \array_values(\array_filter(\explode("\n", $raw), static fn(string $line): bool => $line !== ''));
         $logLine = null;
         foreach ($bodyLines as $line) {
             if (\str_contains($line, '"section":"LOG"')) {
@@ -77,16 +77,21 @@ final class TranscriptWriterTestCase extends TestCase
         $writer = new TranscriptWriter($this->directory . '/wire.log');
         $frame = '{"command":"InvokeActivity","payloads":["abc"]}';
         $writer->writeWireInbound($frame, ['tickTime' => '2026-05-13'], 42);
-        $writer->writeWireOutbound($frame, 42);
+        $writer->writeWireOutbound($frame, 42, 1);
+        $writer->writeWireOutbound($frame, 42, 2);
         $writer->flush();
 
         $reader = new TranscriptReader($this->directory);
         $inbound = $reader->findBySection(TranscriptSection::WIRE_INBOUND);
         $outbound = $reader->findBySection(TranscriptSection::WIRE_OUTBOUND);
         self::assertCount(1, $inbound);
-        self::assertCount(1, $outbound);
-        self::assertSame(42, $inbound[0]->attributes['frame_id']);
+        self::assertCount(2, $outbound);
+        self::assertSame(42, $inbound[0]->attributes['inbound_batch_id']);
         self::assertSame(\strlen($frame), $inbound[0]->attributes['bytes']);
+        self::assertSame(['tickTime' => '2026-05-13'], $inbound[0]->payload['headers']);
+        self::assertSame(42, $outbound[0]->attributes['inbound_batch_id']);
+        self::assertSame(1, $outbound[0]->attributes['outbound_seq']);
+        self::assertSame(2, $outbound[1]->attributes['outbound_seq']);
         $decoded = $inbound[0]->payload['body']['value'] ?? null;
         self::assertIsArray($decoded);
         self::assertSame('InvokeActivity', $decoded['command']);
@@ -156,11 +161,12 @@ final class TranscriptWriterTestCase extends TestCase
     public function testConcurrentWritersUnderLockExProduceWellFormedLines(): void
     {
         $path = $this->directory . '/concurrent.log';
-        $childCount = 2;
+        $childCount = 4;
         $writesPerChild = 50;
         $baseDir = \dirname(__DIR__, 3);
         $autoloadPath = \var_export($baseDir . '/vendor/autoload.php', true);
         $childPaths = [];
+        /** @var list<array{process: resource, stderr: resource, index: int}> $processes */
         $processes = [];
         for ($i = 0; $i < $childCount; $i++) {
             $script = $this->directory . "/child-{$i}.php";
@@ -174,21 +180,29 @@ final class TranscriptWriterTestCase extends TestCase
                 \$writer->flush();
                 PHP);
             $childPaths[] = $script;
-            $processes[] = \proc_open(['php', $script], [
+            $process = \proc_open([\PHP_BINARY, $script], [
                 0 => ['pipe', 'r'],
                 1 => ['pipe', 'w'],
                 2 => ['pipe', 'w'],
             ], $pipes);
-            // close pipes immediately to let child exit
-            foreach ($pipes as $pipe) {
-                if (\is_resource($pipe)) {
-                    \fclose($pipe);
-                }
+            if (!\is_resource($process)) {
+                self::fail("proc_open failed for child {$i}");
             }
+            \fclose($pipes[0]);
+            \fclose($pipes[1]);
+            $processes[] = ['process' => $process, 'stderr' => $pipes[2], 'index' => $i];
         }
-        foreach ($processes as $process) {
-            if (\is_resource($process)) {
-                \proc_close($process);
+        foreach ($processes as $entry) {
+            $stderr = \stream_get_contents($entry['stderr']);
+            \fclose($entry['stderr']);
+            $exitCode = \proc_close($entry['process']);
+            if ($exitCode !== 0) {
+                self::fail(\sprintf(
+                    "child %d exited with %d; stderr:\n%s",
+                    $entry['index'],
+                    $exitCode,
+                    (string) $stderr,
+                ));
             }
         }
         foreach ($childPaths as $script) {

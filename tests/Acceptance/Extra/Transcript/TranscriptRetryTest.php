@@ -18,7 +18,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class TranscriptRetryTest extends TestCase
+final class TranscriptRetryTest extends TestCase
 {
     public function testRetriesAreRecordedPerAttempt(
         #[Stub('Extra_Transcript_TranscriptRetry_run')]
@@ -30,6 +30,7 @@ class TranscriptRetryTest extends TestCase
         $lines = $this->readCurrentTestTranscript();
 
         $throwsByAttempt = [];
+        $messagesByAttempt = [];
         foreach ($lines as $line) {
             if ($line->section !== TranscriptSection::EXCEPTION) {
                 continue;
@@ -39,13 +40,28 @@ class TranscriptRetryTest extends TestCase
             }
             $attempt = (int) ($line->attributes['attempt'] ?? 0);
             $throwsByAttempt[$attempt] = ($throwsByAttempt[$attempt] ?? 0) + 1;
+            $messagesByAttempt[$attempt] = (string) ($line->payload['message'] ?? '');
         }
-        self::assertArrayHasKey(1, $throwsByAttempt, 'Expected exception line for attempt=1');
-        self::assertArrayHasKey(2, $throwsByAttempt, 'Expected exception line for attempt=2');
+        self::assertSame(1, $throwsByAttempt[1] ?? 0, 'Exactly one activity_throw expected for attempt=1');
+        self::assertSame(1, $throwsByAttempt[2] ?? 0, 'Exactly one activity_throw expected for attempt=2');
         self::assertArrayNotHasKey(3, $throwsByAttempt, 'Attempt 3 should succeed without throw');
+        self::assertStringContainsString('boom-attempt-1', $messagesByAttempt[1] ?? '');
+        self::assertStringContainsString('boom-attempt-2', $messagesByAttempt[2] ?? '');
 
-        $wireOutbound = \array_filter($lines, static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::WIRE_OUTBOUND);
-        self::assertGreaterThanOrEqual(3, \count($wireOutbound), 'Expected at least 3 worker outbound frames covering retries');
+        $activityStartsByAttempt = [];
+        foreach ($lines as $line) {
+            if ($line->section !== TranscriptSection::META) {
+                continue;
+            }
+            if (($line->attributes['event'] ?? null) !== 'activity_start') {
+                continue;
+            }
+            $attempt = (int) ($line->attributes['attempt'] ?? 0);
+            $activityStartsByAttempt[$attempt] = ($activityStartsByAttempt[$attempt] ?? 0) + 1;
+        }
+        self::assertSame(1, $activityStartsByAttempt[1] ?? 0);
+        self::assertSame(1, $activityStartsByAttempt[2] ?? 0);
+        self::assertSame(1, $activityStartsByAttempt[3] ?? 0, 'Attempt 3 must record an activity_start');
     }
 }
 

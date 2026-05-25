@@ -10,7 +10,9 @@ use Temporal\Worker\Transport\HostConnectionInterface;
 
 final class RecordingHost implements HostConnectionInterface
 {
-    private int $frameCounter = 0;
+    private int $inboundBatchId = 0;
+
+    private int $outboundSeq = 0;
 
     public function __construct(
         private readonly HostConnectionInterface $inner,
@@ -18,25 +20,35 @@ final class RecordingHost implements HostConnectionInterface
     ) {
         $this->record(fn() => $this->transcript->writeMeta('host_recording_started', [
             'inner' => $inner::class,
+            'pid' => \getmypid() ?: 0,
+            'transcript_path' => $this->transcript->getPath(),
         ]));
     }
 
     public function waitBatch(): ?CommandBatch
     {
-        $batch = $this->inner->waitBatch();
+        try {
+            $batch = $this->inner->waitBatch();
+        } catch (\Throwable $error) {
+            $this->record(fn() => $this->transcript->writeWireError($error));
+            throw $error;
+        }
         if ($batch === null) {
             return null;
         }
-        $this->frameCounter++;
-        $frameId = $this->frameCounter;
-        $this->record(fn() => $this->transcript->writeWireInbound($batch->messages, $batch->context, $frameId));
+        $this->inboundBatchId++;
+        $this->outboundSeq = 0;
+        $batchId = $this->inboundBatchId;
+        $this->record(fn() => $this->transcript->writeWireInbound($batch->messages, $batch->context, $batchId));
         return $batch;
     }
 
     public function send(string $frame): void
     {
-        $frameId = $this->frameCounter;
-        $this->record(fn() => $this->transcript->writeWireOutbound($frame, $frameId));
+        $this->outboundSeq++;
+        $batchId = $this->inboundBatchId;
+        $sequence = $this->outboundSeq;
+        $this->record(fn() => $this->transcript->writeWireOutbound($frame, $batchId, $sequence));
         $this->inner->send($frame);
     }
 

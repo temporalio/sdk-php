@@ -48,7 +48,7 @@ final class FatalHandlerTestCase extends TestCase
 
         $reader = new TranscriptReader($this->directory);
         $fatal = $reader->findBySection(TranscriptSection::FATAL);
-        self::assertNotEmpty($fatal, 'Expected a [FATAL] line; transcript content: ' . \file_get_contents($logFile));
+        self::assertNotEmpty($fatal, $this->diagnostic('Expected a [FATAL] line', $logFile));
         self::assertStringContainsString('intentional fatal', (string) ($fatal[0]->payload['message'] ?? ''));
     }
 
@@ -60,7 +60,7 @@ final class FatalHandlerTestCase extends TestCase
 
         $reader = new TranscriptReader($this->directory);
         $fatal = $reader->findBySection(TranscriptSection::FATAL);
-        self::assertNotEmpty($fatal);
+        self::assertNotEmpty($fatal, $this->diagnostic('FATAL marker missing', $logFile));
         self::assertSame(\Error::class, $fatal[0]->attributes['class']);
         self::assertSame('uncaught fatal', (string) $fatal[0]->payload['message']);
     }
@@ -80,9 +80,16 @@ final class FatalHandlerTestCase extends TestCase
         $boundaries = $reader->findBySection(TranscriptSection::TEST_START);
         $logs = $reader->findBySection(TranscriptSection::LOG);
         $fatal = $reader->findBySection(TranscriptSection::FATAL);
-        self::assertNotEmpty($boundaries, 'TEST_START not preserved across fatal');
-        self::assertNotEmpty($logs, 'LOG not preserved across fatal');
-        self::assertNotEmpty($fatal, 'FATAL marker missing');
+        self::assertNotEmpty($boundaries, $this->diagnostic('TEST_START not preserved across fatal', $logFile));
+        self::assertNotEmpty($logs, $this->diagnostic('LOG not preserved across fatal', $logFile));
+        self::assertNotEmpty($fatal, $this->diagnostic('FATAL marker missing', $logFile));
+    }
+
+    private function diagnostic(string $message, string $logFile): string
+    {
+        return $message
+            . "\nfixture stdout/stderr:\n" . $this->lastFixtureOutput()
+            . "\ntranscript content:\n" . (string) @\file_get_contents($logFile);
     }
 
     private function buildFixtureScript(string $logFile, string $body): string
@@ -100,12 +107,21 @@ final class FatalHandlerTestCase extends TestCase
             PHP;
     }
 
+    /** @var list<string> */
+    private array $lastFixtureOutput = [];
+
     private function executeFixture(string $script): void
     {
-        $scriptPath = $this->directory . '/fixture-' . \uniqid() . '.php';
+        $scriptPath = $this->directory . '/fixture-' . \uniqid('', true) . '.php';
         \file_put_contents($scriptPath, $script);
-        $command = 'php ' . \escapeshellarg($scriptPath) . ' 2>&1';
+        $command = \escapeshellarg(\PHP_BINARY) . ' ' . \escapeshellarg($scriptPath) . ' 2>&1';
         \exec($command, $output, $exitCode);
+        $this->lastFixtureOutput = $output;
         self::assertNotSame(0, $exitCode, 'Fixture process should exit non-zero on fatal; output: ' . \implode("\n", $output));
+    }
+
+    private function lastFixtureOutput(): string
+    {
+        return \implode("\n", $this->lastFixtureOutput);
     }
 }

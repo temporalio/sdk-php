@@ -90,7 +90,13 @@ final class TranscriptStore
         }
         \usort(
             $runs,
-            static fn(TranscriptRun $a, TranscriptRun $b): int => ($b->mtime ?? 0) <=> ($a->mtime ?? 0),
+            static function (TranscriptRun $a, TranscriptRun $b): int {
+                $byMtime = ($b->mtime ?? 0) <=> ($a->mtime ?? 0);
+                if ($byMtime !== 0) {
+                    return $byMtime;
+                }
+                return $b->id <=> $a->id;
+            },
         );
         return $runs;
     }
@@ -144,7 +150,9 @@ final class TranscriptStore
     {
         $slug = \preg_replace('~[^A-Za-z0-9_-]~', '_', $runId) ?? '';
         if ($slug === '') {
-            return 'run';
+            throw new \InvalidArgumentException(
+                'Run id sanitizes to an empty string: ' . \var_export($runId, true),
+            );
         }
         if ($slug[0] === '_') {
             $slug = 'r' . $slug;
@@ -165,6 +173,9 @@ final class TranscriptStore
 
     private function removeDirectoryRecursive(string $path): bool
     {
+        if (\is_link($path)) {
+            return @\unlink($path);
+        }
         if (!\is_dir($path)) {
             return false;
         }
@@ -177,6 +188,10 @@ final class TranscriptStore
                 continue;
             }
             $child = $path . '/' . $entry;
+            if (\is_link($child)) {
+                @\unlink($child);
+                continue;
+            }
             if (\is_dir($child)) {
                 $this->removeDirectoryRecursive($child);
                 continue;

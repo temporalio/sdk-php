@@ -8,6 +8,7 @@ final class TranscriptLine
 {
     /**
      * @param array<string, scalar|null> $attributes
+     * @param array<string, mixed>|null $payload
      */
     public function __construct(
         public readonly \DateTimeImmutable $timestamp,
@@ -22,5 +23,10 @@ final class TranscriptLine
     public function getAttribute(string $key): string|int|float|bool|null
     {
         return $this->attributes[$key] ?? null;
+    }
+
+    public function hasAttribute(string $key): bool
+    {
+        return \array_key_exists($key, $this->attributes);
     }
 }

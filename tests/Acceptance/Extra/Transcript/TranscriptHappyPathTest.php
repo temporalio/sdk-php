@@ -16,7 +16,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class TranscriptHappyPathTest extends TestCase
+final class TranscriptHappyPathTest extends TestCase
 {
     public function testHappyPathRoundTripIsCaptured(
         #[Stub('Extra_Transcript_TranscriptHappyPath_run')]
@@ -28,11 +28,34 @@ class TranscriptHappyPathTest extends TestCase
         $lines = $this->readCurrentTestTranscript();
         self::assertNotEmpty($lines, 'No transcript lines were captured for this test');
 
-        $wireInbound = \array_filter($lines, static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::WIRE_INBOUND);
-        $wireOutbound = \array_filter($lines, static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::WIRE_OUTBOUND);
+        $workflowStart = $this->findMeta($lines, 'workflow_execute_start');
+        self::assertCount(1, $workflowStart, 'Expected exactly one workflow_execute_start META');
+        self::assertSame('Extra_Transcript_TranscriptHappyPath_run', $workflowStart[0]->attributes['workflow_type']);
+        self::assertSame($stub->getExecution()->getID(), $workflowStart[0]->attributes['workflow_id']);
 
-        self::assertGreaterThan(0, \count($wireInbound), 'Expected at least one WIRE_INBOUND frame from the worker');
-        self::assertGreaterThan(0, \count($wireOutbound), 'Expected at least one WIRE_OUTBOUND frame from the worker');
+        $workflowCompleted = $this->findMeta($lines, 'workflow_execute_completed');
+        self::assertCount(1, $workflowCompleted, 'Expected exactly one workflow_execute_completed META');
+
+        $activityStart = $this->findMeta($lines, 'activity_start');
+        self::assertCount(1, $activityStart, 'Expected exactly one activity_start META');
+        self::assertSame('Extra_Transcript_TranscriptHappyPath.greet', $activityStart[0]->attributes['name']);
+        self::assertSame(1, $activityStart[0]->attributes['attempt']);
+
+        $activityCompleted = $this->findMeta($lines, 'activity_completed');
+        self::assertCount(1, $activityCompleted, 'Expected exactly one activity_completed META');
+    }
+
+    /**
+     * @param list<TranscriptLine> $lines
+     * @return list<TranscriptLine>
+     */
+    private function findMeta(array $lines, string $event): array
+    {
+        return \array_values(\array_filter(
+            $lines,
+            static fn(TranscriptLine $line): bool => $line->section === TranscriptSection::META
+                && ($line->attributes['event'] ?? null) === $event,
+        ));
     }
 }
 

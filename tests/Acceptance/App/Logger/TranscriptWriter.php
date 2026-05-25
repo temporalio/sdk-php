@@ -88,10 +88,10 @@ final class TranscriptWriter
         ], $context === [] ? null : $context);
     }
 
-    public function writeWireInbound(string $frame, array $headers, int $frameId): void
+    public function writeWireInbound(string $frame, array $headers, int $inboundBatchId): void
     {
         $this->write(TranscriptSection::WIRE_INBOUND, [
-            'frame_id' => $frameId,
+            'inbound_batch_id' => $inboundBatchId,
             'bytes' => \strlen($frame),
         ], [
             'headers' => $headers,
@@ -99,10 +99,11 @@ final class TranscriptWriter
         ]);
     }
 
-    public function writeWireOutbound(string $frame, int $frameId): void
+    public function writeWireOutbound(string $frame, int $inboundBatchId, int $outboundSeq): void
     {
         $this->write(TranscriptSection::WIRE_OUTBOUND, [
-            'frame_id' => $frameId,
+            'inbound_batch_id' => $inboundBatchId,
+            'outbound_seq' => $outboundSeq,
             'bytes' => \strlen($frame),
         ], [
             'body' => $this->safeDecodeFrame($frame),
@@ -223,7 +224,7 @@ final class TranscriptWriter
             'pid' => $this->processId,
             'seq' => $this->sequence,
             'section' => $section->value,
-            'attrs' => (object) $attributes,
+            'attributes' => (object) $attributes,
         ];
         if ($payload !== null) {
             $record['payload'] = $payload;

@@ -44,13 +44,17 @@ final class TranscriptReader
                 \fclose($handle);
             }
         }
-        \usort(
-            $lines,
-            static fn(TranscriptLine $a, TranscriptLine $b): int =>
-                $a->timestamp <=> $b->timestamp
-                ?: $a->processId <=> $b->processId
-                ?: $a->sequence <=> $b->sequence,
-        );
+        \usort($lines, static function (TranscriptLine $a, TranscriptLine $b): int {
+            $byTimestamp = $a->timestamp <=> $b->timestamp;
+            if ($byTimestamp !== 0) {
+                return $byTimestamp;
+            }
+            $byProcess = $a->processId <=> $b->processId;
+            if ($byProcess !== 0) {
+                return $byProcess;
+            }
+            return $a->sequence <=> $b->sequence;
+        });
         return $lines;
     }
 
@@ -140,20 +144,39 @@ final class TranscriptReader
             throw new MalformedTranscriptException('Unknown section: ' . $sectionValue, $raw, $lineNumber, $file);
         }
 
+        $timestampRaw = $decoded['ts'] ?? null;
+        if (!\is_string($timestampRaw) || $timestampRaw === '') {
+            throw new MalformedTranscriptException('Missing or empty timestamp', $raw, $lineNumber, $file);
+        }
         try {
-            $timestamp = new \DateTimeImmutable((string) ($decoded['ts'] ?? ''));
+            $timestamp = new \DateTimeImmutable($timestampRaw);
         } catch (\Throwable) {
-            throw new MalformedTranscriptException('Invalid timestamp', $raw, $lineNumber, $file);
+            throw new MalformedTranscriptException('Invalid timestamp: ' . $timestampRaw, $raw, $lineNumber, $file);
         }
 
-        $attrs = $decoded['attrs'] ?? [];
-        if (!\is_array($attrs)) {
-            $attrs = [];
+        $attributes = $decoded['attributes'] ?? [];
+        if (!\is_array($attributes)) {
+            throw new MalformedTranscriptException('attributes must be an object', $raw, $lineNumber, $file);
+        }
+        foreach ($attributes as $key => $value) {
+            if ($value !== null && !\is_scalar($value)) {
+                throw new MalformedTranscriptException(
+                    \sprintf('attribute "%s" must be scalar or null, %s given', (string) $key, \get_debug_type($value)),
+                    $raw,
+                    $lineNumber,
+                    $file,
+                );
+            }
         }
 
         $payload = $decoded['payload'] ?? null;
         if ($payload !== null && !\is_array($payload)) {
-            $payload = ['value' => $payload];
+            throw new MalformedTranscriptException(
+                'payload must be an object or null, ' . \get_debug_type($payload) . ' given',
+                $raw,
+                $lineNumber,
+                $file,
+            );
         }
 
         return new TranscriptLine(
@@ -161,7 +184,7 @@ final class TranscriptReader
             processId: (int) ($decoded['pid'] ?? 0),
             sequence: (int) ($decoded['seq'] ?? 0),
             section: $sectionEnum,
-            attributes: $attrs,
+            attributes: $attributes,
             payload: $payload,
             rawLine: $raw,
         );
