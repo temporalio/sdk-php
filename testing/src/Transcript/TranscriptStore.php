@@ -145,6 +145,16 @@ final class TranscriptStore
         return $runId === null ? $this->latestRun() : $this->findRun($runId);
     }
 
+    public function readMergedRun(?string $runId = null): ?string
+    {
+        $run = $runId === null ? $this->currentRun() : $this->findRun($runId);
+        if ($run === null || $run->files() === []) {
+            return null;
+        }
+        $content = @\file_get_contents($run->merge());
+        return \is_string($content) && $content !== '' ? $content : null;
+    }
+
     public function pruneOldRuns(int $keep): int
     {
         $keep = \max(0, $keep);

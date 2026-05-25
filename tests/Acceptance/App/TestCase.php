@@ -174,12 +174,27 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                                 ? $container->get(StderrLogger::class)
                                 : null;
                             $stderr?->error('transcript', ['path' => $transcript->getPath()]);
-                            $stderr?->info('run `composer transcripts:last` to view the merged stream');
+                            $runId = TranscriptStore::currentRunIdFromEnvironment();
+                            $stderr?->info($runId !== null
+                                ? "run `composer transcripts:merge {$runId}` to view the merged stream"
+                                : 'run `composer transcripts:last` to view the merged stream');
+                            if ($runId !== null && self::shouldDumpTranscriptOnFail()) {
+                                $content = TranscriptStore::create(stderr: $stderr)->readMergedRun($runId);
+                                if ($content !== null) {
+                                    $stderr?->info("transcript run {$runId} dump:\n" . $content);
+                                }
+                            }
                         }
                     }
                 }
             },
         );
+    }
+
+    private static function shouldDumpTranscriptOnFail(): bool
+    {
+        $flag = \getenv('TEMPORAL_TRANSCRIPT_DUMP_ON_FAIL');
+        return \is_string($flag) && !\in_array(\strtolower($flag), ['', '0', 'false', 'off', 'no'], true);
     }
 
     /**
