@@ -6,6 +6,8 @@ namespace Temporal\Tests\Acceptance\App\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class TranscriptWriter
 {
@@ -13,7 +15,6 @@ final class TranscriptWriter
 
     private const JSON_FLAGS = \JSON_UNESCAPED_UNICODE
         | \JSON_UNESCAPED_SLASHES
-        | \JSON_PARTIAL_OUTPUT_ON_ERROR
         | \JSON_INVALID_UTF8_SUBSTITUTE;
 
     /** @var resource|null */
@@ -29,6 +30,8 @@ final class TranscriptWriter
 
     private readonly LoggerInterface $stderr;
 
+    private readonly Filesystem $filesystem;
+
     private bool $inWrite = false;
 
     /**
@@ -39,10 +42,11 @@ final class TranscriptWriter
         $this->processId = \getmypid() ?: 0;
         $this->currentPath = $path;
         $this->stderr = $stderr ?? new NullLogger();
+        $this->filesystem = new Filesystem();
         $this->openFileDescriptor($path);
         $this->writeMeta('writer_initialized', [
             'path' => $path,
-            'worker_start_epoch_ms' => (int) (\microtime(true) * 1000),
+            'worker_start_epoch_ms' => TranscriptPaths::currentEpochMs(),
         ]);
         \register_shutdown_function(function (): void {
             if ($this->fileDescriptor !== null) {
@@ -237,9 +241,15 @@ final class TranscriptWriter
                 'pid' => $this->processId,
                 'seq' => $this->sequence,
                 'section' => $section->value,
-                'attrs' => new \stdClass(),
-                'payload' => ['error' => 'json_encode_failed'],
+                'attributes' => (object) $attributes,
+                'payload' => ['error' => 'json_encode_failed', 'message' => \json_last_error_msg()],
             ], self::JSON_FLAGS);
+        }
+        if ($encoded === false) {
+            $this->stderr->error('transcript-writer-internal-error: json fallback failed', [
+                'message' => \json_last_error_msg(),
+            ]);
+            return;
         }
         $line = $encoded . "\n";
 
@@ -265,27 +275,47 @@ final class TranscriptWriter
             return;
         }
         $this->rotationCounter++;
-        $rotated = $this->currentPath . '.' . $this->rotationCounter;
-        @\rename($this->currentPath, $rotated);
+        $rotated = TranscriptPaths::rotatedFile($this->currentPath, $this->rotationCounter);
+        try {
+            $this->filesystem->rename($this->currentPath, $rotated, true);
+        } catch (IOException $ioError) {
+            $this->stderr->error('transcript-writer-internal-error: rotate rename failed', [
+                'from' => $this->currentPath,
+                'to' => $rotated,
+                'message' => $ioError->getMessage(),
+            ]);
+            return;
+        }
         $this->openFileDescriptor($this->currentPath);
-        $this->writeMeta('writer_rotated', [
+        $this->doWrite(TranscriptSection::META, [
+            'event' => 'writer_rotated',
             'from' => $rotated,
             'to' => $this->currentPath,
             'reason' => 'size_cap',
-        ]);
+        ], null);
     }
 
     private function openFileDescriptor(string $path): void
     {
-        $directory = \dirname($path);
-        if (!\is_dir($directory)) {
-            @\mkdir($directory, 0777, true);
+        try {
+            $this->filesystem->mkdir(\dirname($path));
+        } catch (IOException $ioError) {
+            $this->stderr->error('transcript-writer-internal-error: mkdir failed', [
+                'path' => $path,
+                'message' => $ioError->getMessage(),
+            ]);
         }
         $resource = @\fopen($path, 'ab');
         if ($resource === false) {
             $this->stderr->error('transcript-writer-internal-error: fopen failed', ['path' => $path]);
+            if (\is_resource($this->fileDescriptor)) {
+                @\fclose($this->fileDescriptor);
+            }
             $this->fileDescriptor = null;
             return;
+        }
+        if (\is_resource($this->fileDescriptor)) {
+            @\fclose($this->fileDescriptor);
         }
         $this->fileDescriptor = $resource;
     }

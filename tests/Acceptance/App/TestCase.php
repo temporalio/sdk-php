@@ -36,8 +36,6 @@ use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
-    private const TRANSCRIPT_FLUSH_USLEEP = 500_000;
-
     #[\Override]
     protected function runTest(): mixed
     {
@@ -135,6 +133,13 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     throw $e;
                 } finally {
+                    if ($transcript !== null) {
+                        (new WorkflowHistoryDumper())->dump(
+                            $transcript,
+                            $container->get(WorkflowClientInterface::class),
+                            $args,
+                        );
+                    }
                     foreach ($args as $arg) {
                         if ($arg instanceof WorkflowStubInterface) {
                             try {
@@ -147,13 +152,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                                 ]);
                             }
                         }
-                    }
-                    if ($transcript !== null) {
-                        (new WorkflowHistoryDumper())->dump(
-                            $transcript,
-                            $container->get(WorkflowClientInterface::class),
-                            $args,
-                        );
                     }
                     $stderr = $container->has(StderrLogger::class)
                         ? $container->get(StderrLogger::class)
@@ -190,7 +188,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
      */
     protected function readCurrentTestTranscript(): array
     {
-        \usleep(self::TRANSCRIPT_FLUSH_USLEEP);
         $run = TranscriptStore::create()->currentRun();
         if ($run === null) {
             return [];

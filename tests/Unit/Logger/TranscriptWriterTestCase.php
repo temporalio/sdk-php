@@ -20,23 +20,7 @@ use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 #[UsesClass(MalformedTranscriptException::class)]
 final class TranscriptWriterTestCase extends TestCase
 {
-    private string $directory;
-
-    protected function setUp(): void
-    {
-        $this->directory = \sys_get_temp_dir() . '/temporal-transcript-test-' . \getmypid() . '-' . \uniqid();
-        \mkdir($this->directory, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        foreach (\glob($this->directory . '/*') ?: [] as $path) {
-            if (\is_file($path)) {
-                \unlink($path);
-            }
-        }
-        @\rmdir($this->directory);
-    }
+    use TranscriptTestSupport;
 
     public function testWriteLogProducesParseableLine(): void
     {

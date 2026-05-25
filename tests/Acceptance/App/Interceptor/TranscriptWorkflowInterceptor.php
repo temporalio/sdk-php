@@ -11,13 +11,14 @@ use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 
 final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterceptor
 {
     use WorkflowInboundCallsInterceptorTrait;
 
-    private ?TranscriptWriter $writer = null;
+    public function __construct(
+        private readonly TranscriptWriter $transcript,
+    ) {}
 
     public function execute(WorkflowInput $input, callable $next): void
     {
@@ -27,7 +28,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'run_id' => $input->info->execution->getRunID(),
             'is_replaying' => $input->isReplaying,
         ];
-        $this->runPhase('workflow_execute', $attributes, static fn() => $next($input));
+        $this->runPhase('workflow_execute', $attributes, fn() => $next($input));
     }
 
     public function handleSignal(SignalInput $input, callable $next): void
@@ -37,7 +38,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'workflow_id' => $input->info->execution->getID(),
             'is_replaying' => $input->isReplaying,
         ];
-        $this->runPhase('workflow_signal', $attributes, static fn() => $next($input));
+        $this->runPhase('workflow_signal', $attributes, fn() => $next($input));
     }
 
     public function handleQuery(QueryInput $input, callable $next): mixed
@@ -46,7 +47,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'query_name' => $input->queryName,
             'workflow_id' => $input->info->execution->getID(),
         ];
-        return $this->runPhase('workflow_query', $attributes, static fn() => $next($input));
+        return $this->runPhase('workflow_query', $attributes, fn() => $next($input));
     }
 
     public function handleUpdate(UpdateInput $input, callable $next): mixed
@@ -57,18 +58,12 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'workflow_id' => $input->info->execution->getID(),
             'is_replaying' => $input->isReplaying,
         ];
-        return $this->runPhase('workflow_update', $attributes, static fn() => $next($input));
+        return $this->runPhase('workflow_update', $attributes, fn() => $next($input));
     }
 
     public function validateUpdate(UpdateInput $input, callable $next): void
     {
-        $attributes = [
-            'update_name' => $input->updateName,
-            'update_id' => $input->updateId,
-            'workflow_id' => $input->info->execution->getID(),
-            'is_replaying' => $input->isReplaying,
-        ];
-        $this->runPhase('workflow_validate_update', $attributes, static fn() => $next($input));
+        $next($input);
     }
 
     /**
@@ -79,30 +74,14 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
      */
     private function runPhase(string $phase, array $attributes, callable $execution): mixed
     {
-        $writer = $this->resolveWriter();
-        $writer?->writeMeta($phase . '_start', $attributes);
+        $this->transcript->writeMeta($phase . '_start', $attributes);
         try {
             $result = $execution();
-            $writer?->writeMeta($phase . '_completed', $attributes);
+            $this->transcript->writeMeta($phase . '_completed', $attributes);
             return $result;
         } catch (\Throwable $exception) {
-            $writer?->writeException($phase, $attributes, $exception);
+            $this->transcript->writeException($phase, $attributes, $exception);
             throw $exception;
         }
-    }
-
-    private function resolveWriter(): ?TranscriptWriter
-    {
-        if ($this->writer !== null) {
-            return $this->writer;
-        }
-        try {
-            $container = ContainerFacade::$container ?? null;
-            if ($container !== null && $container->has(TranscriptWriter::class)) {
-                $this->writer = $container->get(TranscriptWriter::class);
-            }
-        } catch (\Throwable) {
-        }
-        return $this->writer;
     }
 }

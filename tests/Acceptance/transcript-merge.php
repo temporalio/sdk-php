@@ -65,7 +65,12 @@ if ($listMode) {
     exit(printRuns($store, $stderr));
 }
 
-$run = $selector === null ? $store->latestRun() : $store->findRun($selector);
+try {
+    $run = $selector === null ? $store->latestRun() : $store->findRun($selector);
+} catch (\InvalidArgumentException $invalidSelector) {
+    $stderr->error('invalid selector', ['selector' => $selector, 'message' => $invalidSelector->getMessage()]);
+    exit(2);
+}
 if ($run === null) {
     $stderr->error(
         $selector === null ? 'no transcript runs found' : 'transcript run not found',

@@ -19,8 +19,26 @@ final class WorkflowHistoryDumper
         WorkflowClientInterface $workflowClient,
         array $args,
     ): void {
-        $executions = $this->collectExecutions($args);
-        if ($executions === []) {
+        $executions = [];
+        $stubCount = 0;
+        foreach ($args as $arg) {
+            if (!$arg instanceof WorkflowStubInterface) {
+                continue;
+            }
+            $stubCount++;
+            $execution = $arg->getExecution();
+            if ($execution->getRunID() === null) {
+                $transcript->writeMeta('history_skipped', [
+                    'reason' => 'no_run_id',
+                    'workflow_id' => $execution->getID(),
+                ]);
+                continue;
+            }
+            $key = $execution->getID() . ':' . $execution->getRunID();
+            $executions[$key] = $execution;
+        }
+
+        if ($executions === [] && $stubCount === 0) {
             $transcript->writeMeta('history_skipped', ['reason' => 'no_executions_inspected']);
             return;
         }
@@ -28,23 +46,6 @@ final class WorkflowHistoryDumper
         foreach ($executions as $execution) {
             $this->dumpExecution($transcript, $workflowClient, $execution);
         }
-    }
-
-    /**
-     * @param array<int, mixed> $args
-     * @return array<string, WorkflowExecution>
-     */
-    private function collectExecutions(array $args): array
-    {
-        $executions = [];
-        foreach ($args as $arg) {
-            if ($arg instanceof WorkflowStubInterface) {
-                $execution = $arg->getExecution();
-                $key = $execution->getID() . ':' . ($execution->getRunID() ?? '');
-                $executions[$key] = $execution;
-            }
-        }
-        return $executions;
     }
 
     private function dumpExecution(
@@ -72,7 +73,7 @@ final class WorkflowHistoryDumper
                 }
                 $transcript->writeHistoryEvent(
                     $execution->getID(),
-                    $execution->getRunID(),
+                    (string) $execution->getRunID(),
                     $eventAttributes,
                     $payloadJson,
                 );

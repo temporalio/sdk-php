@@ -28,7 +28,6 @@ use Temporal\Testing\Command;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
-use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\FatalHandler;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -85,8 +84,8 @@ try {
     );
     $run = $runtime->command;
     $container = new Spiral\Core\Container();
-    ContainerFacade::$container = $container;
     $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
+    $container->bindSingleton(LoggerInterface::class, $logger);
 
     $converters = [
         new NullConverter(),
@@ -101,7 +100,7 @@ try {
     $converter = new DataConverter(...$converters);
     $container->bindSingleton(DataConverter::class, $converter);
 
-    $plugins = [new TranscriptPlugin];
+    $plugins = [new TranscriptPlugin($workerTranscript)];
     $container->bindSingleton(
         WorkerFactoryInterface::class,
         WorkerFactory::create(

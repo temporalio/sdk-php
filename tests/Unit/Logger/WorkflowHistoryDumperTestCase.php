@@ -40,23 +40,8 @@ use Temporal\Workflow\WorkflowExecution;
 #[UsesClass(Timestamp::class)]
 final class WorkflowHistoryDumperTestCase extends TestCase
 {
-    private string $directory;
+    use TranscriptTestSupport;
 
-    protected function setUp(): void
-    {
-        $this->directory = \sys_get_temp_dir() . '/history-dumper-' . \getmypid() . '-' . \uniqid();
-        \mkdir($this->directory, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        foreach (\glob($this->directory . '/*') ?: [] as $path) {
-            if (\is_file($path)) {
-                \unlink($path);
-            }
-        }
-        @\rmdir($this->directory);
-    }
 
     public function testWritesHistorySkippedMetaWhenArgsAreEmpty(): void
     {

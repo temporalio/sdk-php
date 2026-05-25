@@ -48,8 +48,13 @@ final class RecordingHost implements HostConnectionInterface
         $this->outboundSeq++;
         $batchId = $this->inboundBatchId;
         $sequence = $this->outboundSeq;
+        try {
+            $this->inner->send($frame);
+        } catch (\Throwable $error) {
+            $this->record(fn() => $this->transcript->writeWireError($error));
+            throw $error;
+        }
         $this->record(fn() => $this->transcript->writeWireOutbound($frame, $batchId, $sequence));
-        $this->inner->send($frame);
     }
 
     public function error(\Throwable $error): void

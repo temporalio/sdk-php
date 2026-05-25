@@ -13,7 +13,9 @@ use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Tests\Acceptance\App\Interceptor\TranscriptActivityInterceptor;
 use Temporal\Tests\Acceptance\App\Interceptor\TranscriptWorkflowInterceptor;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
+use Temporal\Tests\Unit\Logger\TranscriptTestSupport;
 use Temporal\Worker\WorkerOptions;
 
 #[CoversClass(TranscriptPlugin::class)]
@@ -25,16 +27,19 @@ use Temporal\Worker\WorkerOptions;
 #[UsesClass(TranscriptWorkflowInterceptor::class)]
 final class TranscriptPluginTestCase extends TestCase
 {
+    use TranscriptTestSupport;
+
     public function testGetNameReturnsCanonicalIdentifier(): void
     {
-        $plugin = new TranscriptPlugin();
+        $plugin = new TranscriptPlugin($this->newWriter());
 
         self::assertSame('temporal-php.transcript', $plugin->getName());
     }
 
     public function testConfigureWorkerAddsActivityAndWorkflowInterceptors(): void
     {
-        $plugin = new TranscriptPlugin();
+        $writer = $this->newWriter();
+        $plugin = new TranscriptPlugin($writer);
         $context = new WorkerPluginContext('test-queue', WorkerOptions::new());
         $nextCalled = false;
 
@@ -52,9 +57,10 @@ final class TranscriptPluginTestCase extends TestCase
 
     public function testConfigureWorkerAppendsInterceptorsWithoutClobberingExistingOnes(): void
     {
-        $plugin = new TranscriptPlugin();
+        $writer = $this->newWriter();
+        $plugin = new TranscriptPlugin($writer);
         $context = new WorkerPluginContext('test-queue', WorkerOptions::new());
-        $existing = new TranscriptActivityInterceptor();
+        $existing = new TranscriptActivityInterceptor($writer);
         $context->addInterceptor($existing);
 
         $plugin->configureWorker($context, static fn() => null);
@@ -69,7 +75,7 @@ final class TranscriptPluginTestCase extends TestCase
     public function testRegistryExposesPluginUnderWorkerPluginInterface(): void
     {
         $registry = new PluginRegistry();
-        $plugin = new TranscriptPlugin();
+        $plugin = new TranscriptPlugin($this->newWriter());
         $registry->add($plugin);
 
         $workerPlugins = $registry->getPlugins(WorkerPluginInterface::class);
@@ -79,12 +85,18 @@ final class TranscriptPluginTestCase extends TestCase
 
     public function testRegistryRejectsDuplicateRegistration(): void
     {
+        $writer = $this->newWriter();
         $registry = new PluginRegistry();
-        $registry->add(new TranscriptPlugin());
+        $registry->add(new TranscriptPlugin($writer));
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Duplicate plugin "temporal-php.transcript": a plugin with this name is already registered.');
 
-        $registry->add(new TranscriptPlugin());
+        $registry->add(new TranscriptPlugin($writer));
+    }
+
+    private function newWriter(): TranscriptWriter
+    {
+        return new TranscriptWriter($this->directory . '/' . \uniqid('plugin-', true) . '.log');
     }
 }

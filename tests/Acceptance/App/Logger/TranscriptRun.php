@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Logger;
 
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
+
 final class TranscriptRun
 {
-    public const MERGED_DIRECTORY = '_merged';
-
     public function __construct(
         public readonly string $id,
         public readonly string $directory,
@@ -19,8 +20,12 @@ final class TranscriptRun
      */
     public function files(): array
     {
-        $files = \glob($this->directory . '/*.log');
-        return $files === false ? [] : \array_values($files);
+        $live = \glob($this->directory . '/*.log');
+        $rotated = \glob($this->directory . '/*.log.*');
+        return \array_values(\array_merge(
+            \is_array($live) ? $live : [],
+            \is_array($rotated) ? $rotated : [],
+        ));
     }
 
     public function totalBytes(): int
@@ -39,14 +44,16 @@ final class TranscriptRun
 
     public function merge(): string
     {
-        $mergedDirectory = $this->directory . '/' . self::MERGED_DIRECTORY;
-        if (!\is_dir($mergedDirectory)) {
-            @\mkdir($mergedDirectory, 0777, true);
+        $mergedDirectory = TranscriptPaths::mergedDirectory($this->directory);
+        try {
+            (new Filesystem())->mkdir($mergedDirectory);
+        } catch (IOException $ioError) {
+            throw new \RuntimeException(
+                "Failed to create merged directory: {$mergedDirectory} ({$ioError->getMessage()})",
+                previous: $ioError,
+            );
         }
-        if (!\is_dir($mergedDirectory)) {
-            throw new \RuntimeException("Failed to create merged directory: {$mergedDirectory}");
-        }
-        $path = $mergedDirectory . '/transcript.log';
+        $path = TranscriptPaths::mergedFile($this->directory);
         $handle = \fopen($path, 'wb');
         if ($handle === false) {
             throw new \RuntimeException("Failed to open merged file: {$path}");

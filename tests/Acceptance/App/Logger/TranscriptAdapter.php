@@ -12,13 +12,10 @@ final class TranscriptAdapter implements LoggerInterface
 {
     use LoggerTrait;
 
-    private readonly LoggerInterface $stderr;
-
     public function __construct(
         private readonly TranscriptWriter $writer,
-        ?LoggerInterface $stderr = null,
+        private readonly LoggerInterface $stderr,
     ) {
-        $this->stderr = $stderr ?? new NullLogger();
     }
 
     public function log($level, \Stringable|string $message, array $context = []): void

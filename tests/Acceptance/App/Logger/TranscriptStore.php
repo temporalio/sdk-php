@@ -6,6 +6,8 @@ namespace Temporal\Tests\Acceptance\App\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class TranscriptStore
 {
@@ -15,13 +17,21 @@ final class TranscriptStore
 
     private readonly LoggerInterface $stderr;
 
+    private readonly Filesystem $filesystem;
+
     public function __construct(
         public readonly string $baseDirectory,
         ?LoggerInterface $stderr = null,
     ) {
         $this->stderr = $stderr ?? new NullLogger();
-        if (!\is_dir($this->baseDirectory)) {
-            @\mkdir($this->baseDirectory, 0777, true);
+        $this->filesystem = new Filesystem();
+        try {
+            $this->filesystem->mkdir($this->baseDirectory);
+        } catch (IOException $ioError) {
+            $this->stderr->warning('transcript-store: base directory create failed', [
+                'path' => $this->baseDirectory,
+                'message' => $ioError->getMessage(),
+            ]);
         }
     }
 
@@ -38,11 +48,6 @@ final class TranscriptStore
         return new self($projectRoot . '/' . self::DEFAULT_BASE_RELATIVE, $stderr);
     }
 
-    public static function generateRunId(): string
-    {
-        return \date('Ymd-His') . '-' . \bin2hex(\random_bytes(2));
-    }
-
     public static function currentRunIdFromEnvironment(): ?string
     {
         $runId = \getenv(self::RUN_ID_ENV);
@@ -51,15 +56,13 @@ final class TranscriptStore
 
     public function runDirectory(string $runId): string
     {
-        return $this->baseDirectory . '/' . self::sanitizeRunId($runId);
+        return TranscriptPaths::runDirectory($this->baseDirectory, $runId);
     }
 
     public function ensureRunDirectory(string $runId): string
     {
         $directory = $this->runDirectory($runId);
-        if (!\is_dir($directory)) {
-            @\mkdir($directory, 0777, true);
-        }
+        $this->filesystem->mkdir($directory);
         return $directory;
     }
 
@@ -74,7 +77,7 @@ final class TranscriptStore
         }
         $runs = [];
         foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || \str_starts_with($entry, '_')) {
+            if ($entry === '.' || $entry === '..' || TranscriptPaths::isReservedEntry($entry)) {
                 continue;
             }
             $path = $this->baseDirectory . '/' . $entry;
@@ -108,14 +111,13 @@ final class TranscriptStore
 
     public function findRun(string $runId): ?TranscriptRun
     {
-        $sanitized = self::sanitizeRunId($runId);
-        $directory = $this->baseDirectory . '/' . $sanitized;
+        $directory = TranscriptPaths::runDirectory($this->baseDirectory, $runId);
         if (!\is_dir($directory)) {
             return null;
         }
         $mtime = @\filemtime($directory);
         return new TranscriptRun(
-            id: $sanitized,
+            id: \basename($directory),
             directory: $directory,
             mtime: $mtime === false ? null : $mtime,
         );
@@ -133,8 +135,14 @@ final class TranscriptStore
         $stale = \array_slice($this->listRuns(), $keep);
         $deleted = 0;
         foreach ($stale as $run) {
-            if ($this->removeDirectoryRecursive($run->directory)) {
+            try {
+                $this->filesystem->remove($run->directory);
                 $deleted++;
+            } catch (IOException $ioError) {
+                $this->stderr->warning('transcript-store: prune failed', [
+                    'path' => $run->directory,
+                    'message' => $ioError->getMessage(),
+                ]);
             }
         }
         return $deleted;
@@ -143,61 +151,6 @@ final class TranscriptStore
     public function createWriter(string $runId, string $processLabel): TranscriptWriter
     {
         $directory = $this->ensureRunDirectory($runId);
-        return new TranscriptWriter(self::buildFilename($directory, $processLabel), $this->stderr);
-    }
-
-    private static function sanitizeRunId(string $runId): string
-    {
-        $slug = \preg_replace('~[^A-Za-z0-9_-]~', '_', $runId) ?? '';
-        if ($slug === '') {
-            throw new \InvalidArgumentException(
-                'Run id sanitizes to an empty string: ' . \var_export($runId, true),
-            );
-        }
-        if ($slug[0] === '_') {
-            $slug = 'r' . $slug;
-        }
-        return \strlen($slug) > 64 ? \substr($slug, 0, 64) : $slug;
-    }
-
-    private static function buildFilename(string $directory, string $processLabel): string
-    {
-        $slug = \preg_replace('~[^A-Za-z0-9_-]~', '_', $processLabel) ?? 'process';
-        if (\strlen($slug) > 40) {
-            $slug = \substr($slug, 0, 40);
-        }
-        $processId = \getmypid() ?: 0;
-        $startMs = (int) (\microtime(true) * 1000);
-        return $directory . '/' . $slug . '__pid' . $processId . '__' . $startMs . '.log';
-    }
-
-    private function removeDirectoryRecursive(string $path): bool
-    {
-        if (\is_link($path)) {
-            return @\unlink($path);
-        }
-        if (!\is_dir($path)) {
-            return false;
-        }
-        $entries = @\scandir($path);
-        if ($entries === false) {
-            return false;
-        }
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            $child = $path . '/' . $entry;
-            if (\is_link($child)) {
-                @\unlink($child);
-                continue;
-            }
-            if (\is_dir($child)) {
-                $this->removeDirectoryRecursive($child);
-                continue;
-            }
-            @\unlink($child);
-        }
-        return @\rmdir($path);
+        return new TranscriptWriter(TranscriptPaths::writerFile($directory, $processLabel), $this->stderr);
     }
 }

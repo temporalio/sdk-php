@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App\Feature;
 
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Spiral\Core\Attribute\Singleton;
 use Spiral\Core\InvokerInterface;
-use Temporal\Plugin\PluginInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
+use Temporal\Tests\Acceptance\App\Logger\FanoutLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptAdapter;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -24,6 +23,8 @@ final class WorkerFactory
     public function __construct(
         private readonly WorkerFactoryInterface $workerFactory,
         private readonly InvokerInterface $invoker,
+        private readonly ?TranscriptWriter $transcript = null,
+        private readonly ?LoggerInterface $stderr = null,
     ) {}
 
     public function createWorker(
@@ -41,17 +42,7 @@ final class WorkerFactory
         $logger = $attribute?->logger === null ? null : $this->invoker->invoke($attribute->logger);
 
         if ($attribute?->plugins !== null) {
-            $registry = $this->workerFactory->getPluginRegistry();
-            $registeredNames = \array_map(
-                static fn(PluginInterface $plugin): string => $plugin->getName(),
-                $registry->getPlugins(PluginInterface::class),
-            );
-            foreach ($attribute->plugins as $plugin) {
-                if (!\in_array($plugin->getName(), $registeredNames, true)) {
-                    $registry->add($plugin);
-                    $registeredNames[] = $plugin->getName();
-                }
-            }
+            $this->workerFactory->getPluginRegistry()->merge($attribute->plugins);
         }
 
         return $this->workerFactory->newWorker(
@@ -64,19 +55,15 @@ final class WorkerFactory
 
     private function buildLoggerForFeature(Feature $feature): LoggerInterface
     {
-        $container = ContainerFacade::$container ?? null;
-        if ($container === null || !$container->has(TranscriptWriter::class)) {
-            return LoggerFactory::createServerLogger($feature->taskQueue);
+        $serverLogger = LoggerFactory::createServerLogger($feature->taskQueue);
+        if ($this->transcript === null || $this->stderr === null) {
+            return $serverLogger;
         }
-        try {
-            $transcript = $container->get(TranscriptWriter::class);
-            $stderr = $container->has(LoggerInterface::class)
-                ? $container->get(LoggerInterface::class)
-                : new NullLogger();
-            return LoggerFactory::createServerLoggerWithTranscript($feature->taskQueue, $transcript, $stderr);
-        } catch (\Throwable) {
-            return LoggerFactory::createServerLogger($feature->taskQueue);
-        }
+        return new FanoutLogger(
+            $this->stderr,
+            $serverLogger,
+            new TranscriptAdapter($this->transcript, $this->stderr),
+        );
     }
 
     /**

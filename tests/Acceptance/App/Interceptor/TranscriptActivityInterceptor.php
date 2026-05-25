@@ -9,25 +9,25 @@ use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 
 final class TranscriptActivityInterceptor implements ActivityInboundInterceptor
 {
     use ActivityInboundInterceptorTrait;
 
-    private ?TranscriptWriter $writer = null;
+    public function __construct(
+        private readonly TranscriptWriter $transcript,
+    ) {}
 
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
     {
-        $writer = $this->resolveWriter();
         $attributes = $this->buildAttributes();
-        $writer?->writeMeta('activity_start', $attributes);
+        $this->transcript->writeMeta('activity_start', $attributes);
         try {
             $result = $next($input);
-            $writer?->writeMeta('activity_completed', $attributes);
+            $this->transcript->writeMeta('activity_completed', $attributes);
             return $result;
         } catch (\Throwable $exception) {
-            $writer?->writeException('activity_throw', $attributes, $exception);
+            $this->transcript->writeException('activity_throw', $attributes, $exception);
             throw $exception;
         }
     }
@@ -49,20 +49,5 @@ final class TranscriptActivityInterceptor implements ActivityInboundInterceptor
         } catch (\Throwable) {
             return ['name' => 'unknown', 'attempt' => 0];
         }
-    }
-
-    private function resolveWriter(): ?TranscriptWriter
-    {
-        if ($this->writer !== null) {
-            return $this->writer;
-        }
-        try {
-            $container = ContainerFacade::$container ?? null;
-            if ($container !== null && $container->has(TranscriptWriter::class)) {
-                $this->writer = $container->get(TranscriptWriter::class);
-            }
-        } catch (\Throwable) {
-        }
-        return $this->writer;
     }
 }
