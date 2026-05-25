@@ -28,7 +28,9 @@ final class FatalHandlerTestCase extends TestCase
     public function testUserErrorIsRecordedAsFatalViaShutdownFunction(): void
     {
         $logFile = $this->directory . '/fatal.log';
-        $script = $this->buildFixtureScript($logFile, "trigger_error('intentional fatal', E_USER_ERROR);");
+        $script = $this->buildFixtureScript($logFile, <<<'PHP'
+            trigger_error('intentional fatal', E_USER_ERROR);
+            PHP);
         $this->executeFixture($script);
 
         $reader = new TranscriptReader($this->directory);
@@ -40,7 +42,9 @@ final class FatalHandlerTestCase extends TestCase
     public function testUncaughtErrorIsRecordedAsFatalViaExceptionHandler(): void
     {
         $logFile = $this->directory . '/uncaught.log';
-        $script = $this->buildFixtureScript($logFile, "throw new \\Error('uncaught fatal');");
+        $script = $this->buildFixtureScript($logFile, <<<'PHP'
+            throw new \Error('uncaught fatal');
+            PHP);
         $this->executeFixture($script);
 
         $reader = new TranscriptReader($this->directory);
@@ -53,12 +57,11 @@ final class FatalHandlerTestCase extends TestCase
     public function testWritesPriorToFatalArePreserved(): void
     {
         $logFile = $this->directory . '/preserved.log';
-        $script = $this->buildFixtureScript(
-            $logFile,
-            "\$writer->writeTestBoundary(\\Temporal\\Tests\\Acceptance\\App\\Logger\\TranscriptSection::TEST_START, ['name' => 'pre-fatal']);\n"
-            . "\$writer->writeLog('info', 'about to die', []);\n"
-            . "trigger_error('boom', E_USER_ERROR);",
-        );
+        $script = $this->buildFixtureScript($logFile, <<<'PHP'
+            $writer->writeTestBoundary(\Temporal\Testing\Transcript\TranscriptSection::TEST_START, ['name' => 'pre-fatal']);
+            $writer->writeLog('info', 'about to die', []);
+            trigger_error('boom', E_USER_ERROR);
+            PHP);
         $this->executeFixture($script);
 
         $reader = new TranscriptReader($this->directory);
@@ -86,8 +89,8 @@ final class FatalHandlerTestCase extends TestCase
             <?php
             declare(strict_types=1);
             require {$autoloadPath};
-            \$writer = new \\Temporal\\Tests\\Acceptance\\App\\Logger\\TranscriptWriter({$logFileExport});
-            \\Temporal\\Tests\\Acceptance\\App\\Runtime\\FatalHandler::register(\$writer);
+            \$writer = new \\Temporal\\Testing\\Transcript\\TranscriptWriter({$logFileExport});
+            \\Temporal\\Tests\\Acceptance\\App\\Runtime\\FatalHandler::register(\$writer, new \\Psr\\Log\\NullLogger());
             {$body}
             PHP;
     }

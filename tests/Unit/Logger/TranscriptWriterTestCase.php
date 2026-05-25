@@ -157,7 +157,7 @@ final class TranscriptWriterTestCase extends TestCase
             \file_put_contents($script, <<<PHP
                 <?php
                 require {$autoloadPath};
-                \$writer = new \\Temporal\\Tests\\Acceptance\\App\\Logger\\TranscriptWriter('{$path}');
+                \$writer = new \\Temporal\\Testing\\Transcript\\TranscriptWriter('{$path}');
                 for (\$j = 0; \$j < {$writesPerChild}; \$j++) {
                     \$writer->writeLog('info', "child-{$i}-write-\$j", []);
                 }
