@@ -93,12 +93,4 @@ final class FatalHandler
             'pid' => \getmypid() ?: 0,
         ]);
     }
-
-    public static function rebindWriter(TranscriptWriter $writer): void
-    {
-        self::$writer = $writer;
-        $writer->writeMeta('fatal_handler_rebound', [
-            'pid' => \getmypid() ?: 0,
-        ]);
-    }
 }
