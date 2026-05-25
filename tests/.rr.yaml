@@ -18,7 +18,6 @@ temporal:
 
 logs:
     #mode: none
-    level: info
     channels:
         activities:
             mode: none

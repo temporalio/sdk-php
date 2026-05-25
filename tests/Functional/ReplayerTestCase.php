@@ -322,11 +322,6 @@ final class ReplayerTestCase extends TestCase
         parent::setUp();
     }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-    }
-
     private function createAwaitsUpdateUntypedStub(WorkflowClient $client): WorkflowStubInterface
     {
         return $client->newWorkflowStub(

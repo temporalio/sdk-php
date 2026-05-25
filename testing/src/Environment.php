@@ -229,34 +229,20 @@ final class Environment
         $this->io->info('Running command: ' . $this->serializeProcess($this->roadRunnerProcess));
         $this->roadRunnerProcess->start();
 
-        // wait for roadrunner to start by watching the serve process's own stdout
-        // for the readiness banner. avoids grepping `rr workers` output, which
-        // gets corrupted/buried by elevated log verbosity.
+        // wait for roadrunner to start
         $deadline = \microtime(true) + (float) $commandTimeout;
-        $startupFailureReason = null;
         while (!$roadRunnerStarted && \microtime(true) < $deadline) {
-            \usleep(50_000);
-
-            if (!$this->roadRunnerProcess->isRunning()) {
-                $startupFailureReason = 'process exited before becoming ready';
-                break;
-            }
-
-            $fatalDump = $this->detectRoadRunnerFatalDump();
-            if ($fatalDump !== null) {
-                $startupFailureReason = "fatal output detected: {$fatalDump}";
-                break;
-            }
-
-            if (\str_contains($this->roadRunnerProcess->getOutput(), 'RoadRunner server started')) {
+            \usleep(10_000);
+            $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
+            $check->run();
+            if (\str_contains($check->getOutput(), 'Workers of')) {
                 $roadRunnerStarted = true;
             }
         }
 
         if (!$roadRunnerStarted) {
             $this->io->error(\sprintf(
-                'Failed to start until RoadRunner is ready (%s). Status: "%s". Stderr: "%s". Stdout: "%s".',
-                $startupFailureReason ?? 'health check timed out',
+                'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',
                 $this->roadRunnerProcess->getStatus(),
                 $this->roadRunnerProcess->getErrorOutput(),
                 $this->roadRunnerProcess->getOutput(),
@@ -355,30 +341,6 @@ final class Environment
     {
         return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
             $this->temporalTestServerProcess?->isRunning() === true;
-    }
-
-    private function detectRoadRunnerFatalDump(): ?string
-    {
-        if ($this->roadRunnerProcess === null) {
-            return null;
-        }
-
-        $output = $this->roadRunnerProcess->getOutput()
-            . "\n"
-            . $this->roadRunnerProcess->getErrorOutput();
-
-        $markers = [
-            'PHP Fatal error',
-            'PHP Parse error',
-            'Uncaught',
-            'panic:',
-        ];
-        foreach ($markers as $marker) {
-            if (\str_contains($output, $marker)) {
-                return $marker;
-            }
-        }
-        return null;
     }
 
     private function stopTemporalTestServerProcess(): void

@@ -13,7 +13,7 @@ temporal:
       num_workers: 1
 
 logs:
-    level: info
+    mode: none
     # file_logger_options:
     #   log_output: "test-feature.log"
     # channels:

@@ -113,7 +113,7 @@ final class WorkflowExecutionInfo
      * `historySizeBytes`, `mostRecentWorkerVersionStamp`, `executionDuration`,
      * `rootExecution`, `firstRunId`.
      */
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
         return [
             'execution' => $this->execution,
