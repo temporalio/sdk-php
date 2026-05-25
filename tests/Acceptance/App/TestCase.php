@@ -31,15 +31,6 @@ use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var State $state */
-        $state = ContainerFacade::$container->get(State::class);
-        $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
-    }
-
     #[\Override]
     protected function runTest(): mixed
     {

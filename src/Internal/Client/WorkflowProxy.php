@@ -24,6 +24,7 @@ use Temporal\Workflow\ReturnType;
 
 /**
  * @template-covariant T of object
+ * @mixin T
  * @internal
  */
 final class WorkflowProxy extends Proxy

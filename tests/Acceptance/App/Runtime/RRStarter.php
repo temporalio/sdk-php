@@ -25,7 +25,10 @@ final class RRStarter
         \register_shutdown_function(fn() => $this->stop());
     }
 
-    public function start(): void
+    /**
+     * @param list<class-string> $allowedTestClasses
+     */
+    public function start(array $allowedTestClasses = []): void
     {
         if ($this->environment->isRoadRunnerRunning()) {
             return;
@@ -37,6 +40,17 @@ final class RRStarter
         $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
+        $workerArgs = [
+            PHP_BINARY,
+            ...$run->getPhpBinaryArguments(),
+            $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
+            ...$run->getCommandLineArguments(),
+        ];
+
+        foreach ($allowedTestClasses as $class) {
+            $workerArgs[] = 'test-class=' . $class;
+        }
+
         $rrCommand = [
             $this->runtime->workDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
             'serve',
@@ -47,17 +61,17 @@ final class RRStarter
             '-o',
             "temporal.address={$this->runtime->address}",
             '-o',
-            'server.command=' . \implode(',', [
-                PHP_BINARY,
-                ...$run->getPhpBinaryArguments(),
-                $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
-                ...$run->getCommandLineArguments(),
-            ]),
+            'server.command=' . \implode(',', $workerArgs),
         ];
-        $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];
-        $run->tlsCert === null or $rrCommand = [...$rrCommand, '-o', "tls.cert={$run->tlsCert}"];
+        if ($run->tlsKey !== null) {
+            $rrCommand[] = '-o';
+            $rrCommand[] = "tls.key={$run->tlsKey}";
+        }
+        if ($run->tlsCert !== null) {
+            $rrCommand[] = '-o';
+            $rrCommand[] = "tls.cert={$run->tlsCert}";
+        }
 
-        // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
         $this->environment->startRoadRunner(
             rrCommand: $rrCommand,
             configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
