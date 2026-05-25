@@ -62,7 +62,7 @@ final class TranscriptWriterTestCase extends TestCase
         $bodyLines = \array_values(\array_filter(\explode("\n", $raw), static fn(string $l): bool => $l !== ''));
         $logLine = null;
         foreach ($bodyLines as $line) {
-            if (\str_contains($line, '[LOG]')) {
+            if (\str_contains($line, '"section":"LOG"')) {
                 $logLine = $line;
                 break;
             }

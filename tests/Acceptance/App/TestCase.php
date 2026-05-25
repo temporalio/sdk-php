@@ -26,6 +26,7 @@ use Temporal\Tests\Acceptance\App\Logger\TranscriptLine;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptSection;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Tests\Acceptance\App\Logger\WorkflowHistoryDumper;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
@@ -134,11 +135,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     throw $e;
                 } finally {
                     if ($transcript !== null) {
-                        $this->dumpHistoryToTranscript(
+                        (new WorkflowHistoryDumper())->dump(
                             $transcript,
                             $container->get(WorkflowClientInterface::class),
                             $args,
-                            $caughtException,
                         );
                     }
                     // Cleanup: terminate injected workflow if any
@@ -194,61 +194,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         return $run->reader()->linesForTest(static::class, $this->name());
     }
 
-    private function dumpHistoryToTranscript(
-        TranscriptWriter $transcript,
-        WorkflowClientInterface $workflowClient,
-        array $args,
-        ?\Throwable $exception,
-    ): void {
-        $executions = [];
-        foreach ($args as $arg) {
-            if ($arg instanceof WorkflowStubInterface) {
-                $execution = $arg->getExecution();
-                $executions[$execution->getID()] = $execution;
-            }
-        }
-        if ($executions === []) {
-            $transcript->writeMeta('history_skipped', ['reason' => 'no_executions_inspected']);
-            return;
-        }
-        foreach ($executions as $execution) {
-            try {
-                $eventCount = 0;
-                foreach ($workflowClient->getWorkflowHistory($execution) as $event) {
-                    $eventCount++;
-                    $eventAttributes = [
-                        'event_id' => (int) $event->getEventId(),
-                        'event_type' => EventType::name($event->getEventType()),
-                    ];
-                    $eventTime = $event->getEventTime();
-                    if ($eventTime !== null) {
-                        $eventAttributes['event_time'] = $eventTime->getSeconds() . '.' . $eventTime->getNanos();
-                    }
-                    $payloadJson = '{}';
-                    try {
-                        $payloadJson = $event->serializeToJsonString();
-                    } catch (\Throwable $serializationError) {
-                        $eventAttributes['serialize_error'] = $serializationError->getMessage();
-                    }
-                    $transcript->writeHistoryEvent(
-                        $execution->getID(),
-                        $execution->getRunID(),
-                        $eventAttributes,
-                        $payloadJson,
-                    );
-                }
-                $transcript->writeMeta('history_dumped', [
-                    'workflow_id' => $execution->getID(),
-                    'run_id' => $execution->getRunID(),
-                    'event_count' => $eventCount,
-                ]);
-            } catch (\Throwable $historyError) {
-                $transcript->writeHistoryError($execution->getID(), $historyError);
-            }
-        }
-    }
-
-    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
+private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
     {
         foreach ($args as $arg) {
             if (!$arg instanceof WorkflowStubInterface) {

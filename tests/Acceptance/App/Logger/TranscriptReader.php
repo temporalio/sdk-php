@@ -34,10 +34,7 @@ final class TranscriptReader
                     if ($raw === '') {
                         continue;
                     }
-                    $parsed = $this->parseLine($raw, $file, $lineNumber);
-                    if ($parsed !== null) {
-                        $lines[] = $parsed;
-                    }
+                    $lines[] = $this->parseLine($raw, $file, $lineNumber);
                 }
             } finally {
                 \fclose($handle);
@@ -118,148 +115,51 @@ final class TranscriptReader
         ));
     }
 
-    private function parseLine(string $raw, string $file, int $lineNumber): ?TranscriptLine
+    private function parseLine(string $raw, string $file, int $lineNumber): TranscriptLine
     {
-        if (!\preg_match(
-            '/^(?P<timestamp>\S+)\s+(?P<processId>\d+)\s+(?P<sequence>\d+)\s+\[(?P<section>[A-Z_]+)\](?P<tail>.*)$/',
-            $raw,
-            $matches,
-        )) {
+        $decoded = \json_decode($raw, true);
+        if (!\is_array($decoded)) {
             throw new MalformedTranscriptException(
-                'Line does not match transcript schema',
+                'Line is not a valid JSON object: ' . \json_last_error_msg(),
                 $raw,
                 $lineNumber,
                 $file,
             );
         }
 
-        $sectionEnum = TranscriptSection::tryFrom($matches['section']);
+        $sectionValue = $decoded['section'] ?? null;
+        if (!\is_string($sectionValue)) {
+            throw new MalformedTranscriptException('Missing section', $raw, $lineNumber, $file);
+        }
+        $sectionEnum = TranscriptSection::tryFrom($sectionValue);
         if ($sectionEnum === null) {
-            throw new MalformedTranscriptException(
-                'Unknown section: ' . $matches['section'],
-                $raw,
-                $lineNumber,
-                $file,
-            );
+            throw new MalformedTranscriptException('Unknown section: ' . $sectionValue, $raw, $lineNumber, $file);
         }
-
-        $tail = \ltrim($matches['tail']);
-        $payload = null;
-        $attributesPart = $tail;
-        $payloadMarker = ' payload=';
-        $payloadPosition = \strpos($tail, $payloadMarker);
-        if ($payloadPosition !== false) {
-            $attributesPart = \substr($tail, 0, $payloadPosition);
-            $payloadJson = \substr($tail, $payloadPosition + \strlen($payloadMarker));
-            $decoded = \json_decode($payloadJson, true);
-            if ($decoded !== null || \json_last_error() === \JSON_ERROR_NONE) {
-                $payload = \is_array($decoded) ? $decoded : ['value' => $decoded];
-            } else {
-                $payload = ['raw' => $payloadJson];
-            }
-        } elseif (\str_starts_with($tail, 'payload=')) {
-            $payloadJson = \substr($tail, 8);
-            $decoded = \json_decode($payloadJson, true);
-            $payload = \is_array($decoded) ? $decoded : ['raw' => $payloadJson];
-            $attributesPart = '';
-        }
-
-        $attributes = $this->parseAttributes($attributesPart);
 
         try {
-            $timestamp = new \DateTimeImmutable($matches['timestamp']);
+            $timestamp = new \DateTimeImmutable((string) ($decoded['ts'] ?? ''));
         } catch (\Throwable) {
-            throw new MalformedTranscriptException(
-                'Invalid timestamp',
-                $raw,
-                $lineNumber,
-                $file,
-            );
+            throw new MalformedTranscriptException('Invalid timestamp', $raw, $lineNumber, $file);
+        }
+
+        $attrs = $decoded['attrs'] ?? [];
+        if (!\is_array($attrs)) {
+            $attrs = [];
+        }
+
+        $payload = $decoded['payload'] ?? null;
+        if ($payload !== null && !\is_array($payload)) {
+            $payload = ['value' => $payload];
         }
 
         return new TranscriptLine(
             timestamp: $timestamp,
-            processId: (int) $matches['processId'],
-            sequence: (int) $matches['sequence'],
+            processId: (int) ($decoded['pid'] ?? 0),
+            sequence: (int) ($decoded['seq'] ?? 0),
             section: $sectionEnum,
-            attributes: $attributes,
+            attributes: $attrs,
             payload: $payload,
             rawLine: $raw,
         );
-    }
-
-    /**
-     * @return array<string, scalar|null>
-     */
-    private function parseAttributes(string $attributesPart): array
-    {
-        $attributes = [];
-        $position = 0;
-        $length = \strlen($attributesPart);
-        while ($position < $length) {
-            while ($position < $length && $attributesPart[$position] === ' ') {
-                $position++;
-            }
-            if ($position >= $length) {
-                break;
-            }
-            $equalsPosition = \strpos($attributesPart, '=', $position);
-            if ($equalsPosition === false) {
-                break;
-            }
-            $key = \substr($attributesPart, $position, $equalsPosition - $position);
-            $valuePosition = $equalsPosition + 1;
-            if ($valuePosition < $length && $attributesPart[$valuePosition] === '"') {
-                $valuePosition++;
-                $valueStart = $valuePosition;
-                $value = '';
-                while ($valuePosition < $length) {
-                    $character = $attributesPart[$valuePosition];
-                    if ($character === '\\' && $valuePosition + 1 < $length) {
-                        $value .= $attributesPart[$valuePosition + 1];
-                        $valuePosition += 2;
-                        continue;
-                    }
-                    if ($character === '"') {
-                        $valuePosition++;
-                        break;
-                    }
-                    $value .= $character;
-                    $valuePosition++;
-                }
-            } else {
-                $spacePosition = \strpos($attributesPart, ' ', $valuePosition);
-                if ($spacePosition === false) {
-                    $value = \substr($attributesPart, $valuePosition);
-                    $valuePosition = $length;
-                } else {
-                    $value = \substr($attributesPart, $valuePosition, $spacePosition - $valuePosition);
-                    $valuePosition = $spacePosition;
-                }
-            }
-            $attributes[$key] = $this->coerceAttributeValue($value);
-            $position = $valuePosition;
-        }
-        return $attributes;
-    }
-
-    private function coerceAttributeValue(string $value): string|int|float|bool|null
-    {
-        if ($value === 'null') {
-            return null;
-        }
-        if ($value === 'true') {
-            return true;
-        }
-        if ($value === 'false') {
-            return false;
-        }
-        if ($value !== '' && \preg_match('/^-?\d+$/', $value) === 1) {
-            return (int) $value;
-        }
-        if ($value !== '' && \preg_match('/^-?\d+\.\d+$/', $value) === 1) {
-            return (float) $value;
-        }
-        return $value;
     }
 }

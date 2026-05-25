@@ -11,6 +11,11 @@ final class TranscriptWriter
 {
     private const SIZE_CAP_BYTES = 50 * 1024 * 1024;
 
+    private const JSON_FLAGS = \JSON_UNESCAPED_UNICODE
+        | \JSON_UNESCAPED_SLASHES
+        | \JSON_PARTIAL_OUTPUT_ON_ERROR
+        | \JSON_INVALID_UTF8_SUBSTITUTE;
+
     /** @var resource|null */
     private $fileDescriptor;
 
@@ -84,7 +89,7 @@ final class TranscriptWriter
     {
         $this->write(TranscriptSection::LOG, [
             'level' => $level,
-            'message' => $this->oneLine($message),
+            'message' => $message,
         ], $context === [] ? null : $context);
     }
 
@@ -218,18 +223,29 @@ final class TranscriptWriter
         $this->rotateIfNeeded();
 
         $this->sequence++;
-        $timestamp = (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:s.uP');
-        $line = $timestamp . ' '
-            . $this->processId . ' '
-            . $this->sequence . ' '
-            . '[' . $section->value . '] '
-            . $this->formatAttributes($attributes);
-
+        $record = [
+            'ts' => (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:s.uP'),
+            'pid' => $this->processId,
+            'seq' => $this->sequence,
+            'section' => $section->value,
+            'attrs' => (object) $attributes,
+        ];
         if ($payload !== null) {
-            $line .= ' payload=' . $this->encodePayload($payload);
+            $record['payload'] = $payload;
         }
 
-        $line .= "\n";
+        $encoded = \json_encode($record, self::JSON_FLAGS);
+        if ($encoded === false) {
+            $encoded = \json_encode([
+                'ts' => $record['ts'],
+                'pid' => $this->processId,
+                'seq' => $this->sequence,
+                'section' => $section->value,
+                'attrs' => new \stdClass(),
+                'payload' => ['error' => 'json_encode_failed'],
+            ], self::JSON_FLAGS);
+        }
+        $line = $encoded . "\n";
 
         if (!\flock($this->fileDescriptor, \LOCK_EX)) {
             $this->stderr->error('transcript-writer-internal-error: flock failed');
@@ -276,53 +292,6 @@ final class TranscriptWriter
             return;
         }
         $this->fileDescriptor = $resource;
-    }
-
-    /**
-     * @param array<string, scalar|null> $attributes
-     */
-    private function formatAttributes(array $attributes): string
-    {
-        if ($attributes === []) {
-            return '';
-        }
-        $parts = [];
-        foreach ($attributes as $key => $value) {
-            $parts[] = $key . '=' . $this->encodeAttributeValue($value);
-        }
-        return \implode(' ', $parts);
-    }
-
-    private function encodeAttributeValue(mixed $value): string
-    {
-        if ($value === null) {
-            return 'null';
-        }
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (\is_int($value) || \is_float($value)) {
-            return (string) $value;
-        }
-        $stringValue = (string) $value;
-        if (\preg_match('/[\s"]/', $stringValue) === 1) {
-            return '"' . \str_replace(['\\', '"'], ['\\\\', '\\"'], $stringValue) . '"';
-        }
-        return $stringValue;
-    }
-
-    private function encodePayload(mixed $payload): string
-    {
-        $encoded = \json_encode($payload, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES | \JSON_PARTIAL_OUTPUT_ON_ERROR | \JSON_INVALID_UTF8_SUBSTITUTE);
-        if ($encoded === false) {
-            return '"<json_encode_failed>"';
-        }
-        return $encoded;
-    }
-
-    private function oneLine(string $value): string
-    {
-        return \strtr($value, ["\n" => '\\n', "\r" => '\\r', "\t" => '\\t']);
     }
 
     private function safeDecodeFrame(string $frame): mixed
