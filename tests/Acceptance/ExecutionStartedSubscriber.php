@@ -27,6 +27,8 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -80,6 +82,16 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $container->bindSingleton(State::class, $state);
         $container->bindSingleton(Environment::class, $environment);
         $container->bindSingleton(LoggerInterface::class, $logger);
+        $container->bindSingleton(StderrLogger::class, $logger);
+
+        $runId = TranscriptStore::currentRunIdFromEnvironment() ?? TranscriptStore::generateRunId();
+        \putenv('TEMPORAL_TRANSCRIPT_RUN_ID=' . $runId);
+        $_ENV['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
+        $_SERVER['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
+        $logger->info('[transcript] run id', ['run_id' => $runId]);
+
+        $testTranscript = TranscriptStore::create(stderr: $logger)->createWriter($runId, 'test');
+        $container->bindSingleton(TranscriptWriter::class, $testTranscript);
 
         $temporalRunner = new TemporalStarter($environment);
         $rrRunner = new RRStarter($state, $environment);

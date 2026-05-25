@@ -212,4 +212,23 @@ final class TranscriptWriterTestCase extends TestCase
         $reader->getLines();
     }
 
+    public function testReaderIncludesRotatedLogFiles(): void
+    {
+        $writer = new TranscriptWriter($this->directory . '/rotated.log');
+        $writer->writeLog('info', 'pre-rotation', []);
+        $writer->flush();
+        \rename($this->directory . '/rotated.log', $this->directory . '/rotated.log.1');
+
+        $writer = new TranscriptWriter($this->directory . '/rotated.log');
+        $writer->writeLog('info', 'post-rotation', []);
+        $writer->flush();
+
+        $reader = new TranscriptReader($this->directory);
+        $messages = \array_map(
+            static fn($line): string => (string) $line->attributes['message'],
+            $reader->findBySection(TranscriptSection::LOG),
+        );
+        self::assertContains('pre-rotation', $messages);
+        self::assertContains('post-rotation', $messages);
+    }
 }

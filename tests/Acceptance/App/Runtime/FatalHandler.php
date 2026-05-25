@@ -24,10 +24,17 @@ final class FatalHandler
 
     private static bool $inHandler = false;
 
+    private static bool $registered = false;
+
     public static function register(TranscriptWriter $writer, ?LoggerInterface $stderr = null): void
     {
         self::$writer = $writer;
         self::$stderr = $stderr ?? new NullLogger();
+
+        if (self::$registered) {
+            return;
+        }
+        self::$registered = true;
 
         \set_error_handler(static function (int $type, string $message, string $file, int $line): bool {
             if (self::$inHandler) {

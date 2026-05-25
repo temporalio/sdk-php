@@ -27,6 +27,7 @@ use Temporal\Tests\Acceptance\App\Logger\TranscriptSection;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Logger\WorkflowHistoryDumper;
+use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
@@ -134,6 +135,19 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     throw $e;
                 } finally {
+                    foreach ($args as $arg) {
+                        if ($arg instanceof WorkflowStubInterface) {
+                            try {
+                                $arg->terminate('test-end');
+                            } catch (\Throwable $e) {
+                                $transcript?->writeMeta('workflow_terminate_failed', [
+                                    'workflow_id' => $arg->getExecution()->getID(),
+                                    'class' => $e::class,
+                                    'message' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                    }
                     if ($transcript !== null) {
                         (new WorkflowHistoryDumper())->dump(
                             $transcript,
@@ -141,16 +155,9 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                             $args,
                         );
                     }
-                    // Cleanup: terminate injected workflow if any
-                    foreach ($args as $arg) {
-                        if ($arg instanceof WorkflowStubInterface) {
-                            try {
-                                $arg->terminate('test-end');
-                            } catch (\Throwable $e) {
-                                // ignore
-                            }
-                        }
-                    }
+                    $stderr = $container->has(StderrLogger::class)
+                        ? $container->get(StderrLogger::class)
+                        : null;
                     if ($transcript !== null) {
                         $status = match (true) {
                             $caughtException === null => 'passed',
@@ -169,9 +176,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         $transcript->writeTestBoundary(TranscriptSection::TEST_END, $endAttributes);
                         $transcript->flush();
                         if ($caughtException !== null && !$caughtException instanceof SkippedTest) {
-                            $stderr = $container->has(LoggerInterface::class)
-                                ? $container->get(LoggerInterface::class)
-                                : null;
                             $stderr?->error('transcript', ['path' => $transcript->getPath()]);
                             $stderr?->info('run `composer transcripts:last` to view the merged stream');
                         }
@@ -194,7 +198,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         return $run->reader()->linesForTest(static::class, $this->name());
     }
 
-private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
+    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
     {
         foreach ($args as $arg) {
             if (!$arg instanceof WorkflowStubInterface) {

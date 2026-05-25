@@ -29,11 +29,6 @@ final class TranscriptWriter
 
     private readonly LoggerInterface $stderr;
 
-    /**
-     * Re-entry guard. Writes are called from shutdown handlers, destructors, and
-     * exception interceptors; a recursive failure inside doWrite must not retrigger
-     * the writer or it will mask the original throwable.
-     */
     private bool $inWrite = false;
 
     /**

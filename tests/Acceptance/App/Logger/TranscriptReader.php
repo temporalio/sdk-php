@@ -11,8 +11,12 @@ final class TranscriptReader
 
     public function __construct(string $directory)
     {
-        $matches = \glob($directory . '/*.log');
-        $this->files = \is_array($matches) ? $matches : [];
+        $live = \glob($directory . '/*.log');
+        $rotated = \glob($directory . '/*.log.*');
+        $this->files = \array_values(\array_merge(
+            \is_array($live) ? $live : [],
+            \is_array($rotated) ? $rotated : [],
+        ));
     }
 
     /**

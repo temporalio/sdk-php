@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Temporal\Tests\Acceptance\App\Logger\TranscriptRun;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 use Temporal\Worker\Logger\StderrLogger;
 

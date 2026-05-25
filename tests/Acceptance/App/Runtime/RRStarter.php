@@ -62,8 +62,15 @@ final class RRStarter
             $rrCommand[] = "tls.cert={$run->tlsCert}";
         }
 
+        $envs = [];
+        $runId = \getenv('TEMPORAL_TRANSCRIPT_RUN_ID');
+        if (\is_string($runId) && $runId !== '') {
+            $envs['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
+        }
+
         $this->environment->startRoadRunner(
             rrCommand: $rrCommand,
+            envs: $envs,
             configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
         );
     }

@@ -16,9 +16,9 @@ final class RecordingHost implements HostConnectionInterface
         private readonly HostConnectionInterface $inner,
         private readonly TranscriptWriter $transcript,
     ) {
-        $this->transcript->writeMeta('host_recording_started', [
+        $this->record(fn() => $this->transcript->writeMeta('host_recording_started', [
             'inner' => $inner::class,
-        ]);
+        ]));
     }
 
     public function waitBatch(): ?CommandBatch
@@ -28,19 +28,29 @@ final class RecordingHost implements HostConnectionInterface
             return null;
         }
         $this->frameCounter++;
-        $this->transcript->writeWireInbound($batch->messages, $batch->context, $this->frameCounter);
+        $frameId = $this->frameCounter;
+        $this->record(fn() => $this->transcript->writeWireInbound($batch->messages, $batch->context, $frameId));
         return $batch;
     }
 
     public function send(string $frame): void
     {
-        $this->transcript->writeWireOutbound($frame, $this->frameCounter);
+        $frameId = $this->frameCounter;
+        $this->record(fn() => $this->transcript->writeWireOutbound($frame, $frameId));
         $this->inner->send($frame);
     }
 
     public function error(\Throwable $error): void
     {
-        $this->transcript->writeWireError($error);
+        $this->record(fn() => $this->transcript->writeWireError($error));
         $this->inner->error($error);
+    }
+
+    private function record(callable $write): void
+    {
+        try {
+            $write();
+        } catch (\Throwable) {
+        }
     }
 }

@@ -146,6 +146,9 @@ final class TranscriptStore
         if ($slug === '') {
             return 'run';
         }
+        if ($slug[0] === '_') {
+            $slug = 'r' . $slug;
+        }
         return \strlen($slug) > 64 ? \substr($slug, 0, 64) : $slug;
     }
 

@@ -85,6 +85,7 @@ try {
     );
     $run = $runtime->command;
     $container = new Spiral\Core\Container();
+    ContainerFacade::$container = $container;
     $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
 
     $converters = [
@@ -144,10 +145,7 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $host = RoadRunner::create();
-    if (\getenv('TEMPORAL_WIRE_TRACE') !== false && \getenv('TEMPORAL_WIRE_TRACE') !== '0') {
-        $host = new RecordingHost($host, $workerTranscript);
-    }
+    $host = new RecordingHost(RoadRunner::create(), $workerTranscript);
     $container->get(WorkerFactoryInterface::class)->run($host);
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);

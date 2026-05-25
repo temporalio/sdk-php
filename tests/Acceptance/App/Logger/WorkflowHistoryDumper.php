@@ -40,7 +40,8 @@ final class WorkflowHistoryDumper
         foreach ($args as $arg) {
             if ($arg instanceof WorkflowStubInterface) {
                 $execution = $arg->getExecution();
-                $executions[$execution->getID()] = $execution;
+                $key = $execution->getID() . ':' . ($execution->getRunID() ?? '');
+                $executions[$key] = $execution;
             }
         }
         return $executions;

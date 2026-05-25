@@ -20,6 +20,9 @@ use Temporal\Worker\WorkerOptions;
 #[UsesClass(AbstractPlugin::class)]
 #[UsesClass(PluginRegistry::class)]
 #[UsesClass(WorkerPluginContext::class)]
+#[UsesClass(WorkerOptions::class)]
+#[UsesClass(TranscriptActivityInterceptor::class)]
+#[UsesClass(TranscriptWorkflowInterceptor::class)]
 final class TranscriptPluginTestCase extends TestCase
 {
     public function testGetNameReturnsCanonicalIdentifier(): void
@@ -27,7 +30,6 @@ final class TranscriptPluginTestCase extends TestCase
         $plugin = new TranscriptPlugin();
 
         self::assertSame('temporal-php.transcript', $plugin->getName());
-        self::assertSame(TranscriptPlugin::NAME, $plugin->getName());
     }
 
     public function testConfigureWorkerAddsActivityAndWorkflowInterceptors(): void

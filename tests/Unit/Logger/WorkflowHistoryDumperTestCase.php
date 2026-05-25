@@ -30,6 +30,14 @@ use Temporal\Workflow\WorkflowExecution;
 #[UsesClass(TranscriptLine::class)]
 #[UsesClass(TranscriptSection::class)]
 #[UsesClass(MalformedTranscriptException::class)]
+#[UsesClass(WorkflowExecution::class)]
+#[UsesClass(WorkflowExecutionHistory::class)]
+#[UsesClass(Paginator::class)]
+#[UsesClass(HistoryEvent::class)]
+#[UsesClass(History::class)]
+#[UsesClass(GetWorkflowExecutionHistoryResponse::class)]
+#[UsesClass(EventType::class)]
+#[UsesClass(Timestamp::class)]
 final class WorkflowHistoryDumperTestCase extends TestCase
 {
     private string $directory;
@@ -114,7 +122,7 @@ final class WorkflowHistoryDumperTestCase extends TestCase
         self::assertSame(2, $dumpedMetas[0]->attributes['event_count']);
     }
 
-    public function testDeduplicatesExecutionsWithSameId(): void
+    public function testDeduplicatesExecutionsWithSameIdAndRunId(): void
     {
         $writer = $this->newWriter('dedup.log');
         $execution = new WorkflowExecution('wf-dup', 'run-1');
@@ -138,7 +146,36 @@ final class WorkflowHistoryDumperTestCase extends TestCase
             $reader->findBySection(TranscriptSection::META),
             static fn(TranscriptLine $line): bool => ($line->attributes['event'] ?? null) === 'history_dumped',
         ));
-        self::assertCount(1, $dumpedMetas, 'Same execution id should be dumped once');
+        self::assertCount(1, $dumpedMetas, 'Same execution id+runId should be dumped once');
+    }
+
+    public function testDumpsBothExecutionsWhenSameIdButDifferentRunId(): void
+    {
+        $writer = $this->newWriter('two-runs.log');
+        $stubA = $this->createMock(WorkflowStubInterface::class);
+        $stubA->method('getExecution')->willReturn(new WorkflowExecution('wf-retry', 'run-1'));
+        $stubB = $this->createMock(WorkflowStubInterface::class);
+        $stubB->method('getExecution')->willReturn(new WorkflowExecution('wf-retry', 'run-2'));
+
+        $client = $this->createMock(WorkflowClientInterface::class);
+        $client->expects(self::exactly(2))
+            ->method('getWorkflowHistory')
+            ->willReturnOnConsecutiveCalls(
+                $this->makeHistory([$this->newEvent(1, EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED)]),
+                $this->makeHistory([$this->newEvent(1, EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED)]),
+            );
+
+        (new WorkflowHistoryDumper())->dump($writer, $client, [$stubA, $stubB]);
+        $writer->flush();
+
+        $reader = new TranscriptReader($this->directory);
+        $dumpedMetas = \array_values(\array_filter(
+            $reader->findBySection(TranscriptSection::META),
+            static fn(TranscriptLine $line): bool => ($line->attributes['event'] ?? null) === 'history_dumped',
+        ));
+        self::assertCount(2, $dumpedMetas);
+        $runIds = \array_map(static fn(TranscriptLine $line): mixed => $line->attributes['run_id'], $dumpedMetas);
+        self::assertEqualsCanonicalizing(['run-1', 'run-2'], $runIds);
     }
 
     public function testWritesHistoryErrorWhenClientThrows(): void
