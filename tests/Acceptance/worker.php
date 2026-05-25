@@ -41,17 +41,17 @@ use Temporal\WorkerFactory;
 \chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
 
-$stderr = new StderrLogger();
-$workerTranscript = TranscriptStore::create(stderr: $stderr)->createWriter(
-    TranscriptStore::currentRunIdFromEnvironment() ?? ('orphan-' . (\getmypid() ?: 0)),
-    'worker',
-);
-FatalHandler::register($workerTranscript, $stderr);
+$logger = new StderrLogger();
+$workerTranscript = TranscriptStore::create(stderr: $logger)
+    ->createWriter(
+        TranscriptStore::currentRunIdFromEnvironment() ?? ('orphan-' . (\getmypid() ?: 0)),
+        'worker',
+    );
+FatalHandler::register($workerTranscript, $logger);
 
 RuntimeBuilder::init();
 StackRenderer::addIgnoredPath(__FILE__);
 
-$logger = new StderrLogger();
 
 /** @var list<class-string> $allowedTestClasses */
 $allowedTestClasses = [];
@@ -83,9 +83,7 @@ try {
     );
     $run = $runtime->command;
     $container = new Spiral\Core\Container();
-    ContainerFacade::$container = $container;
     $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
-    $container->bindSingleton(StderrLogger::class, $stderr);
 
     $converters = [
         new NullConverter(),
@@ -144,7 +142,7 @@ try {
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);
     $workerTranscript->flush();
-    $stderr->critical('fatal', [
+    $logger->critical('fatal', [
         'class' => $e::class,
         'message' => $e->getMessage(),
         'trace' => $e->getTraceAsString(),

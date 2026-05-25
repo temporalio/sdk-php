@@ -20,7 +20,6 @@ use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
-use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
@@ -84,8 +83,8 @@ final class WorkerFactory
         }
         try {
             $transcript = $container->get(TranscriptWriter::class);
-            $stderr = $container->has(StderrLogger::class)
-                ? $container->get(StderrLogger::class)
+            $stderr = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
                 : new NullLogger();
             return LoggerFactory::createServerLoggerWithTranscript($feature->taskQueue, $transcript, $stderr);
         } catch (\Throwable) {

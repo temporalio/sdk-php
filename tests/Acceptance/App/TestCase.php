@@ -31,7 +31,6 @@ use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
-use Temporal\Worker\Logger\StderrLogger;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
@@ -153,9 +152,11 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         }
                     }
                     if ($transcript !== null) {
-                        $status = $caughtException === null
-                            ? 'passed'
-                            : ($caughtException instanceof SkippedTest ? 'skipped' : 'failed');
+                        $status = match (true) {
+                            $caughtException === null => 'passed',
+                            $caughtException instanceof SkippedTest => 'skipped',
+                            default => 'failed',
+                        };
                         $endAttributes = [
                             'class' => static::class,
                             'method' => $this->name(),
@@ -168,8 +169,8 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         $transcript->writeTestBoundary(TranscriptSection::TEST_END, $endAttributes);
                         $transcript->flush();
                         if ($caughtException !== null && !$caughtException instanceof SkippedTest) {
-                            $stderr = $container->has(StderrLogger::class)
-                                ? $container->get(StderrLogger::class)
+                            $stderr = $container->has(LoggerInterface::class)
+                                ? $container->get(LoggerInterface::class)
                                 : null;
                             $stderr?->error('transcript', ['path' => $transcript->getPath()]);
                             $stderr?->info('run `composer transcripts:last` to view the merged stream');
