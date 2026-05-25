@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Logger;
+namespace Temporal\Testing\Transcript;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -52,6 +52,11 @@ final class TranscriptStore
     {
         $runId = \getenv(self::RUN_ID_ENV);
         return \is_string($runId) && $runId !== '' ? $runId : null;
+    }
+
+    public static function currentRunIdOrOrphan(): string
+    {
+        return self::currentRunIdFromEnvironment() ?? ('orphan-' . (\getmypid() ?: 0));
     }
 
     public static function getOrCreateRunId(): string

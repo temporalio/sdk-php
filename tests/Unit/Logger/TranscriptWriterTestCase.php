@@ -7,11 +7,11 @@ namespace Temporal\Tests\Unit\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Temporal\Tests\Acceptance\App\Logger\MalformedTranscriptException;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptLine;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptReader;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptSection;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\MalformedTranscriptException;
+use Temporal\Testing\Transcript\TranscriptLine;
+use Temporal\Testing\Transcript\TranscriptReader;
+use Temporal\Testing\Transcript\TranscriptSection;
+use Temporal\Testing\Transcript\TranscriptWriter;
 
 #[CoversClass(TranscriptWriter::class)]
 #[UsesClass(TranscriptSection::class)]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Logger;
+namespace Temporal\Testing\Transcript;
 
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Client\WorkflowClientInterface;

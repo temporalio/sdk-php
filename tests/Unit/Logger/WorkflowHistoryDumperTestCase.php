@@ -16,12 +16,12 @@ use Temporal\Client\Common\Paginator;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
-use Temporal\Tests\Acceptance\App\Logger\MalformedTranscriptException;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptLine;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptReader;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptSection;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Logger\WorkflowHistoryDumper;
+use Temporal\Testing\Transcript\MalformedTranscriptException;
+use Temporal\Testing\Transcript\TranscriptLine;
+use Temporal\Testing\Transcript\TranscriptReader;
+use Temporal\Testing\Transcript\TranscriptSection;
+use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\WorkflowHistoryDumper;
 use Temporal\Workflow\WorkflowExecution;
 
 #[CoversClass(WorkflowHistoryDumper::class)]

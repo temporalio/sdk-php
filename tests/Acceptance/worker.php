@@ -25,9 +25,9 @@ use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Testing\Command;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
+use Temporal\Testing\Transcript\TranscriptStore;
+use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptPlugin;
 use Temporal\Tests\Acceptance\App\Runtime\FatalHandler;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -44,10 +44,7 @@ require './vendor/autoload.php';
 
 $logger = new StderrLogger();
 $workerTranscript = TranscriptStore::create(stderr: $logger)
-    ->createWriter(
-        TranscriptStore::currentRunIdFromEnvironment() ?? ('orphan-' . (\getmypid() ?: 0)),
-        'worker',
-    );
+    ->createWriter(TranscriptStore::currentRunIdOrOrphan(), 'worker');
 FatalHandler::register($workerTranscript, $logger);
 
 RuntimeBuilder::init();

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Interceptor;
+namespace Temporal\Testing\Transcript;
 
 use Temporal\Activity;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class TranscriptActivityInterceptor implements ActivityInboundInterceptor
 {

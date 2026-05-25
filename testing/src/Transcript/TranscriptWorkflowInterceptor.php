@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Interceptor;
+namespace Temporal\Testing\Transcript;
 
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
@@ -10,7 +10,7 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterceptor
 {

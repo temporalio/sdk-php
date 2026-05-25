@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
+use Temporal\Testing\Transcript\TranscriptStore;
 use Temporal\Worker\Logger\StderrLogger;
 
 $stderr = new StderrLogger();

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Logger;
+namespace Temporal\Testing\Transcript;
 
 /**
  * Single owner of transcript path/id grammar:

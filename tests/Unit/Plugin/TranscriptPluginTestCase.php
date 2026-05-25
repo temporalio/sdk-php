@@ -11,10 +11,10 @@ use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptActivityInterceptor;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptWorkflowInterceptor;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
-use Temporal\Tests\Acceptance\App\Plugin\TranscriptPlugin;
+use Temporal\Testing\Transcript\TranscriptActivityInterceptor;
+use Temporal\Testing\Transcript\TranscriptWorkflowInterceptor;
+use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptPlugin;
 use Temporal\Tests\Unit\Logger\TranscriptTestSupport;
 use Temporal\Worker\WorkerOptions;
 

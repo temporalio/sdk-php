@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Transport;
 
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 use Temporal\Worker\Transport\CommandBatch;
 use Temporal\Worker\Transport\HostConnectionInterface;
 

@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Plugin;
+namespace Temporal\Testing\Transcript;
 
 use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\WorkerPluginContext;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptActivityInterceptor;
-use Temporal\Tests\Acceptance\App\Interceptor\TranscriptWorkflowInterceptor;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class TranscriptPlugin extends AbstractPlugin
 {

@@ -6,7 +6,7 @@ namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class FatalHandler
 {
