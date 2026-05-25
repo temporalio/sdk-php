@@ -54,6 +54,17 @@ final class TranscriptStore
         return \is_string($runId) && $runId !== '' ? $runId : null;
     }
 
+    public static function getOrCreateRunId(): string
+    {
+        $runId = self::currentRunIdFromEnvironment();
+        if ($runId !== null) {
+            return $runId;
+        }
+        $runId = TranscriptPaths::generateRunId();
+        \putenv(self::RUN_ID_ENV . '=' . $runId);
+        return $runId;
+    }
+
     public function runDirectory(string $runId): string
     {
         return TranscriptPaths::runDirectory($this->baseDirectory, $runId);

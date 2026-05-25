@@ -27,7 +27,6 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
-use Temporal\Tests\Acceptance\App\Logger\TranscriptPaths;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptStore;
 use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
@@ -85,10 +84,7 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $container->bindSingleton(LoggerInterface::class, $logger);
         $container->bindSingleton(StderrLogger::class, $logger);
 
-        $runId = TranscriptStore::currentRunIdFromEnvironment() ?? TranscriptPaths::generateRunId();
-        \putenv('TEMPORAL_TRANSCRIPT_RUN_ID=' . $runId);
-        $_ENV['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
-        $_SERVER['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
+        $runId = TranscriptStore::getOrCreateRunId();
         $logger->info('[transcript] run id', ['run_id' => $runId]);
 
         $transcriptStore = TranscriptStore::create(stderr: $logger);
