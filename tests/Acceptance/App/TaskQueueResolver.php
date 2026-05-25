@@ -35,6 +35,10 @@ final class TaskQueueResolver
             return $namespace;
         }
 
+        if (\str_starts_with($namespace, 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\')) {
+            return $namespace;
+        }
+
         $reflection = new \ReflectionClass($class);
         foreach ($reflection->getAttributes(Worker::class) as $attribute) {
             $worker = $attribute->newInstance();
