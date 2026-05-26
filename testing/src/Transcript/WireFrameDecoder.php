@@ -12,8 +12,7 @@ use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedCollection;
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\EncodingKeys;
 
 final class WireFrameDecoder
 {
@@ -89,11 +88,11 @@ final class WireFrameDecoder
      */
     private static function decodePayloads(Payloads $payloads, DataConverterInterface $converter): array
     {
-        try {
-            return \array_values(EncodedValues::fromPayloads($payloads, $converter)->getValues());
-        } catch (\Throwable) {
-            return \array_map(self::payloadFallback(...), \iterator_to_array($payloads->getPayloads(), false));
+        $out = [];
+        foreach ($payloads->getPayloads() as $payload) {
+            $out[] = self::decodeSinglePayload($payload, $converter);
         }
+        return $out;
     }
 
     /**
@@ -101,16 +100,31 @@ final class WireFrameDecoder
      */
     private static function decodeHeader(Header $header, DataConverterInterface $converter): array
     {
+        $out = [];
         /** @var MapField<string, Payload> $fields */
         $fields = $header->getFields();
+        foreach ($fields as $name => $payload) {
+            $out[$name] = self::decodeSinglePayload($payload, $converter);
+        }
+        return $out;
+    }
+
+    /**
+     * Decodes a single payload using its own `metadata.encoding`. Falls back to a raw
+     * representation when encoding is absent (e.g., {@see \Temporal\DataConverter\RawValue})
+     * or when the converter cannot interpret the bytes.
+     */
+    private static function decodeSinglePayload(Payload $payload, DataConverterInterface $converter): mixed
+    {
+        /** @var MapField<string, string> $meta */
+        $meta = $payload->getMetadata();
+        if (!isset($meta[EncodingKeys::METADATA_ENCODING_KEY])) {
+            return self::payloadFallback($payload);
+        }
         try {
-            return EncodedCollection::fromPayloadCollection($fields, $converter)->getValues();
+            return $converter->fromPayload($payload, null);
         } catch (\Throwable) {
-            $out = [];
-            foreach ($fields as $name => $payload) {
-                $out[$name] = self::payloadFallback($payload);
-            }
-            return $out;
+            return self::payloadFallback($payload);
         }
     }
 
