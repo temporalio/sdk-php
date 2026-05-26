@@ -11,6 +11,7 @@ use Temporal\Testing\Transcript\TranscriptStore;
 final class RRStarter
 {
     private Environment $environment;
+
     public function __construct(
         private State $runtime,
         ?Environment $environment = null,
@@ -19,14 +20,13 @@ final class RRStarter
         \register_shutdown_function(fn() => $this->stop());
     }
 
-    /**
-     * @param list<class-string> $allowedTestClasses
-     */
-    public function start(array $allowedTestClasses = []): void
+    public function start(): void
     {
         if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
+
+        $allowedTestClasses = $this->runtime->allowedTestClasses;
 
         $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;

@@ -57,7 +57,10 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         }
 
         $logger = new StderrLogger();
-        $logger->info('[selection] picked test classes after filtering', ['count' => \count($selectedTestClasses)]);
+        $logger->info('[selection] picked test classes after filtering', [
+            'count' => \count($selectedTestClasses),
+            'classes' => $selectedTestClasses,
+        ]);
 
         RuntimeBuilder::init();
 
@@ -95,7 +98,7 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $temporalRunner = new TemporalStarter($environment);
         $rrRunner = new RRStarter($state, $environment);
         $temporalRunner->start();
-        $rrRunner->start($selectedTestClasses);
+        $rrRunner->start();
 
         $serviceClient = $state->command->tlsKey === null && $state->command->tlsCert === null
             ? ServiceClient::create($state->address)
