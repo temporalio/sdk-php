@@ -7,13 +7,21 @@ namespace Temporal\Tests\Unit\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RoadRunner\Temporal\DTO\V1\Frame;
+use RoadRunner\Temporal\DTO\V1\Message;
+use Temporal\Api\Common\V1\Header;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Failure\V1\Failure;
 use Temporal\Testing\Transcript\MalformedTranscriptException;
 use Temporal\Testing\Transcript\TranscriptLine;
 use Temporal\Testing\Transcript\TranscriptReader;
 use Temporal\Testing\Transcript\TranscriptSection;
 use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\WireFrameDecoder;
 
 #[CoversClass(TranscriptWriter::class)]
+#[CoversClass(WireFrameDecoder::class)]
 #[UsesClass(TranscriptSection::class)]
 #[UsesClass(TranscriptReader::class)]
 #[UsesClass(TranscriptLine::class)]
@@ -79,6 +87,124 @@ final class TranscriptWriterTestCase extends TestCase
         $decoded = $inbound[0]->payload['body']['value'] ?? null;
         self::assertIsArray($decoded);
         self::assertSame('InvokeActivity', $decoded['command']);
+    }
+
+    public function testWriteWireDecodesTemporalProtobufFrame(): void
+    {
+        $jsonPayload = (new Payload())
+            ->setMetadata(['encoding' => 'json/plain'])
+            ->setData('{"hello":"world","n":7}');
+        $nullPayload = (new Payload())
+            ->setMetadata(['encoding' => 'binary/null'])
+            ->setData('');
+        $headerPayload = (new Payload())
+            ->setMetadata(['encoding' => 'json/plain'])
+            ->setData('"trace-id"');
+
+        $message = new Message();
+        $message->setId(42);
+        $message->setCommand('StartWorkflow');
+        $message->setOptions('{"name":"Demo","attempt":1}');
+        $message->setPayloads((new Payloads())->setPayloads([$jsonPayload, $nullPayload]));
+        $message->setHeader((new Header())->setFields(['traceId' => $headerPayload]));
+        $message->setHistoryLength(3);
+        $message->setHistorySize(375);
+        $message->setRunId('run-1');
+        $message->setTaskQueue('default');
+        $message->setReplay(true);
+
+        $frame = (new Frame())->setMessages([$message])->serializeToString();
+
+        $writer = new TranscriptWriter($this->directory . '/proto-wire.log');
+        $writer->writeWireInbound($frame, ['tickTime' => '2026-05-26'], 7);
+        $writer->flush();
+
+        $reader = new TranscriptReader($this->directory);
+        $inbound = $reader->findBySection(TranscriptSection::WIRE_INBOUND);
+        self::assertCount(1, $inbound);
+        self::assertSame(\strlen($frame), $inbound[0]->attributes['bytes']);
+
+        $body = $inbound[0]->payload['body'];
+        self::assertSame('temporal-frame', $body['encoding']);
+        self::assertCount(1, $body['messages']);
+        $decoded = $body['messages'][0];
+
+        self::assertSame('42', $decoded['id']);
+        self::assertSame('StartWorkflow', $decoded['command']);
+        self::assertSame(['name' => 'Demo', 'attempt' => 1], $decoded['options']);
+        self::assertSame('3', $decoded['history_length']);
+        self::assertSame('375', $decoded['history_size']);
+        self::assertSame('run-1', $decoded['run_id']);
+        self::assertSame('default', $decoded['task_queue']);
+        self::assertTrue($decoded['replay']);
+
+        self::assertCount(2, $decoded['payloads']);
+        self::assertSame(['hello' => 'world', 'n' => 7], $decoded['payloads'][0]);
+        self::assertNull($decoded['payloads'][1]);
+
+        self::assertSame(['traceId' => 'trace-id'], $decoded['header']);
+    }
+
+    public function testWriteWireDecodesFailureAndPreservesNonUtf8Payload(): void
+    {
+        $cause = (new Failure())
+            ->setMessage('inner')
+            ->setSource('PHP_SDK')
+            ->setStackTrace("at foo\nat bar");
+        $failure = (new Failure())
+            ->setMessage('Should not be called')
+            ->setSource('PHP_SDK')
+            ->setStackTrace('#0 outer')
+            ->setCause($cause);
+
+        $binaryPayload = (new Payload())
+            ->setMetadata(['encoding' => 'binary/plain'])
+            ->setData("\x00\xff\x01\x02non-utf8");
+
+        $message = (new Message())
+            ->setCommand('CompleteWorkflow')
+            ->setFailure($failure)
+            ->setPayloads((new Payloads())->setPayloads([$binaryPayload]));
+
+        $frame = (new Frame())->setMessages([$message])->serializeToString();
+
+        $writer = new TranscriptWriter($this->directory . '/proto-failure.log');
+        $writer->writeWireOutbound($frame, 1, 1);
+        $writer->flush();
+
+        $reader = new TranscriptReader($this->directory);
+        $outbound = $reader->findBySection(TranscriptSection::WIRE_OUTBOUND);
+        self::assertCount(1, $outbound);
+
+        $decoded = $outbound[0]->payload['body']['messages'][0];
+        self::assertSame('CompleteWorkflow', $decoded['command']);
+        self::assertSame('Should not be called', $decoded['failure']['message']);
+        self::assertSame('PHP_SDK', $decoded['failure']['source']);
+        self::assertSame('#0 outer', $decoded['failure']['stack_trace']);
+        self::assertSame('inner', $decoded['failure']['cause']['message']);
+        self::assertArrayNotHasKey('cause', $decoded['failure']['cause']);
+        self::assertArrayNotHasKey('id', $decoded);
+        self::assertArrayNotHasKey('replay', $decoded);
+
+        $fallback = $decoded['payloads'][0];
+        self::assertSame(['encoding' => 'binary/plain'], $fallback['metadata']);
+        self::assertSame('base64', $fallback['data']['encoding']);
+        self::assertSame("\x00\xff\x01\x02non-utf8", \base64_decode($fallback['data']['value']));
+    }
+
+    public function testWriteWireFallsBackToBase64ForUnparseableBinaryFrame(): void
+    {
+        $frame = "\x00\xff\x01\xfa\xfb\xfc";
+        $writer = new TranscriptWriter($this->directory . '/garbage.log');
+        $writer->writeWireInbound($frame, [], 1);
+        $writer->flush();
+
+        $reader = new TranscriptReader($this->directory);
+        $inbound = $reader->findBySection(TranscriptSection::WIRE_INBOUND);
+        self::assertCount(1, $inbound);
+        $body = $inbound[0]->payload['body'];
+        self::assertSame('raw', $body['encoding']);
+        self::assertSame($frame, \base64_decode($body['preview_base64']));
     }
 
     public function testWriteExceptionCarriesClassAndTrace(): void

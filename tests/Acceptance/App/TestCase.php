@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
-use Google\Protobuf\Timestamp;
 use PHPUnit\Framework\SkippedTest;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
-use Temporal\Api\Enums\V1\EventType;
-use Temporal\Api\Failure\V1\Failure;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
@@ -83,6 +80,9 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 $transcript = $container->has(TranscriptWriter::class)
                     ? $container->get(TranscriptWriter::class)
                     : null;
+                $dumper = $container->has(WorkflowHistoryDumper::class)
+                    ? $container->get(WorkflowHistoryDumper::class)
+                    : null;
                 $transcript?->writeTestBoundary(TranscriptSection::TEST_START, [
                     'class' => static::class,
                     'method' => $this->name(),
@@ -105,8 +105,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         );
                         echo "\n=== Stack trace ===\n";
                         echo $e->getTraceAsString();
-                        echo "\n=== Workflow history ===\n";
-                        $this->printWorkflowHistory($workflowClient, $args);
+
+                        if ($transcript !== null) {
+                            $dumper?->renderForFailure($transcript, $workflowClient, $args);
+                        }
 
                         $logRecords = $container->get(ClientLogger::class)->getRecords();
                         if ($logRecords !== []) {
@@ -134,9 +136,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     throw $e;
                 } finally {
                     if ($transcript !== null) {
-                        $dumper = $container->has(WorkflowHistoryDumper::class)
-                            ? $container->get(WorkflowHistoryDumper::class)
-                            : null;
                         $dumper?->dump($transcript, $workflowClient, $args);
                     }
                     foreach ($args as $arg) {
@@ -175,13 +174,23 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                                 : null;
                             $stderr?->error('transcript', ['path' => $transcript->getPath()]);
                             $runId = TranscriptStore::currentRunIdFromEnvironment();
-                            $stderr?->info($runId !== null
-                                ? "run `composer transcripts:merge {$runId}` to view the merged stream"
-                                : 'run `composer transcripts:last` to view the merged stream');
-                            if ($runId !== null && self::shouldDumpTranscriptOnFail()) {
-                                $content = TranscriptStore::create(stderr: $stderr)->readMergedRun($runId);
-                                if ($content !== null) {
-                                    $stderr?->info("transcript run {$runId} dump:\n" . $content);
+                            $store = TranscriptStore::create(stderr: $stderr);
+                            $run = $runId === null ? $store->latestRun() : $store->findRun($runId);
+                            if ($run !== null && $run->files() !== []) {
+                                try {
+                                    $mergedPath = $run->merge();
+                                    $stderr?->info("view merged transcript: less {$mergedPath}");
+                                    if (self::shouldDumpTranscriptOnFail()) {
+                                        $content = @\file_get_contents($mergedPath);
+                                        if (\is_string($content) && $content !== '') {
+                                            $label = $runId !== null ? "transcript run {$runId}" : 'transcript';
+                                            $stderr?->info("{$label} dump:\n" . $content);
+                                        }
+                                    }
+                                } catch (\Throwable $mergeError) {
+                                    $stderr?->warning('transcript merge failed', [
+                                        'message' => $mergeError->getMessage(),
+                                    ]);
                                 }
                             }
                         }
@@ -209,69 +218,4 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         return $run->reader()->linesForTest(static::class, $this->name());
     }
 
-    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
-    {
-        foreach ($args as $arg) {
-            if (!$arg instanceof WorkflowStubInterface) {
-                continue;
-            }
-
-            $fnTime = static fn(?Timestamp $ts): float => $ts === null
-                ? 0
-                : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
-
-            foreach ($workflowClient->getWorkflowHistory($arg->getExecution()) as $event) {
-                $start ??= $fnTime($event->getEventTime());
-                echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
-                # Calculate delta time
-                $deltaMs = \round(1_000 * ($fnTime($event->getEventTime()) - $start));
-                echo \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
-                echo \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
-
-                $cause = $event->getStartChildWorkflowExecutionFailedEventAttributes()?->getCause()
-                    ?? $event->getSignalExternalWorkflowExecutionFailedEventAttributes()?->getCause()
-                    ?? $event->getRequestCancelExternalWorkflowExecutionFailedEventAttributes()?->getCause();
-                if ($cause !== null) {
-                    echo "Cause: $cause";
-                    continue;
-                }
-
-                $failure = $event->getActivityTaskFailedEventAttributes()?->getFailure()
-                    ?? $event->getWorkflowTaskFailedEventAttributes()?->getFailure()
-                    ?? $event->getNexusOperationFailedEventAttributes()?->getFailure()
-                    ?? $event->getWorkflowExecutionFailedEventAttributes()?->getFailure()
-                    ?? $event->getChildWorkflowExecutionFailedEventAttributes()?->getFailure()
-                    ?? $event->getNexusOperationCancelRequestFailedEventAttributes()?->getFailure();
-
-                if ($failure === null) {
-                    continue;
-                }
-
-                # Render failure
-                echo "Failure:\n";
-                echo "    ========== BEGIN ===========\n";
-                $this->renderFailure($failure, 1);
-                echo "    =========== END ============";
-            }
-        }
-    }
-
-    private function renderFailure(Failure $failure, int $level): void
-    {
-        $fnPad = static function (string $str) use ($level): string {
-            $pad = \str_repeat('    ', $level);
-            return $pad . \str_replace("\n", "\n$pad", $str);
-        };
-        echo $fnPad('Source: ' . $failure->getSource()) . "\n";
-        echo $fnPad('Info: ' . $failure->getFailureInfo()) . "\n";
-        echo $fnPad('Message: ' . $failure->getMessage()) . "\n";
-        echo $fnPad("Stack trace:") . "\n";
-        echo $fnPad($failure->getStackTrace()) . "\n";
-        $previous = $failure->getCause();
-        if ($previous !== null) {
-            echo $fnPad('————————————————————————————') . "\n";
-            echo $fnPad('Caused by:') . "\n";
-            $this->renderFailure($previous, $level + 1);
-        }
-    }
 }

@@ -323,19 +323,21 @@ final class TranscriptWriter
     private function safeDecodeFrame(string $frame): mixed
     {
         $trimmed = \ltrim($frame);
-        if ($trimmed === '' || ($trimmed[0] !== '{' && $trimmed[0] !== '[')) {
-            return [
-                'encoding' => 'raw',
-                'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
-            ];
+        if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+            $decoded = \json_decode($frame, true);
+            if ($decoded !== null || \json_last_error() === \JSON_ERROR_NONE) {
+                return ['encoding' => 'json', 'value' => $decoded];
+            }
         }
-        $decoded = \json_decode($frame, true);
-        if ($decoded === null && \json_last_error() !== \JSON_ERROR_NONE) {
-            return [
-                'encoding' => 'raw',
-                'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
-            ];
+
+        $temporalFrame = WireFrameDecoder::decode($frame);
+        if ($temporalFrame !== null) {
+            return $temporalFrame;
         }
-        return ['encoding' => 'json', 'value' => $decoded];
+
+        return [
+            'encoding' => 'raw',
+            'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
+        ];
     }
 }
