@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
+use Google\Protobuf\Timestamp;
 use PHPUnit\Framework\SkippedTest;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Failure\V1\Failure;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
@@ -80,9 +83,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 $transcript = $container->has(TranscriptWriter::class)
                     ? $container->get(TranscriptWriter::class)
                     : null;
-                $dumper = $container->has(WorkflowHistoryDumper::class)
-                    ? $container->get(WorkflowHistoryDumper::class)
-                    : null;
+                $dumper = new WorkflowHistoryDumper();
                 $transcript?->writeTestBoundary(TranscriptSection::TEST_START, [
                     'class' => static::class,
                     'method' => $this->name(),
@@ -105,22 +106,12 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         );
                         echo "\n=== Stack trace ===\n";
                         echo $e->getTraceAsString();
+                        echo "\n=== Workflow history ===\n";
+                        $this->printWorkflowHistory($workflowClient, $args);
 
-                        if ($transcript !== null) {
-                            $dumper?->renderForFailure($transcript, $workflowClient, $args);
-                        }
-
-                        $logRecords = $container->get(ClientLogger::class)->getRecords();
-                        if ($logRecords !== []) {
-                            echo "\n=== Client log records ===\n";
-                            foreach ($logRecords as $record) {
-                                echo \sprintf(
-                                    "[%s] %s%s\n",
-                                    $record->level,
-                                    $record->message,
-                                    \json_encode($record->context, JSON_UNESCAPED_UNICODE),
-                                );
-                            }
+                        $clientLogger = $container->get(ClientLogger::class);
+                        foreach ($clientLogger->getRecords() as $record) {
+                            $transcript?->writeLog($record->level, $record->message, $record->context);
                         }
 
                         echo "\n\n";
@@ -136,7 +127,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     throw $e;
                 } finally {
                     if ($transcript !== null) {
-                        $dumper?->dump($transcript, $workflowClient, $args);
+                        $dumper->dump($transcript, $workflowClient, $args);
                     }
                     foreach ($args as $arg) {
                         if ($arg instanceof WorkflowStubInterface) {
@@ -218,4 +209,67 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         return $run->reader()->linesForTest(static::class, $this->name());
     }
 
+    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
+    {
+        foreach ($args as $arg) {
+            if (!$arg instanceof WorkflowStubInterface) {
+                continue;
+            }
+
+            $fnTime = static fn(?Timestamp $ts): float => $ts === null
+                ? 0
+                : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
+
+            $start = null;
+            foreach ($workflowClient->getWorkflowHistory($arg->getExecution()) as $event) {
+                $start ??= $fnTime($event->getEventTime());
+                echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
+                $deltaMs = \round(1_000 * ($fnTime($event->getEventTime()) - $start));
+                echo \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
+                echo \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
+
+                $cause = $event->getStartChildWorkflowExecutionFailedEventAttributes()?->getCause()
+                    ?? $event->getSignalExternalWorkflowExecutionFailedEventAttributes()?->getCause()
+                    ?? $event->getRequestCancelExternalWorkflowExecutionFailedEventAttributes()?->getCause();
+                if ($cause !== null) {
+                    echo "Cause: $cause";
+                    continue;
+                }
+
+                $failure = $event->getActivityTaskFailedEventAttributes()?->getFailure()
+                    ?? $event->getWorkflowTaskFailedEventAttributes()?->getFailure()
+                    ?? $event->getNexusOperationFailedEventAttributes()?->getFailure()
+                    ?? $event->getWorkflowExecutionFailedEventAttributes()?->getFailure()
+                    ?? $event->getChildWorkflowExecutionFailedEventAttributes()?->getFailure()
+                    ?? $event->getNexusOperationCancelRequestFailedEventAttributes()?->getFailure();
+                if ($failure === null) {
+                    continue;
+                }
+
+                echo "Failure:\n";
+                echo "    ========== BEGIN ===========\n";
+                $this->renderFailure($failure, 1);
+                echo "    =========== END ============";
+            }
+        }
+    }
+
+    private function renderFailure(Failure $failure, int $level): void
+    {
+        $fnPad = static function (string $str) use ($level): string {
+            $pad = \str_repeat('    ', $level);
+            return $pad . \str_replace("\n", "\n$pad", $str);
+        };
+        echo $fnPad('Source: ' . $failure->getSource()) . "\n";
+        echo $fnPad('Info: ' . $failure->getFailureInfo()) . "\n";
+        echo $fnPad('Message: ' . $failure->getMessage()) . "\n";
+        echo $fnPad('Stack trace:') . "\n";
+        echo $fnPad($failure->getStackTrace()) . "\n";
+        $previous = $failure->getCause();
+        if ($previous !== null) {
+            echo $fnPad('————————————————————————————') . "\n";
+            echo $fnPad('Caused by:') . "\n";
+            $this->renderFailure($previous, $level + 1);
+        }
+    }
 }

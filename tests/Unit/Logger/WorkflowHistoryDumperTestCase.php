@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Enums\V1\WorkflowTaskFailedCause;
+use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
+use Temporal\Api\History\V1\StartChildWorkflowExecutionFailedEventAttributes;
 use Temporal\Api\History\V1\WorkflowExecutionFailedEventAttributes;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
 use Temporal\Client\Common\Paginator;
@@ -191,21 +194,9 @@ final class WorkflowHistoryDumperTestCase extends TestCase
         self::assertEmpty($dumped);
     }
 
-    public function testRenderForFailureIgnoresArgsWithoutStubs(): void
+    public function testEnrichesHistoryEntriesWithDeltaMsAndFailureSummary(): void
     {
-        $writer = $this->newWriter('render-no-stubs.log');
-        $client = $this->createMock(WorkflowClientInterface::class);
-        $client->expects(self::never())->method('getWorkflowHistory');
-
-        (new WorkflowHistoryDumper())->renderForFailure($writer, $client, ['x', 1, new \stdClass()]);
-        $writer->flush();
-
-        self::assertSame([], $this->renderMetas('workflow_history_render'));
-    }
-
-    public function testRenderForFailureEmitsRenderedTextWithFailureTree(): void
-    {
-        $writer = $this->newWriter('render-failure.log');
+        $writer = $this->newWriter('enrich.log');
         $stub = $this->createMock(WorkflowStubInterface::class);
         $stub->method('getExecution')->willReturn(new WorkflowExecution('wf-1', 'run-1'));
 
@@ -216,60 +207,56 @@ final class WorkflowHistoryDumperTestCase extends TestCase
                 (new Failure())
                     ->setMessage('Should not be called')
                     ->setSource('PHP_SDK')
-                    ->setStackTrace('#0 outer'),
+                    ->setApplicationFailureInfo(
+                        (new ApplicationFailureInfo())->setType('Exception'),
+                    ),
             ),
         );
 
         $client = $this->createMock(WorkflowClientInterface::class);
         $client->method('getWorkflowHistory')->willReturn($this->makeHistory([$start, $failed]));
 
-        (new WorkflowHistoryDumper())->renderForFailure($writer, $client, [$stub]);
+        (new WorkflowHistoryDumper())->dump($writer, $client, [$stub]);
         $writer->flush();
 
-        $renders = $this->renderMetas('workflow_history_render');
-        self::assertCount(1, $renders);
-        self::assertSame('wf-1', $renders[0]->attributes['workflow_id']);
-        self::assertSame('run-1', $renders[0]->attributes['run_id']);
-
-        $text = (string) $renders[0]->attributes['text'];
-        self::assertStringContainsString('EVENT_TYPE_WORKFLOW_EXECUTION_STARTED', $text);
-        self::assertStringContainsString('EVENT_TYPE_WORKFLOW_EXECUTION_FAILED', $text);
-        self::assertStringContainsString('250ms', $text);
-        self::assertStringContainsString('Should not be called', $text);
-        self::assertStringContainsString('PHP_SDK', $text);
-        self::assertStringContainsString('BEGIN', $text);
-        self::assertStringContainsString('END', $text);
+        $reader = new TranscriptReader($this->directory);
+        $history = $reader->findBySection(TranscriptSection::HISTORY);
+        self::assertCount(2, $history);
+        self::assertSame(0, $history[0]->attributes['delta_ms']);
+        self::assertSame(250, $history[1]->attributes['delta_ms']);
+        self::assertSame('application_failure_info', $history[1]->attributes['failure_kind']);
+        self::assertSame('Should not be called', $history[1]->attributes['failure_message']);
+        self::assertArrayNotHasKey('failure_kind', $history[0]->attributes);
+        self::assertArrayNotHasKey('cause', $history[0]->attributes);
     }
 
-    public function testRenderForFailureEmitsRenderFailedMetaWhenClientThrows(): void
+    public function testRecordsCauseAttributeForChildWorkflowStartFailure(): void
     {
-        $writer = $this->newWriter('render-throw.log');
+        $writer = $this->newWriter('cause.log');
         $stub = $this->createMock(WorkflowStubInterface::class);
-        $stub->method('getExecution')->willReturn(new WorkflowExecution('wf-x', 'run-x'));
+        $stub->method('getExecution')->willReturn(new WorkflowExecution('wf-c', 'run-c'));
+
+        $event = $this->newEvent(7, EventType::EVENT_TYPE_START_CHILD_WORKFLOW_EXECUTION_FAILED, 1700000000, 0);
+        $event->setStartChildWorkflowExecutionFailedEventAttributes(
+            (new StartChildWorkflowExecutionFailedEventAttributes())
+                ->setCause(WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE),
+        );
 
         $client = $this->createMock(WorkflowClientInterface::class);
-        $client->method('getWorkflowHistory')->willThrowException(new \RuntimeException('temporal-down'));
+        $client->method('getWorkflowHistory')->willReturn($this->makeHistory([$event]));
 
-        (new WorkflowHistoryDumper())->renderForFailure($writer, $client, [$stub]);
+        (new WorkflowHistoryDumper())->dump($writer, $client, [$stub]);
         $writer->flush();
 
-        $metas = $this->renderMetas('workflow_history_render_failed');
-        self::assertCount(1, $metas);
-        self::assertSame('wf-x', $metas[0]->attributes['workflow_id']);
-        self::assertSame(\RuntimeException::class, $metas[0]->attributes['class']);
-        self::assertSame('temporal-down', $metas[0]->attributes['message']);
-    }
-
-    /**
-     * @return list<TranscriptLine>
-     */
-    private function renderMetas(string $event): array
-    {
         $reader = new TranscriptReader($this->directory);
-        return \array_values(\array_filter(
-            $reader->findBySection(TranscriptSection::META),
-            static fn(TranscriptLine $line): bool => ($line->attributes['event'] ?? null) === $event,
-        ));
+        $history = $reader->findBySection(TranscriptSection::HISTORY);
+        self::assertCount(1, $history);
+        self::assertArrayHasKey('cause', $history[0]->attributes);
+        self::assertSame(
+            (string) WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+            (string) $history[0]->attributes['cause'],
+        );
+        self::assertArrayNotHasKey('failure_kind', $history[0]->attributes);
     }
 
     public function testRecordsSerializeErrorAttributeWhenEventSerializationFails(): void
