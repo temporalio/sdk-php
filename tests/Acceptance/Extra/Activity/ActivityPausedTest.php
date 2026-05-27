@@ -23,11 +23,11 @@ class ActivityPausedTest extends TestCase
 {
     #[Test]
     public function simplePause(
-        #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '200 seconds')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '10 seconds')] WorkflowStubInterface $stub,
         ServiceClientInterface $serviceClient,
         WorkflowClientInterface $workflowClient,
     ): void {
-        $deadline = \microtime(true) + 10;
+        $deadline = \microtime(true) + 5;
         $started = false;
         while (\microtime(true) < $deadline) {
             $response = $serviceClient->DescribeWorkflowExecution(
@@ -61,7 +61,7 @@ class ActivityPausedTest extends TestCase
                         ->setRunId($stub->getExecution()->getRunID()),
                 ),
         );
-        $result = $stub->getResult(timeout: 200);
+        $result = $stub->getResult(timeout: 10);
 
         self::assertSame(ActivityPausedException::class, $result);
     }
@@ -75,14 +75,16 @@ class TestWorkflow
     public function handle()
     {
         $stub = Workflow::newUntypedActivityStub(
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout('101 seconds'),
+            Activity\ActivityOptions::new()
+                ->withScheduleToCloseTimeout('10 seconds')
+                ->withHeartbeatTimeout('1 second'),
         );
 
         /** @see TestActivity::sleep() */
-        $run = $stub->execute('Extra_Activity_ActivityPaused.sleep', args: [100]);
+        $run = $stub->execute('Extra_Activity_ActivityPaused.sleep', args: [10]);
 
         $timerFired = ! yield Workflow::awaitWithTimeout(
-            '20 seconds',
+            '10 seconds',
             $run,
         );
 
