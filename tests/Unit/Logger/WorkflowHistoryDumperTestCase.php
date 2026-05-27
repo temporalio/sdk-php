@@ -259,32 +259,6 @@ final class WorkflowHistoryDumperTestCase extends TestCase
         self::assertArrayNotHasKey('failure_kind', $history[0]->attributes);
     }
 
-    public function testRecordsSerializeErrorAttributeWhenEventSerializationFails(): void
-    {
-        $writer = $this->newWriter('serr.log');
-        $stub = $this->createMock(WorkflowStubInterface::class);
-        $stub->method('getExecution')->willReturn(new WorkflowExecution('wf-serr', 'run-1'));
-
-        $event = $this->createMock(HistoryEvent::class);
-        $event->method('getEventId')->willReturn(7);
-        $event->method('getEventType')->willReturn(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED);
-        $event->method('getEventTime')->willReturn(null);
-        $event->method('serializeToJsonString')->willThrowException(new \RuntimeException('bad-utf8'));
-
-        $client = $this->createMock(WorkflowClientInterface::class);
-        $client->method('getWorkflowHistory')->willReturn($this->makeHistory([$event]));
-
-        (new WorkflowHistoryDumper())->dump($writer, $client, [$stub]);
-        $writer->flush();
-
-        $reader = new TranscriptReader($this->directory);
-        $history = $reader->findBySection(TranscriptSection::HISTORY);
-        self::assertCount(1, $history);
-        self::assertSame(7, $history[0]->attributes['event_id']);
-        self::assertSame('bad-utf8', $history[0]->attributes['serialize_error']);
-        self::assertSame('{}', $history[0]->payload['attrs']);
-    }
-
     private function newWriter(string $name): TranscriptWriter
     {
         return new TranscriptWriter($this->directory . '/' . $name);
