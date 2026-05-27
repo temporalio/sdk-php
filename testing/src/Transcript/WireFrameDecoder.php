@@ -134,7 +134,6 @@ final class WireFrameDecoder
     private static function payloadFallback(Payload $payload): array
     {
         $metadata = [];
-        /** @var MapField<string, string> $meta */
         $meta = $payload->getMetadata();
         foreach ($meta as $key => $value) {
             $metadata[$key] = self::bytesToReadable((string) $value);
