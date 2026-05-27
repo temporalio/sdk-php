@@ -47,7 +47,6 @@ class FeatureWorkflow
         if (!empty(Workflow::getInfo()->continuedExecutionRunId)) {
             return $input;
         }
-        throw new \Exception('Should not be called');
 
         return yield Workflow::continueAsNew(
             'Harness_ContinueAsNew_ContinueAsSame',
