@@ -7,7 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
 use Temporal\Api\Common\V1\WorkflowExecution;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowClientInterface;
@@ -28,27 +27,20 @@ class ActivityPausedTest extends TestCase
         WorkflowClientInterface $workflowClient,
     ): void {
         $deadline = \microtime(true) + 10;
-        $started = false;
-        while (\microtime(true) < $deadline) {
-            $response = $serviceClient->DescribeWorkflowExecution(
-                (new DescribeWorkflowExecutionRequest())
-                    ->setNamespace('default')
-                    ->setExecution(
-                        (new WorkflowExecution())
-                            ->setWorkflowId($stub->getExecution()->getID())
-                            ->setRunId($stub->getExecution()->getRunID()),
-                    ),
-            );
-            foreach ($response->getPendingActivities() as $pending) {
-                if ($pending->hasLastStartedTime()) {
-                    $started = true;
-                    break 2;
-                }
+        find:
+        $found = false;
+        foreach ($workflowClient->getWorkflowHistory($stub->getExecution()) as $event) {
+            if ($event->hasActivityTaskScheduledEventAttributes()) {
+                $found = true;
+                break;
             }
-            \usleep(50_000);
         }
 
-        self::assertTrue($started, 'Activity did not reach STARTED state in pending_activities');
+        if (!$found && \microtime(true) < $deadline) {
+            goto find;
+        }
+
+        self::assertTrue($found, '`Activity task started` event not found in workflow history');
 
         $serviceClient->PauseActivity(
             (new PauseActivityRequest())
