@@ -14,6 +14,7 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\ActivityPausedException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -25,14 +26,14 @@ class ActivityPausedTest extends TestCase
     public function simplePause(
         #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '10 seconds')] WorkflowStubInterface $stub,
         ServiceClientInterface $serviceClient,
-        WorkflowClientInterface $workflowClient,
+        State $runtime,
     ): void {
         $deadline = \microtime(true) + 5;
         $started = false;
         while (\microtime(true) < $deadline) {
             $response = $serviceClient->DescribeWorkflowExecution(
                 (new DescribeWorkflowExecutionRequest())
-                    ->setNamespace('default')
+                    ->setNamespace($runtime->namespace)
                     ->setExecution(
                         (new WorkflowExecution())
                             ->setWorkflowId($stub->getExecution()->getID())
