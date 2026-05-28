@@ -22,6 +22,7 @@ use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+use Temporal\Common\SideEffectOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -99,6 +100,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected array $trace = [];
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
+    protected ?string $currentDetails = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -253,7 +255,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new GetVersionInput($changeId, $minSupported, $maxSupported));
     }
 
-    public function sideEffect(callable $context): PromiseInterface
+    public function sideEffect(callable $context, ?SideEffectOptions $options = null): PromiseInterface
     {
         $value = null;
         $closure = $context(...);
@@ -264,7 +266,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     $closure,
                     /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
                     'sideEffect',
-                )(new SideEffectInput($closure));
+                )(new SideEffectInput($closure, $options));
             }
         } catch (\Throwable $e) {
             return reject($e);
@@ -278,7 +280,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
-            $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
+            $this->request(new SideEffect(
+                EncodedValues::fromValues([$value]),
+                $options === null ? [] : $this->services->marshaller->marshal($options),
+            )),
             $returnType,
         );
         return $last();
@@ -442,6 +447,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return new ActivityStub($this->services->marshaller, $options, $this->getHeader());
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $class
+     * @return ActivityProxy<T>
+     */
     public function newActivityStub(
         string $class,
         ?ActivityOptionsInterface $options = null,
@@ -721,6 +731,22 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function getUpdateDispatcher(): UpdateDispatcher
     {
         return $this->updateDispatcher;
+    }
+
+    /**
+     * Get the current details of the workflow execution.
+     */
+    public function getCurrentDetails(): ?string
+    {
+        return $this->currentDetails;
+    }
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public function setCurrentDetails(?string $details): void
+    {
+        $this->currentDetails = $details;
     }
 
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface

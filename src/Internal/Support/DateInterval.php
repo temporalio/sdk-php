@@ -51,7 +51,7 @@ final class DateInterval
     ];
 
     /**
-     * @param DateIntervalFormat $format
+     * @psalm-param DateIntervalFormat $format
      *
      * @psalm-assert DateIntervalValue|null $interval
      * @psalm-suppress InvalidOperand

@@ -10,26 +10,39 @@ use Temporal\Testing\SystemInfo;
 final class RRStarter
 {
     private Environment $environment;
-    private bool $started = false;
-
     public function __construct(
         private State $runtime,
+        ?Environment $environment = null,
     ) {
-        $this->environment = Environment::create();
+        $this->environment = $environment ?? Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 
-    public function start(): void
+    /**
+     * @param list<class-string> $allowedTestClasses
+     */
+    public function start(array $allowedTestClasses = []): void
     {
-        if ($this->started) {
+        if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
 
-        $sysInfo = SystemInfo::detect();
+        $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
+        $workerArgs = [
+            PHP_BINARY,
+            ...$run->getPhpBinaryArguments(),
+            $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
+            ...$run->getCommandLineArguments(),
+        ];
+
+        foreach ($allowedTestClasses as $class) {
+            $workerArgs[] = 'test-class=' . $class;
+        }
+
         $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . $sysInfo->rrExecutable,
+            $this->runtime->workDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
             'serve',
             '-w',
             $this->runtime->rrConfigDir,
@@ -38,31 +51,26 @@ final class RRStarter
             '-o',
             "temporal.address={$this->runtime->address}",
             '-o',
-            'server.command=' . \implode(',', [
-                PHP_BINARY,
-                ...$run->getPhpBinaryArguments(),
-                $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
-                ...$run->getCommandLineArguments(),
-            ]),
+            'server.command=' . \implode(',', $workerArgs),
         ];
-        $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];
-        $run->tlsCert === null or $rrCommand = [...$rrCommand, '-o', "tls.cert={$run->tlsCert}"];
-        $command = \implode(' ', $rrCommand);
+        if ($run->tlsKey !== null) {
+            $rrCommand[] = '-o';
+            $rrCommand[] = "tls.key={$run->tlsKey}";
+        }
+        if ($run->tlsCert !== null) {
+            $rrCommand[] = '-o';
+            $rrCommand[] = "tls.cert={$run->tlsCert}";
+        }
 
-        // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
-        $this->environment->startRoadRunner($command);
-        $this->started = true;
+        $this->environment->startRoadRunner(
+            rrCommand: $rrCommand,
+            configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
+        );
     }
 
     public function stop(): void
     {
-        if (!$this->started) {
-            return;
-        }
-
-        // echo "\e[1;36mStop RoadRunner\e[0m\n";
-        $this->environment->stop();
-        $this->started = false;
+        $this->environment->stopRoadRunner();
     }
 
     public function __destruct()

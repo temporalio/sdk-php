@@ -74,6 +74,10 @@ use Temporal\Internal\Mapper\WorkflowExecutionConfigMapper;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * @template ReturnType
+ * @implements WorkflowStubInterface<ReturnType>
+ */
 final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 {
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';

@@ -35,16 +35,19 @@ final class WorkerFactory
             ...$feature->workflows,
             ...$feature->activities,
         );
-        if ($attr !== null) {
-            $attr->options === null or $options = $this->invoker->invoke($attr->options);
-            $attr->pipelineProvider === null or $interceptorProvider = $this->invoker->invoke($attr->pipelineProvider);
-            $attr->logger === null or $logger = $this->invoker->invoke($attr->logger);
+        $options = $attr?->options === null ? null : $this->invoker->invoke($attr->options);
+        $interceptorProvider = $attr?->pipelineProvider === null ? null : $this->invoker->invoke($attr->pipelineProvider);
+        $logger = $attr?->logger === null ? null : $this->invoker->invoke($attr->logger);
+
+        // Add plugins from the attribute to the factory's registry (already instantiated, no invoker needed)
+        if ($attr?->plugins !== null) {
+            $this->workerFactory->getPluginRegistry()->merge($attr->plugins);
         }
 
         return $this->workerFactory->newWorker(
             $feature->taskQueue,
             $options ?? WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
-            interceptorProvider: $interceptorProvider ?? null,
+            interceptorProvider: $interceptorProvider,
             logger: $logger ?? LoggerFactory::createServerLogger($feature->taskQueue),
         );
     }
@@ -53,7 +56,7 @@ final class WorkerFactory
      * Find {@see Worker} attribute in the classes collection.
      * If more than one attribute is found, an exception is thrown.
      */
-    private static function findAttribute(string ...$classes): ?Worker
+    public static function findAttribute(string ...$classes): ?Worker
     {
         $classes = \array_unique($classes);
         /** @var array<array{0: Worker, 1: class-string}> $found */

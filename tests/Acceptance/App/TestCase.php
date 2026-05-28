@@ -11,27 +11,25 @@ use Spiral\Core\Container;
 use Spiral\Core\Scope;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Client\ClientOptions;
+use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\TemporalException;
+use Temporal\Plugin\ClientPluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Tests\Acceptance\App\Attribute\Worker;
+use Temporal\Tests\Acceptance\App\Feature\WorkerFactory;
 use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var State $state */
-        $state = ContainerFacade::$container->get(State::class);
-        $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
-    }
-
     #[\Override]
     protected function runTest(): mixed
     {
@@ -44,14 +42,33 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         $logger = LoggerFactory::createClientLogger($feature->taskQueue);
         $logger->clear();
 
+        // Build scope bindings
+        $bindings = [
+            Feature::class => $feature,
+            static::class => $this,
+            State::class => $runtime,
+            LoggerInterface::class => ClientLogger::class,
+            ClientLogger::class => $logger,
+        ];
+
+        // Auto-inject plugin-configured client from #[Worker(plugins: [...])] attribute
+        $workerAttr = WorkerFactory::findAttribute(static::class);
+        if ($workerAttr?->plugins !== null) {
+            $pluginRegistry = new PluginRegistry($workerAttr->plugins);
+            $clientPlugins = $pluginRegistry->getPlugins(ClientPluginInterface::class);
+            if ($clientPlugins !== []) {
+                $existingClient = $container->get(WorkflowClientInterface::class);
+                $pluginClient = WorkflowClient::create(
+                    serviceClient: $existingClient->getServiceClient(),
+                    options: (new ClientOptions())->withNamespace($runtime->namespace),
+                    pluginRegistry: new PluginRegistry($workerAttr->plugins),
+                );
+                $bindings[WorkflowClientInterface::class] = $pluginClient;
+            }
+        }
+
         return $container->runScope(
-            new Scope(name: 'feature', bindings: [
-                Feature::class => $feature,
-                static::class => $this,
-                State::class => $runtime,
-                LoggerInterface::class => ClientLogger::class,
-                ClientLogger::class => $logger,
-            ]),
+            new Scope(name: 'feature', bindings: $bindings),
             function (Container $container): mixed {
                 $reflection = new \ReflectionMethod($this, $this->name());
                 $args = $container->resolveArguments($reflection);
@@ -90,10 +107,9 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     if (!$e instanceof SkippedTest) {
                         // Restart RR if a Error occurs
-                        /** @var RRStarter $runner */
-                        $runner = $container->get(RRStarter::class);
-                        $runner->stop();
-                        $runner->start();
+                        $roadRunnerStarter = $container->get(RRStarter::class);
+                        $roadRunnerStarter->stop();
+                        $roadRunnerStarter->start();
                     }
 
                     throw $e;

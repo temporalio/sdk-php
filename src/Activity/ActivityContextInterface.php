@@ -17,7 +17,11 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ActivityPausedException;
+use Temporal\Exception\Client\ActivityResetException;
 
+/**
+ * @psalm-import-type TType from Type
+ */
 interface ActivityContextInterface
 {
     /**
@@ -46,7 +50,8 @@ interface ActivityContextInterface
      *
      * @see Activity::getHeartbeatDetails()
      *
-     * @param Type|string $type
+     * @param null|mixed $type
+     * @psalm-param TType $type
      */
     public function getLastHeartbeatDetails($type = null): mixed;
 
@@ -63,6 +68,7 @@ interface ActivityContextInterface
      * @throws ActivityCompletionException
      * @throws ActivityCanceledException
      * @throws ActivityPausedException
+     * @throws ActivityResetException
      *
      * @see Activity::heartbeat()
      *

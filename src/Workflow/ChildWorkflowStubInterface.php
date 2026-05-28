@@ -15,6 +15,9 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Internal\Transport\CompletableResultInterface;
 
+/**
+ * @psalm-import-type TType from Type
+ */
 interface ChildWorkflowStubInterface
 {
     /**
@@ -27,7 +30,7 @@ interface ChildWorkflowStubInterface
     public function getOptions(): ChildWorkflowOptions;
 
     /**
-     * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     * @param TType $returnType
      *
      * @return CompletableResultInterface
      */
@@ -40,6 +43,9 @@ interface ChildWorkflowStubInterface
      */
     public function start(...$args): PromiseInterface;
 
+    /**
+     * @param TType $returnType
+     */
     public function getResult($returnType = null): PromiseInterface;
 
     /**

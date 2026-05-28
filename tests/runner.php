@@ -14,11 +14,13 @@ $logFile = 'runtime/phpunit.xml';
 \passthru(\sprintf("%s %s --log-junit=%s 2>&1", PHP_BINARY, $command, $logFile), $code);
 
 if (\file_exists($logFile)) {
-    $xml = \simplexml_load_file($logFile);
-    $failures = (int) $xml->testsuite['failures'] + (int) $xml->testsuite['errors'];
+    $xml = @\simplexml_load_file($logFile);
+    if ($xml !== false) {
+        $failures = (int)$xml->testsuite['failures'] + (int)$xml->testsuite['errors'];
 
-    if ($failures === 0) {
-        exit(0);
+        if ($failures === 0) {
+            exit(0);
+        }
     }
 }
 

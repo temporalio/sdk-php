@@ -29,10 +29,15 @@ final class WorkflowMethod
      * Be careful about names that contain special characters. These names can
      * be used as metric tags. And systems like prometheus ignore metrics which
      * have tags with unsupported characters.
+     *
+     * @var non-empty-string|null
      */
     #[Immutable]
     public ?string $name = null;
 
+    /**
+     * @param non-empty-string|null $name
+     */
     public function __construct(?string $name = null)
     {
         $this->name = $name;

@@ -40,11 +40,13 @@ class GeneratorWorkflow
     }
 
     /**
-     * @param ActivityProxy|SimpleActivity $simple
+     * @param ActivityProxy<SimpleActivity> $simple
      */
     private function doSomething(ActivityProxy $simple, string $input): \Generator
     {
-        $input === 'error' and throw new \Exception('error from generator');
+        if ($input === 'error') {
+            throw new \Exception('error from generator');
+        }
 
         if ($input === 'failure') {
             yield $simple->fail();

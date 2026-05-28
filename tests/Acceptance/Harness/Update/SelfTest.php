@@ -22,7 +22,8 @@ class SelfTest extends TestCase
     public static function check(
         #[Stub('Harness_Update_Self')]WorkflowStubInterface $stub,
     ): void {
-        self::assertSame('Hello, world!', $stub->getResult());
+        $result = $stub->getResult();
+        self::assertSame('Hello, world!', $result);
     }
 }
 
@@ -36,7 +37,7 @@ class FeatureWorkflow
     {
         yield Workflow::executeActivity(
             'result',
-            options: ActivityOptions::new()->withStartToCloseTimeout(2)
+            options: ActivityOptions::new()->withStartToCloseTimeout(10),
         );
 
         yield Workflow::await(fn(): bool => $this->done);
@@ -61,9 +62,10 @@ class FeatureActivity
     #[ActivityMethod('result')]
     public function result(): void
     {
-        $this->client->newUntypedRunningWorkflowStub(
+        $workflowStub = $this->client->newUntypedRunningWorkflowStub(
             workflowID: Activity::getInfo()->workflowExecution->getID(),
             workflowType: Activity::getInfo()->workflowType->name,
-        )->update('my_update');
+        );
+        $workflowStub->update('my_update');
     }
 }

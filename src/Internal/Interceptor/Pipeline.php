@@ -53,7 +53,7 @@ final class Pipeline
     /**
      * Make sure that interceptors implement the same interface.
      *
-     * @template T of Interceptor
+     * @template T of object
      *
      * @param iterable<T> $interceptors
      *
@@ -62,6 +62,21 @@ final class Pipeline
     public static function prepare(iterable $interceptors): self
     {
         return new self($interceptors);
+    }
+
+    /**
+     * Merge two pipelines into one. Interceptors from the first pipeline run before the second.
+     *
+     * @template T of object
+     *
+     * @param self<T, mixed> $first
+     * @param self<T, mixed> $second
+     *
+     * @return self<T, mixed>
+     */
+    public static function merge(self $first, self $second): self
+    {
+        return new self([...$first->interceptors, ...$second->interceptors]);
     }
 
     /**

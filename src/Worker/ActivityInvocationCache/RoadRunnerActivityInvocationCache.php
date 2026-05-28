@@ -41,7 +41,7 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
         $this->cache->clear();
     }
 
-    public function saveCompletion(string $activityMethodName, $value): void
+    public function saveCompletion(string $activityMethodName, mixed $value): void
     {
         $this->cache->set($activityMethodName, ActivityInvocationResult::fromValue($value, $this->dataConverter));
     }

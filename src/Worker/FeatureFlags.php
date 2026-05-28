@@ -56,4 +56,12 @@ final class FeatureFlags
      * @since SDK 2.16.0
      */
     public static bool $throwDestructMemorizedInstanceException = true;
+
+    /**
+     * Trigger deprecation warning when activity methods are used without explicit #[ActivityMethod] attribute.
+     *
+     * @see ActivityMethod
+     * @since SDK 2.17.0
+     */
+    public static bool $warnOnActivityMethodWithoutAttribute = true;
 }

@@ -10,7 +10,7 @@ use Temporal\Activity\ActivityCancellationType as Policy;
  * Converts a boolean value to an activity cancellation policy.
  *
  * @see Policy
- * @extends Type<bool>
+ * @extends Type<bool, int>
  * @internal
  */
 final class ActivityCancellationType extends Type

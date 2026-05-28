@@ -111,13 +111,6 @@ class ActivityReader extends Reader
                     $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
                 }
 
-                //
-                // In the future, activity methods are available only in
-                // those classes that contain the attribute:
-                //
-                //  - #[ActivityInterface]
-                //  - #[LocalActivityInterface]
-                //
                 $interface = $this->reader->firstClassMetadata($ctx->getReflection(), ActivityInterface::class);
 
                 if ($interface === null) {

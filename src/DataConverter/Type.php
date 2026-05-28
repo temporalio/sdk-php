@@ -14,7 +14,10 @@ namespace Temporal\DataConverter;
 use Temporal\Workflow\ReturnType;
 
 /**
+ * @template TIsClass of bool
+ *
  * @psalm-type TypeEnum = Type::TYPE_*
+ * @psalm-type TType = string|\ReflectionClass|\ReflectionType|Type|null
  */
 final class Type
 {
@@ -33,7 +36,7 @@ final class Type
     private readonly bool $allowsNull;
 
     /**
-     * @param TypeEnum|string $name
+     * @psalm-param TypeEnum|string $name
      */
     public function __construct(
         private readonly string $name = Type::TYPE_ANY,
@@ -75,31 +78,23 @@ final class Type
     }
 
     /**
-     * @param string|\ReflectionClass|\ReflectionType|Type|ReturnType $type
+     * @param string|\ReflectionClass|\ReflectionType|Type|ReturnType|null $type
      */
     public static function create($type): Type
     {
-        switch (true) {
-            case $type instanceof ReturnType:
-                return new self($type->name, $type->nullable);
-
-            case $type instanceof self:
-                return $type;
-
-            case \is_string($type):
-                return new self($type);
-
-            case $type instanceof \ReflectionClass:
-                return self::fromReflectionClass($type);
-
-            case $type instanceof \ReflectionType:
-                return self::fromReflectionType($type);
-
-            default:
-                return new self();
-        }
+        return match (true) {
+            $type instanceof ReturnType => new self($type->name, $type->nullable),
+            $type instanceof self => $type,
+            \is_string($type) => new self($type),
+            $type instanceof \ReflectionClass => self::fromReflectionClass($type),
+            $type instanceof \ReflectionType => self::fromReflectionType($type),
+            default => new self(),
+        };
     }
 
+    /**
+     * @psalm-return (TIsClass is true ? class-string : string)
+     */
     public function getName(): string
     {
         return $this->name;
@@ -115,6 +110,10 @@ final class Type
         return $this->name === self::TYPE_ANY;
     }
 
+    /**
+     * @psalm-assert-if-true self<true> $this
+     * @psalm-assert-if-false self<false> $this
+     */
     public function isClass(): bool
     {
         return \class_exists($this->name);

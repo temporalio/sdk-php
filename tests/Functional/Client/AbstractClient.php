@@ -28,7 +28,7 @@ abstract class AbstractClient extends AbstractFunctional
      * @param string $connection
      * @return WorkflowClient
      */
-    protected function createClient(string $connection = 'localhost:7233'): WorkflowClient
+    protected function createClient(string $connection = '127.0.0.1:7233'): WorkflowClient
     {
         return new WorkflowClient(
             ServiceClient::create($connection)

@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 class WorkflowTestCase extends TestCase
 {
     protected WorkflowClient $workflowClient;
@@ -15,7 +18,8 @@ class WorkflowTestCase extends TestCase
 
     protected function setUp(): void
     {
-        $temporalAddress = \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
+        $temporalAddress = \getenv('TEMPORAL_ADDRESS');
+        $temporalAddress = \is_string($temporalAddress) && !empty($temporalAddress) ? $temporalAddress : '127.0.0.1:7233';
         $this->workflowClient = new WorkflowClient(ServiceClient::create($temporalAddress));
         $this->testingService = TestService::create($temporalAddress);
 

@@ -64,7 +64,7 @@ class JsonConverter extends Converter
         try {
             return $this->create(\json_encode($value, self::JSON_FLAGS));
         } catch (\Throwable $e) {
-            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
+            throw new DataConverterException($e->getMessage(), (int) $e->getCode(), $e);
         }
     }
 
@@ -82,7 +82,7 @@ class JsonConverter extends Converter
                 self::JSON_FLAGS,
             );
         } catch (\Throwable $e) {
-            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
+            throw new DataConverterException($e->getMessage(), (int) $e->getCode(), $e);
         }
 
         if ($data === null && $type->allowsNull()) {
@@ -151,6 +151,9 @@ class JsonConverter extends Converter
             try {
                 $reflection = new \ReflectionClass($type->getName());
                 if (PHP_VERSION_ID >= 80104 && $reflection->isEnum()) {
+                    /**
+                     * @var \UnitEnum $data
+                     */
                     return $reflection->getConstant($data->name);
                 }
             } catch (\ReflectionException $e) {

@@ -11,13 +11,11 @@ namespace Temporal\Common\Versioning;
  * Versions. The Versioning Behavior of a workflow execution is typically specified by the worker
  * who completes the first task of the execution, but is also overridable manually for new and
  * existing workflows (see VersioningOverride).
- * Experimental. Worker Deployments are experimental and might significantly change in the future.
  *
  * @see \Temporal\Api\Enums\V1\VersioningBehavior
  *
  * @since SDK 2.16.0
  * @since RoadRunner 2025.1.3
- * @internal Experimental
  */
 enum VersioningBehavior: int
 {

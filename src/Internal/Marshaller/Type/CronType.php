@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 /**
- * @extends Type<string>
+ * @psalm-type TValue = null|string|\Stringable
+ * @extends Type<string, TValue>
  */
 class CronType extends Type
 {
