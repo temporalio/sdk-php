@@ -12,6 +12,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 class DynamicSignalWithPromisesTest extends TestCase
 {
@@ -37,7 +38,7 @@ class DynamicSignalWithPromisesTest extends TestCase
     }
 }
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Stability_DynamicSignalWithPromises')]

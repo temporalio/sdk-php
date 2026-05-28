@@ -15,8 +15,9 @@ use Generator;
 use Temporal\Tests\Interceptor\HeaderChanger;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 final class ChildedHeaderWorkflow
 {
     use HandleTrait;

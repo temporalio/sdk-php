@@ -20,6 +20,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Activity\ActivityCancellationType;
 
 /*
 
@@ -76,7 +78,7 @@ class FeatureWorkflow
                 ->withHeartbeatTimeout('5 seconds')
                 # Disable retry
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
-                ->withCancellationType(Activity\ActivityCancellationType::TryCancel)
+                ->withCancellationType(ActivityCancellationType::TryCancel)
         );
 
         $scope = Workflow::async(static fn() => $activity->cancellableActivity());
@@ -97,7 +99,7 @@ class FeatureWorkflow
         return $this->result;
     }
 
-    #[Workflow\SignalMethod('activity_result')]
+    #[SignalMethod('activity_result')]
     public function activityResult(string $result)
     {
         $this->result = $result;

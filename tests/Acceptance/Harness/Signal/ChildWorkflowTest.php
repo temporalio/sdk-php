@@ -12,6 +12,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
 
 class ChildWorkflowTest extends TestCase
 {
@@ -31,7 +32,7 @@ class FeatureWorkflow
     {
         $wf = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
-            Workflow\ChildWorkflowOptions::new()
+            ChildWorkflowOptions::new()
                 // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
                 ->withTaskQueue(Workflow::getInfo()->taskQueue)
         );

@@ -12,8 +12,9 @@ namespace Temporal\Tests\Workflow;
 use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class Case335Workflow
 {
     private bool $exit = false;

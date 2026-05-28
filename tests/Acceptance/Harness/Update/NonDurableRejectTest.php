@@ -12,6 +12,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class NonDurableRejectTest extends TestCase
 {
@@ -52,14 +54,14 @@ class FeatureWorkflow
         return $this->counter;
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate(int $arg): int
     {
         $this->counter += $arg;
         return $this->counter;
     }
 
-    #[Workflow\UpdateValidatorMethod('my_update')]
+    #[UpdateValidatorMethod('my_update')]
     public function validateMyUpdate(int $arg): void
     {
         $arg < 0 and throw new \InvalidArgumentException('I *HATE* negative numbers!');

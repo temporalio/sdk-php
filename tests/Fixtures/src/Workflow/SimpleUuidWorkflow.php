@@ -15,12 +15,14 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SimpleUuidWorkflow
 {
     #[WorkflowMethod(name: 'SimpleUuidWorkflow')]
-    #[Workflow\ReturnType(UuidInterface::class)]
+    #[ReturnType(UuidInterface::class)]
     public function handler(UuidInterface $uuid)
     {
         // Side effect

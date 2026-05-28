@@ -28,6 +28,7 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router;
+use Temporal\Internal\Transport\Router\GetWorkerInfo;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
@@ -198,7 +199,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo(
+        $router->add(new GetWorkerInfo(
             $this->queues,
             $this->marshaller,
             ServiceCredentials::create(),

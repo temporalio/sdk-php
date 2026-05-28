@@ -18,6 +18,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class AsyncAcceptTest extends TestCase
 {
@@ -84,19 +86,19 @@ class FeatureWorkflow
         return 'Hello, World!';
     }
 
-    #[Workflow\SignalMethod('finish')]
+    #[SignalMethod('finish')]
     public function finish()
     {
         $this->done = true;
     }
 
-    #[Workflow\SignalMethod('unblock')]
+    #[SignalMethod('unblock')]
     public function unblock()
     {
         $this->blocked = false;
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate(bool $block)
     {
         if ($block) {

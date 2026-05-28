@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexYield;
+namespace Temporal\Tests\Acceptance\Extra\MutexYield;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
@@ -12,6 +12,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\Mutex;
+use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\SignalMethod;
 
 class MutexYieldTest extends TestCase
 {
@@ -59,17 +62,17 @@ class MutexYieldTest extends TestCase
 #[WorkflowInterface]
 class TestWorkflow
 {
-    private Workflow\Mutex $mutex;
+    private Mutex $mutex;
     private bool $exit = false;
 
     public function __construct()
     {
-        $this->mutex = new Workflow\Mutex();
+        $this->mutex = new Mutex();
         $this->mutex->lock();
     }
 
     #[WorkflowMethod(name: "Extra_Workflow_MutexYield")]
-    #[Workflow\ReturnType(Type::TYPE_ARRAY)]
+    #[ReturnType(Type::TYPE_ARRAY)]
     public function handle(): \Generator
     {
         yield $this->mutex;
@@ -86,13 +89,13 @@ class TestWorkflow
         return [$yieldLocked, $awaitLocked];
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function unlock(): void
     {
         $this->mutex->unlock();
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

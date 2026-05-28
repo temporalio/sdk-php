@@ -23,6 +23,10 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\TimerOptions;
+use Temporal\Workflow\UpdateMethod;
 
 class UserMetadataTest extends TestCase
 {
@@ -238,30 +242,30 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_UserMetadata")]
     public function handle()
     {
-        $timer = Workflow::timer(30, Workflow\TimerOptions::new()->withSummary('test timer summary'));
+        $timer = Workflow::timer(30, TimerOptions::new()->withSummary('test timer summary'));
         yield Workflow::await($timer, fn() => $this->exit);
         return $this->result;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function ping(): string
     {
         return 'pong';
     }
 
-    #[Workflow\UpdateMethod('start_child')]
+    #[UpdateMethod('start_child')]
     public function startChild(string $summary, string $details)
     {
         $stub = Workflow::newUntypedChildWorkflowStub(
             'Extra_Workflow_UserMetadata',
-            Workflow\ChildWorkflowOptions::new()->withStaticSummary($summary)->withStaticDetails($details),
+            ChildWorkflowOptions::new()->withStaticSummary($summary)->withStaticDetails($details),
         );
         $execution = yield $stub->start();
 
         return $execution->getID();
     }
 
-    #[Workflow\UpdateMethod('execute_activity')]
+    #[UpdateMethod('execute_activity')]
     public function executeActivity(string $summary)
     {
         /** @see TestActivity::execute() */
@@ -273,7 +277,7 @@ class TestWorkflow
         );
     }
 
-    #[Workflow\UpdateMethod('execute_local_activity')]
+    #[UpdateMethod('execute_local_activity')]
     public function executeLocalActivity(string $summary)
     {
         /** @see TestActivity::execute() */
@@ -285,7 +289,7 @@ class TestWorkflow
         );
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

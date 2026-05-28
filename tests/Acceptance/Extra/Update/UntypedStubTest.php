@@ -16,6 +16,10 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class UntypedStubTest extends TestCase
 {
@@ -271,7 +275,7 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return mixed
      */
-    #[Workflow\UpdateMethod(name: 'await')]
+    #[UpdateMethod(name: 'await')]
     public function add(string $name): mixed
     {
         $this->awaits[$name] ??= null;
@@ -279,7 +283,7 @@ class TestWorkflow
         return $this->awaits[$name];
     }
 
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'await')]
+    #[UpdateValidatorMethod(forUpdate: 'await')]
     public function validateAdd(string $name): void
     {
         empty($name) and throw new \InvalidArgumentException('Name must not be empty');
@@ -289,7 +293,7 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return PromiseInterface<bool>
      */
-    #[Workflow\UpdateMethod(name: 'awaitWithTimeout')]
+    #[UpdateMethod(name: 'awaitWithTimeout')]
     public function addWithTimeout(string $name, string|int $timeout, mixed $value): mixed
     {
         $this->awaits[$name] ??= null;
@@ -309,7 +313,7 @@ class TestWorkflow
         return $this->awaits[$name];
     }
 
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'awaitWithTimeout')]
+    #[UpdateValidatorMethod(forUpdate: 'awaitWithTimeout')]
     public function validateAddWithTimeout(string $name, string|int $timeout, mixed $value): void
     {
         $value === null and throw new \InvalidArgumentException('Value must not be null');
@@ -323,13 +327,13 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return mixed
      */
-    #[Workflow\UpdateMethod(name: 'resolveValue')]
+    #[UpdateMethod(name: 'resolveValue')]
     public function resolve(string $name, mixed $value): mixed
     {
         return $this->awaits[$name] = $value;
     }
 
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'resolveValue')]
+    #[UpdateValidatorMethod(forUpdate: 'resolveValue')]
     public function validateResolve(string $name, mixed $value): void
     {
         $value === null and throw new \InvalidArgumentException('Value must not be null');
@@ -341,13 +345,13 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return mixed
      */
-    #[Workflow\QueryMethod(name: 'getValue')]
+    #[QueryMethod(name: 'getValue')]
     public function get(string $name): mixed
     {
         return $this->awaits[$name] ?? null;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

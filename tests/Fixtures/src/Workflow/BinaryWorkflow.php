@@ -15,8 +15,9 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\Bytes;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class BinaryWorkflow
 {
     #[WorkflowMethod(name: 'BinaryWorkflow')]

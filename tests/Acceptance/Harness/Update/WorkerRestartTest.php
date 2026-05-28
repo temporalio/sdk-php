@@ -19,6 +19,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 const KV_ACTIVITY_STARTED = 'update-worker-restart-started';
 const KV_ACTIVITY_BLOCKED = 'update-worker-restart-blocked';
@@ -70,7 +71,7 @@ class FeatureWorkflow
         return 'Hello, World!';
     }
 
-    #[Workflow\UpdateMethod('do_activities')]
+    #[UpdateMethod('do_activities')]
     public function doActivities()
     {
         yield Workflow::executeActivity(

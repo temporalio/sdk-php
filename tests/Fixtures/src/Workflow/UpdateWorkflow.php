@@ -19,6 +19,10 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 #[WorkflowInterface]
 class UpdateWorkflow
@@ -33,21 +37,21 @@ class UpdateWorkflow
         return $this->greetings;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function addNameWithoutValidation(string $name): mixed
     {
         $this->greetings[] = $result = \sprintf('Hello, %s!', $name);
         return $result;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function addName(string $name): mixed
     {
         $this->greetings[] = $result = \sprintf('Hello, %s!', $name);
         return $result;
     }
 
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'addName')]
+    #[UpdateValidatorMethod(forUpdate: 'addName')]
     public function validateName(string $name): void
     {
         if (\preg_match('/\\d/', $name) === 1) {
@@ -55,7 +59,7 @@ class UpdateWorkflow
         }
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function randomizeName(int $count = 1): mixed
     {
         $promises = [];
@@ -72,7 +76,7 @@ class UpdateWorkflow
         return $this->greetings;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function addNameViaActivity(string $name): mixed
     {
         $name = yield Workflow::newActivityStub(
@@ -83,33 +87,33 @@ class UpdateWorkflow
         return $result;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function throwException(string $name): mixed
     {
         throw new \Exception("Test exception with $name");
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function returnNilUuid(): UuidInterface
     {
         return Uuid::fromString(Uuid::NIL);
     }
 
-    #[Workflow\UpdateMethod]
-    #[Workflow\ReturnType(UuidInterface::class)]
+    #[UpdateMethod]
+    #[ReturnType(UuidInterface::class)]
     public function returnUuid(UuidInterface $datetime)
     {
         return $datetime;
     }
 
-    #[Workflow\UpdateMethod]
-    #[Workflow\ReturnType('object')]
+    #[UpdateMethod]
+    #[ReturnType('object')]
     public function returnAsObject(mixed $mixed): object
     {
         return (object)(array)$mixed;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

@@ -23,6 +23,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 #[Worker(pipelineProvider: [WorkerServices::class, 'interceptors'])]
 class FallbackHandlersTest extends TestCase
@@ -249,7 +251,7 @@ class TestWorkflow
         ];
     }
 
-    #[Workflow\UpdateMethod('register_query_fallback')]
+    #[UpdateMethod('register_query_fallback')]
     public function registerQueryFallback(): void
     {
         Workflow::registerDynamicQuery(static fn(string $name, ValuesInterface $values): string => \sprintf(
@@ -259,7 +261,7 @@ class TestWorkflow
         ));
     }
 
-    #[Workflow\UpdateMethod('register_signals_fallback')]
+    #[UpdateMethod('register_signals_fallback')]
     public function registerSignalFallback(): void
     {
         Workflow::registerDynamicSignal(function (string $name, ValuesInterface $values): void {
@@ -267,7 +269,7 @@ class TestWorkflow
         });
     }
 
-    #[Workflow\UpdateMethod('register_updates_fallback')]
+    #[UpdateMethod('register_updates_fallback')]
     public function registerUpdateFallback(bool $validator): void
     {
         Workflow::registerDynamicUpdate(
@@ -282,7 +284,7 @@ class TestWorkflow
         );
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

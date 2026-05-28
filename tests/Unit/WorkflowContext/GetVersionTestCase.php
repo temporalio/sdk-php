@@ -11,6 +11,7 @@ use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 final class GetVersionTestCase extends AbstractUnit
 {
@@ -26,7 +27,7 @@ final class GetVersionTestCase extends AbstractUnit
 
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'VersionWorkflow')]
                 public function handler(): iterable

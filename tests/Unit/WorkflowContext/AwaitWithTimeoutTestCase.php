@@ -11,6 +11,8 @@ use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertTrue;
@@ -33,7 +35,7 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
     {
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
@@ -57,7 +59,7 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
 
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
@@ -78,7 +80,7 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
     {
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
@@ -100,7 +102,7 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
         $this->addToAssertionCount(1);
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 private bool $doCancel = false;
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
@@ -119,7 +121,7 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
                     return 'OK';
                 }
 
-                #[Workflow\SignalMethod]
+                #[SignalMethod]
                 public function cancel(): void
                 {
                     $this->doCancel = true;

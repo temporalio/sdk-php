@@ -14,8 +14,9 @@ namespace Temporal\Tests\Workflow;
 use React\Promise\Deferred;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class RuntimeSignalWorkflow
 {
     #[WorkflowMethod]

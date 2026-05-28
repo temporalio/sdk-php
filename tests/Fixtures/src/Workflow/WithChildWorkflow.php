@@ -13,8 +13,10 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class WithChildWorkflow
 {
     #[WorkflowMethod(name: 'WithChildWorkflow')]
@@ -24,7 +26,7 @@ class WithChildWorkflow
         $result = yield Workflow::executeChildWorkflow(
             'SimpleWorkflow',
             ['child ' . $input],
-            Workflow\ChildWorkflowOptions::new(),
+            ChildWorkflowOptions::new(),
         );
 
         return 'Child: ' . $result;

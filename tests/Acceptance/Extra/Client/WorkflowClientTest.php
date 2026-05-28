@@ -13,6 +13,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowExecutionStatus;
 
 class WorkflowClientTest extends TestCase
 {
@@ -48,7 +49,7 @@ class WorkflowClientTest extends TestCase
 
         self::assertInstanceOf(\DateTimeInterface::class, $description->info->startTime);
         self::assertNull($description->info->closeTime);
-        self::assertSame(Workflow\WorkflowExecutionStatus::Running, $description->info->status);
+        self::assertSame(WorkflowExecutionStatus::Running, $description->info->status);
         self::assertGreaterThanOrEqual(2, $description->info->historyLength);
         self::assertNull($description->info->parentExecution);
         self::assertNotNull($description->info->executionTime);

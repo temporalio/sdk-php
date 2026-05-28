@@ -13,6 +13,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
 
 class SignalTest extends TestCase
 {
@@ -35,7 +36,7 @@ class MainWorkflow
         $workflow = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
             // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
-            Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
+            ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         );
         $handle = $workflow->run();
         yield $workflow->signal('unblock');

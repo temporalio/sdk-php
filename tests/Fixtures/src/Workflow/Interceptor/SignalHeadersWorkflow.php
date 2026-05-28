@@ -13,8 +13,10 @@ namespace Temporal\Tests\Workflow\Interceptor;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SignalHeadersWorkflow
 {
     private ?array $headers = null;
@@ -27,7 +29,7 @@ class SignalHeadersWorkflow
         return $this->headers;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function signal(): void
     {
         $this->signalled = true;
