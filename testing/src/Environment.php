@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Support\TestOutputStyle;
@@ -23,6 +24,7 @@ final class Environment
 
     public function __construct(
         OutputInterface $output,
+        private Downloader $downloader,
         private SystemInfo $systemInfo,
         ?Command $command = null,
         private bool $allowExternalTemporalProcess = false,
@@ -35,12 +37,18 @@ final class Environment
 
     public static function create(?Command $command = null, ?SystemInfo $systemInfo = null): self
     {
+        $token = \getenv('GITHUB_TOKEN');
         $allowExternalTemporalProcess = \getenv('ALLOW_EXTERNAL_TEMPORAL_PROCESS') === 'true';
 
         $systemInfo ??= SystemInfo::detect();
 
         return new self(
             new TestOutputStyle(new ArgvInput(), new ConsoleOutput()),
+            new Downloader(new Filesystem(), HttpClient::create([
+                'headers' => [
+                    'authorization' => \is_string($token) ? 'token ' . $token : null,
+                ],
+            ])),
             $systemInfo,
             $command,
             $allowExternalTemporalProcess,

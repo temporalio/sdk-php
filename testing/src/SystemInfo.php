@@ -41,7 +41,7 @@ final class SystemInfo
         public string $os,
         public string $temporalServerExecutable,
         public string $rrExecutable,
-        public string $temporalCliExecutable,
+        public string $temporalCliExecutable = 'temporal',
     ) {}
 
     public static function detect(): self
