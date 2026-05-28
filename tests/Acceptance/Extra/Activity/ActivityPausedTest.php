@@ -7,14 +7,11 @@ namespace Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
 use Temporal\Api\Common\V1\WorkflowExecution;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\ActivityPausedException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
-use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -26,22 +23,12 @@ class ActivityPausedTest extends TestCase
     public function simplePause(
         #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '10 seconds')] WorkflowStubInterface $stub,
         ServiceClientInterface $serviceClient,
-        State $runtime,
     ): void {
         $deadline = \microtime(true) + 5;
         $started = false;
         while (\microtime(true) < $deadline) {
-            $response = $serviceClient->DescribeWorkflowExecution(
-                (new DescribeWorkflowExecutionRequest())
-                    ->setNamespace($runtime->namespace)
-                    ->setExecution(
-                        (new WorkflowExecution())
-                            ->setWorkflowId($stub->getExecution()->getID())
-                            ->setRunId($stub->getExecution()->getRunID()),
-                    ),
-            );
-            foreach ($response->getPendingActivities() as $pending) {
-                if ($pending->hasLastStartedTime()) {
+            foreach ($stub->describe()->pendingActivities as $pending) {
+                if ($pending->lastStartedTime !== null) {
                     $started = true;
                     break 2;
                 }
