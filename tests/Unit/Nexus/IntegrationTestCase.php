@@ -45,14 +45,21 @@ interface EchoServiceInterface
     #[AsyncOperation(output: 'string')]
     public function cancelOp(string $input): OperationInfo;
 
+    #[AsyncOperation(output: 'string')]
+    public function cancelThrowsOp(string $input): OperationInfo;
+
     #[Operation]
     public function echoWithLinks(string $input): string;
 
-    /** Reads caller-side links from $details->links and serialises them into the result. */
+    /**
+     * Reads caller-side links from $details->links and serialises them into the result.
+     */
     #[Operation]
     public function reportCallerLinks(string $input): string;
 
-    /** Reports whether $context->deadline was populated and roughly how far in the future it is. */
+    /**
+     * Reports whether $context->deadline was populated and roughly how far in the future it is.
+     */
     #[Operation]
     public function reportDeadline(string $input): string;
 }
@@ -86,6 +93,17 @@ class EchoServiceImpl implements EchoServiceInterface
     public function cancelCancelOp(string $token): void
     {
         $this->canceledTokens[] = $token;
+    }
+
+    public function cancelThrowsOp(string $input): OperationInfo
+    {
+        return new OperationInfo('cancel-throws-token-' . $input, OperationState::Running);
+    }
+
+    #[OperationCancel(operation: 'cancelThrowsOp')]
+    public function cancelCancelThrowsOp(string $token): void
+    {
+        throw new \RuntimeException("cancel routine blew up for {$token}");
     }
 
     public function echoWithLinks(string $input): string
@@ -131,24 +149,6 @@ final class IntegrationTestCase extends AbstractUnit
     private CancelNexusOperation $cancelRoute;
     private DataConverter $dataConverter;
     private EchoServiceImpl $serviceImpl;
-
-    protected function setUp(): void
-    {
-        $this->dataConverter = DataConverter::createDefault();
-
-        $this->serviceImpl = new EchoServiceImpl();
-
-        $reader = new \Temporal\Internal\Declaration\Reader\NexusServiceReader(new \Spiral\Attributes\AttributeReader());
-        $prototype = $reader->fromClass($this->serviceImpl::class)->withInstance($this->serviceImpl);
-
-        $repository = new \Temporal\Internal\Declaration\Prototype\NexusServiceCollection();
-        $repository->add($prototype, false);
-
-        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
-
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter);
-        $this->cancelRoute = new CancelNexusOperation($taskHandler);
-    }
 
     // ── Sync operation ───────────────────────────────────────────
 
@@ -247,6 +247,31 @@ final class IntegrationTestCase extends AbstractUnit
         }
     }
 
+    public function testCancelHandlerThrowingIsConvertedToHandlerError(): void
+    {
+        $request = $this->makeCancelRequest('EchoService', 'cancelThrowsOp', 'boom-token');
+        $deferred = new Deferred();
+
+        $this->cancelRoute->handle($request, [], $deferred);
+
+        $error = null;
+        $deferred->promise()->then(
+            null,
+            static function (\Throwable $e) use (&$error): void {
+                $error = $e;
+            },
+        );
+
+        self::assertInstanceOf(
+            NexusHandlerException::class,
+            $error,
+            'A throwing cancel routine must surface as a typed HandlerException rejection, never crash the worker.',
+        );
+        self::assertSame(NexusErrorType::Internal, $error->errorType);
+        self::assertInstanceOf(\RuntimeException::class, $error->getPrevious());
+        self::assertStringContainsString('boom-token', $error->getPrevious()->getMessage());
+    }
+
     // ── Headers ──────────────────────────────────────────────────
 
     public function testRequestHeaders(): void
@@ -303,7 +328,7 @@ final class IntegrationTestCase extends AbstractUnit
         $this->invokeRoute->handle($request, [], $deferred);
 
         $error = null;
-        $deferred->promise()->then(null, function (\Throwable $e) use (&$error): void {
+        $deferred->promise()->then(null, static function (\Throwable $e) use (&$error): void {
             $error = $e;
         });
         self::assertInstanceOf(\Temporal\Nexus\Exception\HandlerException::class, $error);
@@ -327,7 +352,7 @@ final class IntegrationTestCase extends AbstractUnit
         $this->invokeRoute->handle($request, [], $deferred);
 
         $error = null;
-        $deferred->promise()->then(null, function (\Throwable $e) use (&$error): void {
+        $deferred->promise()->then(null, static function (\Throwable $e) use (&$error): void {
             $error = $e;
         });
         self::assertInstanceOf(\Temporal\Nexus\Exception\HandlerException::class, $error);
@@ -471,6 +496,24 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertSame('CancelNexusOperation', $this->cancelRoute->getName());
     }
 
+    protected function setUp(): void
+    {
+        $this->dataConverter = DataConverter::createDefault();
+
+        $this->serviceImpl = new EchoServiceImpl();
+
+        $reader = new \Temporal\Internal\Declaration\Reader\NexusServiceReader(new \Spiral\Attributes\AttributeReader());
+        $prototype = $reader->fromClass($this->serviceImpl::class)->withInstance($this->serviceImpl);
+
+        $repository = new \Temporal\Internal\Declaration\Prototype\NexusServiceCollection();
+        $repository->add($prototype, false);
+
+        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
+
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter);
+        $this->cancelRoute = new CancelNexusOperation($taskHandler);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private function invoke(string $operation, string $input): NexusOperationStarted
@@ -522,8 +565,12 @@ final class IntegrationTestCase extends AbstractUnit
         $error = null;
 
         $deferred->promise()->then(
-            function ($value) use (&$result): void { $result = $value; },
-            function (\Throwable $e) use (&$error): void { $error = $e; },
+            static function ($value) use (&$result): void {
+                $result = $value;
+            },
+            static function (\Throwable $e) use (&$error): void {
+                $error = $e;
+            },
         );
 
         if ($error !== null) {
@@ -540,8 +587,12 @@ final class IntegrationTestCase extends AbstractUnit
         $error = null;
 
         $deferred->promise()->then(
-            function ($value) use (&$result): void { $result = $value; },
-            function (\Throwable $e) use (&$error): void { $error = $e; },
+            static function ($value) use (&$result): void {
+                $result = $value;
+            },
+            static function (\Throwable $e) use (&$error): void {
+                $error = $e;
+            },
         );
 
         if ($error !== null) {

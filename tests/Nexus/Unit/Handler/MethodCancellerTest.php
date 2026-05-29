@@ -11,16 +11,61 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Handler\ClosureMethodCancellationListener;
+use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\MethodCancellationListenerInterface;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelSignaturesService;
 use Temporal\Tests\Support\FrozenClock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(MethodCanceller::class)]
+#[CoversClass(MethodOperationHandler::class)]
 final class MethodCancellerTest extends TestCase
 {
+    public function testHandlerResolvesLegacyStringSignature(): void
+    {
+        $service = new CancelSignaturesService();
+        $this->cancel($service, 'legacy', 'tok-1');
+
+        self::assertSame('tok-1', $service->cancelCalls['legacy']);
+    }
+
+    public function testHandlerResolvesContextAndDetailsByType(): void
+    {
+        $service = new CancelSignaturesService();
+        $this->cancel($service, 'contextAndDetails', 'tok-2');
+
+        [$context, $details] = $service->cancelCalls['contextAndDetails'];
+        self::assertInstanceOf(OperationContext::class, $context);
+        self::assertInstanceOf(OperationCancelDetails::class, $details);
+        self::assertSame('tok-2', $details->operationToken);
+    }
+
+    public function testHandlerResolvesReversedSignatureByType(): void
+    {
+        $service = new CancelSignaturesService();
+        $this->cancel($service, 'reversed', 'tok-3');
+
+        [$details, $context] = $service->cancelCalls['reversed'];
+        self::assertInstanceOf(OperationCancelDetails::class, $details);
+        self::assertInstanceOf(OperationContext::class, $context);
+        self::assertSame('tok-3', $details->operationToken);
+    }
+
+    public function testHandlerResolvesNoArgsSignature(): void
+    {
+        $service = new CancelSignaturesService();
+        $this->cancel($service, 'noArgs', 'tok-4');
+
+        self::assertTrue($service->cancelCalls['noArgs']);
+    }
+
     public function testNotCancelledByDefault(): void
     {
         $canceller = new MethodCanceller();
@@ -100,7 +145,7 @@ final class MethodCancellerTest extends TestCase
         $canceller = new MethodCanceller();
         $invoked = false;
 
-        $listener = new class ($invoked) implements MethodCancellationListenerInterface {
+        $listener = new class($invoked) implements MethodCancellationListenerInterface {
             public function __construct(private bool &$invoked) {}
 
             public function cancelled(): void
@@ -224,5 +269,22 @@ final class MethodCancellerTest extends TestCase
         $canceller->cancel('x');
 
         self::assertSame(['a', 'b'], $order);
+    }
+
+    private function cancel(object $service, string $operation, string $token): void
+    {
+        $prototype = (new NexusServiceReader(new AttributeReader()))->fromClass(\get_class($service));
+        $operationPrototype = $prototype->getOperations()[$operation];
+
+        $handler = new MethodOperationHandler(
+            instance: $service,
+            startMethod: new \ReflectionMethod($service, $operationPrototype->methodName),
+            operation: $operationPrototype,
+        );
+
+        $handler->cancel(
+            new OperationContext(service: $prototype->getID(), operation: $operation),
+            new OperationCancelDetails(operationToken: $token),
+        );
     }
 }

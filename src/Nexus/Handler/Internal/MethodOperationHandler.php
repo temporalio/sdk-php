@@ -67,6 +67,29 @@ final class MethodOperationHandler implements OperationHandlerInterface
             );
         }
 
-        $cancelMethod->invoke($this->instance, $details->operationToken);
+        $cancelMethod->invoke($this->instance, ...$this->resolveCancelArgs($cancelMethod, $context, $details));
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function resolveCancelArgs(
+        \ReflectionMethod $cancelMethod,
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): array {
+        $args = [];
+        foreach ($cancelMethod->getParameters() as $parameter) {
+            $type = $parameter->getType();
+            $typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
+
+            $args[] = match ($typeName) {
+                OperationContext::class => $context,
+                OperationCancelDetails::class => $details,
+                default => $details->operationToken,
+            };
+        }
+
+        return $args;
     }
 }

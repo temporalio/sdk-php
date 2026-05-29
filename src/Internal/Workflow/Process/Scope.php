@@ -24,6 +24,7 @@ use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
+use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
@@ -385,7 +386,10 @@ class Scope implements CancellationScopeInterface, Destroyable
             }
 
             if (!$cancellable) {
-                // non-cancellable request
+                if ($request instanceof ExecuteNexusOperation) {
+                    $client->reject($request, new CanceledFailure('nexus operation cancelled'));
+                }
+
                 return;
             }
 

@@ -33,7 +33,9 @@ use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/** Scope cancel over Promise::all of N async Nexus ops fans out per-sibling. */
+/**
+ * Scope cancel over Promise::all of N async Nexus ops fans out per-sibling.
+ */
 #[Worker(options: [self::class, 'workerOptions'])]
 class CancelPropagationTest extends TestCase
 {
@@ -83,8 +85,20 @@ class CancelPropagationTest extends TestCase
             'Cancel must fan out to every sibling — proves Scope::onRequest registers per-promise onCancel.',
         );
 
-        // CANCELED-event count is server-timing dependent (handler returns 'cancelled:tag'
-        // normally, so the op may close as COMPLETED) — only fan-out is load-bearing.
+        $canceled = self::countEvents($history, EventType::EVENT_TYPE_NEXUS_OPERATION_CANCELED);
+        self::assertSame(
+            3,
+            $canceled,
+            'Every sibling must reach the terminal CANCELED event — the handler re-raises the '
+            . 'CanceledFailure so the operation closes as CANCELED rather than COMPLETED.',
+        );
+
+        $completed = self::countEvents($history, EventType::EVENT_TYPE_NEXUS_OPERATION_COMPLETED);
+        self::assertSame(
+            0,
+            $completed,
+            'No sibling may close as COMPLETED once cancellation propagated.',
+        );
     }
 
     private static function countEvents(History $history, int $type): int
@@ -129,12 +143,8 @@ class CancelPropagationHandlerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_ParallelCancel_Handler')]
     public function handle(string $input)
     {
-        try {
-            yield Workflow::timer(CarbonInterval::seconds(45));
-            return "completed:{$input}";
-        } catch (CanceledFailure) {
-            return "cancelled:{$input}";
-        }
+        yield Workflow::timer(CarbonInterval::seconds(45));
+        return "completed:{$input}";
     }
 }
 

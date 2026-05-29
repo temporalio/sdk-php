@@ -6,8 +6,11 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancelTypes;
 
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
@@ -29,7 +32,7 @@ use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
- * P1 #6–8 — async-cancel matrix.
+ * P1 #6–9 — async-cancel matrix.
  *
  * Existing {@see \Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel\AsyncCancelByTokenTest}
  * covers `WaitRequested`. This suite covers the rest:
@@ -37,12 +40,15 @@ use Temporal\Workflow\WorkflowMethod;
  *                       a CanceledFailure too.
  *   - `WaitCompleted` — caller waits until the handler workflow has fully
  *                       finished after the cancel.
- *   - `Abandon`       — caller's cancel is suppressed, handler runs to natural
- *                       completion, caller observes the handler's result.
- *
- * P1 #9 ("cancel before handler started") is still deferred — `Workflow::async()
- * + immediate cancel()` raced and the caller workflow failed with
- * retryState=NON_RETRYABLE. Needs a different primitive. Tracked in nexus_plan.md.
+ *   - `Abandon`       — caller's wire cancel is suppressed AND the caller's
+ *                       future resolves immediately with a CanceledFailure;
+ *                       the handler keeps running server-side. The caller does
+ *                       NOT await the handler, and no
+ *                       `RequestCancelNexusOperation` reaches the server.
+ *   - cancel-before-sent — scope cancelled in the same task that issued the
+ *                       operation, before the schedule command is flushed; the
+ *                       caller resumes with a CanceledFailure and nothing is
+ *                       ever scheduled on the server.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class AsyncCancelTypesTest extends TestCase
@@ -58,25 +64,70 @@ class AsyncCancelTypesTest extends TestCase
     #[Test]
     public function tryCancel(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
-        self::assertSame('ok', $this->runCancelScenario($state, $client, $endpoints, 'try-cancel'));
+        $stub = $this->runCancelScenario($state, $client, $endpoints, 'try-cancel');
+        self::assertSame('ok', $stub->getResult('string'));
     }
 
     #[Test]
     public function waitCompleted(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
     {
+        $stub = $this->runCancelScenario($state, $client, $endpoints, 'wait-completed');
+        self::assertSame('cancelled:payload', $stub->getResult('string'));
+    }
+
+    #[Test]
+    public function abandonResumesCallerImmediatelyWithoutWireCancel(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $stub = $this->runCancelScenario($state, $client, $endpoints, 'abandon');
+
         self::assertSame(
-            'cancelled:payload',
-            $this->runCancelScenario($state, $client, $endpoints, 'wait-completed'),
+            'ok',
+            $stub->getResult('string'),
+            'Abandon must resolve the caller future immediately with a CanceledFailure.',
+        );
+
+        $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
+        self::assertSame(
+            0,
+            self::countEvents($history, EventType::EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED),
+            'Abandon must NOT send a RequestCancelNexusOperation to the server.',
         );
     }
 
     #[Test]
-    public function abandon(State $state, WorkflowClientInterface $client, NexusEndpoints $endpoints): void
-    {
+    public function cancelBeforeSentResumesCallerWithoutScheduling(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $stub = $this->runCancelScenario($state, $client, $endpoints, 'cancel-before-sent');
+
         self::assertSame(
-            'completed:payload',
-            $this->runCancelScenario($state, $client, $endpoints, 'abandon'),
+            'ok',
+            $stub->getResult('string'),
+            'Cancel before the schedule command is flushed must resolve the caller with a CanceledFailure.',
         );
+
+        $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
+        self::assertSame(
+            0,
+            self::countEvents($history, EventType::EVENT_TYPE_NEXUS_OPERATION_SCHEDULED),
+            'Nothing must be scheduled on the server when the operation is cancelled before being sent.',
+        );
+    }
+
+    private static function countEvents(History $history, int $type): int
+    {
+        $count = 0;
+        foreach ($history->getEvents() as $event) {
+            if ($event->getEventType() === $type) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private function runCancelScenario(
@@ -84,7 +135,7 @@ class AsyncCancelTypesTest extends TestCase
         WorkflowClientInterface $client,
         NexusEndpoints $endpoints,
         string $scenario,
-    ): string {
+    ): WorkflowStubInterface {
         $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-cancel-' . $scenario);
 
         $stub = $client->newUntypedWorkflowStub(
@@ -96,7 +147,7 @@ class AsyncCancelTypesTest extends TestCase
 
         $client->start($stub, $endpoint->name, $scenario);
 
-        return $stub->getResult('string');
+        return $stub;
     }
 }
 
@@ -141,10 +192,11 @@ class LongRunningHandlerWorkflow
     }
 }
 
-// ── Service B: short handler for Abandon scenario ──────────────────
+// ── Service B: handler for the Abandon scenario ────────────────────
 //
-// Abandon suppresses the wire cancel, so the caller awaits the handler's
-// natural completion. A 1s timer keeps the test fast.
+// Abandon resolves the caller immediately and never sends a wire cancel,
+// so the handler is expected to keep running server-side. The caller does
+// not await it, so the handler's eventual result is irrelevant to the test.
 
 #[Service(name: 'AbandonService')]
 class AbandonService
@@ -176,13 +228,8 @@ class AbandonHandlerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_AsyncCancelTypes_AbandonHandler')]
     public function handle(string $input)
     {
-        try {
-            yield Workflow::timer(CarbonInterval::seconds(1));
-            return "completed:{$input}";
-        } catch (CanceledFailure) {
-            // Should NOT reach here in the Abandon scenario.
-            return "WRONG-cancelled:{$input}";
-        }
+        yield Workflow::timer(CarbonInterval::seconds(5));
+        return "completed:{$input}";
     }
 }
 
@@ -215,12 +262,6 @@ class CancelTypesCallerWorkflow
         $scope->cancel();
 
         try {
-            // For TryCancel: handler observes cancel and rejects via
-            // CanceledFailure (caller catches it before handler completes).
-            // For WaitCompleted: caller awaits the handler's CanceledFailure-
-            // recovery path, which returns "cancelled:payload" naturally.
-            // For Abandon: cancel is suppressed at the wire level, handler
-            // runs to completion and returns its natural result.
             $result = yield $promise;
 
             return $result;
@@ -257,6 +298,12 @@ class CancelTypesCallerWorkflow
                 AbandonService::class,
                 'run',
                 300,
+            ],
+            'cancel-before-sent' => [
+                NexusOperationCancellationType::TryCancel->value,
+                CancelTypesService::class,
+                'longRunning',
+                0,
             ],
             default => throw new \InvalidArgumentException("unknown scenario: {$scenario}"),
         };

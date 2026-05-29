@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\OperationCancel;
@@ -25,6 +27,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
+use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -262,6 +265,42 @@ class ReplayTest extends TestCase
         (new WorkflowReplayer())->replayHistory($history);
     }
 
+    #[Test]
+    public function cancelledNexusOperationReplaysCleanly(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-cancel');
+
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Nexus_Replay_CancelCaller',
+            WorkflowOptions::new()
+                ->withTaskQueue(__NAMESPACE__)
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+        );
+
+        $client->start($stub, $endpoint->name, 'world');
+        self::assertSame('cancelled', $stub->getResult('string'));
+
+        $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
+
+        // The cancel path must leave both the request marker and the terminal
+        // CANCELED event in history; replay then re-derives the same command
+        // stream (schedule + cancel) from these events.
+        self::assertContainsEvents(
+            $history,
+            [
+                EventType::EVENT_TYPE_NEXUS_OPERATION_SCHEDULED,
+                EventType::EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED,
+                EventType::EVENT_TYPE_NEXUS_OPERATION_CANCELED,
+            ],
+            'cancelled caller history must include Scheduled+CancelRequested+Canceled Nexus events',
+        );
+
+        (new WorkflowReplayer())->replayHistory($history);
+    }
+
     /**
      * @param list<int> $expectedTypes
      */
@@ -388,5 +427,77 @@ class ReplayTimerThenSyncCallerWorkflow
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(20)),
         );
         return yield $stub->greet($name);
+    }
+}
+
+// ── Cancel-path Nexus service (long handler that does not recover) ──────
+
+#[Service(name: 'ReplayCancelService')]
+class ReplayCancelService
+{
+    #[AsyncOperation(output: 'string')]
+    public function longRunning(string $input): OperationInfo
+    {
+        $details = Nexus::getStartDetails();
+        return WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                ReplayCancelHandlerWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId($details->requestId),
+                $input,
+            ),
+            $details,
+        );
+    }
+
+    #[OperationCancel(operation: 'longRunning')]
+    public function cancelLongRunning(string $token): void
+    {
+        WorkflowRunOperation::cancel($token);
+    }
+}
+
+#[WorkflowInterface]
+class ReplayCancelHandlerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Replay_CancelHandler')]
+    public function handle(string $input)
+    {
+        yield Workflow::timer(CarbonInterval::seconds(30));
+        return "completed:{$input}";
+    }
+}
+
+#[WorkflowInterface]
+class ReplayCancelCallerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Replay_CancelCaller')]
+    public function run(string $endpoint, string $input)
+    {
+        $stub = Workflow::newNexusServiceStub(
+            ReplayCancelService::class,
+            NexusOperationOptions::new()
+                ->withEndpoint($endpoint)
+                ->withScheduleToCloseTimeout(CarbonInterval::seconds(60))
+                ->withCancellationType(NexusOperationCancellationType::WaitRequested),
+        );
+
+        $promise = null;
+        $scope = Workflow::async(static function () use ($stub, $input, &$promise): void {
+            $promise = $stub->longRunning($input);
+        });
+
+        yield Workflow::timer(CarbonInterval::seconds(1));
+        $scope->cancel();
+
+        try {
+            yield $promise;
+        } catch (NexusOperationFailure $e) {
+            if ($e->getPrevious() instanceof CanceledFailure) {
+                return 'cancelled';
+            }
+            throw $e;
+        }
+
+        return 'unexpected-completion';
     }
 }

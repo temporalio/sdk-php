@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncWorkflow;
 
 use Carbon\CarbonInterval;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
@@ -21,6 +23,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
+use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -118,6 +121,33 @@ class WorkflowRunOperationTest extends TestCase
 
         RequestIdMarker::clear();
     }
+
+    /**
+     * Cancelling the caller scope cancels the in-flight Nexus operation:
+     * the cancel propagates through `WorkflowRunOperation::cancel()` to the
+     * handler workflow, whose long timer is interrupted by a
+     * {@see CanceledFailure}. The caller observes the operation rejecting and
+     * resolves to `'cancelled'`.
+     */
+    #[Test]
+    public function cancellingScopeCancelsNexusOperation(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-async-wf-cancel');
+
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Nexus_AsyncWorkflow_CancelCaller',
+            WorkflowOptions::new()
+                ->withTaskQueue(__NAMESPACE__)
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(60)),
+        );
+
+        $client->start($stub, $endpoint->name, 'world');
+
+        self::assertSame('cancelled', $stub->getResult('string'));
+    }
 }
 
 /**
@@ -182,6 +212,26 @@ class AsyncWorkflowService
     {
         WorkflowRunOperation::cancel($token);
     }
+
+    #[AsyncOperation(output: 'string')]
+    public function slowHello(string $input): OperationInfo
+    {
+        $details = Nexus::getStartDetails();
+        return WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                SlowAsyncHandlerWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId($details->requestId),
+                $input,
+            ),
+            $details,
+        );
+    }
+
+    #[OperationCancel(operation: 'slowHello')]
+    public function cancelSlowHello(string $token): void
+    {
+        WorkflowRunOperation::cancel($token);
+    }
 }
 
 // ── Handler workflow ───────────────────────────────────────────────
@@ -199,7 +249,27 @@ class AsyncHandlerWorkflow
     }
 }
 
-// ── Caller workflow ────────────────────────────────────────────────
+/**
+ * Long-running handler so the caller has a window to cancel the operation
+ * before it completes. The 45s timer is interrupted by a {@see CanceledFailure}
+ * once the cancel propagates from the caller through Temporal.
+ */
+#[WorkflowInterface]
+class SlowAsyncHandlerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_AsyncWorkflow_SlowHandler')]
+    public function handle(string $input)
+    {
+        try {
+            yield Workflow::timer(CarbonInterval::seconds(45));
+            return 'HELLO, ' . \strtoupper($input) . '!';
+        } catch (CanceledFailure) {
+            return 'cancelled:' . $input;
+        }
+    }
+}
+
+// ── Caller workflows ───────────────────────────────────────────────
 
 #[WorkflowInterface]
 class AsyncCallerWorkflow
@@ -214,5 +284,40 @@ class AsyncCallerWorkflow
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(30)),
         );
         return yield $stub->hello($input);
+    }
+}
+
+#[WorkflowInterface]
+class AsyncCancelCallerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_AsyncWorkflow_CancelCaller')]
+    public function run(string $endpoint, string $input)
+    {
+        $stub = Workflow::newNexusServiceStub(
+            AsyncWorkflowService::class,
+            NexusOperationOptions::new()
+                ->withEndpoint($endpoint)
+                ->withScheduleToCloseTimeout(CarbonInterval::seconds(60))
+                ->withCancellationType(NexusOperationCancellationType::WaitRequested),
+        );
+
+        $operation = null;
+        $scope = Workflow::async(static function () use ($stub, $input, &$operation): void {
+            $operation = $stub->slowHello($input);
+        });
+
+        yield Workflow::timer(CarbonInterval::seconds(2));
+        $scope->cancel();
+
+        try {
+            yield $operation;
+            return 'unexpected-no-failure';
+        } catch (NexusOperationFailure $e) {
+            return $e->getPrevious() instanceof CanceledFailure
+                ? 'cancelled'
+                : 'unexpected-cause:' . ($e->getPrevious()?->getMessage() ?? 'null');
+        } catch (CanceledFailure) {
+            return 'cancelled';
+        }
     }
 }

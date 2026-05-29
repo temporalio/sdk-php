@@ -43,6 +43,12 @@ final class NexusOperationOptions extends Options
     public \DateInterval $scheduleToCloseTimeout;
 
     /**
+     * Behaviour applied when the caller workflow is cancelled.
+     *
+     * Defaults to {@see NexusOperationCancellationType::Unspecified}, which
+     * the server treats as {@see NexusOperationCancellationType::WaitCompleted}
+     * (the sdk-go default).
+     *
      * @see NexusOperationCancellationType
      */
     #[Marshal(name: 'cancellationType')]

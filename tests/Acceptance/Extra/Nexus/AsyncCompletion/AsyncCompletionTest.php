@@ -106,26 +106,17 @@ class AsyncCompletionTest extends TestCase
         // -> CanceledFailure) and returned 'cancelled'.
         self::assertSame('cancelled', $caller->getResult('string', timeout: 30));
 
-        // Give Temporal a beat to flush the cancel-side event into history,
-        // then iterate. Any cancel-side Nexus event proves the cancel reached
-        // the workflow's history — Temporal records both
-        // EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED (caller side) and
-        // EVENT_TYPE_NEXUS_OPERATION_CANCELED (terminal) for cancelled ops.
-        $cancelEventTypes = [
-            EventType::EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED,
-            EventType::EVENT_TYPE_NEXUS_OPERATION_CANCELED,
-        ];
-
-        $found = [];
+        $cancelRequested = false;
         foreach ($client->getWorkflowHistory($caller->getExecution()) as $event) {
-            if (\in_array($event->getEventType(), $cancelEventTypes, true)) {
-                $found[] = $event->getEventType();
+            if ($event->getEventType() === EventType::EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED) {
+                $cancelRequested = true;
+                break;
             }
         }
 
-        self::assertNotEmpty(
-            $found,
-            'Expected a Nexus cancel-side event in caller workflow history; none found.',
+        self::assertTrue(
+            $cancelRequested,
+            'Expected EVENT_TYPE_NEXUS_OPERATION_CANCEL_REQUESTED in caller workflow history; none found.',
         );
     }
 }

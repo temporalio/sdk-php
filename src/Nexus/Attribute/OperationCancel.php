@@ -18,8 +18,16 @@ use Spiral\Attributes\NamedArgumentConstructor;
  * Marks a method on a service implementation class as the cancel routine for a named
  * {@see AsyncOperation}.
  *
- * The annotated method must be public and non-static. It receives the operation token
- * as its sole argument and returns `void`.
+ * The annotated method must be public and non-static and return `void`. It may declare,
+ * in any order, any of the following parameters; arguments are matched by type, not by
+ * position:
+ *
+ * - no parameters;
+ * - a single `string` parameter, which receives the operation token (legacy signature);
+ * - a {@see \Temporal\Nexus\Handler\OperationContext} parameter, which receives the
+ *   operation context;
+ * - a {@see \Temporal\Nexus\Handler\OperationCancelDetails} parameter, which receives the
+ *   cancel details (including the operation token).
  *
  * @Annotation
  * @NamedArgumentConstructor

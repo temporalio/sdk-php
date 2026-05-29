@@ -22,6 +22,7 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\AuthInterceptor;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelSignaturesService;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
@@ -67,7 +68,7 @@ final class CancelOperationTest extends TestCase
 
     public function testCancelWithInterceptor(): void
     {
-        $apiClient = fn(string $name): string => "greeting-{$name}";
+        $apiClient = static fn(string $name): string => "greeting-{$name}";
         $authToken = 'auth-token';
         $loggingInterceptor = new LoggingInterceptor();
 
@@ -108,6 +109,81 @@ final class CancelOperationTest extends TestCase
 
         // Logging interceptor saw both start and cancel.
         self::assertSame(['sayHello2', 'sayHello2'], $loggingInterceptor->getOperations());
+    }
+
+    public function testCancelLegacyStringSignature(): void
+    {
+        $service = new CancelSignaturesService();
+        $handler = ServiceHandler::create(
+            dataConverter: self::dataConverter(),
+            instances: [self::bindNexusService($service)],
+        );
+
+        $handler->cancelOperation(
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'legacy'),
+            new OperationCancelDetails(operationToken: 'token-legacy'),
+        );
+
+        self::assertSame('token-legacy', $service->cancelCalls['legacy']);
+    }
+
+    public function testCancelContextAndDetailsSignature(): void
+    {
+        $service = new CancelSignaturesService();
+        $handler = ServiceHandler::create(
+            dataConverter: self::dataConverter(),
+            instances: [self::bindNexusService($service)],
+        );
+
+        $details = new OperationCancelDetails(operationToken: 'token-cd');
+        $handler->cancelOperation(
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'contextAndDetails'),
+            $details,
+        );
+
+        [$context, $passedDetails] = $service->cancelCalls['contextAndDetails'];
+        self::assertInstanceOf(OperationContext::class, $context);
+        self::assertSame('CancelSignaturesServiceInterface', $context->service);
+        self::assertSame('contextAndDetails', $context->operation);
+        self::assertSame($details, $passedDetails);
+        self::assertSame('token-cd', $passedDetails->operationToken);
+    }
+
+    public function testCancelReversedSignatureResolvesByType(): void
+    {
+        $service = new CancelSignaturesService();
+        $handler = ServiceHandler::create(
+            dataConverter: self::dataConverter(),
+            instances: [self::bindNexusService($service)],
+        );
+
+        $details = new OperationCancelDetails(operationToken: 'token-rev');
+        $handler->cancelOperation(
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'reversed'),
+            $details,
+        );
+
+        [$passedDetails, $context] = $service->cancelCalls['reversed'];
+        self::assertInstanceOf(OperationCancelDetails::class, $passedDetails);
+        self::assertInstanceOf(OperationContext::class, $context);
+        self::assertSame($details, $passedDetails);
+        self::assertSame('reversed', $context->operation);
+    }
+
+    public function testCancelNoArgsSignature(): void
+    {
+        $service = new CancelSignaturesService();
+        $handler = ServiceHandler::create(
+            dataConverter: self::dataConverter(),
+            instances: [self::bindNexusService($service)],
+        );
+
+        $handler->cancelOperation(
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'noArgs'),
+            new OperationCancelDetails(operationToken: 'token-noargs'),
+        );
+
+        self::assertTrue($service->cancelCalls['noArgs']);
     }
 
     private static function dataConverter(): DataConverterInterface

@@ -86,7 +86,12 @@ final class NexusOperationStub implements NexusOperationStubInterface
             $service,
             $operation,
         );
-        $startedPromise = $this->request(new GetNexusOperationStarted($startId));
+        $startedPromise = $this->normalizeFailure(
+            $this->request(new GetNexusOperationStarted($startId)),
+            $endpoint,
+            $service,
+            $operation,
+        );
 
         return $startedPromise->then(
             fn(ValuesInterface $values): NexusOperationHandle => $this->buildHandle(

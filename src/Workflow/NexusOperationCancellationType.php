@@ -17,18 +17,19 @@ namespace Temporal\Workflow;
  */
 enum NexusOperationCancellationType: int
 {
+    /**
+     * No cancellation type was specified. The server treats this as
+     * {@see self::WaitCompleted}, matching the sdk-go default.
+     */
     case Unspecified = 0;
 
     /**
      * Do not request cancellation of the operation. The handler workflow
-     * keeps running; the caller workflow continues to await its natural
-     * completion (the SDK suppresses the wire-level cancel command, so the
-     * server is never notified of the caller's cancel request).
-     *
-     * Note: only the cancel-suppression part is implemented. The Java/Go
-     * semantics also let the caller resume *immediately* after the local
-     * cancel without awaiting the handler — that requires plumbing through
-     * `Internal\Workflow\Process\Scope::onRequest` and is not yet supported.
+     * keeps running server-side; the SDK suppresses the wire-level cancel
+     * command, so the server is never notified of the caller's cancel
+     * request, and the caller's future resolves immediately with a
+     * {@see \Temporal\Exception\Failure\CanceledFailure} (surfaced as a
+     * {@see \Temporal\Exception\Failure\NexusOperationFailure}).
      */
     case Abandon = 1;
     case TryCancel = 2;

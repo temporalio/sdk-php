@@ -19,6 +19,8 @@ use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\OperationInfo;
 
 /**
@@ -451,27 +453,9 @@ class NexusServiceReader extends Reader
         if ($method->isStatic()) {
             throw new InvalidArgumentException("#[OperationCancel] method {$where} cannot be static");
         }
-        if ($method->getNumberOfParameters() < 1) {
-            throw new InvalidArgumentException(
-                "#[OperationCancel] method {$where} must accept the operation token as its first parameter",
-            );
-        }
 
-        // Operation tokens are always strings on the wire. Allow `string`,
-        // untyped, or `mixed`; reject any other concrete type so the mistake
-        // surfaces at registration rather than as a runtime TypeError.
-        $tokenParameter = $method->getParameters()[0];
-        $tokenType = $tokenParameter->getType();
-        if (
-            $tokenType instanceof \ReflectionNamedType
-            && $tokenType->getName() !== 'string'
-            && $tokenType->getName() !== 'mixed'
-        ) {
-            throw new InvalidArgumentException(\sprintf(
-                '#[OperationCancel] method %s must declare its first parameter as `string` (operation token), got `%s`',
-                $where,
-                (string) $tokenType,
-            ));
+        foreach ($method->getParameters() as $parameter) {
+            $this->assertCancelParameterType($parameter, $where);
         }
 
         $returnType = $method->getReturnType();
@@ -482,5 +466,33 @@ class NexusServiceReader extends Reader
                 (string) $returnType,
             ));
         }
+    }
+
+    /**
+     * A cancel-method parameter may be untyped, `mixed`, `string` (operation
+     * token) or one of the handler context objects ({@see OperationContext},
+     * {@see OperationCancelDetails}). Any other concrete type is rejected so the
+     * mistake surfaces at registration rather than as a runtime TypeError.
+     */
+    private function assertCancelParameterType(\ReflectionParameter $parameter, string $where): void
+    {
+        $type = $parameter->getType();
+        if (!$type instanceof \ReflectionNamedType) {
+            return;
+        }
+
+        $allowed = ['string', 'mixed', OperationContext::class, OperationCancelDetails::class];
+        if (\in_array($type->getName(), $allowed, true)) {
+            return;
+        }
+
+        throw new InvalidArgumentException(\sprintf(
+            '#[OperationCancel] method %s parameter $%s must be typed as `string` (operation token), `%s` or `%s`, got `%s`',
+            $where,
+            $parameter->getName(),
+            OperationContext::class,
+            OperationCancelDetails::class,
+            (string) $type,
+        ));
     }
 }
