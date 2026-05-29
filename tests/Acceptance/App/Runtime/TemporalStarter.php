@@ -32,6 +32,8 @@ final class TemporalStarter
                 '--dynamic-config-value', 'frontend.activityAPIsEnabled=true',
                 '--dynamic-config-value', 'frontend.workerVersioningWorkflowAPIs=true',
                 '--dynamic-config-value', 'system.enableDeploymentVersions=true',
+                '--dynamic-config-value', 'history.enableChasm=true',
+                '--dynamic-config-value', 'history.enableCHASMSchedulerCreation=true',
             ],
             searchAttributes: [
                 'foo' => ValueType::Text->value,
