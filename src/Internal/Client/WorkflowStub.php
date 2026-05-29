@@ -69,10 +69,15 @@ use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Mapper\PendingActivityInfoMapper;
 use Temporal\Internal\Mapper\WorkflowExecutionConfigMapper;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * @template ReturnType
+ * @implements WorkflowStubInterface<ReturnType>
+ */
 final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 {
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
@@ -456,12 +461,20 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
 
+                $activityMapper = new PendingActivityInfoMapper($this->converter);
+                $pendingActivities = [];
+                /** @psalm-suppress TooManyTemplateParams */
+                foreach ($response->getPendingActivities() as $pendingActivity) {
+                    $pendingActivities[] = $activityMapper->fromMessage($pendingActivity);
+                }
+
                 /** @psalm-suppress PossiblyNullArgument */
                 return new WorkflowExecutionDescription(
                     config: (new WorkflowExecutionConfigMapper($this->converter))
                         ->fromMessage($response->getExecutionConfig()),
                     info: (new WorkflowExecutionInfoMapper($this->converter))
                         ->fromMessage($response->getWorkflowExecutionInfo()),
+                    pendingActivities: $pendingActivities,
                 );
             },
             /** @see WorkflowClientCallsInterceptor::describe() */
