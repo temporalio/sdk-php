@@ -16,12 +16,14 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
-use Temporal\Worker\Transport\Command\Client\UpdateResponse;
+use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
     private const ERROR_HANDLER_NOT_FOUND = 'unknown update method %s. KnownUpdateNames=[%s]';
+    private const COMMAND_VALIDATED = 'UpdateValidated';
+    private const COMMAND_COMPLETED = 'UpdateCompleted';
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
@@ -60,11 +62,11 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             $isReplay = (bool) ($request->getOptions()['replay'] ?? false);
             if ($isReplay) {
                 // On replay, we don't need to execute validation handlers
-                $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResponse::COMMAND_VALIDATED,
-                    values: null,
+                $context->getClient()->send(new CommandResponse(
+                    command: self::COMMAND_VALIDATED,
+                    options: ['id' => $updateId],
+                    payloads: null,
                     failure: null,
-                    updateId: $updateId,
                 ));
             } else {
                 $validator = $updateDispatcher->findValidateUpdateHandler($name);
@@ -72,20 +74,20 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 // Validation will be passed if no validation handler is found
                 $validator === null or $validator($input);
 
-                $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResponse::COMMAND_VALIDATED,
-                    values: null,
+                $context->getClient()->send(new CommandResponse(
+                    command: self::COMMAND_VALIDATED,
+                    options: ['id' => $updateId],
+                    payloads: null,
                     failure: null,
-                    updateId: $updateId,
                 ));
             }
         } catch (\Throwable $e) {
             $context->getClient()->send(
-                new UpdateResponse(
-                    command: UpdateResponse::COMMAND_VALIDATED,
-                    values: null,
+                new CommandResponse(
+                    command: self::COMMAND_VALIDATED,
+                    options: ['id' => $updateId],
+                    payloads: null,
                     failure: $e,
-                    updateId: $updateId,
                 ),
             );
             return;
@@ -96,19 +98,19 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $deferred = new Deferred();
         $deferred->promise()->then(
             static function (mixed $value) use ($updateId, $context): void {
-                $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResponse::COMMAND_COMPLETED,
-                    values: EncodedValues::fromValues([$value]),
+                $context->getClient()->send(new CommandResponse(
+                    command: self::COMMAND_COMPLETED,
+                    options: ['id' => $updateId],
+                    payloads: EncodedValues::fromValues([$value]),
                     failure: null,
-                    updateId: $updateId,
                 ));
             },
             static function (\Throwable $err) use ($updateId, $context): void {
-                $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResponse::COMMAND_COMPLETED,
-                    values: null,
+                $context->getClient()->send(new CommandResponse(
+                    command: self::COMMAND_COMPLETED,
+                    options: ['id' => $updateId],
+                    payloads: null,
                     failure: $err,
-                    updateId: $updateId,
                 ));
             },
         );

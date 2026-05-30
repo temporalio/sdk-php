@@ -27,11 +27,13 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\LinkParser;
 use Temporal\Nexus\NexusOperationContext;
-use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
+use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeNexusOperation extends Route
 {
+    private const COMMAND = 'NexusOperationStarted';
+
     public function __construct(
         private readonly NexusTaskHandler $taskHandler,
         private readonly NexusInvocationRegistry $invocations,
@@ -65,9 +67,14 @@ final class InvokeNexusOperation extends Route
             if ($startResponse->hasSyncSuccess()) {
                 $sync = $startResponse->getSyncSuccess();
                 \assert($sync !== null);
-                $resolver->resolve(new NexusOperationStarted(
-                    async: false,
-                    links: self::linksToWire($sync->getLinks()),
+                $options = ['async' => false];
+                $links = self::linksToWire($sync->getLinks());
+                if ($links !== []) {
+                    $options['links'] = $links;
+                }
+                $resolver->resolve(new CommandResponse(
+                    command: self::COMMAND,
+                    options: $options,
                     payloads: $this->payloadAsValues($sync->getPayload()),
                 ));
                 return;
@@ -76,10 +83,18 @@ final class InvokeNexusOperation extends Route
             if ($startResponse->hasAsyncSuccess()) {
                 $async = $startResponse->getAsyncSuccess();
                 \assert($async !== null);
-                $resolver->resolve(new NexusOperationStarted(
-                    async: true,
-                    token: $async->getOperationToken(),
-                    links: self::linksToWire($async->getLinks()),
+                $options = ['async' => true];
+                $token = $async->getOperationToken();
+                if ($token !== null) {
+                    $options['token'] = $token;
+                }
+                $links = self::linksToWire($async->getLinks());
+                if ($links !== []) {
+                    $options['links'] = $links;
+                }
+                $resolver->resolve(new CommandResponse(
+                    command: self::COMMAND,
+                    options: $options,
                 ));
                 return;
             }

@@ -160,14 +160,6 @@ class WorkflowClient implements WorkflowClientInterface
         return $this->client;
     }
 
-    /**
-     * Read-only accessor for the client-wide options.
-     */
-    public function getClientOptions(): ClientOptions
-    {
-        return $this->clientOptions;
-    }
-
     public function start($workflow, ...$args): WorkflowRunInterface
     {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {

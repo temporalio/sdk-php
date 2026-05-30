@@ -15,8 +15,7 @@ use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
-use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
-use Temporal\Worker\Transport\Command\Client\UpdateResponse;
+use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -75,27 +74,13 @@ class Encoder
 
                 return $msg;
 
-            case $cmd instanceof UpdateResponse:
+            case $cmd instanceof CommandResponse:
                 $msg->setCommand($cmd->getCommand());
                 $msg->setOptions(\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE));
 
                 if ($cmd->getFailure() !== null) {
                     $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
                 }
-
-                if ($cmd->getPayloads() !== null) {
-                    $cmd->getPayloads()->setDataConverter($this->converter);
-                    $msg->setPayloads($cmd->getPayloads()->toPayloads());
-                }
-
-                return $msg;
-
-            case $cmd instanceof NexusOperationStarted:
-                $msg->setCommand($cmd->getCommand());
-                $msg->setOptions(\json_encode(
-                    $cmd->getOptions(),
-                    JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
-                ));
 
                 if ($cmd->getPayloads() !== null) {
                     $cmd->getPayloads()->setDataConverter($this->converter);

@@ -24,7 +24,7 @@ use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
-use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
+use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
@@ -156,8 +156,8 @@ final class IntegrationTestCase extends AbstractUnit
     {
         $reply = $this->invoke('echo', 'hello');
 
-        self::assertFalse($reply->isAsync());
-        self::assertNull($reply->getToken());
+        self::assertFalse($reply->getOptions()['async']);
+        self::assertNull($reply->getOptions()['token'] ?? null);
         self::assertSame('echo:hello', $this->decodePayload($reply));
     }
 
@@ -165,7 +165,7 @@ final class IntegrationTestCase extends AbstractUnit
     {
         foreach (['simple', 'with spaces', 'unicode: привет'] as $input) {
             $reply = $this->invoke('echo', $input);
-            self::assertFalse($reply->isAsync());
+            self::assertFalse($reply->getOptions()['async']);
             self::assertSame("echo:{$input}", $this->decodePayload($reply), "Failed for input: {$input}");
         }
     }
@@ -176,8 +176,8 @@ final class IntegrationTestCase extends AbstractUnit
     {
         $reply = $this->invoke('asyncEcho', 'test');
 
-        self::assertTrue($reply->isAsync());
-        self::assertSame('async-token-test', $reply->getToken());
+        self::assertTrue($reply->getOptions()['async']);
+        self::assertSame('async-token-test', $reply->getOptions()['token'] ?? null);
         self::assertNull($reply->getPayloads(), 'async reply must not carry payloads');
     }
 
@@ -376,9 +376,9 @@ final class IntegrationTestCase extends AbstractUnit
     {
         $reply = $this->invoke('echoWithLinks', 'hi');
 
-        self::assertFalse($reply->isAsync());
+        self::assertFalse($reply->getOptions()['async']);
 
-        $links = $reply->getLinks();
+        $links = $reply->getOptions()['links'] ?? [];
         self::assertCount(2, $links);
         self::assertSame('http://test.local/resource/1', $links[0]['url']);
         self::assertSame('test.Resource', $links[0]['type']);
@@ -389,7 +389,7 @@ final class IntegrationTestCase extends AbstractUnit
     {
         $reply = $this->invoke('echo', 'hello');
 
-        self::assertSame([], $reply->getLinks(), 'links field must be empty when handler adds none');
+        self::assertSame([], $reply->getOptions()['links'] ?? [], 'links field must be empty when handler adds none');
     }
 
     // ── Deadline from Nexus timeout headers ──────────────────────
@@ -519,7 +519,7 @@ final class IntegrationTestCase extends AbstractUnit
 
     // ── Helpers ──────────────────────────────────────────────────
 
-    private function invoke(string $operation, string $input): NexusOperationStarted
+    private function invoke(string $operation, string $input): CommandResponse
     {
         $request = $this->makeInvokeRequest('EchoService', $operation, $input);
         $deferred = new Deferred();
@@ -527,7 +527,7 @@ final class IntegrationTestCase extends AbstractUnit
         return $this->awaitReply($deferred);
     }
 
-    private function decodePayload(NexusOperationStarted $reply): string
+    private function decodePayload(CommandResponse $reply): string
     {
         $payloads = $reply->getPayloads();
         self::assertNotNull($payloads, 'sync reply must carry a payload');
@@ -562,7 +562,7 @@ final class IntegrationTestCase extends AbstractUnit
         );
     }
 
-    private function awaitReply(Deferred $deferred): NexusOperationStarted
+    private function awaitReply(Deferred $deferred): CommandResponse
     {
         $result = null;
         $error = null;
@@ -580,7 +580,7 @@ final class IntegrationTestCase extends AbstractUnit
             throw $error;
         }
 
-        self::assertInstanceOf(NexusOperationStarted::class, $result);
+        self::assertInstanceOf(CommandResponse::class, $result);
         return $result;
     }
 

@@ -85,7 +85,7 @@ final class Server implements ServerInterface
     }
 
     /**
-     * Routes that need a typed reply command (e.g. {@see \Temporal\Worker\Transport\Command\Client\NexusOperationStarted})
+     * Routes that need a typed reply command (e.g. {@see \Temporal\Worker\Transport\Command\Client\CommandResponse})
      * resolve directly with a {@see ResponseInterface} instance and it is
      * pushed verbatim. Anything else is wrapped as a {@see SuccessClientResponse}.
      *
