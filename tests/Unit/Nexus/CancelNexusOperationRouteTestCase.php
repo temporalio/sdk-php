@@ -10,6 +10,8 @@ use Spiral\Attributes\AttributeReader;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Nexus\Attribute\AsyncOperation;
@@ -64,14 +66,14 @@ final class CancelNexusOperationRouteTestCase extends AbstractUnit
 
     public function testRouteName(): void
     {
-        $route = new CancelNexusOperation($this->buildHandler());
+        $route = new CancelNexusOperation($this->buildHandler(), $this->buildMarshaller());
 
         self::assertSame('CancelNexusOperation', $route->getName());
     }
 
     public function testForwardsOptionHeadersToHandlerContext(): void
     {
-        $route = new CancelNexusOperation($this->buildHandler());
+        $route = new CancelNexusOperation($this->buildHandler(), $this->buildMarshaller());
         $request = $this->makeRequest([
             'service' => 'RouteHeaderService',
             'operation' => 'op',
@@ -93,7 +95,7 @@ final class CancelNexusOperationRouteTestCase extends AbstractUnit
 
     public function testMissingHeadersResolvesWithEmptyContextHeaders(): void
     {
-        $route = new CancelNexusOperation($this->buildHandler());
+        $route = new CancelNexusOperation($this->buildHandler(), $this->buildMarshaller());
         $request = $this->makeRequest([
             'service' => 'RouteHeaderService',
             'operation' => 'op',
@@ -115,6 +117,11 @@ final class CancelNexusOperationRouteTestCase extends AbstractUnit
         $collection->add($prototype, false);
 
         return new NexusTaskHandler($collection, DataConverter::createDefault());
+    }
+
+    private function buildMarshaller(): Marshaller
+    {
+        return new Marshaller(new AttributeMapperFactory(new AttributeReader()));
     }
 
     /**

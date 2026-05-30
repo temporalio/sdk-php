@@ -7,7 +7,6 @@ namespace Temporal\Tests\Unit\Nexus;
 use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Internal\Nexus\NexusContext;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -44,7 +43,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
         Nexus::setCurrentContext(new NexusContext(
             current: new OperationContext(service: 'svc', operation: 'op'),
             operation: $ctx,
-            environment: new NexusEnvironment('ns', 'tq', $client),
+            workflowClient: $client,
         ));
 
         self::assertSame($ctx, Nexus::getOperationContext());

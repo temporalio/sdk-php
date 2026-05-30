@@ -28,6 +28,7 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
+use Temporal\Nexus\NexusOperationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -74,9 +75,19 @@ class TestGreetingServiceImpl implements TestGreetingService
     /** @var array<string, string> Headers seen by the most recent cancel dispatch. */
     public static array $capturedCancelHeaders = [];
 
+    /** @var string|null Namespace seen by the most recent start dispatch. */
+    public static ?string $capturedStartNamespace = null;
+
+    /** @var string|null Task queue seen by the most recent start dispatch. */
+    public static ?string $capturedStartTaskQueue = null;
+
     public function sayHello(string $name): string
     {
         self::$capturedStartHeaders = Nexus::getCurrentOperationContext()->headers;
+        if (Nexus::getCurrentContext()->operation !== null) {
+            self::$capturedStartNamespace = Nexus::getOperationContext()->namespace;
+            self::$capturedStartTaskQueue = Nexus::getOperationContext()->taskQueue;
+        }
         return "Hello, {$name}!";
     }
 
@@ -293,6 +304,48 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertSame('trace-2', TestGreetingServiceImpl::$capturedStartHeaders['x-nexus-trace-id'] ?? null);
     }
 
+    public function testStartOperationUsesWireNamespace(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
+
+        $operationContext = new NexusOperationContext();
+        $operationContext->namespace = 'wire-ns';
+        $operationContext->taskQueue = 'wire-tq';
+        $this->handler->handleStartOperation($request, null, $operationContext);
+
+        self::assertSame('wire-ns', TestGreetingServiceImpl::$capturedStartNamespace);
+    }
+
+    public function testStartOperationHasNoNamespaceWhenWireAbsent(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
+
+        $this->handler->handleStartOperation($request, null, new NexusOperationContext());
+
+        self::assertNull(TestGreetingServiceImpl::$capturedStartNamespace);
+    }
+
+    public function testStartOperationUsesWireTaskQueue(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
+
+        $operationContext = new NexusOperationContext();
+        $operationContext->namespace = 'wire-ns';
+        $operationContext->taskQueue = 'wire-tq';
+        $this->handler->handleStartOperation($request, null, $operationContext);
+
+        self::assertSame('wire-tq', TestGreetingServiceImpl::$capturedStartTaskQueue);
+    }
+
+    public function testStartOperationHasNoTaskQueueWhenWireAbsent(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
+
+        $this->handler->handleStartOperation($request, null, new NexusOperationContext());
+
+        self::assertNull(TestGreetingServiceImpl::$capturedStartTaskQueue);
+    }
+
     public function testHandlerErrorContainsErrorType(): void
     {
         $request = $this->buildStartRequest('NonExistentService', 'op', 'input');
@@ -439,6 +492,8 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
         TestGreetingServiceImpl::$capturedStartHeaders = [];
         TestGreetingServiceImpl::$capturedCancelHeaders = [];
+        TestGreetingServiceImpl::$capturedStartNamespace = null;
+        TestGreetingServiceImpl::$capturedStartTaskQueue = null;
 
         $this->handler = new NexusTaskHandler(
             self::buildRepository(new TestGreetingServiceImpl()),

@@ -11,14 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit;
 
-use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\NexusOperationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(NexusOperationContext::class)]
-#[UsesClass(InvalidArgumentException::class)]
 final class NexusOperationContextTest extends TestCase
 {
     public function testConstructStoresFields(): void
@@ -29,20 +26,12 @@ final class NexusOperationContextTest extends TestCase
         self::assertSame('tq', $ctx->taskQueue);
     }
 
-    public function testRejectsEmptyNamespace(): void
+    public function testDefaultsAreEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('namespace must not be empty');
+        $ctx = new NexusOperationContext();
 
-        new NexusOperationContext('', 'tq');
-    }
-
-    public function testRejectsEmptyTaskQueue(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('taskQueue must not be empty');
-
-        new NexusOperationContext('ns', '');
+        self::assertSame('', $ctx->namespace);
+        self::assertSame('', $ctx->taskQueue);
     }
 
     public function testDoesNotExposeWorkflowClient(): void

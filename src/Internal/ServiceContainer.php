@@ -13,6 +13,7 @@ namespace Temporal\Internal;
 
 use Psr\Log\LoggerInterface;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
@@ -23,7 +24,6 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -63,7 +63,7 @@ final class ServiceContainer
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
         public readonly LoggerInterface $logger,
-        public readonly ?NexusEnvironment $nexusEnvironment = null,
+        public readonly ?WorkflowClientInterface $workflowClient = null,
     ) {
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -73,7 +73,7 @@ final class ServiceContainer
             $this->nexusServices,
             $this->dataConverter,
             interceptorProvider: $this->interceptorProvider,
-            environment: $nexusEnvironment,
+            workflowClient: $workflowClient,
         );
         $this->running = new ProcessCollection();
         $this->workflowsReader = new WorkflowReader($this->reader);
@@ -86,7 +86,7 @@ final class ServiceContainer
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
         LoggerInterface $logger,
-        ?NexusEnvironment $nexusEnvironment = null,
+        ?WorkflowClientInterface $workflowClient = null,
     ): self {
         return new self(
             $worker,
@@ -99,7 +99,7 @@ final class ServiceContainer
             $exceptionInterceptor,
             $interceptorProvider,
             $logger,
-            $nexusEnvironment,
+            $workflowClient,
         );
     }
 }

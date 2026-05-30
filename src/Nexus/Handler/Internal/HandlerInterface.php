@@ -11,14 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler\Internal;
 
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\NexusOperationContext;
 
 /**
  * @internal
@@ -37,7 +38,8 @@ interface HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         ValuesInterface $input,
-        ?NexusEnvironment $environment = null,
+        ?WorkflowClientInterface $workflowClient = null,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
     ): OperationStartResult;
 
     /**
@@ -55,6 +57,7 @@ interface HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
-        ?NexusEnvironment $environment = null,
+        ?WorkflowClientInterface $workflowClient = null,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
     ): void;
 }

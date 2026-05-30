@@ -37,7 +37,6 @@ use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\ArrayRepository;
@@ -193,15 +192,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
-        /** @psalm-suppress ArgumentTypeCoercion */
-        $nexusEnvironment = $this->workflowClient !== null
-            ? new NexusEnvironment(
-                $this->workflowClient->getClientOptions()->namespace,
-                $taskQueue,
-                $this->workflowClient,
-            )
-            : null;
-
         $worker = new Worker(
             $taskQueue,
             $options,
@@ -214,7 +204,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                     $options->enableLoggingInReplay,
                     $taskQueue,
                 ),
-                $nexusEnvironment,
+                $this->workflowClient,
             ),
             $this->rpc,
         );

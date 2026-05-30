@@ -22,6 +22,7 @@ use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Header as NexusHeader;
 use Temporal\Nexus\LinkParser;
+use Temporal\Nexus\NexusOperationContext;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
@@ -30,6 +31,7 @@ use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -57,7 +59,7 @@ final class NexusTaskHandler
         private readonly DataConverterInterface $dataConverter,
         private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
-        private readonly ?NexusEnvironment $environment = null,
+        private readonly ?WorkflowClientInterface $workflowClient = null,
     ) {}
 
     /**
@@ -85,8 +87,11 @@ final class NexusTaskHandler
         }
     }
 
-    public function handleStartOperation(Request $request, ?MethodCanceller $methodCanceller = null): Response
-    {
+    public function handleStartOperation(
+        Request $request,
+        ?MethodCanceller $methodCanceller = null,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
+    ): Response {
         $startRequest = $request->getStartOperation();
         \assert($startRequest instanceof StartOperationRequest);
 
@@ -125,7 +130,8 @@ final class NexusTaskHandler
                 $context,
                 $details,
                 $input,
-                $this->environment,
+                $this->workflowClient,
+                $operationContext,
             );
 
             $startResponse = new StartOperationResponse();
@@ -174,8 +180,10 @@ final class NexusTaskHandler
         }
     }
 
-    public function handleCancelOperation(Request $request): Response
-    {
+    public function handleCancelOperation(
+        Request $request,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
+    ): Response {
         $cancelRequest = $request->getCancelOperation();
         \assert($cancelRequest instanceof CancelOperationRequest);
 
@@ -202,7 +210,8 @@ final class NexusTaskHandler
             $this->getServiceHandler()->cancelOperation(
                 $context,
                 $details,
-                $this->environment,
+                $this->workflowClient,
+                $operationContext,
             );
 
             $response = new Response();

@@ -11,39 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
-use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 
-/**
- * Temporal-side context exposed to a Nexus operation handler.
- * Set by NexusTaskHandler around each dispatch, read via {@see Nexus::getOperationContext()}.
- *
- * Carries only what user code may legitimately observe (namespace, taskQueue);
- * the WorkflowClient that backs async operations stays on the internal channel
- * and is consumed by {@see WorkflowRunOperation} helpers — never directly by
- * user code.
- */
 final class NexusOperationContext
 {
-    /**
-     * @param non-empty-string $namespace
-     * @param non-empty-string $taskQueue
-     * @throws InvalidArgumentException when namespace or taskQueue is empty.
-     */
     public function __construct(
-        public readonly string $namespace,
-        public readonly string $taskQueue,
-    ) {
-        /** @psalm-suppress TypeDoesNotContainType — defensive runtime check */
-        if ($namespace === '') {
-            throw new InvalidArgumentException(
-                'NexusOperationContext: namespace must not be empty',
-            );
-        }
-        /** @psalm-suppress TypeDoesNotContainType — defensive runtime check */
-        if ($taskQueue === '') {
-            throw new InvalidArgumentException(
-                'NexusOperationContext: taskQueue must not be empty',
-            );
-        }
-    }
+        #[Marshal(name: 'namespace')]
+        public string $namespace = '',
+        #[Marshal(name: 'taskQueue')]
+        public string $taskQueue = '',
+    ) {}
 }

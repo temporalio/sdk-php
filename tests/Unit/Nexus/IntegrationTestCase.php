@@ -510,8 +510,11 @@ final class IntegrationTestCase extends AbstractUnit
 
         $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
 
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter);
-        $this->cancelRoute = new CancelNexusOperation($taskHandler);
+        $marshaller = new \Temporal\Internal\Marshaller\Marshaller(
+            new \Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory(new \Spiral\Attributes\AttributeReader()),
+        );
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter, $marshaller);
+        $this->cancelRoute = new CancelNexusOperation($taskHandler, $marshaller);
     }
 
     // ── Helpers ──────────────────────────────────────────────────

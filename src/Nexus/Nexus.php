@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\Interceptor\NexusOperationOutbound\GetInfoInput;
 use Temporal\Internal\Nexus\NexusContext;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Support\Facade;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
@@ -106,19 +106,14 @@ final class Nexus extends Facade
     }
 
     /**
-     * Worker-bound execution environment backing Nexus async helpers
-     * (carries the WorkflowClient, namespace, taskQueue).
-     *
-     * @internal Plumbing for {@see \Temporal\Nexus\WorkflowRunOperation}; user code
-     *           should drive backing workflows through the helper API rather than
-     *           reaching for the client directly.
-     *
-     * @throws \LogicException when called outside a Nexus operation dispatch.
+     * @internal Plumbing for {@see \Temporal\Nexus\WorkflowRunOperation}; user code should drive
+     *           backing workflows through the helper API rather than reaching for the client.
+     * @throws \LogicException when no WorkflowClient is available (async Nexus needs cluster access).
      */
-    public static function getEnvironment(): NexusEnvironment
+    public static function getWorkflowClient(): WorkflowClientInterface
     {
-        return self::getCurrentContext()->environment ?? throw new \LogicException(
-            'Nexus::getEnvironment() called outside a Nexus handler dispatch.',
+        return self::getCurrentContext()->workflowClient ?? throw new \LogicException(
+            'Nexus::getWorkflowClient() requires a WorkflowClient. Async Nexus operations (WorkflowRunOperation) need cluster access; provide a WorkflowClient to the WorkerFactory.',
         );
     }
 }

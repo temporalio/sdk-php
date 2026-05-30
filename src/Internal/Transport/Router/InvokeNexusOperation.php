@@ -19,12 +19,14 @@ use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\LinkParser;
+use Temporal\Nexus\NexusOperationContext;
 use Temporal\Worker\Transport\Command\Client\NexusOperationStarted;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -34,12 +36,14 @@ final class InvokeNexusOperation extends Route
         private readonly NexusTaskHandler $taskHandler,
         private readonly NexusInvocationRegistry $invocations,
         private readonly DataConverterInterface $dataConverter,
+        private readonly MarshallerInterface $marshaller,
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
         $invocationId = (int) ($options['invocationId'] ?? 0);
+        $operationContext = $this->marshaller->unmarshal($options, new NexusOperationContext());
 
         $canceller = null;
         if ($invocationId !== 0) {
@@ -49,7 +53,11 @@ final class InvokeNexusOperation extends Route
 
         try {
             $protoRequest = self::buildProtoRequest($options, $request->getPayloads());
-            $response = $this->taskHandler->handleStartOperation($protoRequest, $canceller);
+            $response = $this->taskHandler->handleStartOperation(
+                $protoRequest,
+                $canceller,
+                $operationContext,
+            );
 
             $startResponse = $response->getStartOperation();
             \assert($startResponse !== null);

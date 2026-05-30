@@ -42,8 +42,8 @@ final class WorkflowRunOperation
      */
     public static function start(WorkflowHandle $handle, OperationStartDetails $details): OperationInfo
     {
-        $environment = Nexus::getEnvironment();
-        $client = $environment->workflowClient;
+        $client = Nexus::getWorkflowClient();
+        $info = Nexus::getOperationContext();
 
         $options = $handle->options;
         if ($options->workflowId === '') {
@@ -56,12 +56,12 @@ final class WorkflowRunOperation
 
         // Default task queue to the handler's queue; avoids silent hang on `default`.
         if ($options->taskQueue === \Temporal\Worker\WorkerFactoryInterface::DEFAULT_TASK_QUEUE) {
-            $options = $options->withTaskQueue($environment->taskQueue);
+            $options = $options->withTaskQueue($info->taskQueue);
         }
 
         // Token = ns+workflowId (stable across retries).
         $token = WorkflowRunOperationToken::generate(
-            $environment->namespace,
+            $info->namespace,
             $options->workflowId,
         );
 
@@ -94,7 +94,7 @@ final class WorkflowRunOperation
         // Caller server attaches it to NEXUS_OPERATION_STARTED so UI shows the
         // caller↔handler chain. Mirror of Java/TS/Python/Go SDK behaviour.
         Nexus::getCurrentOperationContext()->links->add(
-            self::buildStartedEventSelfLink($environment->namespace, $run->getExecution()),
+            self::buildStartedEventSelfLink($info->namespace, $run->getExecution()),
         );
 
         return new OperationInfo($token, OperationState::Running);
@@ -107,18 +107,19 @@ final class WorkflowRunOperation
      */
     public static function cancel(string $operationToken): void
     {
-        $environment = Nexus::getEnvironment();
+        $client = Nexus::getWorkflowClient();
+        $info = Nexus::getOperationContext();
         $decoded = WorkflowRunOperationToken::load($operationToken);
 
-        if ($decoded->namespace !== '' && $decoded->namespace !== $environment->namespace) {
+        if ($decoded->namespace !== '' && $decoded->namespace !== $info->namespace) {
             throw new InvalidArgumentException(\sprintf(
                 'workflow run token namespace "%s" does not match handler namespace "%s"',
                 $decoded->namespace,
-                $environment->namespace,
+                $info->namespace,
             ));
         }
 
-        $stub = $environment->workflowClient->newUntypedRunningWorkflowStub($decoded->workflowId);
+        $stub = $client->newUntypedRunningWorkflowStub($decoded->workflowId);
         $stub->cancel();
     }
 

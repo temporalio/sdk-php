@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Api\Common\V1\Payloads;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -23,7 +24,6 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\NexusServiceInstance;
 use Temporal\Internal\Nexus\NexusContext;
-use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
@@ -92,7 +92,8 @@ final class ServiceHandler implements HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         ValuesInterface $input,
-        ?NexusEnvironment $environment = null,
+        ?WorkflowClientInterface $workflowClient = null,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
     ): OperationStartResult {
         [$instance, $handler] = $this->resolveHandler($context);
 
@@ -119,8 +120,8 @@ final class ServiceHandler implements HandlerInterface
         }
 
         Nexus::setCurrentContext(new NexusContext(
-            operation: self::buildPublicOperationContext($environment),
-            environment: $environment,
+            operation: self::publicOperationContext($operationContext),
+            workflowClient: $workflowClient,
             current: $contextWithServiceDefinition,
             startDetails: $details,
             outboundPipeline: $this->interceptorProvider
@@ -160,7 +161,8 @@ final class ServiceHandler implements HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
-        ?NexusEnvironment $environment = null,
+        ?WorkflowClientInterface $workflowClient = null,
+        NexusOperationContext $operationContext = new NexusOperationContext(),
     ): void {
         [$instance, $handler] = $this->resolveHandler($context);
 
@@ -179,8 +181,8 @@ final class ServiceHandler implements HandlerInterface
         $contextWithServiceDefinition = $context->withServiceDefinition($instance->prototype);
 
         Nexus::setCurrentContext(new NexusContext(
-            operation: self::buildPublicOperationContext($environment),
-            environment: $environment,
+            operation: self::publicOperationContext($operationContext),
+            workflowClient: $workflowClient,
             current: $contextWithServiceDefinition,
             cancelDetails: $details,
             outboundPipeline: $this->interceptorProvider
@@ -201,12 +203,12 @@ final class ServiceHandler implements HandlerInterface
         }
     }
 
-    private static function buildPublicOperationContext(?NexusEnvironment $environment): ?NexusOperationContext
+    private static function publicOperationContext(NexusOperationContext $operationContext): ?NexusOperationContext
     {
-        if ($environment === null) {
+        if ($operationContext->namespace === '' || $operationContext->taskQueue === '') {
             return null;
         }
-        return new NexusOperationContext($environment->namespace, $environment->taskQueue);
+        return $operationContext;
     }
 
     /**
