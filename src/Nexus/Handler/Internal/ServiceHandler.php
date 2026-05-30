@@ -119,29 +119,23 @@ final class ServiceHandler implements HandlerInterface
             );
         }
 
-        Nexus::setCurrentContext(new NexusContext(
-            operation: self::publicOperationContext($operationContext),
-            workflowClient: $workflowClient,
-            current: $contextWithServiceDefinition,
-            startDetails: $details,
-            outboundPipeline: $this->interceptorProvider
-                ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
-        ));
-        try {
-            $result = $this->interceptorProvider
-                ->getPipeline(NexusOperationInboundCallsInterceptor::class)
-                ->with(
-                    static fn(StartOperationInput $input): OperationStartResult => $handler->start(
-                        $input->operationContext,
-                        $input->startDetails,
-                        $input->input,
-                    ),
-                    /** @see NexusOperationInboundCallsInterceptor::startOperation() */
-                    'startOperation',
-                )(new StartOperationInput($contextWithServiceDefinition, $details, $inputObject));
-        } finally {
-            Nexus::setCurrentContext(null);
-        }
+        $result = $this->dispatch(
+            new NexusContext(
+                operation: self::publicOperationContext($operationContext),
+                workflowClient: $workflowClient,
+                current: $contextWithServiceDefinition,
+                startDetails: $details,
+                outboundPipeline: $this->interceptorProvider
+                    ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
+            ),
+            static fn(StartOperationInput $input): OperationStartResult => $handler->start(
+                $input->operationContext,
+                $input->startDetails,
+                $input->input,
+            ),
+            'startOperation',
+            new StartOperationInput($contextWithServiceDefinition, $details, $inputObject),
+        );
 
         \assert($result instanceof OperationStartResult);
 
@@ -180,27 +174,21 @@ final class ServiceHandler implements HandlerInterface
 
         $contextWithServiceDefinition = $context->withServiceDefinition($instance->prototype);
 
-        Nexus::setCurrentContext(new NexusContext(
-            operation: self::publicOperationContext($operationContext),
-            workflowClient: $workflowClient,
-            current: $contextWithServiceDefinition,
-            cancelDetails: $details,
-            outboundPipeline: $this->interceptorProvider
-                ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
-        ));
-        try {
-            $this->interceptorProvider
-                ->getPipeline(NexusOperationInboundCallsInterceptor::class)
-                ->with(
-                    static function (CancelOperationInput $input) use ($handler): void {
-                        $handler->cancel($input->operationContext, $input->cancelDetails);
-                    },
-                    /** @see NexusOperationInboundCallsInterceptor::cancelOperation() */
-                    'cancelOperation',
-                )(new CancelOperationInput($contextWithServiceDefinition, $details));
-        } finally {
-            Nexus::setCurrentContext(null);
-        }
+        $this->dispatch(
+            new NexusContext(
+                operation: self::publicOperationContext($operationContext),
+                workflowClient: $workflowClient,
+                current: $contextWithServiceDefinition,
+                cancelDetails: $details,
+                outboundPipeline: $this->interceptorProvider
+                    ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
+            ),
+            static function (CancelOperationInput $input) use ($handler): void {
+                $handler->cancel($input->operationContext, $input->cancelDetails);
+            },
+            'cancelOperation',
+            new CancelOperationInput($contextWithServiceDefinition, $details),
+        );
     }
 
     private static function publicOperationContext(NexusOperationContext $operationContext): ?NexusOperationContext
@@ -209,6 +197,21 @@ final class ServiceHandler implements HandlerInterface
             return null;
         }
         return $operationContext;
+    }
+
+    /**
+     * @param non-empty-string $method
+     */
+    private function dispatch(NexusContext $dispatchContext, \Closure $terminal, string $method, object $input): mixed
+    {
+        Nexus::setCurrentContext($dispatchContext);
+        try {
+            return $this->interceptorProvider
+                ->getPipeline(NexusOperationInboundCallsInterceptor::class)
+                ->with($terminal, $method)($input);
+        } finally {
+            Nexus::setCurrentContext(null);
+        }
     }
 
     /**

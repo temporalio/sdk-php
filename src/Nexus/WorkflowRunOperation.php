@@ -59,7 +59,6 @@ final class WorkflowRunOperation
             $options = $options->withTaskQueue($info->taskQueue);
         }
 
-        // Token = ns+workflowId (stable across retries).
         $token = WorkflowRunOperationToken::generate(
             $info->namespace,
             $options->workflowId,
@@ -90,9 +89,6 @@ final class WorkflowRunOperation
         $stub = $client->newWorkflowStub($handle->workflowClass, $options);
         $run = $client->start($stub, ...$handle->args);
 
-        // Self-link to WORKFLOW_EXECUTION_STARTED event of the run we just started.
-        // Caller server attaches it to NEXUS_OPERATION_STARTED so UI shows the
-        // caller↔handler chain. Mirror of Java/TS/Python/Go SDK behaviour.
         Nexus::getCurrentOperationContext()->links->add(
             self::buildStartedEventSelfLink($info->namespace, $run->getExecution()),
         );
