@@ -521,6 +521,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             'executeNexusOperation',
         )(new ExecuteNexusOperationInput(
+            $options->endpoint,
             $options->service,
             $operation,
             $args,

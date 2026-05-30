@@ -188,7 +188,7 @@ class LinkService
     #[Operation]
     public function attachAndReportSingle(string $suffix): string
     {
-        $context = Nexus::getCurrentContext();
+        $context = Nexus::getCurrentOperationContext();
         $context->links->add(new Link(
             "https://example.test/session/{$suffix}",
             'example.session',
@@ -199,7 +199,7 @@ class LinkService
     #[Operation]
     public function attachAndReportMany(string $suffix): string
     {
-        $context = Nexus::getCurrentContext();
+        $context = Nexus::getCurrentOperationContext();
         $context->links->add(
             new Link("https://example.test/primary/primary-{$suffix}", 'example.primary'),
             new Link("https://example.test/audit/audit-{$suffix}", 'example.audit'),
@@ -210,7 +210,7 @@ class LinkService
     #[Operation]
     public function reportNoLinks(string $_ignored): string
     {
-        return self::reportLinks(Nexus::getCurrentContext());
+        return self::reportLinks(Nexus::getCurrentOperationContext());
     }
 
     /**

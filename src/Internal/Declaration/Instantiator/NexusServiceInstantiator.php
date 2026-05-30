@@ -44,9 +44,6 @@ final class NexusServiceInstantiator
         return new NexusServiceInstance($prototype, $instance, $handlers);
     }
 
-    /**
-     * @throws \ReflectionException
-     */
     private function resolveInstance(NexusServicePrototype $prototype): object
     {
         $factory = $prototype->getFactory();
@@ -69,7 +66,14 @@ final class NexusServiceInstantiator
                 $prototype->getID(),
             ));
         }
-        return $reflection->newInstance();
+        try {
+            return $reflection->newInstance();
+        } catch (\ReflectionException $e) {
+            throw new NexusException(\sprintf(
+                'Service implementation for "%s" cannot be instantiated without arguments — bind via withInstance() or withFactory()',
+                $prototype->getID(),
+            ), 0, $e);
+        }
     }
 
     /**

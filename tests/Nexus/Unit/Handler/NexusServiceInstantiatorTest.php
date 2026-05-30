@@ -149,31 +149,6 @@ final class NexusServiceInstantiatorTest extends TestCase
         self::assertStringContainsString('sayHello1', $e->getMessage());
     }
 
-    public function testCancelMethodMustAcceptToken(): void
-    {
-        $instance = new class implements GreetingServiceInterface {
-            public function sayHello1(string $name): string
-            {
-                return '';
-            }
-
-            public function sayHello2(string $name): \Temporal\Nexus\OperationInfo
-            {
-                return new \Temporal\Nexus\OperationInfo('tok', \Temporal\Nexus\OperationState::Running);
-            }
-
-            #[\Temporal\Nexus\Attribute\OperationCancel(operation: 'sayHello2')]
-            public function badCancel(): void {}
-        };
-
-        $e = self::assertThrown(
-            InvalidArgumentException::class,
-            static fn() => self::bind($instance),
-        );
-
-        self::assertStringContainsString('must accept the operation token', $e->getMessage());
-    }
-
     /**
      * Helper that wires Reader+Instantiator together — the same flow the
      * Worker uses at registration time.

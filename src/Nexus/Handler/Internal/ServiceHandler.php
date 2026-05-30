@@ -15,9 +15,10 @@ use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
+use Temporal\Interceptor\NexusOperationOutboundCallsInterceptor;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\NexusServiceInstance;
@@ -122,19 +123,21 @@ final class ServiceHandler implements HandlerInterface
             environment: $environment,
             current: $contextWithServiceDefinition,
             startDetails: $details,
+            outboundPipeline: $this->interceptorProvider
+                ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
         ));
         try {
             $result = $this->interceptorProvider
                 ->getPipeline(NexusOperationInboundCallsInterceptor::class)
                 ->with(
-                    static fn(NexusOperationStartInput $input): OperationStartResult => $handler->start(
-                        $input->context,
-                        $input->details,
+                    static fn(StartOperationInput $input): OperationStartResult => $handler->start(
+                        $input->operationContext,
+                        $input->startDetails,
                         $input->input,
                     ),
-                    /** @see NexusOperationInboundCallsInterceptor::startNexusOperation() */
-                    'startNexusOperation',
-                )(new NexusOperationStartInput($contextWithServiceDefinition, $details, $inputObject));
+                    /** @see NexusOperationInboundCallsInterceptor::startOperation() */
+                    'startOperation',
+                )(new StartOperationInput($contextWithServiceDefinition, $details, $inputObject));
         } finally {
             Nexus::setCurrentContext(null);
         }
@@ -180,17 +183,19 @@ final class ServiceHandler implements HandlerInterface
             environment: $environment,
             current: $contextWithServiceDefinition,
             cancelDetails: $details,
+            outboundPipeline: $this->interceptorProvider
+                ->getPipeline(NexusOperationOutboundCallsInterceptor::class),
         ));
         try {
             $this->interceptorProvider
                 ->getPipeline(NexusOperationInboundCallsInterceptor::class)
                 ->with(
-                    static function (NexusOperationCancelInput $input) use ($handler): void {
-                        $handler->cancel($input->context, $input->details);
+                    static function (CancelOperationInput $input) use ($handler): void {
+                        $handler->cancel($input->operationContext, $input->cancelDetails);
                     },
-                    /** @see NexusOperationInboundCallsInterceptor::cancelNexusOperation() */
-                    'cancelNexusOperation',
-                )(new NexusOperationCancelInput($contextWithServiceDefinition, $details));
+                    /** @see NexusOperationInboundCallsInterceptor::cancelOperation() */
+                    'cancelOperation',
+                )(new CancelOperationInput($contextWithServiceDefinition, $details));
         } finally {
             Nexus::setCurrentContext(null);
         }

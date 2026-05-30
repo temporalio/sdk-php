@@ -11,30 +11,33 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\NexusOperationInbound;
 
-use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationStartDetails;
 
 /**
  * @psalm-immutable
  */
-final class NexusOperationCancelInput
+final class StartOperationInput
 {
     /**
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        public readonly OperationContext $context,
-        public readonly OperationCancelDetails $details,
+        public readonly OperationContext $operationContext,
+        public readonly OperationStartDetails $startDetails,
+        public readonly mixed $input,
     ) {}
 
     public function with(
-        ?OperationContext $context = null,
-        ?OperationCancelDetails $details = null,
+        ?OperationContext $operationContext = null,
+        ?OperationStartDetails $startDetails = null,
+        mixed $input = null,
     ): self {
         return new self(
-            $context ?? $this->context,
-            $details ?? $this->details,
+            $operationContext ?? $this->operationContext,
+            $startDetails ?? $this->startDetails,
+            $input ?? $this->input,
         );
     }
 }

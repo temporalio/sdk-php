@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\Trait\NexusOperationInboundCallsInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Nexus\Handler\OperationStartResult;
@@ -26,9 +26,9 @@ use Temporal\Nexus\Handler\OperationStartResult;
  * {
  *     use NexusOperationInboundCallsInterceptorTrait;
  *
- *     public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+ *     public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
  *     {
- *         if (($input->context->headers['authorization'] ?? null) !== 'expected-token') {
+ *         if (($input->operationContext->headers['authorization'] ?? null) !== 'expected-token') {
  *             throw HandlerException::create(ErrorType::Unauthorized, 'Unauthorized');
  *         }
  *
@@ -42,12 +42,12 @@ use Temporal\Nexus\Handler\OperationStartResult;
 interface NexusOperationInboundCallsInterceptor extends Interceptor
 {
     /**
-     * @param callable(NexusOperationStartInput): OperationStartResult $next
+     * @param callable(StartOperationInput): OperationStartResult $next
      */
-    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult;
+    public function startOperation(StartOperationInput $input, callable $next): OperationStartResult;
 
     /**
-     * @param callable(NexusOperationCancelInput): void $next
+     * @param callable(CancelOperationInput): void $next
      */
-    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void;
+    public function cancelOperation(CancelOperationInput $input, callable $next): void;
 }

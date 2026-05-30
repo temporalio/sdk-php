@@ -14,8 +14,8 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\Trait\NexusOperationInboundCallsInterceptorTrait;
@@ -42,14 +42,16 @@ final class ServiceHandlerInterceptorTest extends TestCase
             return new class($name, $log) implements NexusOperationInboundCallsInterceptor {
                 use NexusOperationInboundCallsInterceptorTrait;
 
-                /** @param list<string> $log */
+                /**
+                 * @param list<string> $log
+                 */
                 public function __construct(
                     private readonly string $name,
                     private array &$log,
                 ) {}
 
-                public function startNexusOperation(
-                    NexusOperationStartInput $input,
+                public function startOperation(
+                    StartOperationInput $input,
                     callable $next,
                 ): OperationStartResult {
                     $this->log[] = "enter:{$this->name}";
@@ -62,7 +64,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [self::bindNexusService(new GreetingService(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingService(static fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$record('A'), $record('B'), $record('C')]),
         );
 
@@ -84,8 +86,8 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $overriding = new class implements NexusOperationInboundCallsInterceptor {
             use NexusOperationInboundCallsInterceptorTrait;
 
-            public function startNexusOperation(
-                NexusOperationStartInput $input,
+            public function startOperation(
+                StartOperationInput $input,
                 callable $next,
             ): OperationStartResult {
                 return OperationStartResult::sync("rewritten-{$input->input}");
@@ -94,7 +96,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [self::bindNexusService(new GreetingService(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingService(static fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$overriding]),
         );
 
@@ -112,8 +114,8 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $exploding = new class implements NexusOperationInboundCallsInterceptor {
             use NexusOperationInboundCallsInterceptorTrait;
 
-            public function startNexusOperation(
-                NexusOperationStartInput $input,
+            public function startOperation(
+                StartOperationInput $input,
                 callable $next,
             ): OperationStartResult {
                 throw HandlerException::create(ErrorType::Unauthorized, 'blocked');
@@ -122,7 +124,7 @@ final class ServiceHandlerInterceptorTest extends TestCase
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [self::bindNexusService(new GreetingService(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingService(static fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$exploding]),
         );
 
@@ -140,8 +142,8 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $swallowing = new class implements NexusOperationInboundCallsInterceptor {
             use NexusOperationInboundCallsInterceptorTrait;
 
-            public function startNexusOperation(
-                NexusOperationStartInput $input,
+            public function startOperation(
+                StartOperationInput $input,
                 callable $next,
             ): OperationStartResult {
                 try {
@@ -176,19 +178,21 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $observer = new class($seen) implements NexusOperationInboundCallsInterceptor {
             use NexusOperationInboundCallsInterceptorTrait;
 
-            /** @param list<string> $seen */
+            /**
+             * @param list<string> $seen
+             */
             public function __construct(private array &$seen) {}
 
-            public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+            public function cancelOperation(CancelOperationInput $input, callable $next): void
             {
-                $this->seen[] = "{$input->context->operation}:{$input->details->operationToken}";
+                $this->seen[] = "{$input->operationContext->operation}:{$input->cancelDetails->operationToken}";
                 $next($input);
             }
         };
 
         $handler = ServiceHandler::create(
             dataConverter: self::dataConverter(),
-            instances: [self::bindNexusService(new GreetingService(fn($n) => "g-{$n}"))],
+            instances: [self::bindNexusService(new GreetingService(static fn($n) => "g-{$n}"))],
             interceptorProvider: new SimplePipelineProvider([$observer]),
         );
 

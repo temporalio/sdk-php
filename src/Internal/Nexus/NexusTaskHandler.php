@@ -62,7 +62,8 @@ final class NexusTaskHandler
 
     /**
      * Resolve absolute deadline from Operation-Timeout (preferred) or Request-Timeout.
-     * Case-insensitive; malformed values yield null.
+     * Case-insensitive; an absent or unparseable header yields null (the real
+     * deadline is enforced by RoadRunner/server).
      *
      * @param array<string, string> $headers
      */
@@ -155,6 +156,8 @@ final class NexusTaskHandler
             } else {
                 \assert($result instanceof AsyncOperationStartResult);
                 $asyncResponse = new StartOperationResponse\Async();
+                /** @psalm-suppress DeprecatedMethod */
+                $asyncResponse->setOperationId($result->info->token);
                 $asyncResponse->setOperationToken($result->info->token);
 
                 $contextLinks = $context->links->all();

@@ -33,7 +33,7 @@ final class Header
     /** Async operation token returned from StartOperation. */
     public const OPERATION_TOKEN = 'Nexus-Operation-Token';
 
-    /** RFC 5322 timestamp; optional on async callback POST (defaults to reception time). */
+    /** IMF-fixdate (RFC 9110 §5.6.7) timestamp; optional on async callback POST (defaults to reception time). */
     public const OPERATION_START_TIME = 'Nexus-Operation-Start-Time';
 
     /** RFC 3339 ms-precision timestamp; required on async callback POST. */
@@ -165,7 +165,7 @@ final class Header
      */
     public static function formatStartTime(\DateTimeImmutable $time): string
     {
-        return $time->setTimezone(new \DateTimeZone('UTC'))->format(\DATE_RFC7231);
+        return $time->setTimezone(new \DateTimeZone('UTC'))->format('D, d M Y H:i:s \G\M\T');
     }
 
     /**
@@ -180,7 +180,7 @@ final class Header
         if ($trimmed === '') {
             throw new InvalidArgumentException('Nexus-Operation-Start-Time must not be empty');
         }
-        $parsed = \DateTimeImmutable::createFromFormat(\DATE_RFC7231, $trimmed);
+        $parsed = \DateTimeImmutable::createFromFormat('D, d M Y H:i:s \G\M\T', $trimmed);
         if ($parsed !== false) {
             return $parsed;
         }

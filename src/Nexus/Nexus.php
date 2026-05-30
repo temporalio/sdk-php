@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Interceptor\NexusOperationOutbound\GetInfoInput;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Support\Facade;
@@ -24,28 +25,64 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 final class Nexus extends Facade
 {
     /**
+     * Guard accessor for the active Nexus dispatch context.
+     *
+     * Mirrors {@see \Temporal\Workflow::getCurrentContext()}: returns the composite
+     * {@see NexusContext} for the current dispatch and throws when called outside a
+     * Nexus operation handler. The handler-side {@see Handler\OperationContext}
+     * (links, headers, deadline, service definition) is reachable via
+     * {@see NexusContext::$current}.
+     *
+     * @throws \LogicException when called outside a Nexus operation dispatch.
+     */
+    public static function getCurrentContext(): NexusContext
+    {
+        $context = parent::getCurrentContext();
+        if (!$context instanceof NexusContext) {
+            throw new \LogicException('The Nexus facade can be used only inside a Nexus operation handler.');
+        }
+
+        return $context;
+    }
+
+    /**
+     * Handler-side {@see OperationContext} for the current dispatch (links, headers,
+     * deadline, service definition). Guarded accessor for {@see NexusContext::$current}.
+     *
+     * @throws \LogicException when called outside a Nexus operation dispatch.
+     */
+    public static function getCurrentOperationContext(): OperationContext
+    {
+        return self::getCurrentContext()->current ?? throw new \LogicException(
+            'Nexus::getCurrentOperationContext() called outside a Nexus operation dispatch.',
+        );
+    }
+
+    /**
      * Temporal-side context (namespace, taskQueue, workflowClient).
      *
      * @throws \LogicException when called outside a Nexus operation dispatch.
      */
     public static function getOperationContext(): NexusOperationContext
     {
-        return self::getDispatchContext()?->operation ?? throw new \LogicException(
+        $dispatch = self::getCurrentContext();
+        $info = $dispatch->operation ?? throw new \LogicException(
             'Nexus::getOperationContext() called outside a Nexus handler.',
         );
-    }
 
-    /**
-     * Handler-side {@see OperationContext} for the current dispatch (links, headers,
-     * deadline, service definition).
-     *
-     * @throws \LogicException when called outside a Nexus operation dispatch.
-     */
-    public static function getCurrentContext(): OperationContext
-    {
-        return self::getDispatchContext()?->current ?? throw new \LogicException(
-            'Nexus::getCurrentContext() called outside a Nexus operation dispatch.',
-        );
+        $pipeline = $dispatch->outboundPipeline;
+        if ($pipeline === null) {
+            return $info;
+        }
+
+        return $pipeline->with(
+            /**
+             * @psalm-suppress UnusedClosureParam The terminal call ignores the empty input DTO.
+             * @see \Temporal\Interceptor\NexusOperationOutboundCallsInterceptor::getInfo()
+             */
+            static fn(GetInfoInput $input): NexusOperationContext => $info,
+            'getInfo',
+        )(new GetInfoInput());
     }
 
     /**
@@ -55,7 +92,7 @@ final class Nexus extends Facade
      */
     public static function getStartDetails(): OperationStartDetails
     {
-        return self::getDispatchContext()?->startDetails ?? throw new \LogicException(
+        return self::getCurrentContext()->startDetails ?? throw new \LogicException(
             'Nexus::getStartDetails() called outside a start-operation dispatch.',
         );
     }
@@ -65,7 +102,7 @@ final class Nexus extends Facade
      */
     public static function getCancelDetails(): OperationCancelDetails
     {
-        return self::getDispatchContext()?->cancelDetails ?? throw new \LogicException(
+        return self::getCurrentContext()->cancelDetails ?? throw new \LogicException(
             'Nexus::getCancelDetails() called outside a cancel-operation dispatch.',
         );
     }
@@ -82,22 +119,8 @@ final class Nexus extends Facade
      */
     public static function getEnvironment(): NexusEnvironment
     {
-        return self::getDispatchContext()?->environment ?? throw new \LogicException(
+        return self::getCurrentContext()->environment ?? throw new \LogicException(
             'Nexus::getEnvironment() called outside a Nexus handler dispatch.',
         );
-    }
-
-    /**
-     * Returns the composite dispatch state stored in the Facade slot, or null
-     * when no Nexus dispatch is active.
-     *
-     * @internal Plumbing for {@see \Temporal\Internal\Nexus\NexusTaskHandler}
-     *           and {@see \Temporal\Nexus\Handler\Internal\ServiceHandler}. Use the
-     *           typed accessors above from user code.
-     */
-    public static function getDispatchContext(): ?NexusContext
-    {
-        $context = parent::getCurrentContext();
-        return $context instanceof NexusContext ? $context : null;
     }
 }

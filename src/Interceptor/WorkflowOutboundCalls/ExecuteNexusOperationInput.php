@@ -30,6 +30,7 @@ final class ExecuteNexusOperationInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
+        public readonly string $endpoint,
         public readonly string $service,
         public readonly string $operation,
         public readonly array $args,
@@ -39,6 +40,7 @@ final class ExecuteNexusOperationInput
     ) {}
 
     public function with(
+        ?string $endpoint = null,
         ?string $service = null,
         ?string $operation = null,
         ?array $args = null,
@@ -46,6 +48,9 @@ final class ExecuteNexusOperationInput
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
         ?array $nexusHeaders = null,
     ): self {
+        if ($endpoint !== null && $endpoint === '') {
+            throw new \InvalidArgumentException('$endpoint must be a non-empty string.');
+        }
         if ($service !== null && $service === '') {
             throw new \InvalidArgumentException('$service must be a non-empty string.');
         }
@@ -53,6 +58,7 @@ final class ExecuteNexusOperationInput
             throw new \InvalidArgumentException('$operation must be a non-empty string.');
         }
         return new self(
+            $endpoint ?? $this->endpoint,
             $service ?? $this->service,
             $operation ?? $this->operation,
             $args ?? $this->args,

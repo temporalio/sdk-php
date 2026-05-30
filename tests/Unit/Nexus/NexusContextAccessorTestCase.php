@@ -30,7 +30,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
     public function testOutsideDispatchThrows(): void
     {
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Nexus::getOperationContext()');
+        $this->expectExceptionMessage('The Nexus facade can be used only inside a Nexus operation handler.');
         Nexus::getOperationContext();
     }
 

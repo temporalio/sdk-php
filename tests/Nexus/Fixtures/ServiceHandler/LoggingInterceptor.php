@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixtures\ServiceHandler;
 
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Nexus\Handler\OperationStartResult;
 
@@ -24,21 +24,23 @@ final class LoggingInterceptor implements NexusOperationInboundCallsInterceptor
     /** @var list<string> */
     private array $operations = [];
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function getOperations(): array
     {
         return $this->operations;
     }
 
-    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+    public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
-        $this->operations[] = $input->context->operation;
+        $this->operations[] = $input->operationContext->operation;
         return $next($input);
     }
 
-    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+    public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
-        $this->operations[] = $input->context->operation;
+        $this->operations[] = $input->operationContext->operation;
         $next($input);
     }
 }

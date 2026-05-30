@@ -73,7 +73,7 @@ final class NexusOperationStub implements NexusOperationStubInterface
             args: EncodedValues::fromValues($args),
             options: $this->marshaller->marshal($this->options),
             header: $this->header,
-            nexusHeaders: $nexusHeaders,
+            nexusHeaders: \array_change_key_case($nexusHeaders, CASE_LOWER),
         );
 
         $startId = $startRequest->getID();

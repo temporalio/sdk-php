@@ -11,6 +11,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
@@ -38,21 +39,6 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
     /** @var WorkflowClientInterface&MockObject */
     private WorkflowClientInterface $client;
 
-    protected function setUp(): void
-    {
-        $this->client = $this->createMock(WorkflowClientInterface::class);
-        Nexus::setCurrentContext(new NexusContext(
-            operation: new NexusOperationContext(self::NS, 'tq'),
-            environment: new NexusEnvironment(self::NS, 'tq', $this->client),
-            current: new OperationContext(service: 'svc', operation: 'op'),
-        ));
-    }
-
-    protected function tearDown(): void
-    {
-        Nexus::setCurrentContext(null);
-    }
-
     public function testStartReturnsAsyncTokenAndStartsWorkflow(): void
     {
         $stub = $this->createMock(WorkflowStubInterface::class);
@@ -60,7 +46,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         $capturedOptions = null;
         $this->client->expects(self::once())
             ->method('newWorkflowStub')
-            ->willReturnCallback(function (string $class, ?WorkflowOptions $options = null) use ($stub, &$capturedOptions) {
+            ->willReturnCallback(static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$capturedOptions) {
                 $capturedOptions = $options;
                 return $stub;
             });
@@ -103,13 +89,49 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         self::assertSame($expectedToken, $callback->headers['nexus-operation-id']);
     }
 
+    public function testStartPreservesCallerProvidedTokenHeaders(): void
+    {
+        $stub = $this->createMock(WorkflowStubInterface::class);
+
+        $captured = null;
+        $this->client->method('newWorkflowStub')->willReturnCallback(
+            static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
+                $captured = $options;
+                return $stub;
+            },
+        );
+        $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
+
+        WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(
+                FakeWorkflow::class,
+                WorkflowOptions::new()->withWorkflowId(self::WID),
+            ),
+            new OperationStartDetails(
+                requestId: 'req-1',
+                callbackUrl: 'https://callback.example/done',
+                callbackHeaders: [
+                    'nexus-operation-token' => 'caller-token',
+                    'Nexus-Operation-Id' => 'caller-id',
+                ],
+                links: [],
+            ),
+        );
+
+        $callback = $captured->completionCallbacks[0];
+        self::assertSame('caller-token', $callback->headers['nexus-operation-token']);
+        self::assertSame('caller-id', $callback->headers['Nexus-Operation-Id']);
+        self::assertArrayNotHasKey('Nexus-Operation-Token', $callback->headers);
+        self::assertArrayNotHasKey('nexus-operation-id', $callback->headers);
+    }
+
     public function testStartWithoutCallbackOmitsCompletionCallback(): void
     {
         $stub = $this->createMock(WorkflowStubInterface::class);
 
         $captured = null;
         $this->client->method('newWorkflowStub')->willReturnCallback(
-            function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
+            static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
                 $captured = $options;
                 return $stub;
             },
@@ -134,7 +156,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $captured = null;
         $this->client->method('newWorkflowStub')->willReturnCallback(
-            function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
+            static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
                 $captured = $options;
                 return $stub;
             },
@@ -158,7 +180,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $captured = null;
         $this->client->method('newWorkflowStub')->willReturnCallback(
-            function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
+            static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
                 $captured = $options;
                 return $stub;
             },
@@ -197,12 +219,46 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
             new OperationStartDetails(requestId: 'req-1', callbackUrl: null, callbackHeaders: [], links: []),
         );
 
-        $links = Nexus::getCurrentContext()->links->all();
+        $links = Nexus::getCurrentOperationContext()->links->all();
         self::assertCount(1, $links);
         self::assertSame(\Temporal\Internal\Nexus\NexusLinkConverter::TYPE_WORKFLOW_EVENT, $links[0]->type);
         self::assertStringContainsString('/namespaces/' . self::NS . '/', $links[0]->uri);
         self::assertStringContainsString('/workflows/' . self::WID . '/run-xyz/history', $links[0]->uri);
         self::assertStringContainsString('eventType=WorkflowExecutionStarted', $links[0]->uri);
+    }
+
+    public function testStartDoesNotForceConflictPolicyAndAlwaysAttachesOnConflictOptions(): void
+    {
+        $captured = $this->captureStartOptions(
+            WorkflowOptions::new()->withWorkflowId(self::WID),
+        );
+
+        self::assertSame(WorkflowIdConflictPolicy::Unspecified, $captured->workflowIdConflictPolicy);
+        self::assertNotNull($captured->onConflictOptions);
+    }
+
+    public function testStartPreservesExplicitFailConflictPolicyAndStillAttachesOnConflictOptions(): void
+    {
+        $captured = $this->captureStartOptions(
+            WorkflowOptions::new()
+                ->withWorkflowId(self::WID)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::Fail),
+        );
+
+        self::assertSame(WorkflowIdConflictPolicy::Fail, $captured->workflowIdConflictPolicy);
+        self::assertNotNull($captured->onConflictOptions);
+    }
+
+    public function testStartPreservesExplicitUseExistingConflictPolicy(): void
+    {
+        $captured = $this->captureStartOptions(
+            WorkflowOptions::new()
+                ->withWorkflowId(self::WID)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
+        );
+
+        self::assertSame(WorkflowIdConflictPolicy::UseExisting, $captured->workflowIdConflictPolicy);
+        self::assertNotNull($captured->onConflictOptions);
     }
 
     public function testStartFailsWithoutWorkflowId(): void
@@ -239,7 +295,46 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         WorkflowRunOperation::cancel('not-a-real-token');
     }
+
+    protected function setUp(): void
+    {
+        $this->client = $this->createMock(WorkflowClientInterface::class);
+        Nexus::setCurrentContext(new NexusContext(
+            operation: new NexusOperationContext(self::NS, 'tq'),
+            environment: new NexusEnvironment(self::NS, 'tq', $this->client),
+            current: new OperationContext(service: 'svc', operation: 'op'),
+        ));
+    }
+
+    protected function tearDown(): void
+    {
+        Nexus::setCurrentContext(null);
+    }
+
+    private function captureStartOptions(WorkflowOptions $handleOptions): WorkflowOptions
+    {
+        $stub = $this->createMock(WorkflowStubInterface::class);
+
+        $captured = null;
+        $this->client->method('newWorkflowStub')->willReturnCallback(
+            static function (string $class, ?WorkflowOptions $options = null) use ($stub, &$captured) {
+                $captured = $options;
+                return $stub;
+            },
+        );
+        $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
+
+        WorkflowRunOperation::start(
+            WorkflowHandle::fromWorkflowMethod(FakeWorkflow::class, $handleOptions),
+            new OperationStartDetails(requestId: 'req-policy', callbackUrl: null, callbackHeaders: [], links: []),
+        );
+
+        self::assertNotNull($captured);
+        return $captured;
+    }
 }
 
-/** @internal Local fixture — needed only as a class-string for WorkflowHandle. */
+/**
+ * @internal Local fixture — needed only as a class-string for WorkflowHandle.
+ */
 final class FakeWorkflow {}

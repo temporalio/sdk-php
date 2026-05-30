@@ -15,6 +15,8 @@ use Temporal\Api\Nexus\V1\HandlerError;
 
 /**
  * Wraps a Nexus HandlerError proto for transport back to RR.
+ *
+ * @internal
  */
 final class NexusHandlerErrorException extends \RuntimeException
 {

@@ -13,6 +13,8 @@ namespace Temporal\Internal\Nexus;
 
 use Google\Rpc\Code;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowException;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
@@ -32,6 +34,14 @@ final class HandlerErrorMapper
     {
         if ($e instanceof ApplicationFailure && $e->isNonRetryable()) {
             return HandlerException::fromCause(ErrorType::Internal, $e, RetryBehavior::NonRetryable);
+        }
+
+        if ($e instanceof WorkflowNotFoundException) {
+            return HandlerException::fromCause(ErrorType::NotFound, $e);
+        }
+
+        if ($e instanceof WorkflowException) {
+            return HandlerException::fromCause(ErrorType::BadRequest, $e);
         }
 
         if ($e instanceof ServiceClientException) {

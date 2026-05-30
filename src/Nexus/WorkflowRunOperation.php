@@ -14,7 +14,6 @@ namespace Temporal\Nexus;
 use Temporal\Api\Common\V1\Link\WorkflowEvent;
 use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
 use Temporal\Api\Enums\V1\EventType;
-use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Nexus\OnConflictOptions;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
@@ -68,19 +67,22 @@ final class WorkflowRunOperation
 
         if ($details->callbackUrl !== null && $details->callbackUrl !== '') {
             $headers = $details->callbackHeaders;
+            $present = \array_change_key_case($headers, \CASE_LOWER);
             // Send both header names for pre/post-1.27 server compatibility.
-            $headers['Nexus-Operation-Token'] = $token;
-            $headers['nexus-operation-id'] = $token;
+            if (!\array_key_exists('nexus-operation-token', $present)) {
+                $headers['Nexus-Operation-Token'] = $token;
+            }
+            if (!\array_key_exists('nexus-operation-id', $present)) {
+                $headers['nexus-operation-id'] = $token;
+            }
 
             $callback = CompletionCallback::withNexusLinks($details->callbackUrl, $headers, $details->links);
             $options = $options->withCompletionCallbacks($callback);
         }
 
-        // Required so a retried StartWorkflow attaches the new completion-callback to the existing run.
         $options = $options
-            ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting)
-            ->withOnConflictOptionsInternal(OnConflictOptions::forNexusCompletionCallback())
-            ->withLinks($details->links);
+            ->withLinks($details->links)
+            ->withOnConflictOptionsInternal(OnConflictOptions::forNexusCompletionCallback());
 
         // Pin requestId so retried Nexus starts dedupe server-side.
         $options = $options->withRequestId($details->requestId);
@@ -91,7 +93,7 @@ final class WorkflowRunOperation
         // Self-link to WORKFLOW_EXECUTION_STARTED event of the run we just started.
         // Caller server attaches it to NEXUS_OPERATION_STARTED so UI shows the
         // caller↔handler chain. Mirror of Java/TS/Python/Go SDK behaviour.
-        Nexus::getCurrentContext()->links->add(
+        Nexus::getCurrentOperationContext()->links->add(
             self::buildStartedEventSelfLink($environment->namespace, $run->getExecution()),
         );
 

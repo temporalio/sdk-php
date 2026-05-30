@@ -40,6 +40,8 @@ use Temporal\Workflow\WorkflowMethod;
  *                       a CanceledFailure too.
  *   - `WaitCompleted` — caller waits until the handler workflow has fully
  *                       finished after the cancel.
+ *   - `Unspecified`   — the "not configured" sentinel; defaults to the
+ *                       WaitCompleted behaviour.
  *   - `Abandon`       — caller's wire cancel is suppressed AND the caller's
  *                       future resolves immediately with a CanceledFailure;
  *                       the handler keeps running server-side. The caller does
@@ -73,6 +75,26 @@ class AsyncCancelTypesTest extends TestCase
     {
         $stub = $this->runCancelScenario($state, $client, $endpoints, 'wait-completed');
         self::assertSame('cancelled:payload', $stub->getResult('string'));
+    }
+
+    #[Test]
+    public function unspecifiedDefaultsToWaitCompleted(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $stub = $this->runCancelScenario($state, $client, $endpoints, 'unspecified');
+
+        // Unspecified is the "not configured" sentinel (value 0, dropped on the
+        // wire by RR's omitempty). The SDK treats it as the WaitCompleted default:
+        // the caller waits for the handler to fully finish after the cancel and
+        // observes the handler's own 'cancelled:payload' result — identical to the
+        // explicit wait-completed scenario, NOT an early CanceledFailure ('ok').
+        self::assertSame(
+            'cancelled:payload',
+            $stub->getResult('string'),
+            'Unspecified must default to WaitCompleted behaviour.',
+        );
     }
 
     #[Test]
@@ -289,6 +311,12 @@ class CancelTypesCallerWorkflow
             ],
             'wait-completed' => [
                 NexusOperationCancellationType::WaitCompleted->value,
+                CancelTypesService::class,
+                'longRunning',
+                500,
+            ],
+            'unspecified' => [
+                NexusOperationCancellationType::Unspecified->value,
                 CancelTypesService::class,
                 'longRunning',
                 500,

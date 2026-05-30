@@ -172,6 +172,20 @@ final class FailureConverter
                 $failure->setApplicationFailureInfo($info);
                 break;
 
+            case $e instanceof NexusOperationFailure:
+                $info = new NexusOperationFailureInfo();
+                /** @psalm-suppress DeprecatedMethod */
+                $info
+                    ->setScheduledEventId($e->getScheduledEventId())
+                    ->setEndpoint($e->getEndpoint())
+                    ->setService($e->getService())
+                    ->setOperation($e->getOperation())
+                    ->setOperationId($e->getOperationToken())
+                    ->setOperationToken($e->getOperationToken());
+
+                $failure->setNexusOperationExecutionFailureInfo($info);
+                break;
+
             default:
                 $info = new ApplicationFailureInfo();
                 $info->setType($e::class);

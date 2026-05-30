@@ -473,12 +473,17 @@ class ReplayCancelCallerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_Replay_CancelCaller')]
     public function run(string $endpoint, string $input)
     {
+        // WaitCompleted (not WaitRequested): the caller future must resolve on the
+        // terminal NEXUS_OPERATION_CANCELED event, not on CANCEL_REQUEST_COMPLETED.
+        // WaitRequested unblocks at the cancel-ack and the caller workflow closes its
+        // history *before* the server writes NEXUS_OPERATION_CANCELED, so that event
+        // never lands in the caller history and the assertion below can't see it.
         $stub = Workflow::newNexusServiceStub(
             ReplayCancelService::class,
             NexusOperationOptions::new()
                 ->withEndpoint($endpoint)
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(60))
-                ->withCancellationType(NexusOperationCancellationType::WaitRequested),
+                ->withCancellationType(NexusOperationCancellationType::WaitCompleted),
         );
 
         $promise = null;

@@ -8,6 +8,7 @@ use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\OperationCancel;
@@ -90,7 +91,9 @@ class SharedAsyncService
         return WorkflowRunOperation::start(
             WorkflowHandle::fromWorkflowMethod(
                 SharedHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($handlerWorkflowId),
+                WorkflowOptions::new()
+                    ->withWorkflowId($handlerWorkflowId)
+                    ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
                 $handlerWorkflowId,
             ),
             Nexus::getStartDetails(),

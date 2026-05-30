@@ -71,8 +71,6 @@ final class NexusOperationHandle
     /**
      * Server-issued operation token. `string` for async operations,
      * `null` for sync (which complete inline and have no token).
-     *
-     * Backwards-compatible alias for the `operationToken` readonly property.
      */
     public function getOperationToken(): ?string
     {

@@ -108,7 +108,7 @@ class EchoServiceImpl implements EchoServiceInterface
 
     public function echoWithLinks(string $input): string
     {
-        Nexus::getCurrentContext()->links->add(
+        Nexus::getCurrentOperationContext()->links->add(
             new Link('http://test.local/resource/1', 'test.Resource'),
             new Link('http://test.local/resource/2', 'test.Resource'),
         );
@@ -127,7 +127,7 @@ class EchoServiceImpl implements EchoServiceInterface
 
     public function reportDeadline(string $input): string
     {
-        $context = Nexus::getCurrentContext();
+        $context = Nexus::getCurrentOperationContext();
         if ($context->deadline === null) {
             return 'deadline:none';
         }

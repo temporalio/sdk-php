@@ -36,14 +36,6 @@ final class MethodCanceller
         $this->clock = $clock ?? new SystemClock();
     }
 
-    /**
-     * @internal Shared with {@see \Temporal\Nexus\Handler\OperationContext}.
-     */
-    public static function formatDeadlineReason(\DateTimeImmutable $deadline): string
-    {
-        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
-    }
-
     public function isCancelled(): bool
     {
         $this->checkDeadline();
@@ -85,12 +77,17 @@ final class MethodCanceller
             $listener->cancelled();
             return;
         }
-        $this->listeners->attach($listener);
+        $this->listeners->offsetSet($listener);
     }
 
     public function removeListener(MethodCancellationListenerInterface $listener): void
     {
-        $this->listeners->detach($listener);
+        $this->listeners->offsetUnset($listener);
+    }
+
+    private static function formatDeadlineReason(\DateTimeImmutable $deadline): string
+    {
+        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
     }
 
     private function checkDeadline(): void

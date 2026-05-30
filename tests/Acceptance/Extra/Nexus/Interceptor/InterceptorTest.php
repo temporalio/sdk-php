@@ -11,8 +11,8 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -212,23 +212,23 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
 
     public function __construct(private readonly string $authToken) {}
 
-    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+    public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
         // Scope auth to GreetingService only. The async cancel test below uses
         // a different service (InterceptorCancelService) reached via
         // workflow-to-workflow Nexus stubs that don't propagate caller auth
         // headers — guarding that service here would deadlock the test.
-        if ($input->context->service === 'GreetingService') {
-            $this->assertAuthorized($input->context->headers[self::AUTH_HEADER] ?? null);
+        if ($input->operationContext->service === 'GreetingService') {
+            $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
         }
         return $next($input);
     }
 
-    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+    public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
-        // Same scoping rationale as startNexusOperation().
-        if ($input->context->service === 'GreetingService') {
-            $this->assertAuthorized($input->context->headers[self::AUTH_HEADER] ?? null);
+        // Same scoping rationale as startOperation().
+        if ($input->operationContext->service === 'GreetingService') {
+            $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
         }
         $next($input);
     }
@@ -245,15 +245,15 @@ final class LoggingInterceptor implements NexusOperationInboundCallsInterceptor
 {
     use NexusOperationInboundCallsInterceptorTrait;
 
-    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+    public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
-        WorkerLocalMarker::$lastSeen = "seen-by-interceptor:{$input->context->operation}";
+        WorkerLocalMarker::$lastSeen = "seen-by-interceptor:{$input->operationContext->operation}";
         return $next($input);
     }
 
-    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+    public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
-        WorkerLocalMarker::recordCancel("cancel-seen-by-interceptor:{$input->context->operation}");
+        WorkerLocalMarker::recordCancel("cancel-seen-by-interceptor:{$input->operationContext->operation}");
         $next($input);
     }
 }

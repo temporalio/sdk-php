@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\Trait;
 
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationCancelInput;
-use Temporal\Interceptor\NexusOperationInbound\NexusOperationStartInput;
+use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
+use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
 use Temporal\Nexus\Handler\OperationStartResult;
 
@@ -24,21 +24,21 @@ use Temporal\Nexus\Handler\OperationStartResult;
 trait NexusOperationInboundCallsInterceptorTrait
 {
     /**
-     * Default implementation of the `startNexusOperation` method.
+     * Default implementation of the `startOperation` method.
      *
-     * @see NexusOperationInboundCallsInterceptor::startNexusOperation()
+     * @see NexusOperationInboundCallsInterceptor::startOperation()
      */
-    public function startNexusOperation(NexusOperationStartInput $input, callable $next): OperationStartResult
+    public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
         return $next($input);
     }
 
     /**
-     * Default implementation of the `cancelNexusOperation` method.
+     * Default implementation of the `cancelOperation` method.
      *
-     * @see NexusOperationInboundCallsInterceptor::cancelNexusOperation()
+     * @see NexusOperationInboundCallsInterceptor::cancelOperation()
      */
-    public function cancelNexusOperation(NexusOperationCancelInput $input, callable $next): void
+    public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
         $next($input);
     }

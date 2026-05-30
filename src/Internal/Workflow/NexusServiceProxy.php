@@ -74,6 +74,7 @@ final class NexusServiceProxy extends Proxy
             'executeNexusOperation',
         )(
             new ExecuteNexusOperationInput(
+                $this->options->endpoint,
                 $service,
                 $operation->name,
                 $args,

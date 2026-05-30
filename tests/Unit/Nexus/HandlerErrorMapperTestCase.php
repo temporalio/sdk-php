@@ -7,8 +7,13 @@ namespace Temporal\Tests\Unit\Nexus;
 use Google\Rpc\Code;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowException;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Internal\Nexus\HandlerErrorMapper;
+use Temporal\Workflow\WorkflowExecution;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\RetryBehavior;
@@ -23,7 +28,9 @@ use Temporal\Tests\Unit\AbstractUnit;
 #[UsesClass(RetryBehavior::class)]
 final class HandlerErrorMapperTestCase extends AbstractUnit
 {
-    /** @return iterable<string, array{0: int, 1: ErrorType, 2: RetryBehavior}> */
+    /**
+     * @return iterable<string, array{0: int, 1: ErrorType, 2: RetryBehavior}>
+     */
     public static function grpcCodeMatrix(): iterable
     {
         // Mirrors Go internal_nexus_task_handler.go:592-647 and Java NexusTaskHandlerImpl.java:236-269.
@@ -99,6 +106,54 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
         );
 
         self::assertNull(HandlerErrorMapper::mapToHandlerException($cause));
+    }
+
+    public function testWorkflowNotFoundExceptionBecomesNotFound(): void
+    {
+        $cause = new WorkflowNotFoundException(null, new WorkflowExecution('wf-id', 'run-id'));
+
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::NotFound, $mapped->errorType);
+        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame($cause, $mapped->getPrevious());
+    }
+
+    public function testWorkflowExceptionBecomesBadRequest(): void
+    {
+        $cause = new WorkflowException(null, new WorkflowExecution('wf-id', 'run-id'));
+
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
+        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame($cause, $mapped->getPrevious());
+    }
+
+    public function testWorkflowFailedExceptionBecomesBadRequest(): void
+    {
+        $cause = new WorkflowFailedException(new WorkflowExecution('wf-id', 'run-id'), 'WorkflowType', 1, 0);
+
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
+        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame($cause, $mapped->getPrevious());
+    }
+
+    public function testWorkflowExecutionAlreadyStartedExceptionBecomesBadRequest(): void
+    {
+        $cause = new WorkflowExecutionAlreadyStartedException(new WorkflowExecution('wf-id', 'run-id'), 'WorkflowType');
+
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
+        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame($cause, $mapped->getPrevious());
     }
 
     public function testGenericRuntimeExceptionIsNotMapped(): void

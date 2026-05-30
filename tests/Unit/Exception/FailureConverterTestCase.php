@@ -372,6 +372,51 @@ final class FailureConverterTestCase extends AbstractUnit
         self::assertSame('tok-xyz', $exception->getOperationToken());
     }
 
+    public function testNexusOperationFailureProducesNexusOperationFailureInfo(): void
+    {
+        $e = new NexusOperationFailure(
+            'operation failed',
+            42,
+            'my-endpoint',
+            'MyService',
+            'doThing',
+            'tok-xyz',
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertTrue($failure->hasNexusOperationExecutionFailureInfo());
+        $info = $failure->getNexusOperationExecutionFailureInfo();
+        self::assertSame(42, $info->getScheduledEventId());
+        self::assertSame('my-endpoint', $info->getEndpoint());
+        self::assertSame('MyService', $info->getService());
+        self::assertSame('doThing', $info->getOperation());
+        self::assertSame('tok-xyz', $info->getOperationToken());
+    }
+
+    public function testNexusOperationFailureRoundTrip(): void
+    {
+        $converter = DataConverter::createDefault();
+        $original = new NexusOperationFailure(
+            'operation failed',
+            7,
+            'endpoint-1',
+            'SvcA',
+            'op-b',
+            'token-c',
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($original, $converter);
+        $restored = FailureConverter::mapFailureToException($failure, $converter);
+
+        self::assertInstanceOf(NexusOperationFailure::class, $restored);
+        self::assertSame(7, $restored->getScheduledEventId());
+        self::assertSame('endpoint-1', $restored->getEndpoint());
+        self::assertSame('SvcA', $restored->getService());
+        self::assertSame('op-b', $restored->getOperation());
+        self::assertSame('token-c', $restored->getOperationToken());
+    }
+
     public function testNexusOperationFailureInfoFallsBackToDeprecatedOperationId(): void
     {
         // Older servers populate only the deprecated `operation_id` field.

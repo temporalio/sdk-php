@@ -69,6 +69,8 @@ final class CancelNexusOperation extends Route
             ->setOperation((string) ($options['operation'] ?? ''))
             ->setOperationToken((string) ($options['operationToken'] ?? ''));
 
-        return (new Request())->setCancelOperation($cancelRequest);
+        return (new Request())
+            ->setHeader((array) ($options['headers'] ?? []))
+            ->setCancelOperation($cancelRequest);
     }
 }

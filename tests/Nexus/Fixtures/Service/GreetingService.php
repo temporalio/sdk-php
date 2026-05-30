@@ -49,7 +49,7 @@ final class GreetingService implements GreetingServiceInterface
 
         // Add link for names ending with "link"
         if (\str_ends_with($name, 'link')) {
-            Nexus::getCurrentContext()->links->add(
+            Nexus::getCurrentOperationContext()->links->add(
                 new Link('http://somepath?k=v', 'com.example.MyResource'),
             );
         }
