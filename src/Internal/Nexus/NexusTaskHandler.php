@@ -47,7 +47,6 @@ use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 final class NexusTaskHandler
 {
     private ?ServiceHandler $serviceHandler = null;
-    private ?NexusEnvironment $environment = null;
 
     /**
      * @param bool $includeTracebackInFailure Disable in cross-trust-boundary
@@ -58,6 +57,7 @@ final class NexusTaskHandler
         private readonly DataConverterInterface $dataConverter,
         private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
+        private readonly ?NexusEnvironment $environment = null,
     ) {}
 
     /**
@@ -83,15 +83,6 @@ final class NexusTaskHandler
         } catch (\Temporal\Nexus\Exception\InvalidArgumentException) {
             return null;
         }
-    }
-
-    /**
-     * Bind worker environment for {@see \Temporal\Nexus\Nexus::getOperationContext()}. Idempotent.
-     */
-    public function withNexusEnvironment(NexusEnvironment $environment): self
-    {
-        $this->environment = $environment;
-        return $this;
     }
 
     public function handleStartOperation(Request $request, ?MethodCanceller $methodCanceller = null): Response

@@ -23,7 +23,9 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
+use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -42,6 +44,7 @@ final class ServiceContainer
     public readonly ActivityCollection $activities;
     public readonly NexusServiceCollection $nexusServices;
     public readonly NexusInvocationRegistry $nexusInvocations;
+    public readonly NexusTaskHandler $nexusTaskHandler;
     public readonly WorkflowReader $workflowsReader;
     public readonly ActivityReader $activitiesReader;
     public readonly NexusServiceReader $nexusServicesReader;
@@ -60,11 +63,18 @@ final class ServiceContainer
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
         public readonly LoggerInterface $logger,
+        public readonly ?NexusEnvironment $nexusEnvironment = null,
     ) {
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
         $this->nexusServices = new NexusServiceCollection();
         $this->nexusInvocations = new NexusInvocationRegistry();
+        $this->nexusTaskHandler = new NexusTaskHandler(
+            $this->nexusServices,
+            $this->dataConverter,
+            interceptorProvider: $this->interceptorProvider,
+            environment: $nexusEnvironment,
+        );
         $this->running = new ProcessCollection();
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);
@@ -76,6 +86,7 @@ final class ServiceContainer
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
         LoggerInterface $logger,
+        ?NexusEnvironment $nexusEnvironment = null,
     ): self {
         return new self(
             $worker,
@@ -88,6 +99,7 @@ final class ServiceContainer
             $exceptionInterceptor,
             $interceptorProvider,
             $logger,
+            $nexusEnvironment,
         );
     }
 }

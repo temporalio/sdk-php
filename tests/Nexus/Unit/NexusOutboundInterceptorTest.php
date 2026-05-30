@@ -18,6 +18,7 @@ use Temporal\Interceptor\NexusOperationOutboundCallsInterceptor;
 use Temporal\Interceptor\Trait\NexusOperationOutboundCallsInterceptorTrait;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 
@@ -56,6 +57,7 @@ final class NexusOutboundInterceptorTest extends TestCase
 
         $info = new NexusOperationContext('ns', 'tq');
         Nexus::setCurrentContext(new NexusContext(
+            current: new OperationContext(service: 'svc', operation: 'op'),
             operation: $info,
             outboundPipeline: Pipeline::prepare([$record('A'), $record('B')]),
         ));
@@ -79,6 +81,7 @@ final class NexusOutboundInterceptorTest extends TestCase
         };
 
         Nexus::setCurrentContext(new NexusContext(
+            current: new OperationContext(service: 'svc', operation: 'op'),
             operation: new NexusOperationContext('ns', 'tq'),
             outboundPipeline: Pipeline::prepare([$rewriting]),
         ));
@@ -92,7 +95,10 @@ final class NexusOutboundInterceptorTest extends TestCase
     public function testGetInfoReturnsInfoDirectlyWithoutPipeline(): void
     {
         $info = new NexusOperationContext('ns', 'tq');
-        Nexus::setCurrentContext(new NexusContext(operation: $info));
+        Nexus::setCurrentContext(new NexusContext(
+            current: new OperationContext(service: 'svc', operation: 'op'),
+            operation: $info,
+        ));
 
         self::assertSame($info, Nexus::getOperationContext());
     }

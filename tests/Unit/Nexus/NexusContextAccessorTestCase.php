@@ -8,6 +8,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Internal\Nexus\NexusEnvironment;
+use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\NexusOperationContext;
@@ -41,6 +42,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
         $ctx = new NexusOperationContext('ns', 'tq');
 
         Nexus::setCurrentContext(new NexusContext(
+            current: new OperationContext(service: 'svc', operation: 'op'),
             operation: $ctx,
             environment: new NexusEnvironment('ns', 'tq', $client),
         ));
@@ -62,7 +64,10 @@ final class NexusContextAccessorTestCase extends AbstractUnit
 
     public function testClearingRestoresOutsideBehavior(): void
     {
-        Nexus::setCurrentContext(new NexusContext(operation: new NexusOperationContext('ns', 'tq')));
+        Nexus::setCurrentContext(new NexusContext(
+            current: new OperationContext(service: 'svc', operation: 'op'),
+            operation: new NexusOperationContext('ns', 'tq'),
+        ));
         Nexus::setCurrentContext(null);
 
         $this->expectException(\LogicException::class);

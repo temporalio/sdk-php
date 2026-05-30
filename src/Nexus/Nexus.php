@@ -53,9 +53,7 @@ final class Nexus extends Facade
      */
     public static function getCurrentOperationContext(): OperationContext
     {
-        return self::getCurrentContext()->current ?? throw new \LogicException(
-            'Nexus::getCurrentOperationContext() called outside a Nexus operation dispatch.',
-        );
+        return self::getCurrentContext()->current;
     }
 
     /**

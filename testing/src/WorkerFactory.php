@@ -14,6 +14,7 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Nexus\NexusEnvironment;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Logger;
 use Temporal\Plugin\CompositePipelineProvider;
@@ -94,6 +95,15 @@ class WorkerFactory extends \Temporal\WorkerFactory
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
+        /** @psalm-suppress ArgumentTypeCoercion */
+        $nexusEnvironment = $this->workflowClient !== null
+            ? new NexusEnvironment(
+                $this->workflowClient->getClientOptions()->namespace,
+                $taskQueue,
+                $this->workflowClient,
+            )
+            : null;
+
         $worker = new WorkerMock(
             new Worker(
                 $taskQueue,
@@ -107,6 +117,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
                         $options->enableLoggingInReplay,
                         $taskQueue,
                     ),
+                    $nexusEnvironment,
                 ),
                 $this->rpc,
             ),

@@ -15,8 +15,6 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
-use Temporal\Internal\Nexus\NexusEnvironment;
-use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
@@ -37,21 +35,18 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     private RouterInterface $router;
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
-    private ?NexusEnvironment $nexusEnvironment;
 
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
-        ?NexusEnvironment $nexusEnvironment = null,
     ) {
         EntityNameValidator::validateTaskQueue($taskQueue);
 
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
-        $this->nexusEnvironment = $nexusEnvironment;
 
         $this->services = $serviceContainer;
         $this->router = $this->createRouter();
@@ -122,6 +117,14 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
     public function registerNexusServiceImplementation(object ...$services): WorkerInterface
     {
+        if ($this->services->nexusEnvironment === null && $services !== []) {
+            throw new \LogicException(
+                'Cannot register Nexus service implementations on a worker without a WorkflowClient. ' .
+                'Pass a WorkflowClient to the WorkerFactory (e.g. WorkerFactory::create(client: $workflowClient)) ' .
+                '— Nexus operations require cluster access.',
+            );
+        }
+
         foreach ($services as $service) {
             $prototype = $this->services->nexusServicesReader->fromClass(\get_class($service));
             $this->services->nexusServices->add($prototype->withInstance($service), false);
@@ -153,27 +156,10 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $router->add(new Router\StackTrace($this->services->running));
 
         // Nexus routes
-        $nexusHandler = $this->createNexusTaskHandler();
-        $invocations = $this->services->nexusInvocations;
-        $router->add(new Router\InvokeNexusOperation($nexusHandler, $invocations, $this->services->dataConverter));
-        $router->add(new Router\CancelNexusOperation($nexusHandler));
-        $router->add(new Router\CancelNexusOperationMethod($invocations));
+        $router->add(new Router\InvokeNexusOperation($this->services->nexusTaskHandler, $this->services->nexusInvocations, $this->services->dataConverter));
+        $router->add(new Router\CancelNexusOperation($this->services->nexusTaskHandler));
+        $router->add(new Router\CancelNexusOperationMethod($this->services->nexusInvocations));
 
         return $router;
-    }
-
-    private function createNexusTaskHandler(): NexusTaskHandler
-    {
-        $handler = new NexusTaskHandler(
-            $this->services->nexusServices,
-            $this->services->dataConverter,
-            interceptorProvider: $this->services->interceptorProvider,
-        );
-
-        if ($this->nexusEnvironment !== null) {
-            $handler->withNexusEnvironment($this->nexusEnvironment);
-        }
-
-        return $handler;
     }
 }

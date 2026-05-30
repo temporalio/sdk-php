@@ -214,9 +214,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                     $options->enableLoggingInReplay,
                     $taskQueue,
                 ),
+                $nexusEnvironment,
             ),
             $this->rpc,
-            $nexusEnvironment,
         );
 
         // Call initializeWorker hooks (forward order)
