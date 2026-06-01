@@ -23,7 +23,6 @@ use Temporal\Nexus\Handler\SyncOperationStartResult;
 use Temporal\Nexus\Header as NexusHeader;
 use Temporal\Nexus\LinkParser;
 use Temporal\Nexus\NexusOperationContext;
-use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
 use Temporal\Api\Nexus\V1\Request;
@@ -138,7 +137,9 @@ final class NexusTaskHandler
             if ($result instanceof SyncOperationStartResult) {
                 $syncResponse = new StartOperationResponse\Sync();
 
-                $resultPayload = self::extractFirstPayload($result->value);
+                $resultPayload = $result->value instanceof ValuesInterface
+                    ? EncodedValues::firstPayload($result->value)
+                    : null;
                 if ($resultPayload !== null) {
                     $syncResponse->setPayload($resultPayload);
                 }
@@ -224,18 +225,6 @@ final class NexusTaskHandler
                     ?? HandlerException::fromCause(ErrorType::Internal, $e),
             );
         }
-    }
-
-    private static function extractFirstPayload(mixed $value): ?Payload
-    {
-        if (!$value instanceof ValuesInterface) {
-            return null;
-        }
-        $payloads = $value->toPayloads()->getPayloads();
-        if ($payloads->count() === 0) {
-            return null;
-        }
-        return $payloads[0];
     }
 
     private function getServiceHandler(): ServiceHandler

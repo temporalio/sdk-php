@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverterInterface;
@@ -130,7 +129,7 @@ final class InvokeNexusOperation extends Route
                 LinkParser::fromRaw($options['links'] ?? null),
             ));
 
-        $inputPayload = self::firstPayload($payloads);
+        $inputPayload = EncodedValues::firstPayload($payloads);
         if ($inputPayload !== null) {
             $startRequest->setPayload($inputPayload);
         }
@@ -138,15 +137,6 @@ final class InvokeNexusOperation extends Route
         return (new Request())
             ->setHeader((array) ($options['headers'] ?? []))
             ->setStartOperation($startRequest);
-    }
-
-    private static function firstPayload(ValuesInterface $values): ?Payload
-    {
-        $payloads = $values->toPayloads()->getPayloads();
-        if ($payloads->count() === 0) {
-            return null;
-        }
-        return $payloads[0];
     }
 
     /**

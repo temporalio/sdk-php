@@ -69,6 +69,15 @@ class EncodedValues implements ValuesInterface
         return static::fromPayloads($payloads, $dataConverter);
     }
 
+    public static function firstPayload(ValuesInterface $values): ?Payload
+    {
+        $payloads = $values->toPayloads()->getPayloads();
+        if ($payloads->count() === 0) {
+            return null;
+        }
+        return $payloads[0];
+    }
+
     public static function sliceValues(
         DataConverterInterface $converter,
         ValuesInterface $values,
