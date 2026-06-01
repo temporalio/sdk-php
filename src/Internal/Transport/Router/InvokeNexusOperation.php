@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverterInterface;
@@ -75,7 +74,7 @@ final class InvokeNexusOperation extends Route
                 $resolver->resolve(new CommandResponse(
                     command: self::COMMAND,
                     options: $options,
-                    payloads: $this->payloadAsValues($sync->getPayload()),
+                    payloads: EncodedValues::fromPayload($sync->getPayload(), $this->dataConverter),
                 ));
                 return;
             }
@@ -161,14 +160,5 @@ final class InvokeNexusOperation extends Route
             $out[] = ['url' => $link->getUrl(), 'type' => $link->getType()];
         }
         return $out;
-    }
-
-    private function payloadAsValues(?Payload $payload): ValuesInterface
-    {
-        $payloads = new Payloads();
-        if ($payload !== null) {
-            $payloads->setPayloads([$payload]);
-        }
-        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
     }
 }

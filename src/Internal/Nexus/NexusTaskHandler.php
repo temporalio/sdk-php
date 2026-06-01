@@ -24,7 +24,6 @@ use Temporal\Nexus\Header as NexusHeader;
 use Temporal\Nexus\LinkParser;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
 use Temporal\Api\Nexus\V1\Request;
@@ -123,7 +122,7 @@ final class NexusTaskHandler
             links: $links,
         );
 
-        $input = $this->buildInputFromPayload($startRequest->getPayload());
+        $input = EncodedValues::fromPayload($startRequest->getPayload(), $this->dataConverter);
 
         try {
             $result = $this->getServiceHandler()->startOperation(
@@ -237,18 +236,6 @@ final class NexusTaskHandler
             return null;
         }
         return $payloads[0];
-    }
-
-    /**
-     * Wrap a single proto Payload (or none) into a ValuesInterface for ServiceHandler.
-     */
-    private function buildInputFromPayload(?Payload $payload): ValuesInterface
-    {
-        $payloads = new Payloads();
-        if ($payload !== null) {
-            $payloads->setPayloads([$payload]);
-        }
-        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
     }
 
     private function getServiceHandler(): ServiceHandler
