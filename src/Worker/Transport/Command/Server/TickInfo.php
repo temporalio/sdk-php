@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command\Server;
 
+use Temporal\Workflow\WorkflowInfo;
+
 final class TickInfo
 {
     /**
@@ -24,4 +26,14 @@ final class TickInfo
         public readonly bool $continueAsNewSuggested = false,
         public readonly bool $isReplaying = false,
     ) {}
+
+    /**
+     * @psalm-suppress InaccessibleProperty
+     */
+    public function applyTo(WorkflowInfo $info): void
+    {
+        $info->historyLength = $this->historyLength;
+        $info->historySize = $this->historySize;
+        $info->shouldContinueAsNew = $this->continueAsNewSuggested;
+    }
 }
