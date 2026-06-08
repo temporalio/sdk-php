@@ -7,6 +7,10 @@ namespace Temporal\Testing;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+/**
+ * @deprecated will be removed in the next major release.
+ * Use dload to get the latest version of the Temporal server or any other ways.
+ */
 final class Downloader
 {
     public const TAG_LATEST = 'latest';
