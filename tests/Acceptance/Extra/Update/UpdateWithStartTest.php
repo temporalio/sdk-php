@@ -6,10 +6,13 @@ namespace Temporal\Tests\Acceptance\Extra\Update\UpdateWithStart;
 
 use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -39,6 +42,49 @@ class UpdateWithStartTest extends TestCase
 
         $this->assertSame(['key' => null], (array)$result);
         $this->assertFalse($handle->hasResult());
+    }
+
+    #[Test]
+    public function returnsTypedUpdateResult(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Update_UpdateWithStart',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue),
+        );
+
+        $options = UpdateOptions::new('echo', LifecycleStage::StageCompleted)
+            ->withResultType(UpdateResult::class);
+
+        /** @see TestWorkflow::echo */
+        $handle = $client->updateWithStart($stub, $options, ['hello']);
+
+        $result = $handle->getResult();
+        $this->assertInstanceOf(UpdateResult::class, $result);
+        $this->assertSame('hello', $result->name);
+        $this->assertSame(5, $result->length);
+
+        $stub->signal('exit');
+        $stub->getResult();
+    }
+
+    #[Test]
+    public function rejectsFirstExecutionRunId(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Update_UpdateWithStart',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue),
+        );
+
+        $options = UpdateOptions::new('await', LifecycleStage::StageAccepted)
+            ->withFirstExecutionRunId(Uuid::uuid7()->__toString());
+
+        $this->expectException(WorkflowServiceException::class);
+        $this->expectExceptionMessage('FirstExecutionRunId is not allowed');
+        $client->updateWithStart($stub, $options, ['key']);
     }
 
     #[Test]
@@ -128,9 +174,24 @@ class TestWorkflow
         empty($name) and throw new \InvalidArgumentException('Name must not be empty');
     }
 
+    #[Workflow\UpdateMethod(name: 'echo')]
+    public function echo(string $name): UpdateResult
+    {
+        $this->updateStarted = true;
+        return new UpdateResult($name, \strlen($name));
+    }
+
     #[Workflow\SignalMethod]
     public function exit(): void
     {
         $this->exit = true;
     }
+}
+
+class UpdateResult
+{
+    public function __construct(
+        public string $name = '',
+        public int $length = 0,
+    ) {}
 }
