@@ -39,7 +39,7 @@ class PreventCloseTest extends TestCase
         $stub->signal('add', 1);
 
         // Wait that the first signal is processed
-        usleep(200_000);
+        \usleep(200_000);
 
         // Add signal while WF is completing
         $stub->signal('add', 2);
@@ -69,7 +69,7 @@ class FeatureWorkflow
     }
 
     #[SignalMethod('add')]
-    public function add(int $arg)
+    public function add(int $arg): void
     {
         $this->values[] = $arg;
     }

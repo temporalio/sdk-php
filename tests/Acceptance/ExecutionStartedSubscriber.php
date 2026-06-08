@@ -45,6 +45,16 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
 
     public function notify(ExecutionStarted $event): void
     {
+        try {
+            $this->boot($event);
+        } catch (\Throwable $e) {
+            echo $e;
+            exit(1);
+        }
+    }
+
+    private function boot(ExecutionStarted $event): void
+    {
         $classNames = [];
         foreach ($event->testSuite()->tests() as $test) {
             if ($test instanceof TestMethod && \str_starts_with($test->className(), self::NAMESPACE_PREFIX)) {

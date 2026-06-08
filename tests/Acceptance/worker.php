@@ -110,7 +110,7 @@ try {
     $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
     $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
     $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
-    $container->bindSingleton(RPCInterface::class, RPC::create('tcp://127.0.0.1:6001'));
+    $container->bindSingleton(RPCInterface::class, RPC::create(\getenv('ROADRUNNER_ADDRESS') ?: 'tcp://127.0.0.1:6001'));
     $container->bind(
         StorageInterface::class,
         static fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
