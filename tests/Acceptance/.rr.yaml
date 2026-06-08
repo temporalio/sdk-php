@@ -1,6 +1,6 @@
 version: "3"
 rpc:
-    listen: tcp://127.0.0.1:6001
+    listen: ${ROADRUNNER_ADDRESS:-tcp://127.0.0.1:6001}
 
 server:
     command: "php worker.php"

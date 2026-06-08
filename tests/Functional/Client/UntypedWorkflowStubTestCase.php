@@ -26,7 +26,7 @@ use Temporal\Workflow\WorkflowExecutionStatus;
  */
 class UntypedWorkflowStubTestCase extends AbstractClient
 {
-    public function testUntypedStartAndWaitResult()
+    public function testUntypedStartAndWaitResult(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
@@ -38,7 +38,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame('HELLO WORLD', $simple->getResult());
     }
 
-    public function testUntypedStartWithWrongData()
+    public function testUntypedStartWithWrongData(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
@@ -48,7 +48,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $simple->getResult();
     }
 
-    public function testUntypedStartViaClient()
+    public function testUntypedStartViaClient(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
@@ -60,9 +60,8 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame('TEST', $r->getResult());
     }
 
-    public function testStartWithSameID()
+    public function testStartWithSameID(): void
     {
-        $this->markTestSkipped('Currently not supported "getStartRequestId" on test server');
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
 
@@ -73,14 +72,14 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $simple2 = $client->newUntypedWorkflowStub(
             'SimpleWorkflow',
             WorkflowOptions::new()
-                ->withWorkflowId($e->getExecution()->getID())
+                ->withWorkflowId($e->getExecution()->getID()),
         );
 
         $this->expectException(WorkflowExecutionAlreadyStartedException::class);
         $client->start($simple2, 'hello world');
     }
 
-    public function testSignalWorkflowAndGetResult()
+    public function testSignalWorkflowAndGetResult(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -94,7 +93,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame(-1, $simple->getResult());
     }
 
-    public function testSignalWithStart()
+    public function testSignalWithStart(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -108,10 +107,8 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame(-2, $simple->getResult());
     }
 
-    public function testSignalWithStartAlreadyStarted()
+    public function testSignalWithStartAlreadyStarted(): void
     {
-        $this->markTestSkipped('Currently not supported "getStartRequestId" on test server');
-
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
@@ -126,14 +123,14 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $simple2 = $client->newUntypedWorkflowStub(
             'SimpleWorkflow',
             WorkflowOptions::new()
-                ->withWorkflowId($e->getExecution()->getID())
+                ->withWorkflowId($e->getExecution()->getID()),
         );
 
         $this->expectException(WorkflowExecutionAlreadyStartedException::class);
-        $e = $client->startWithSignal($simple2, 'add', [-1]);
+        $client->startWithSignal($simple2, 'add', [-1]);
     }
 
-    public function testSignalNotStarted()
+    public function testSignalNotStarted(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -142,7 +139,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $simple->signal('add', -1);
     }
 
-    public function testQueryNotStarted()
+    public function testQueryNotStarted(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -151,7 +148,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $simple->query('get');
     }
 
-    public function testQueryWorkflow()
+    public function testQueryWorkflow(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('QueryWorkflow');
@@ -166,7 +163,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame(88, $simple->getResult());
     }
 
-    public function testStartAsNewEventTrailing()
+    public function testStartAsNewEventTrailing(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('ContinuableWorkflow');
@@ -178,7 +175,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $this->assertSame('OK6', $simple->getResult());
     }
 
-    public function testCancelled()
+    public function testCancelled(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -195,7 +192,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         }
     }
 
-    public function testTerminated()
+    public function testTerminated(): void
     {
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
@@ -251,7 +248,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         self::assertSame(WorkflowExecutionStatus::Terminated, $stubDescription->info->status);
     }
 
-    public function testSignalRunningWorkflowWithInheritedSignal()
+    public function testSignalRunningWorkflowWithInheritedSignal(): void
     {
         $client = $this->createClient();
 

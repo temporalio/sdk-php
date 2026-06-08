@@ -20,19 +20,33 @@ final class NamedArgumentsTestCase extends TestCase
 {
     private WorkflowClient $workflowClient;
 
-    protected function setUp(): void
+    public static function argumentsDataProvider(): iterable
     {
-        $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('127.0.0.1:7233')
-        );
+        yield 'one param' => [
+            ['int' => 1],
+            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => null, 'array' => []],
+        ];
 
-        parent::setUp();
+        yield 'params in different order' => [
+            ['string' => 'test', 'int' => 1, 'bool' => true, 'nullableString' => 'test', 'array' => ['test']],
+            ['int' => 1, 'string' => 'test', 'bool' => true, 'nullableString' => 'test', 'array' => ['test']],
+        ];
+
+        yield 'missing params' => [
+            ['int' => 1, 'nullableString' => 'test'],
+            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => []],
+        ];
+
+        yield 'missing param and different order' => [
+            ['nullableString' => 'test', 'int' => 1, 'array' => ['test']],
+            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => ['test']],
+        ];
     }
 
     public function testActivityNamedParams(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
-            ActivityNamedArgumentsWorkflow::class
+            ActivityNamedArgumentsWorkflow::class,
         );
 
         $result = $this->workflowClient->start(
@@ -66,36 +80,13 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
-    public static function argumentsDataProvider(): iterable
-    {
-        yield 'one param' => [
-            ['int' => 1],
-            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => null, 'array' => []],
-        ];
-
-        yield 'params in different order' => [
-            ['string' => 'test', 'int' => 1, 'bool' => true, 'nullableString' => 'test', 'array' => ['test']],
-            ['int' => 1, 'string' => 'test', 'bool' => true, 'nullableString' => 'test', 'array' => ['test']],
-        ];
-
-        yield 'missing params' => [
-            ['int' => 1, 'nullableString' => 'test'],
-            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => []],
-        ];
-
-        yield 'missing param and different order' => [
-            ['nullableString' => 'test', 'int' => 1, 'array' => ['test']],
-            ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => ['test']],
-        ];
-    }
-
     /**
      * @dataProvider argumentsDataProvider
      */
     public function testRunWorkflow(array $args, array $expectedResult): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
-            SimpleNamedArgumentsWorkflow::class
+            SimpleNamedArgumentsWorkflow::class,
         );
 
         $result = $this->workflowClient->start(
@@ -112,7 +103,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testSignalWorkflow(array $signalArgs, array $expectedResult): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
-            SignalNamedArgumentsWorkflow::class
+            SignalNamedArgumentsWorkflow::class,
         );
 
         $run = $this->workflowClient->start($workflow);
@@ -130,7 +121,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testStartWithSignal(array $signalArgs, array $expectedResult): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
-            SignalNamedArgumentsWorkflow::class
+            SignalNamedArgumentsWorkflow::class,
         );
 
         $run = $this->workflowClient->startWithSignal(
@@ -144,7 +135,7 @@ final class NamedArgumentsTestCase extends TestCase
         $this->assertSame($expectedResult, $result);
     }
 
-    public function testChildWorkflowSignalNamedArguments()
+    public function testChildWorkflowSignalNamedArguments(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
             ChildSignalNamedArgumentsWorkflow::class,
@@ -191,7 +182,7 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
-    public function testContinueAsNewNamedArguments()
+    public function testContinueAsNewNamedArguments(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(
             ContinueAsNewNamedArgumentsWorkflow::class,
@@ -233,10 +224,10 @@ final class NamedArgumentsTestCase extends TestCase
         self::assertSame('FooBar6', $result);
     }
 
-    public function testExecuteChildNamedArguments()
+    public function testExecuteChildNamedArguments(): void
     {
         $this->markTestSkipped(
-            'Workflow::executeChildWorkflow executes child as untyped, so named arguments are not supported'
+            'Workflow::executeChildWorkflow executes child as untyped, so named arguments are not supported',
         );
 
         $workflow = $this->workflowClient->newWorkflowStub(
@@ -282,5 +273,14 @@ final class NamedArgumentsTestCase extends TestCase
                 'array' => [],
             ],
         ], $result);
+    }
+
+    protected function setUp(): void
+    {
+        $this->workflowClient = new WorkflowClient(
+            ServiceClient::create('127.0.0.1:7233'),
+        );
+
+        parent::setUp();
     }
 }

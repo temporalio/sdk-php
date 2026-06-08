@@ -1407,6 +1407,14 @@
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="testing/src/Environment.php">
+    <DeprecatedClass>
+      <code><![CDATA[new Downloader(new Filesystem(), HttpClient::create([
+                'headers' => [
+                    'authorization' => \is_string($token) ? 'token ' . $token : null,
+                ],
+            ]))]]></code>
+      <code><![CDATA[private]]></code>
+    </DeprecatedClass>
     <PossiblyNullReference>
       <code><![CDATA[stop]]></code>
       <code><![CDATA[stop]]></code>

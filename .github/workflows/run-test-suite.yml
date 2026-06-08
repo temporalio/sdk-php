@@ -50,6 +50,7 @@ jobs:
     timeout-minutes: ${{ inputs.test-timeout }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TEMPORAL_HEADLESS: true
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
