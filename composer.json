@@ -105,7 +105,11 @@
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox",
         "test:accept-slow": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Slow\" --color=always --testdox",
-        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox"
+        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox",
+        "transcripts:last": "php tests/Acceptance/transcript-merge.php",
+        "transcripts:list": "php tests/Acceptance/transcript-merge.php --list",
+        "transcripts:merge": "php tests/Acceptance/transcript-merge.php",
+        "transcripts:clean": "rm -rf runtime/tests/transcripts/*"
     },
     "config": {
         "sort-packages": true,

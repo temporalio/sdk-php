@@ -22,6 +22,7 @@ final class TaskQueueResolver
         \Temporal\Tests\Acceptance\Harness\Signal\Activities\ActivitiesTest::class,
         \Temporal\Tests\Acceptance\Extra\Versioning\Classic\ClassicTest::class,
         \Temporal\Tests\Acceptance\Extra\Versioning\Deployment\DeploymentTest::class,
+        \Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused\ActivityPausedTest::class,
     ];
 
     /**

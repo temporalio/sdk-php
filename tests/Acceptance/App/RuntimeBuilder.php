@@ -87,6 +87,7 @@ final class RuntimeBuilder
         array $allowedTestClasses = [],
     ): State {
         $runtime = new State($command, \dirname(__DIR__), $workDir, $testCasesDir, $workers);
+        $runtime->allowedTestClasses = $allowedTestClasses;
 
         self::hydrateClasses($runtime, $allowedTestClasses);
 

@@ -4,6 +4,8 @@ rpc:
 
 server:
     command: "php worker.php"
+    env:
+        TEMPORAL_TRANSCRIPT_DIR: "runtime/tests/transcripts"
 
 # Workflow and activity mesh service
 temporal:

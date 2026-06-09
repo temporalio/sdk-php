@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
+use Spiral\Core\Container;
+
 final class ContainerFacade
 {
-    public static \Spiral\Core\Container $container;
+    public static Container $container;
 }

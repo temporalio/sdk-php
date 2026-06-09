@@ -23,21 +23,33 @@ use Temporal\DataConverter\NullConverter;
 use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Internal\Support\StackRenderer;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Testing\Command;
+use Temporal\Testing\Transcript\TranscriptStore;
+use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\TranscriptPlugin;
+use Temporal\Tests\Acceptance\App\Runtime\FatalHandler;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
+use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\WorkerFactory;
 
 \chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
+
+$logger = new StderrLogger();
+$workerTranscript = TranscriptStore::create(stderr: $logger)
+    ->createWriter(TranscriptStore::currentRunIdOrOrphan(), 'worker');
+FatalHandler::register($workerTranscript, $logger);
+
 RuntimeBuilder::init();
 StackRenderer::addIgnoredPath(__FILE__);
 
-$logger = new StderrLogger();
 
 /** @var list<class-string> $allowedTestClasses */
 $allowedTestClasses = [];
@@ -69,6 +81,8 @@ try {
     );
     $run = $runtime->command;
     $container = new Spiral\Core\Container();
+    $container->bindSingleton(TranscriptWriter::class, $workerTranscript);
+    $container->bindSingleton(LoggerInterface::class, $logger);
 
     $converters = [
         new NullConverter(),
@@ -96,7 +110,11 @@ try {
 
     $container->bindSingleton(
         WorkerFactoryInterface::class,
-        WorkerFactory::create(converter: $converter, client: $workflowClient),
+        WorkerFactory::create(
+            converter: $converter,
+            pluginRegistry: new PluginRegistry([new TranscriptPlugin($workerTranscript)]),
+            client: $workflowClient,
+        ),
     );
 
     $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
@@ -129,7 +147,15 @@ try {
         $getWorker($feature)->registerNexusServiceImplementation($container->make($nexusService));
     }
 
-    $container->get(WorkerFactoryInterface::class)->run();
+    $host = new RecordingHost(RoadRunner::create(), $workerTranscript);
+    $container->get(WorkerFactoryInterface::class)->run($host);
 } catch (\Throwable $e) {
-    td($e);
+    $workerTranscript->writeFatal($e);
+    $workerTranscript->flush();
+    $logger->critical('fatal', [
+        'class' => $e::class,
+        'message' => $e->getMessage(),
+        'trace' => $e->getTraceAsString(),
+    ]);
+    exit(1);
 }
