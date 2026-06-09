@@ -24,6 +24,7 @@ use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Interceptor\WorkflowInbound\InitInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
@@ -68,6 +69,11 @@ final class InterceptorCallsCounter implements
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
     {
         return $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
+    }
+
+    public function init(InitInput $input, callable $next): void
+    {
+        $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
     }
 
     public function execute(WorkflowInput $input, callable $next): void
