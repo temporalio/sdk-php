@@ -40,7 +40,7 @@
         "spiral/roadrunner-kv": "^4.3.1",
         "spiral/roadrunner-worker": "^3.6.2",
         "symfony/filesystem": "^5.4.45 || ^6.4.13 || ^7.0 || ^8.0",
-        "symfony/http-client": "^5.4.49 || ^6.4.17 || ^7.0 || ^8.0",
+        "symfony/http-client": "^5.4.53 || ^6.4.17 || ^7.0 || ^8.0",
         "symfony/polyfill-php83": "^1.31.0",
         "symfony/process": "^5.4.51 || ^6.4.15 || ^7.0 || ^8.0"
     },
@@ -104,7 +104,11 @@
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox",
         "test:accept-slow": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Slow\" --color=always --testdox",
-        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox"
+        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox",
+        "transcripts:last": "php tests/Acceptance/transcript-merge.php",
+        "transcripts:list": "php tests/Acceptance/transcript-merge.php --list",
+        "transcripts:merge": "php tests/Acceptance/transcript-merge.php",
+        "transcripts:clean": "rm -rf runtime/tests/transcripts/*"
     },
     "config": {
         "sort-packages": true,

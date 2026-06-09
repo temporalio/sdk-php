@@ -4,52 +4,67 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Feature;
 
+use Psr\Log\LoggerInterface;
 use Spiral\Core\Attribute\Singleton;
 use Spiral\Core\InvokerInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
+use Temporal\Tests\Acceptance\App\Logger\FanoutLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
+use Temporal\Testing\Transcript\TranscriptAdapter;
+use Temporal\Testing\Transcript\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
-use Spiral\Core\Container\InjectorInterface;
-use Temporal\Client\WorkflowStubInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 
-/**
- * @implements InjectorInterface<WorkflowStubInterface>
- */
 #[Singleton]
 final class WorkerFactory
 {
     public function __construct(
         private readonly WorkerFactoryInterface $workerFactory,
         private readonly InvokerInterface $invoker,
+        private readonly LoggerInterface $logger,
+        private readonly ?TranscriptWriter $transcript = null,
     ) {}
 
     public function createWorker(
         Feature $feature,
     ): WorkerInterface {
-        // Find Worker attribute
-        $attr = self::findAttribute(
+        $attribute = self::findAttribute(
             ...\array_map(static fn(array $check): string => $check[0], $feature->checks),
             ...$feature->workflows,
             ...$feature->activities,
         );
-        $options = $attr?->options === null ? null : $this->invoker->invoke($attr->options);
-        $interceptorProvider = $attr?->pipelineProvider === null ? null : $this->invoker->invoke($attr->pipelineProvider);
-        $logger = $attr?->logger === null ? null : $this->invoker->invoke($attr->logger);
+        $options = $attribute?->options === null ? null : $this->invoker->invoke($attribute->options);
+        $interceptorProvider = $attribute?->pipelineProvider === null
+            ? null
+            : $this->invoker->invoke($attribute->pipelineProvider);
+        $logger = $attribute?->logger === null ? null : $this->invoker->invoke($attribute->logger);
+        if ($logger !== null && !$logger instanceof LoggerInterface) {
+            throw new \InvalidArgumentException(sprintf("Logger must implement PSR-3 LoggerInterface, got %s", \get_debug_type($logger)));
+        }
 
-        // Add plugins from the attribute to the factory's registry (already instantiated, no invoker needed)
-        if ($attr?->plugins !== null) {
-            $this->workerFactory->getPluginRegistry()->merge($attr->plugins);
+        if ($attribute?->plugins !== null) {
+            $this->workerFactory->getPluginRegistry()->merge($attribute->plugins);
         }
 
         return $this->workerFactory->newWorker(
             $feature->taskQueue,
             $options ?? WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
             interceptorProvider: $interceptorProvider,
-            logger: $logger ?? LoggerFactory::createServerLogger($feature->taskQueue),
+            logger: $this->decorateLogger($logger, $feature),
         );
+    }
+
+    private function decorateLogger(?LoggerInterface $logger, Feature $feature): LoggerInterface
+    {
+        $serverLogger = LoggerFactory::createServerLogger($feature->taskQueue);
+        $loggers = [$this->logger, $logger, $serverLogger];
+        if ($this->transcript !== null) {
+            $loggers[] = new TranscriptAdapter($this->transcript, $this->logger);
+        }
+
+        return new FanoutLogger(...array_filter($loggers));
     }
 
     /**

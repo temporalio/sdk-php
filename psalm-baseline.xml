@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.16.0@7cf3e8b988edd75e0766963b0b9e671b220f5785">
+<files psalm-version="6.16.1@f1f5de594dc76faf8784e02d3dc4716c91c6f6ac">
   <file src="src/Activity/ActivityInterface.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -1407,6 +1407,14 @@
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="testing/src/Environment.php">
+    <DeprecatedClass>
+      <code><![CDATA[new Downloader(new Filesystem(), HttpClient::create([
+                'headers' => [
+                    'authorization' => \is_string($token) ? 'token ' . $token : null,
+                ],
+            ]))]]></code>
+      <code><![CDATA[private]]></code>
+    </DeprecatedClass>
     <PossiblyNullReference>
       <code><![CDATA[stop]]></code>
       <code><![CDATA[stop]]></code>
@@ -1421,6 +1429,82 @@
     <UndefinedClass>
       <code><![CDATA[ChannelCredentials]]></code>
     </UndefinedClass>
+  </file>
+  <file src="testing/src/Transcript/TranscriptActivityInterceptor.php">
+    <PossiblyNullReference>
+      <code><![CDATA[getID]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="testing/src/Transcript/TranscriptPaths.php">
+    <InvalidOperand>
+      <code><![CDATA[\microtime(true) * 1000]]></code>
+    </InvalidOperand>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/TranscriptReader.php">
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="testing/src/Transcript/TranscriptRun.php">
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="testing/src/Transcript/TranscriptStore.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[TranscriptPaths::writerFile($directory, $processLabel)]]></code>
+    </ArgumentTypeCoercion>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/TranscriptWorkflowInterceptor.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[fn() => $next($input)]]></code>
+      <code><![CDATA[fn() => $next($input)]]></code>
+    </MissingClosureReturnType>
+  </file>
+  <file src="testing/src/Transcript/TranscriptWriter.php">
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+    </InvalidPropertyAssignmentValue>
+    <PossiblyInvalidCast>
+      <code><![CDATA[$errorRecord['file'] ?? '']]></code>
+      <code><![CDATA[$errorRecord['message'] ?? '']]></code>
+    </PossiblyInvalidCast>
+    <PossiblyNullArgument>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+    </PossiblyNullArgument>
+    <RiskyCast>
+      <code><![CDATA[$errorRecord['line'] ?? 0]]></code>
+      <code><![CDATA[$errorRecord['type'] ?? 0]]></code>
+    </RiskyCast>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/WireFrameDecoder.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$message->getHeader()]]></code>
+      <code><![CDATA[$message->getPayloads()]]></code>
+    </PossiblyNullArgument>
+    <TooManyTemplateParams>
+      <code><![CDATA[$fields]]></code>
+      <code><![CDATA[$meta]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="testing/src/Transcript/WorkflowHistoryDumper.php">
+    <InvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds() + \round($eventTime->getNanos() / 1_000_000_000, 6)]]></code>
+      <code><![CDATA[($sec - $startSec) * 1000]]></code>
+    </InvalidOperand>
+    <PossiblyInvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds()]]></code>
+    </PossiblyInvalidOperand>
   </file>
   <file src="testing/src/WorkerMock.php">
     <DeprecatedMethod>

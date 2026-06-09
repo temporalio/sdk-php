@@ -27,6 +27,8 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
+use Temporal\Testing\Transcript\TranscriptStore;
+use Temporal\Testing\Transcript\TranscriptWriter;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -40,6 +42,16 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
     private const NAMESPACE_PREFIX = 'Temporal\\Tests\\Acceptance\\';
 
     public function notify(ExecutionStarted $event): void
+    {
+        try {
+            $this->boot($event);
+        } catch (\Throwable $e) {
+            echo $e;
+            exit(1);
+        }
+    }
+
+    private function boot(ExecutionStarted $event): void
     {
         $classNames = [];
         foreach ($event->testSuite()->tests() as $test) {
@@ -55,7 +67,10 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         }
 
         $logger = new StderrLogger();
-        $logger->info('[selection] picked test classes after filtering', ['count' => \count($selectedTestClasses)]);
+        $logger->info('[selection] picked test classes after filtering', [
+            'count' => \count($selectedTestClasses),
+            'classes' => $selectedTestClasses,
+        ]);
 
         RuntimeBuilder::init();
 
@@ -80,11 +95,20 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $container->bindSingleton(State::class, $state);
         $container->bindSingleton(Environment::class, $environment);
         $container->bindSingleton(LoggerInterface::class, $logger);
+        $container->bindSingleton(StderrLogger::class, $logger);
+
+        $runId = TranscriptStore::getOrCreateRunId();
+        $logger->info('[transcript] run id', ['run_id' => $runId]);
+
+        $transcriptStore = TranscriptStore::create(stderr: $logger);
+        $transcriptStore->pruneOldRuns(keep: 20);
+        $testTranscript = $transcriptStore->createWriter($runId, 'test');
+        $container->bindSingleton(TranscriptWriter::class, $testTranscript);
 
         $temporalRunner = new TemporalStarter($environment);
         $rrRunner = new RRStarter($state, $environment);
         $temporalRunner->start();
-        $rrRunner->start($selectedTestClasses);
+        $rrRunner->start();
 
         $serviceClient = $state->command->tlsKey === null && $state->command->tlsCert === null
             ? ServiceClient::create($state->address)
