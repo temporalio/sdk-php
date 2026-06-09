@@ -1430,6 +1430,82 @@
       <code><![CDATA[ChannelCredentials]]></code>
     </UndefinedClass>
   </file>
+  <file src="testing/src/Transcript/TranscriptActivityInterceptor.php">
+    <PossiblyNullReference>
+      <code><![CDATA[getID]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="testing/src/Transcript/TranscriptPaths.php">
+    <InvalidOperand>
+      <code><![CDATA[\microtime(true) * 1000]]></code>
+    </InvalidOperand>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/TranscriptReader.php">
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="testing/src/Transcript/TranscriptRun.php">
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="testing/src/Transcript/TranscriptStore.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[TranscriptPaths::writerFile($directory, $processLabel)]]></code>
+    </ArgumentTypeCoercion>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/TranscriptWorkflowInterceptor.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[fn() => $next($input)]]></code>
+      <code><![CDATA[fn() => $next($input)]]></code>
+    </MissingClosureReturnType>
+  </file>
+  <file src="testing/src/Transcript/TranscriptWriter.php">
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+    </InvalidPropertyAssignmentValue>
+    <PossiblyInvalidCast>
+      <code><![CDATA[$errorRecord['file'] ?? '']]></code>
+      <code><![CDATA[$errorRecord['message'] ?? '']]></code>
+    </PossiblyInvalidCast>
+    <PossiblyNullArgument>
+      <code><![CDATA[$this->fileDescriptor]]></code>
+    </PossiblyNullArgument>
+    <RiskyCast>
+      <code><![CDATA[$errorRecord['line'] ?? 0]]></code>
+      <code><![CDATA[$errorRecord['type'] ?? 0]]></code>
+    </RiskyCast>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[\getmypid()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="testing/src/Transcript/WireFrameDecoder.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$message->getHeader()]]></code>
+      <code><![CDATA[$message->getPayloads()]]></code>
+    </PossiblyNullArgument>
+    <TooManyTemplateParams>
+      <code><![CDATA[$fields]]></code>
+      <code><![CDATA[$meta]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="testing/src/Transcript/WorkflowHistoryDumper.php">
+    <InvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds() + \round($eventTime->getNanos() / 1_000_000_000, 6)]]></code>
+      <code><![CDATA[($sec - $startSec) * 1000]]></code>
+    </InvalidOperand>
+    <PossiblyInvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds()]]></code>
+    </PossiblyInvalidOperand>
+  </file>
   <file src="testing/src/WorkerMock.php">
     <DeprecatedMethod>
       <code><![CDATA[registerActivityImplementations]]></code>

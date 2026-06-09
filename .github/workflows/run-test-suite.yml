@@ -108,6 +108,7 @@ jobs:
         run: ${{ inputs.test-command }}
         env:
           XDEBUG_MODE: off
+          TEMPORAL_TRANSCRIPT_DUMP_ON_FAIL: "1"
 
       - name: Check for failures
         if: steps.validate.outcome == 'failure'
