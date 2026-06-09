@@ -11,12 +11,9 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -140,23 +137,13 @@ class ReverseLinkTest extends TestCase
 class ReverseLinkService
 {
     #[AsyncOperation(output: 'string')]
-    public function backedByWorkflow(string $input): OperationInfo
+    public function backedByWorkflow(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                ReverseLinkHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            ReverseLinkHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'backedByWorkflow')]
-    public function cancelBackedByWorkflow(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

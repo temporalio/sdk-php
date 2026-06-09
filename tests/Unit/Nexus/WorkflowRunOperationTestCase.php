@@ -19,6 +19,7 @@ use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Nexus\WorkflowHandle;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Temporal\Nexus\Handler\Internal\WorkflowRunStarter;
 use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\Environment;
@@ -32,6 +33,7 @@ use Temporal\Worker\Environment\EnvironmentInterface;
  * @group nexus
  */
 #[CoversClass(WorkflowRunOperation::class)]
+#[CoversClass(WorkflowRunStarter::class)]
 final class WorkflowRunOperationTestCase extends AbstractUnit
 {
     private const NS = 'sample-ns';
@@ -65,7 +67,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
             42,
         );
 
-        $info = WorkflowRunOperation::start(
+        $info = WorkflowRunStarter::start(
             $handle,
             new OperationStartDetails(
                 requestId: 'req-1',
@@ -105,7 +107,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()->withWorkflowId(self::WID),
@@ -141,7 +143,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()->withWorkflowId(self::WID),
@@ -166,7 +168,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()->withWorkflowId(self::WID),
@@ -190,7 +192,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()
@@ -214,7 +216,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($run);
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()->withWorkflowId(self::WID),
@@ -269,7 +271,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('workflow ID is required');
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(
                 FakeWorkflow::class,
                 WorkflowOptions::new()->withWorkflowId(''),
@@ -328,7 +330,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
         $this->client->method('start')->willReturn($this->createMock(\Temporal\Workflow\WorkflowRunInterface::class));
 
-        WorkflowRunOperation::start(
+        WorkflowRunStarter::start(
             WorkflowHandle::fromWorkflowMethod(FakeWorkflow::class, $handleOptions),
             new OperationStartDetails(requestId: 'req-policy', callbackUrl: null, callbackHeaders: [], links: []),
         );

@@ -14,12 +14,9 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -179,23 +176,13 @@ class AsyncCancelTypesTest extends TestCase
 class CancelTypesService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo
+    public function longRunning(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                LongRunningHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            LongRunningHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'longRunning')]
-    public function cancelLongRunning(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 
@@ -224,23 +211,13 @@ class LongRunningHandlerWorkflow
 class AbandonService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo
+    public function run(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                AbandonHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            AbandonHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'run')]
-    public function cancel(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

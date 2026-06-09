@@ -12,12 +12,9 @@ use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -141,23 +138,13 @@ class TimeoutSyncCallerWorkflow
 class TimeoutAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function slowAsync(string $input): OperationInfo
+    public function slowAsync(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                SlowHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            SlowHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'slowAsync')]
-    public function cancel(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

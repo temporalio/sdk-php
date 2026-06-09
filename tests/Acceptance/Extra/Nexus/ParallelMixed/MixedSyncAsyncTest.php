@@ -13,12 +13,9 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Promise;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
@@ -110,23 +107,13 @@ class MixedSyncAsyncService
     }
 
     #[AsyncOperation(output: 'string')]
-    public function asyncOp(string $tag): OperationInfo
+    public function asyncOp(string $tag): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                MixedAsyncHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $tag,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            MixedAsyncHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $tag,
         );
-    }
-
-    #[OperationCancel(operation: 'asyncOp')]
-    public function cancelAsyncOp(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

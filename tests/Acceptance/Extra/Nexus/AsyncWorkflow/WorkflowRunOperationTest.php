@@ -8,15 +8,12 @@ use Carbon\CarbonInterval;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -205,30 +202,14 @@ class AsyncWorkflowService
         );
     }
 
-    #[OperationCancel(operation: 'hello')]
-    public function cancelHello(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
-    }
-
     #[AsyncOperation(output: 'string')]
-    public function slowHello(string $input): OperationInfo
+    public function slowHello(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                SlowAsyncHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            SlowAsyncHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'slowHello')]
-    public function cancelSlowHello(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

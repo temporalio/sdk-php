@@ -11,12 +11,8 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -86,24 +82,15 @@ class MultipleCallersTest extends TestCase
 class SharedAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $handlerWorkflowId): OperationInfo
+    public function run(string $handlerWorkflowId): WorkflowHandle
     {
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                SharedHandlerWorkflow::class,
-                WorkflowOptions::new()
-                    ->withWorkflowId($handlerWorkflowId)
-                    ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
-                $handlerWorkflowId,
-            ),
-            Nexus::getStartDetails(),
+        return WorkflowHandle::fromWorkflowMethod(
+            SharedHandlerWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowId($handlerWorkflowId)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
+            $handlerWorkflowId,
         );
-    }
-
-    #[OperationCancel(operation: 'run')]
-    public function cancel(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

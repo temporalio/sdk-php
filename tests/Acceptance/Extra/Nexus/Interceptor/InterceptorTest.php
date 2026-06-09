@@ -19,15 +19,11 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\Trait\NexusOperationInboundCallsInterceptorTrait;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\OperationStartResult;
-use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -288,23 +284,13 @@ class GreetingService
 class InterceptorCancelService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $handlerWorkflowId): OperationInfo
+    public function longRunning(string $handlerWorkflowId): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                CancelHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($handlerWorkflowId),
-                $handlerWorkflowId,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            CancelHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId($handlerWorkflowId),
+            $handlerWorkflowId,
         );
-    }
-
-    #[OperationCancel(operation: 'longRunning')]
-    public function cancelLongRunning(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

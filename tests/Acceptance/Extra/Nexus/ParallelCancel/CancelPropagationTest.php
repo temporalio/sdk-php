@@ -14,12 +14,9 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Promise;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
@@ -117,23 +114,13 @@ class CancelPropagationTest extends TestCase
 class CancelPropagationService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo
+    public function longRunning(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                CancelPropagationHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            CancelPropagationHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'longRunning')]
-    public function cancelLongRunning(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

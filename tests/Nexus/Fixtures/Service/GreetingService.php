@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixtures\Service;
 
+use Temporal\Common\Uuid;
 use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
@@ -44,7 +45,7 @@ final class GreetingService implements GreetingServiceInterface
             throw new \InvalidArgumentException('This service does not support callbacks');
         }
 
-        $id = \bin2hex(\random_bytes(16));
+        $id = Uuid::v4();
         $this->operations[$id] = ($this->apiClient)($name);
 
         // Add link for names ending with "link"

@@ -13,12 +13,9 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
@@ -341,23 +338,13 @@ class ReplaySyncService
 class ReplayAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function shout(string $input): OperationInfo
+    public function shout(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                ReplayAsyncHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            ReplayAsyncHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'shout')]
-    public function cancelShout(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 
@@ -436,23 +423,13 @@ class ReplayTimerThenSyncCallerWorkflow
 class ReplayCancelService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo
+    public function longRunning(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                ReplayCancelHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            ReplayCancelHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'longRunning')]
-    public function cancelLongRunning(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

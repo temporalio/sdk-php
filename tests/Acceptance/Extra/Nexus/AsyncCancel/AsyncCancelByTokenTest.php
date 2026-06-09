@@ -6,10 +6,8 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel;
 
 use Carbon\CarbonInterval;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
@@ -82,23 +80,13 @@ class AsyncCancelByTokenTest extends TestCase
 class AsyncCancelService
 {
     #[AsyncOperation(output: 'string')]
-    public function longRunning(string $input): OperationInfo
+    public function longRunning(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                LongRunningHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            LongRunningHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'longRunning')]
-    public function cancelLongRunning(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

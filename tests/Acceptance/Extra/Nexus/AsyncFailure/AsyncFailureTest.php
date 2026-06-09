@@ -12,12 +12,9 @@ use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Nexus;
-use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\WorkflowHandle;
-use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -104,23 +101,13 @@ class AsyncFailureTest extends TestCase
 class AsyncFailingService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo
+    public function run(string $input): WorkflowHandle
     {
-        $details = Nexus::getStartDetails();
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                FailingHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        return WorkflowHandle::fromWorkflowMethod(
+            FailingHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId(Nexus::getStartDetails()->requestId),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'run')]
-    public function cancel(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 
@@ -183,23 +170,14 @@ class HandlerFailsCallerWorkflow
 class AsyncTerminateService
 {
     #[AsyncOperation(output: 'string')]
-    public function run(string $input): OperationInfo
+    public function run(string $input): WorkflowHandle
     {
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                HandlerWorkflowToTerminate::class,
-                // Fixed workflow ID so the test can locate and terminate it.
-                WorkflowOptions::new()->withWorkflowId(HandlerWorkflowToTerminate::ID),
-                $input,
-            ),
-            Nexus::getStartDetails(),
+        return WorkflowHandle::fromWorkflowMethod(
+            HandlerWorkflowToTerminate::class,
+            // Fixed workflow ID so the test can locate and terminate it.
+            WorkflowOptions::new()->withWorkflowId(HandlerWorkflowToTerminate::ID),
+            $input,
         );
-    }
-
-    #[OperationCancel(operation: 'run')]
-    public function cancel(string $token): void
-    {
-        WorkflowRunOperation::cancel($token);
     }
 }
 

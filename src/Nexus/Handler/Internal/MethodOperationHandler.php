@@ -46,7 +46,7 @@ final class MethodOperationHandler implements OperationHandlerInterface
         // `: OperationInfo` or `: WorkflowHandle` for async, the wire output type for sync.
         if ($this->operation->async) {
             if ($result instanceof WorkflowHandle) {
-                $result = WorkflowRunOperation::start($result, $details);
+                $result = WorkflowRunStarter::start($result, $details);
             }
             if (!$result instanceof OperationInfo) {
                 throw new \LogicException(\sprintf(
@@ -69,6 +69,12 @@ final class MethodOperationHandler implements OperationHandlerInterface
         $cancelMethod = $this->operation->cancelHandler;
 
         if ($cancelMethod === null) {
+            $returnType = $this->startMethod->getReturnType();
+            if ($returnType instanceof \ReflectionNamedType && $returnType->getName() === WorkflowHandle::class) {
+                WorkflowRunOperation::cancel($details->operationToken);
+                return;
+            }
+
             throw HandlerException::create(
                 ErrorType::NotImplemented,
                 \sprintf(
