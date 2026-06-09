@@ -14,9 +14,7 @@ namespace Temporal\Nexus\Handler;
 use Temporal\Nexus\OperationInfo;
 
 /**
- * Carries the {@see OperationInfo} (token + state). Mirrors the spec's
- * `201 Created` body for `StartOperation`. Construct via
- * {@see OperationStartResult::async()}.
+ * Construct via {@see OperationStartResult::async()}.
  *
  * @extends OperationStartResult<never>
  */

@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Nexus\NexusOperationContext;
+
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -26,6 +28,8 @@ use Temporal\Tests\Nexus\Fixtures\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -33,6 +37,14 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerTest extends TestCase
 {
     use BindNexusService;
+
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
 
     public function testVoidService(): void
     {
@@ -45,9 +57,11 @@ final class ServiceHandlerTest extends TestCase
         $handler = self::newGreetingHandler();
 
         $result = $handler->startOperation(
-            self::newGreetingContext('sayHello1'),
+            $this->newGreetingContext('sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('SomeUser'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame('Hello, SomeUser!', $result->value->getValue(0, 'string'));
@@ -58,9 +72,11 @@ final class ServiceHandlerTest extends TestCase
         $handler = self::newGreetingHandler();
 
         $result = $handler->startOperation(
-            self::newGreetingContext('sayHello2'),
+            $this->newGreetingContext('sayHello2'),
             new OperationStartDetails(requestId: 'r3'),
             self::encode('SomeUser'),
+            null,
+            new NexusOperationContext(),
         );
 
         $token = $result->info->token;
@@ -71,12 +87,14 @@ final class ServiceHandlerTest extends TestCase
     public function testAsyncHandlerCollectsLinksOnLinkSuffixedInput(): void
     {
         $handler = self::newGreetingHandler();
-        $context = self::newGreetingContext('sayHello2');
+        $context = $this->newGreetingContext('sayHello2');
 
         $result = $handler->startOperation(
             $context,
             new OperationStartDetails(requestId: 'r4'),
             self::encode('SomeUser-link'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertNotNull($result->info->token);
@@ -98,10 +116,13 @@ final class ServiceHandlerTest extends TestCase
             new OperationContext(
                 service: 'GreetingServiceInterface',
                 operation: 'sayHello1',
+                env: $this->env,
                 headers: [AuthInterceptor::AUTH_HEADER => $token],
             ),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('SomeUser'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame('Hello, SomeUser!', $result->value->getValue(0, 'string'));
@@ -119,9 +140,12 @@ final class ServiceHandlerTest extends TestCase
             new OperationContext(
                 service: 'GreetingServiceInterface',
                 operation: 'sayHello1',
+                env: $this->env,
             ),
             new OperationStartDetails(requestId: 'r2'),
             self::encode('SomeUser'),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -138,10 +162,13 @@ final class ServiceHandlerTest extends TestCase
             new OperationContext(
                 service: 'GreetingServiceInterface',
                 operation: 'sayHello1',
+                env: $this->env,
                 headers: [AuthInterceptor::AUTH_HEADER => $token],
             ),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('SomeUser'),
+            null,
+            new NexusOperationContext(),
         );
 
         // Auth is before logging, so an unauthorized call never reaches the logger.
@@ -157,9 +184,11 @@ final class ServiceHandlerTest extends TestCase
 
         $this->expectException(HandlerException::class);
         $handler->startOperation(
-            new OperationContext(service: 'NonExistent', operation: 'op'),
+            new OperationContext(service: 'NonExistent', operation: 'op', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::empty(),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -172,9 +201,11 @@ final class ServiceHandlerTest extends TestCase
 
         $this->expectException(HandlerException::class);
         $handler->startOperation(
-            new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent'),
+            new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::empty(),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -188,8 +219,10 @@ final class ServiceHandlerTest extends TestCase
         $this->expectException(HandlerException::class);
         $this->expectExceptionMessage('synchronous and cannot be cancelled');
         $handler->cancelOperation(
-            new OperationContext(service: 'VoidServiceInterface', operation: 'operation'),
+            new OperationContext(service: 'VoidServiceInterface', operation: 'operation', env: $this->env),
             new OperationCancelDetails(operationToken: 'some-token'),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -204,9 +237,9 @@ final class ServiceHandlerTest extends TestCase
         );
     }
 
-    private static function newGreetingContext(string $operation): OperationContext
+    private function newGreetingContext(string $operation): OperationContext
     {
-        return new OperationContext(service: 'GreetingServiceInterface', operation: $operation);
+        return new OperationContext(service: 'GreetingServiceInterface', operation: $operation, env: $this->env);
     }
 
     private static function dataConverter(): DataConverterInterface

@@ -22,7 +22,7 @@ use Temporal\DataConverter\Type;
  * caller has it, the start response has already arrived and the discriminator
  * is known.
  *
- *  - {@see self::$operationToken} — server-issued token (`string` for async
+ *  - {@see self::getOperationToken()} — server-issued token (`string` for async
  *    operations, `null` for sync operations which complete inline).
  *  - {@see self::getResult()} — typed value promise. For sync ops it is
  *    already-resolved by the time the handle exists; for async ops it
@@ -30,7 +30,7 @@ use Temporal\DataConverter\Type;
  *
  * ```php
  * $handle = yield $stub->start('order.place', [$order]);
- * $token  = $handle->operationToken;          // string|null, no race
+ * $token  = $handle->getOperationToken();     // string|null, no race
  * $result = yield $handle->getResult();
  * ```
  *
@@ -50,7 +50,7 @@ final class NexusOperationHandle
      *        Type used to decode the result value.
      */
     public function __construct(
-        public readonly ?string $operationToken,
+        private readonly ?string $operationToken,
         PromiseInterface $rawResult,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ) {

@@ -30,7 +30,7 @@ final class CompletionCallbackTestCase extends TestCase
     {
         $uri = 'temporal:///namespaces/n/workflows/w/r/history'
             . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
-        $cb = CompletionCallback::withNexusLinks(
+        $cb = CompletionCallback::fromNexusLinks(
             'http://cb',
             ['k' => 'v'],
             [
@@ -48,6 +48,6 @@ final class CompletionCallbackTestCase extends TestCase
     {
         $bad = 'https:///namespaces/n/workflows/w/r/history?referenceType=EventReference&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
         $this->expectException(InvalidArgumentException::class);
-        CompletionCallback::withNexusLinks('http://cb', [], [new NexusLink($bad, NexusLinkConverter::TYPE_WORKFLOW_EVENT)]);
+        CompletionCallback::fromNexusLinks('http://cb', [], [new NexusLink($bad, NexusLinkConverter::TYPE_WORKFLOW_EVENT)]);
     }
 }

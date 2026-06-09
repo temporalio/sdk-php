@@ -18,12 +18,7 @@ final class GetInfoInput
 {
     /**
      * @no-named-arguments
-     * @internal Don't use the constructor. Use {@see self::with()} instead.
+     * @internal Don't use the constructor.
      */
     public function __construct() {}
-
-    public function with(): self
-    {
-        return new self();
-    }
 }

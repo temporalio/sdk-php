@@ -14,8 +14,11 @@ namespace Temporal\Workflow;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Nexus\Validation\PrintableAsciiValidator;
+use Temporal\Nexus\Validation\ServiceNameValidator;
 
 /**
  * Options for executing a Nexus operation from a workflow.
@@ -51,13 +54,13 @@ final class NexusOperationOptions extends Options
      *
      * @see NexusOperationCancellationType
      */
-    #[Marshal(name: 'cancellationType')]
-    public int $cancellationType;
+    #[Marshal(name: 'cancellationType', type: EnumValueType::class, of: NexusOperationCancellationType::class)]
+    public NexusOperationCancellationType $cancellationType;
 
     public function __construct()
     {
         $this->scheduleToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
-        $this->cancellationType = NexusOperationCancellationType::Unspecified->value;
+        $this->cancellationType = NexusOperationCancellationType::Unspecified;
         parent::__construct();
     }
 
@@ -67,10 +70,7 @@ final class NexusOperationOptions extends Options
     #[Pure]
     public function withEndpoint(string $endpoint): self
     {
-        /** @psalm-suppress TypeDoesNotContainType */
-        if ($endpoint === '') {
-            throw new \InvalidArgumentException('Nexus endpoint must be a non-empty string');
-        }
+        PrintableAsciiValidator::assert($endpoint, 'Nexus Endpoint');
         $self = clone $this;
         $self->endpoint = $endpoint;
         return $self;
@@ -82,10 +82,7 @@ final class NexusOperationOptions extends Options
     #[Pure]
     public function withService(string $service): self
     {
-        /** @psalm-suppress TypeDoesNotContainType */
-        if ($service === '') {
-            throw new \InvalidArgumentException('Nexus service must be a non-empty string');
-        }
+        ServiceNameValidator::assert($service);
         $self = clone $this;
         $self->service = $service;
         return $self;
@@ -105,10 +102,12 @@ final class NexusOperationOptions extends Options
     #[Pure]
     public function withCancellationType(NexusOperationCancellationType|int $type): self
     {
-        \is_int($type) and $type = NexusOperationCancellationType::from($type);
+        if (\is_int($type)) {
+            $type = NexusOperationCancellationType::from($type);
+        }
 
         $self = clone $this;
-        $self->cancellationType = $type->value;
+        $self->cancellationType = $type;
         return $self;
     }
 }

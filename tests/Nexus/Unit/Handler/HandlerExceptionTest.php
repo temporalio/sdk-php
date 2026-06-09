@@ -85,23 +85,6 @@ final class HandlerExceptionTest extends TestCase
         self::assertTrue($ex->isRetryable());
     }
 
-    public function testFromRawTypeUnknownYieldsUnknown(): void
-    {
-        $ex = HandlerException::fromRawType('COMPLETELY_NEW', 'msg');
-
-        self::assertSame('COMPLETELY_NEW', $ex->rawErrorType);
-        self::assertSame(ErrorType::Unknown, $ex->errorType);
-        self::assertSame('msg', $ex->getMessage());
-    }
-
-    public function testFromRawTypeKnownResolvesEnum(): void
-    {
-        $ex = HandlerException::fromRawType('BAD_REQUEST', 'msg');
-
-        self::assertSame('BAD_REQUEST', $ex->rawErrorType);
-        self::assertSame(ErrorType::BadRequest, $ex->errorType);
-    }
-
     public function testIsRetryableFromErrorType(): void
     {
         $retryable = [

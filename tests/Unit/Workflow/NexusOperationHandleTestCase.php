@@ -60,12 +60,32 @@ final class NexusOperationHandleTestCase extends AbstractUnit
             rawResult: $deferred->promise(),
         );
 
-        self::assertSame('observed-while-pending', $handle->operationToken);
+        self::assertSame('observed-while-pending', $handle->getOperationToken());
 
         $resolved = false;
         $handle->getResult()->then(static function () use (&$resolved): void {
             $resolved = true;
         });
         self::assertFalse($resolved);
+    }
+
+    public function testGetOperationTokenReturnsNullForSyncOperation(): void
+    {
+        $handle = new NexusOperationHandle(
+            operationToken: null,
+            rawResult: (new Deferred())->promise(),
+        );
+
+        self::assertNull($handle->getOperationToken());
+    }
+
+    public function testGetOperationTokenReturnsTokenForAsyncOperation(): void
+    {
+        $handle = new NexusOperationHandle(
+            operationToken: 'op-token-xyz',
+            rawResult: (new Deferred())->promise(),
+        );
+
+        self::assertSame('op-token-xyz', $handle->getOperationToken());
     }
 }

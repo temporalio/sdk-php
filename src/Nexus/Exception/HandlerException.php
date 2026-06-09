@@ -21,18 +21,13 @@ final class HandlerException extends NexusException
     public readonly RetryBehavior $retryBehavior;
 
     private function __construct(
-        ErrorType|string $errorType,
+        ErrorType $errorType,
         string $message,
         ?\Throwable $cause,
         RetryBehavior $retryBehavior,
     ) {
-        if ($errorType instanceof ErrorType) {
-            $this->rawErrorType = $errorType->value;
-            $this->errorType = $errorType;
-        } else {
-            $this->rawErrorType = $errorType;
-            $this->errorType = ErrorType::tryFrom($errorType) ?? ErrorType::Unknown;
-        }
+        $this->rawErrorType = $errorType->value;
+        $this->errorType = $errorType;
         $this->retryBehavior = $retryBehavior;
 
         parent::__construct($message, 0, $cause);
@@ -59,18 +54,6 @@ final class HandlerException extends NexusException
             ? "handler error: {$cause->getMessage()}"
             : 'handler error';
         return new self($errorType, $message, $cause, $retryBehavior);
-    }
-
-    /**
-     * Unknown wire values → {@see ErrorType::Unknown}; raw value preserved in {@see self::$rawErrorType}.
-     */
-    public static function fromRawType(
-        string $rawErrorType,
-        string $message,
-        ?\Throwable $cause = null,
-        RetryBehavior $retryBehavior = RetryBehavior::Unspecified,
-    ): self {
-        return new self($rawErrorType, $message, $cause, $retryBehavior);
     }
 
     public function isRetryable(): bool

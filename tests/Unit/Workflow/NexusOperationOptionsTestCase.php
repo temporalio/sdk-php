@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Workflow;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
@@ -34,8 +35,8 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
 
     public function testWithEndpointRejectsEmptyString(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Nexus endpoint must be a non-empty string');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Nexus Endpoint must not be empty');
 
         NexusOperationOptions::new()->withEndpoint('');
     }
@@ -59,8 +60,8 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
 
     public function testWithServiceRejectsEmptyString(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Nexus service must be a non-empty string');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Service Name must not be empty');
 
         NexusOperationOptions::new()->withService('');
     }
@@ -76,7 +77,7 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
     {
         $options = NexusOperationOptions::new();
 
-        self::assertSame(NexusOperationCancellationType::Unspecified->value, $options->cancellationType);
+        self::assertSame(NexusOperationCancellationType::Unspecified, $options->cancellationType);
     }
 
     public function testWithCancellationTypeAcceptsEnum(): void
@@ -84,7 +85,7 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
         $options = NexusOperationOptions::new()
             ->withCancellationType(NexusOperationCancellationType::TryCancel);
 
-        self::assertSame(NexusOperationCancellationType::TryCancel->value, $options->cancellationType);
+        self::assertSame(NexusOperationCancellationType::TryCancel, $options->cancellationType);
     }
 
     public function testWithCancellationTypeAcceptsInt(): void
@@ -92,7 +93,7 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
         $options = NexusOperationOptions::new()
             ->withCancellationType(NexusOperationCancellationType::WaitCompleted->value);
 
-        self::assertSame(NexusOperationCancellationType::WaitCompleted->value, $options->cancellationType);
+        self::assertSame(NexusOperationCancellationType::WaitCompleted, $options->cancellationType);
     }
 
     public function testWithCancellationTypeIsImmutable(): void
@@ -102,11 +103,11 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
 
         self::assertNotSame($original, $updated);
         self::assertSame(
-            NexusOperationCancellationType::Unspecified->value,
+            NexusOperationCancellationType::Unspecified,
             $original->cancellationType,
             'Original must stay pristine',
         );
-        self::assertSame(NexusOperationCancellationType::Abandon->value, $updated->cancellationType);
+        self::assertSame(NexusOperationCancellationType::Abandon, $updated->cancellationType);
     }
 
     public function testWithCancellationTypeIntAndEnumProduceSameValue(): void

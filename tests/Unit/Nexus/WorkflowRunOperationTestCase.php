@@ -21,6 +21,8 @@ use Temporal\Nexus\WorkflowHandle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * Mocks the WorkflowClient and exercises the {@see WorkflowRunOperation}
@@ -37,6 +39,8 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
     /** @var WorkflowClientInterface&MockObject */
     private WorkflowClientInterface $client;
+
+    private EnvironmentInterface $env;
 
     public function testStartReturnsAsyncTokenAndStartsWorkflow(): void
     {
@@ -297,11 +301,12 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
     protected function setUp(): void
     {
+        $this->env = new Environment();
         $this->client = $this->createMock(WorkflowClientInterface::class);
         Nexus::setCurrentContext(new NexusContext(
             operation: new NexusOperationContext(self::NS, 'tq'),
             workflowClient: $this->client,
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
         ));
     }
 

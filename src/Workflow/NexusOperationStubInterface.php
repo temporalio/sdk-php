@@ -16,6 +16,10 @@ use Temporal\DataConverter\Type;
 
 interface NexusOperationStubInterface
 {
+    /**
+     * Options this stub was created with (endpoint, service, timeouts,
+     * cancellation type).
+     */
     public function getOptions(): NexusOperationOptions;
 
     /**
@@ -42,7 +46,7 @@ interface NexusOperationStubInterface
      *
      * ```php
      * $handle = yield $stub->start('order.place', [$order]);
-     * $token  = $handle->operationToken;
+     * $token  = $handle->getOperationToken();
      * $result = yield $handle->getResult();
      * ```
      *

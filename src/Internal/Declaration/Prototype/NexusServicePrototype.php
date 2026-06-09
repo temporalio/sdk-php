@@ -14,18 +14,9 @@ namespace Temporal\Internal\Declaration\Prototype;
 use Temporal\Nexus\Validation\ServiceNameValidator;
 
 /**
- * Pure storage DTO for a `#[Service]`-annotated Nexus contract. Mirrors the
- * shape of {@see ActivityPrototype} / {@see WorkflowPrototype}: reflection
- * lives in the Reader, the prototype is a plain getter bag.
- *
- * The base `Prototype::$handler` slot is left null — Nexus services have no
- * single entry-point handler; per-operation handlers are exposed through
- * {@see self::getOperations()}.
- *
- * The `$factory` slot follows {@see ActivityPrototype}: `withInstance(object)`
- * is sugar over `withFactory(static fn() => $instance)`, and
- * {@see \Temporal\Internal\Declaration\Instantiator\NexusServiceInstantiator}
- * uses it at bind time.
+ * Storage DTO for a `#[Service]`-annotated Nexus contract; same shape as
+ * {@see ActivityPrototype}. The base handler slot stays null — operations are
+ * exposed via {@see self::getOperations()}; the impl is bound via the factory.
  */
 final class NexusServicePrototype extends Prototype
 {

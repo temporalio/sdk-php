@@ -32,7 +32,7 @@ use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Nexus\NexusLinkConverter;
-use Temporal\Internal\Nexus\OnConflictOptions;
+use Temporal\Internal\Client\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Nexus\Link as NexusLink;

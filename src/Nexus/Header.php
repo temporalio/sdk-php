@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus;
 
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
@@ -101,18 +102,15 @@ final class Header
             return null;
         }
 
-        if (!\preg_match('/^(\d+)(ms|s|m)$/', $trimmed, $m)) {
-            throw new InvalidArgumentException(
-                "Invalid Nexus timeout format '{$value}'; expected <number><unit> with unit in ms|s|m",
-            );
+        if (!\preg_match('/^[+-]?\d/', $trimmed)) {
+            throw new InvalidArgumentException("Invalid Nexus timeout '{$value}'");
         }
 
-        $number = (int) $m[1];
-        return match ($m[2]) {
-            'ms' => self::millisecondsInterval($number),
-            's'  => new \DateInterval("PT{$number}S"),
-            'm'  => new \DateInterval("PT{$number}M"),
-        };
+        try {
+            return DateInterval::parse($trimmed, DateInterval::FORMAT_SECONDS);
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException("Invalid Nexus timeout '{$value}'", 0, $e);
+        }
     }
 
     /**
@@ -129,76 +127,5 @@ final class Header
             return null;
         }
         return ($now ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add($interval);
-    }
-
-    /**
-     * RFC 3339 with millisecond precision in UTC, e.g. `2026-04-25T12:43:36.123Z`.
-     */
-    public static function formatCloseTime(\DateTimeImmutable $time): string
-    {
-        return $time->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.v\Z');
-    }
-
-    /**
-     * Accepts any RFC 3339 form parseable by {@see \DateTimeImmutable}.
-     *
-     * @throws InvalidArgumentException
-     */
-    public static function parseCloseTime(string $value): \DateTimeImmutable
-    {
-        $trimmed = \trim($value);
-        if ($trimmed === '') {
-            throw new InvalidArgumentException('Nexus-Operation-Close-Time must not be empty');
-        }
-        try {
-            return new \DateTimeImmutable($trimmed);
-        } catch (\Exception $e) {
-            throw new InvalidArgumentException(
-                "Invalid Nexus-Operation-Close-Time '{$value}'; expected an RFC 3339 timestamp",
-                previous: $e,
-            );
-        }
-    }
-
-    /**
-     * IMF-fixdate (RFC 9110 §5.6.7), e.g. `Sat, 25 Apr 2026 12:43:36 GMT`.
-     */
-    public static function formatStartTime(\DateTimeImmutable $time): string
-    {
-        return $time->setTimezone(new \DateTimeZone('UTC'))->format('D, d M Y H:i:s \G\M\T');
-    }
-
-    /**
-     * IMF-fixdate, with fallback to {@see \DateTimeImmutable} for obsolete
-     * forms (RFC 850, asctime) per RFC 9110 receiver tolerance.
-     *
-     * @throws InvalidArgumentException
-     */
-    public static function parseStartTime(string $value): \DateTimeImmutable
-    {
-        $trimmed = \trim($value);
-        if ($trimmed === '') {
-            throw new InvalidArgumentException('Nexus-Operation-Start-Time must not be empty');
-        }
-        $parsed = \DateTimeImmutable::createFromFormat('D, d M Y H:i:s \G\M\T', $trimmed);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-        try {
-            return new \DateTimeImmutable($trimmed);
-        } catch (\Exception $e) {
-            throw new InvalidArgumentException(
-                "Invalid Nexus-Operation-Start-Time '{$value}'; expected an HTTP-date (IMF-fixdate)",
-                previous: $e,
-            );
-        }
-    }
-
-    private static function millisecondsInterval(int $ms): \DateInterval
-    {
-        $seconds = \intdiv($ms, 1000);
-        $interval = new \DateInterval("PT{$seconds}S");
-        $interval->f = ($ms % 1000) / 1000;
-        return $interval;
     }
 }

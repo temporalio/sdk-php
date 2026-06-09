@@ -11,9 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
-/**
- * Adapter wrapping a `callable` into {@see MethodCancellationListenerInterface}.
- */
 final class ClosureMethodCancellationListener implements MethodCancellationListenerInterface
 {
     private function __construct(

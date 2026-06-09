@@ -39,7 +39,7 @@ final class OperationStartDetailsTest extends TestCase
     public function testRejectsEmptyRequestId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('requestId must not be empty');
+        $this->expectExceptionMessage('OperationStartDetails requires a non-empty requestId');
         new OperationStartDetails(requestId: '');
     }
 

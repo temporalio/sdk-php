@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Nexus\NexusOperationContext;
+
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -27,6 +29,8 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -34,6 +38,14 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerInterceptorTest extends TestCase
 {
     use BindNexusService;
+
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
 
     public function testMultipleInterceptorsAreAppliedInRegistrationOrder(): void
     {
@@ -69,9 +81,11 @@ final class ServiceHandlerInterceptorTest extends TestCase
         );
 
         $handler->startOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('User'),
+            null,
+            new NexusOperationContext(),
         );
 
         // First registered interceptor is the outermost.
@@ -101,9 +115,11 @@ final class ServiceHandlerInterceptorTest extends TestCase
         );
 
         $result = $handler->startOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('Alice'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame('rewritten-Alice', $result->value->getValue(0, 'string'));
@@ -131,9 +147,11 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $this->expectException(HandlerException::class);
         $this->expectExceptionMessage('blocked');
         $handler->startOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello1', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('X'),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -164,9 +182,11 @@ final class ServiceHandlerInterceptorTest extends TestCase
         );
 
         $result = $handler->startOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('X'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame('fallback', $result->value->getValue(0, 'string'));
@@ -197,17 +217,21 @@ final class ServiceHandlerInterceptorTest extends TestCase
         );
 
         $started = $handler->startOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('User'),
+            null,
+            new NexusOperationContext(),
         );
 
         $token = $started->info->token;
         self::assertNotNull($token);
 
         $handler->cancelOperation(
-            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2'),
+            new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2', env: $this->env),
             new \Temporal\Nexus\Handler\OperationCancelDetails(operationToken: $token),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame(["sayHello2:{$token}"], $seen);

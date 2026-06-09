@@ -21,11 +21,21 @@ use Temporal\Internal\Nexus\NexusContext;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\NexusOperationContext;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 #[CoversClass(Nexus::class)]
 #[CoversClass(NexusOperationOutboundCallsInterceptor::class)]
 final class NexusOutboundInterceptorTest extends TestCase
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     protected function tearDown(): void
     {
         Nexus::setCurrentContext(null);
@@ -57,7 +67,7 @@ final class NexusOutboundInterceptorTest extends TestCase
 
         $info = new NexusOperationContext('ns', 'tq');
         Nexus::setCurrentContext(new NexusContext(
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
             operation: $info,
             outboundPipeline: Pipeline::prepare([$record('A'), $record('B')]),
         ));
@@ -81,7 +91,7 @@ final class NexusOutboundInterceptorTest extends TestCase
         };
 
         Nexus::setCurrentContext(new NexusContext(
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
             operation: new NexusOperationContext('ns', 'tq'),
             outboundPipeline: Pipeline::prepare([$rewriting]),
         ));
@@ -96,7 +106,7 @@ final class NexusOutboundInterceptorTest extends TestCase
     {
         $info = new NexusOperationContext('ns', 'tq');
         Nexus::setCurrentContext(new NexusContext(
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
             operation: $info,
         ));
 

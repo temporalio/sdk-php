@@ -104,21 +104,19 @@ final class HeaderTest extends TestCase
      */
     public static function malformedTimeoutProvider(): iterable
     {
-        yield 'fractional'      => ['0.5s'];
-        yield 'negative'        => ['-30s'];
-        yield 'unknown unit h'  => ['30h'];
         yield 'unknown unit us' => ['30us'];
         yield 'no unit'         => ['30'];
+        yield 'bare number'     => ['5'];
         yield 'only unit'       => ['ms'];
-        yield 'embedded space'  => ['30 s'];
-        yield 'leading plus'    => ['+30s'];
+        yield 'pure garbage'    => ['abc'];
+        yield 'trailing junk'   => ['12x'];
     }
 
     #[DataProvider('malformedTimeoutProvider')]
     public function testParseTimeoutRejectsMalformed(string $input): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Invalid Nexus timeout format/');
+        $this->expectExceptionMessageMatches('/Invalid Nexus timeout/');
 
         Header::parseTimeout($input);
     }
@@ -146,131 +144,4 @@ final class HeaderTest extends TestCase
         Header::deadlineFromTimeout('garbage');
     }
 
-    // ── formatCloseTime() / parseCloseTime() ─────────────────────────
-
-    public function testFormatCloseTimeRfc3339WithMs(): void
-    {
-        $t = new \DateTimeImmutable('2026-04-25T12:43:36.123456+00:00');
-
-        self::assertSame('2026-04-25T12:43:36.123Z', Header::formatCloseTime($t));
-    }
-
-    public function testFormatCloseTimeNormalizesNonUtcInputToUtc(): void
-    {
-        $t = new \DateTimeImmutable('2026-04-25T15:43:36.500+03:00');
-
-        self::assertSame('2026-04-25T12:43:36.500Z', Header::formatCloseTime($t));
-    }
-
-    public function testFormatCloseTimePadsMillisecondZeros(): void
-    {
-        $t = new \DateTimeImmutable('2026-04-25T12:00:00+00:00');
-
-        self::assertSame('2026-04-25T12:00:00.000Z', Header::formatCloseTime($t));
-    }
-
-    public function testParseCloseTimeAcceptsZForm(): void
-    {
-        $t = Header::parseCloseTime('2026-04-25T12:43:36.123Z');
-
-        self::assertSame('2026-04-25T12:43:36.123', $t->format('Y-m-d\TH:i:s.v'));
-    }
-
-    public function testParseCloseTimeAcceptsOffsetForm(): void
-    {
-        $t = Header::parseCloseTime('2026-04-25T15:43:36.123+03:00');
-
-        self::assertSame(
-            '2026-04-25T12:43:36.123',
-            $t->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.v'),
-        );
-    }
-
-    public function testParseCloseTimeAcceptsSecondsOnly(): void
-    {
-        $t = Header::parseCloseTime('2026-04-25T12:43:36Z');
-
-        self::assertSame('2026-04-25T12:43:36', $t->format('Y-m-d\TH:i:s'));
-    }
-
-    public function testParseCloseTimeRejectsEmpty(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Nexus-Operation-Close-Time must not be empty');
-        Header::parseCloseTime('   ');
-    }
-
-    public function testParseCloseTimeRejectsMalformed(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/RFC 3339/');
-        Header::parseCloseTime('not-a-timestamp');
-    }
-
-    public function testCloseTimeRoundTrip(): void
-    {
-        $original = new \DateTimeImmutable('2026-04-25T12:43:36.789+00:00');
-
-        $encoded = Header::formatCloseTime($original);
-        $parsed = Header::parseCloseTime($encoded);
-
-        self::assertSame($original->getTimestamp(), $parsed->getTimestamp());
-        self::assertSame(789000, (int) $parsed->format('u'));
-    }
-
-    // ── formatStartTime() / parseStartTime() ─────────────────────────
-
-    public function testFormatStartTimeImfFixdate(): void
-    {
-        $t = new \DateTimeImmutable('2026-04-25T12:43:36+00:00');
-
-        self::assertSame('Sat, 25 Apr 2026 12:43:36 GMT', Header::formatStartTime($t));
-    }
-
-    public function testFormatStartTimeNormalizesNonUtc(): void
-    {
-        $t = new \DateTimeImmutable('2026-04-25T15:43:36+03:00');
-
-        self::assertSame('Sat, 25 Apr 2026 12:43:36 GMT', Header::formatStartTime($t));
-    }
-
-    public function testParseStartTimeImfFixdate(): void
-    {
-        $t = Header::parseStartTime('Sat, 25 Apr 2026 12:43:36 GMT');
-
-        self::assertSame('2026-04-25T12:43:36+00:00', $t->format('c'));
-    }
-
-    public function testParseStartTimeFallsBackForObsoleteForms(): void
-    {
-        // RFC 850 form — receivers must tolerate per RFC 9110.
-        $t = Header::parseStartTime('Saturday, 25-Apr-26 12:43:36 GMT');
-
-        self::assertSame('2026-04-25', $t->format('Y-m-d'));
-        self::assertSame('12:43:36', $t->format('H:i:s'));
-    }
-
-    public function testParseStartTimeRejectsEmpty(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Nexus-Operation-Start-Time must not be empty');
-        Header::parseStartTime('');
-    }
-
-    public function testParseStartTimeRejectsGarbage(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/HTTP-date/');
-        Header::parseStartTime('not-a-timestamp');
-    }
-
-    public function testStartTimeRoundTrip(): void
-    {
-        $original = new \DateTimeImmutable('2026-04-25T12:43:36+00:00');
-
-        $encoded = Header::formatStartTime($original);
-        $parsed = Header::parseStartTime($encoded);
-
-        self::assertSame($original->getTimestamp(), $parsed->getTimestamp());
-    }
 }

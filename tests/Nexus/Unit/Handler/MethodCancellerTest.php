@@ -20,7 +20,9 @@ use Temporal\Nexus\Handler\MethodCancellationListenerInterface;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelSignaturesService;
-use Temporal\Tests\Support\FrozenClock;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -28,6 +30,14 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MethodOperationHandler::class)]
 final class MethodCancellerTest extends TestCase
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     public function testHandlerResolvesLegacyStringSignature(): void
     {
         $service = new CancelSignaturesService();
@@ -68,7 +78,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testNotCancelledByDefault(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
 
         self::assertFalse($canceller->isCancelled());
         self::assertNull($canceller->getReason());
@@ -76,7 +86,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testCancelSetsReason(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $canceller->cancel('deadline exceeded');
 
         self::assertTrue($canceller->isCancelled());
@@ -85,7 +95,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testCancelIsIdempotent(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $canceller->cancel('first');
         $canceller->cancel('second');
 
@@ -94,7 +104,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testListenerInvokedOnCancel(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $hits = 0;
         $canceller->addListener(ClosureMethodCancellationListener::fromCallable(
             static function () use (&$hits): void {
@@ -111,7 +121,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testListenerInvokedOnlyOnceAcrossDuplicateCancels(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $count = 0;
         $canceller->addListener(ClosureMethodCancellationListener::fromCallable(
             static function () use (&$count): void {
@@ -127,7 +137,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testListenerAddedAfterCancelInvokedImmediately(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $canceller->cancel('gone');
 
         $fired = false;
@@ -142,7 +152,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testRemovedListenerNotInvoked(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $invoked = false;
 
         $listener = new class($invoked) implements MethodCancellationListenerInterface {
@@ -163,7 +173,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testDeadlineNotExpiredYet(): void
     {
-        $canceller = new MethodCanceller(new \DateTimeImmutable('+1 hour'));
+        $canceller = new MethodCanceller($this->env, new \DateTimeImmutable('+1 hour'));
 
         self::assertFalse($canceller->isCancelled());
         self::assertNull($canceller->getReason());
@@ -171,7 +181,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testExpiredDeadlineAutoCancelsOnIsCancelled(): void
     {
-        $canceller = new MethodCanceller(new \DateTimeImmutable('-1 second'));
+        $canceller = new MethodCanceller($this->env, new \DateTimeImmutable('-1 second'));
 
         self::assertTrue($canceller->isCancelled());
         self::assertStringContainsString('deadline exceeded', (string) $canceller->getReason());
@@ -179,7 +189,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testExpiredDeadlineAutoCancelsOnGetReason(): void
     {
-        $canceller = new MethodCanceller(new \DateTimeImmutable('-1 second'));
+        $canceller = new MethodCanceller($this->env, new \DateTimeImmutable('-1 second'));
 
         // getReason() must trip the cancellation even if isCancelled() wasn't called first.
         self::assertNotNull($canceller->getReason());
@@ -188,9 +198,9 @@ final class MethodCancellerTest extends TestCase
 
     public function testListenerFiresOnDeadlineTrip(): void
     {
-        $clock = new FrozenClock(new \DateTimeImmutable('2026-01-01T00:00:00Z'));
+        $this->env->update(new TickInfo(time: new \DateTimeImmutable('2026-01-01T00:00:00Z')));
         $deadline = new \DateTimeImmutable('2026-01-01T00:00:00.100Z');
-        $canceller = new MethodCanceller($deadline, $clock);
+        $canceller = new MethodCanceller($this->env, $deadline);
 
         $fired = false;
         $canceller->addListener(ClosureMethodCancellationListener::fromCallable(
@@ -198,8 +208,10 @@ final class MethodCancellerTest extends TestCase
                 $fired = true;
             },
         ));
+        self::assertFalse($canceller->isCancelled());
+        self::assertFalse($fired);
 
-        $clock->advance(new \DateInterval('PT1S'));
+        $this->env->update(new TickInfo(time: new \DateTimeImmutable('2026-01-01T00:00:01Z')));
         self::assertTrue($canceller->isCancelled());
 
         self::assertTrue($fired);
@@ -208,7 +220,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testExplicitCancelWinsOverDeadline(): void
     {
-        $canceller = new MethodCanceller(new \DateTimeImmutable('-1 second'));
+        $canceller = new MethodCanceller($this->env, new \DateTimeImmutable('-1 second'));
 
         $canceller->cancel('shutdown');
 
@@ -222,7 +234,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testAddListenerOnAlreadyExpiredDeadlineInvokesImmediately(): void
     {
-        $canceller = new MethodCanceller(new \DateTimeImmutable('-1 second'));
+        $canceller = new MethodCanceller($this->env, new \DateTimeImmutable('-1 second'));
 
         $fired = false;
         $canceller->addListener(ClosureMethodCancellationListener::fromCallable(
@@ -238,14 +250,14 @@ final class MethodCancellerTest extends TestCase
     public function testGetDeadlineReturnsProvidedValue(): void
     {
         $deadline = new \DateTimeImmutable('+5 minutes');
-        $canceller = new MethodCanceller($deadline);
+        $canceller = new MethodCanceller($this->env, $deadline);
 
         self::assertSame($deadline, $canceller->getDeadline());
     }
 
     public function testNullDeadlineBehavesAsBefore(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
 
         self::assertNull($canceller->getDeadline());
         self::assertFalse($canceller->isCancelled());
@@ -253,7 +265,7 @@ final class MethodCancellerTest extends TestCase
 
     public function testListenersInvokedInRegistrationOrder(): void
     {
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $order = [];
         $canceller->addListener(ClosureMethodCancellationListener::fromCallable(
             static function () use (&$order): void {
@@ -283,7 +295,7 @@ final class MethodCancellerTest extends TestCase
         );
 
         $handler->cancel(
-            new OperationContext(service: $prototype->getID(), operation: $operation),
+            new OperationContext(service: $prototype->getID(), operation: $operation, env: $this->env),
             new OperationCancelDetails(operationToken: $token),
         );
     }

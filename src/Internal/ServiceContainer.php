@@ -42,11 +42,12 @@ final class ServiceContainer
 
     public readonly ProcessCollection $running;
     public readonly ActivityCollection $activities;
+    public readonly WorkflowReader $workflowsReader;
+    public readonly ActivityReader $activitiesReader;
+
     public readonly NexusServiceCollection $nexusServices;
     public readonly NexusInvocationRegistry $nexusInvocations;
     public readonly NexusTaskHandler $nexusTaskHandler;
-    public readonly WorkflowReader $workflowsReader;
-    public readonly ActivityReader $activitiesReader;
     public readonly NexusServiceReader $nexusServicesReader;
 
     /**
@@ -66,7 +67,11 @@ final class ServiceContainer
         public readonly ?WorkflowClientInterface $workflowClient = null,
     ) {
         $this->workflows = new WorkflowCollection();
+        $this->running = new ProcessCollection();
         $this->activities = new ActivityCollection();
+        $this->workflowsReader = new WorkflowReader($this->reader);
+        $this->activitiesReader = new ActivityReader($this->reader);
+
         $this->nexusServices = new NexusServiceCollection();
         $this->nexusInvocations = new NexusInvocationRegistry();
         $this->nexusTaskHandler = new NexusTaskHandler(
@@ -74,10 +79,8 @@ final class ServiceContainer
             $this->dataConverter,
             interceptorProvider: $this->interceptorProvider,
             workflowClient: $workflowClient,
+            env: $this->env,
         );
-        $this->running = new ProcessCollection();
-        $this->workflowsReader = new WorkflowReader($this->reader);
-        $this->activitiesReader = new ActivityReader($this->reader);
         $this->nexusServicesReader = new NexusServiceReader($this->reader);
     }
 

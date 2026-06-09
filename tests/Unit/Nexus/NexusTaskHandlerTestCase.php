@@ -32,6 +32,8 @@ use Temporal\Nexus\NexusOperationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 #[Service]
 interface TestGreetingService
@@ -83,7 +85,7 @@ class TestGreetingServiceImpl implements TestGreetingService
 
     public function sayHello(string $name): string
     {
-        self::$capturedStartHeaders = Nexus::getCurrentOperationContext()->headers;
+        self::$capturedStartHeaders = Nexus::getCurrentOperationContext()->headers->all();
         if (Nexus::getCurrentContext()->operation !== null) {
             self::$capturedStartNamespace = Nexus::getOperationContext()->namespace;
             self::$capturedStartTaskQueue = Nexus::getOperationContext()->taskQueue;
@@ -125,7 +127,7 @@ class TestGreetingServiceImpl implements TestGreetingService
     #[OperationCancel(operation: 'cancelableOp')]
     public function cancelCancelableOp(string $token): void
     {
-        self::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers;
+        self::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers->all();
         if ($token === 'unknown') {
             throw HandlerException::create(ErrorType::NotFound, 'Not found');
         }
@@ -176,12 +178,13 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 {
     private NexusTaskHandler $handler;
     private DataConverterInterface $dataConverter;
+    private EnvironmentInterface $env;
 
     public function testStartSyncOperation(): void
     {
         $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->hasStartOperation());
         $startResp = $response->getStartOperation();
@@ -198,7 +201,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'asyncOp', 'input');
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->hasStartOperation());
         $startResp = $response->getStartOperation();
@@ -219,7 +222,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
         $this->expectException(OperationException::class);
         $this->expectExceptionMessage('Something went wrong');
-        $this->handler->handleStartOperation($request);
+        $this->handler->handleStartOperation($request, new NexusOperationContext());
     }
 
     public function testStartOperationPropagatesOperationExceptionCauseChain(): void
@@ -227,7 +230,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'richCauseFailingOp', 'input');
 
         try {
-            $this->handler->handleStartOperation($request);
+            $this->handler->handleStartOperation($request, new NexusOperationContext());
             self::fail('Expected OperationException');
         } catch (OperationException $e) {
             self::assertSame('outer-failure', $e->getMessage());
@@ -245,14 +248,14 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('NonExistentService', 'op', 'input');
 
         $this->expectException(NexusHandlerErrorException::class);
-        $this->handler->handleStartOperation($request);
+        $this->handler->handleStartOperation($request, new NexusOperationContext());
     }
 
     public function testCancelOperation(): void
     {
         $request = $this->buildCancelRequest('TestGreetingService', 'cancelableOp', 'cancel-token-456');
 
-        $response = $this->handler->handleCancelOperation($request);
+        $response = $this->handler->handleCancelOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->hasCancelOperation());
     }
@@ -262,7 +265,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildCancelRequest('TestGreetingService', 'cancelableOp', 'unknown');
 
         $this->expectException(NexusHandlerErrorException::class);
-        $this->handler->handleCancelOperation($request);
+        $this->handler->handleCancelOperation($request, new NexusOperationContext());
     }
 
     public function testCancelOperationWithUnknownService(): void
@@ -270,7 +273,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildCancelRequest('NonExistentService', 'op', 'token');
 
         $this->expectException(NexusHandlerErrorException::class);
-        $this->handler->handleCancelOperation($request);
+        $this->handler->handleCancelOperation($request, new NexusOperationContext());
     }
 
     public function testCancelOperationPropagatesHeadersToContext(): void
@@ -280,7 +283,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
             'Authorization' => 'Bearer xyz',
         ]);
 
-        $this->handler->handleCancelOperation($request);
+        $this->handler->handleCancelOperation($request, new NexusOperationContext());
 
         // OperationContext lowercases header keys on construction.
         self::assertSame('trace-1', TestGreetingServiceImpl::$capturedCancelHeaders['x-nexus-trace-id'] ?? null);
@@ -299,7 +302,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request->setStartOperation($startReq);
         $request->setHeader(['X-Nexus-Trace-Id' => 'trace-2']);
 
-        $this->handler->handleStartOperation($request);
+        $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertSame('trace-2', TestGreetingServiceImpl::$capturedStartHeaders['x-nexus-trace-id'] ?? null);
     }
@@ -311,7 +314,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $operationContext = new NexusOperationContext();
         $operationContext->namespace = 'wire-ns';
         $operationContext->taskQueue = 'wire-tq';
-        $this->handler->handleStartOperation($request, null, $operationContext);
+        $this->handler->handleStartOperation($request, $operationContext);
 
         self::assertSame('wire-ns', TestGreetingServiceImpl::$capturedStartNamespace);
     }
@@ -320,7 +323,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
 
-        $this->handler->handleStartOperation($request, null, new NexusOperationContext());
+        $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertNull(TestGreetingServiceImpl::$capturedStartNamespace);
     }
@@ -332,7 +335,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $operationContext = new NexusOperationContext();
         $operationContext->namespace = 'wire-ns';
         $operationContext->taskQueue = 'wire-tq';
-        $this->handler->handleStartOperation($request, null, $operationContext);
+        $this->handler->handleStartOperation($request, $operationContext);
 
         self::assertSame('wire-tq', TestGreetingServiceImpl::$capturedStartTaskQueue);
     }
@@ -341,7 +344,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'sayHello', 'World');
 
-        $this->handler->handleStartOperation($request, null, new NexusOperationContext());
+        $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertNull(TestGreetingServiceImpl::$capturedStartTaskQueue);
     }
@@ -351,7 +354,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('NonExistentService', 'op', 'input');
 
         try {
-            $this->handler->handleStartOperation($request);
+            $this->handler->handleStartOperation($request, new NexusOperationContext());
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
@@ -364,7 +367,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'grpcFailingOp', 'input');
 
         try {
-            $this->handler->handleStartOperation($request);
+            $this->handler->handleStartOperation($request, new NexusOperationContext());
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
@@ -377,7 +380,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'appFailureOp', 'input');
 
         try {
-            $this->handler->handleStartOperation($request);
+            $this->handler->handleStartOperation($request, new NexusOperationContext());
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('INTERNAL', $e->handlerError->getErrorType());
@@ -393,7 +396,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'genericFailingOp', 'input');
 
         try {
-            $this->handler->handleStartOperation($request);
+            $this->handler->handleStartOperation($request, new NexusOperationContext());
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('INTERNAL', $e->handlerError->getErrorType());
@@ -406,7 +409,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'deadlineEchoOp', 'input');
         $request->setHeader(['Request-Timeout' => 'not-a-duration']);
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
         self::assertSame('none', $this->decodeSyncStringResult($response->getStartOperation()));
@@ -417,7 +420,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = $this->buildStartRequest('TestGreetingService', 'deadlineEchoOp', 'input');
         $request->setHeader(['Request-Timeout' => '30s']);
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
         self::assertNotSame('none', $this->decodeSyncStringResult($response->getStartOperation()));
@@ -427,7 +430,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'deadlineEchoOp', 'input');
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
         self::assertSame('none', $this->decodeSyncStringResult($response->getStartOperation()));
@@ -447,7 +450,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request->setStartOperation($startReq);
         $request->setHeader(['content-type' => 'application/json']);
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->hasStartOperation());
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
@@ -457,7 +460,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'shout', 'hello');
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
 
         self::assertTrue($response->hasStartOperation());
         $startResp = $response->getStartOperation();
@@ -482,13 +485,14 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = new Request();
         $request->setStartOperation($startReq);
 
-        $response = $this->handler->handleStartOperation($request);
+        $response = $this->handler->handleStartOperation($request, new NexusOperationContext());
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
     }
 
     protected function setUp(): void
     {
         $this->dataConverter = DataConverter::createDefault();
+        $this->env = new Environment();
 
         TestGreetingServiceImpl::$capturedStartHeaders = [];
         TestGreetingServiceImpl::$capturedCancelHeaders = [];
@@ -498,6 +502,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $this->handler = new NexusTaskHandler(
             self::buildRepository(new TestGreetingServiceImpl()),
             $this->dataConverter,
+            $this->env,
         );
     }
 

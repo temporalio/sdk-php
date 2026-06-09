@@ -125,12 +125,12 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
             if (!$hasClient) {
                 foreach ($prototype->getOperations() as $operation) {
                     if ($operation->async) {
-                        throw new \LogicException(
-                            'Cannot register Nexus service implementations with async operations on a worker ' .
-                            'without a WorkflowClient. Async Nexus operations (WorkflowRunOperation) require cluster ' .
-                            'access; pass a WorkflowClient to the WorkerFactory ' .
-                            '(e.g. WorkerFactory::create(client: $workflowClient)).',
-                        );
+                        throw new \LogicException(\sprintf(
+                            'Nexus service %s declares async operation "%s", which needs cluster access. '
+                            . 'Pass a WorkflowClient to the worker: WorkerFactory::create(client: $workflowClient).',
+                            \get_class($service),
+                            $operation->name,
+                        ));
                     }
                 }
             }
@@ -164,7 +164,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $router->add(new Router\StackTrace($this->services->running));
 
         // Nexus routes
-        $router->add(new Router\InvokeNexusOperation($this->services->nexusTaskHandler, $this->services->nexusInvocations, $this->services->dataConverter, $this->services->marshaller));
+        $router->add(new Router\InvokeNexusOperation($this->services->nexusTaskHandler, $this->services->nexusInvocations, $this->services->dataConverter, $this->services->marshaller, $this->services->env));
         $router->add(new Router\CancelNexusOperation($this->services->nexusTaskHandler, $this->services->marshaller));
         $router->add(new Router\CancelNexusOperationMethod($this->services->nexusInvocations));
 

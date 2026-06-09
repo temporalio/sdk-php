@@ -20,6 +20,8 @@ use Temporal\Nexus\Handler\OperationStartResult;
  * Trait that provides a default interceptor implementation.
  *
  * @see NexusOperationInboundCallsInterceptor
+ *
+ * @psalm-require-implements NexusOperationInboundCallsInterceptor
  */
 trait NexusOperationInboundCallsInterceptorTrait
 {

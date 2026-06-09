@@ -38,8 +38,8 @@ interface HandlerInterface
         OperationContext $context,
         OperationStartDetails $details,
         ValuesInterface $input,
-        ?WorkflowClientInterface $workflowClient = null,
-        NexusOperationContext $operationContext = new NexusOperationContext(),
+        ?WorkflowClientInterface $workflowClient,
+        NexusOperationContext $operationContext,
     ): OperationStartResult;
 
     /**
@@ -57,7 +57,7 @@ interface HandlerInterface
     public function cancelOperation(
         OperationContext $context,
         OperationCancelDetails $details,
-        ?WorkflowClientInterface $workflowClient = null,
-        NexusOperationContext $operationContext = new NexusOperationContext(),
+        ?WorkflowClientInterface $workflowClient,
+        NexusOperationContext $operationContext,
     ): void;
 }

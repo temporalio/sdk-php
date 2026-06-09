@@ -900,12 +900,6 @@
       <code><![CDATA[ActivityContext]]></code>
     </UnnecessaryVarAnnotation>
   </file>
-  <file src="src/Internal/Transport/Router/InvokeNexusOperation.php">
-    <RiskyTruthyFalsyComparison>
-      <code><![CDATA[$callback]]></code>
-      <code><![CDATA[$options['requestId'] ?? '']]></code>
-    </RiskyTruthyFalsyComparison>
-  </file>
   <file src="src/Internal/Transport/Router/InvokeQuery.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$request->getID()]]></code>

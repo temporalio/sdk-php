@@ -15,7 +15,8 @@ use Temporal\Api\Common\V1\Link\WorkflowEvent;
 use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Internal\Nexus\NexusLinkConverter;
-use Temporal\Internal\Nexus\OnConflictOptions;
+use Temporal\Internal\Client\OnConflictOptions;
+use Temporal\Nexus\Internal\Headers;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\OperationStartDetails;
@@ -66,25 +67,24 @@ final class WorkflowRunOperation
 
         if ($details->callbackUrl !== null && $details->callbackUrl !== '') {
             $headers = $details->callbackHeaders;
-            $present = \array_change_key_case($headers, \CASE_LOWER);
+            $present = Headers::normalize($headers);
             // Send both header names for pre/post-1.27 server compatibility.
-            if (!\array_key_exists('nexus-operation-token', $present)) {
-                $headers['Nexus-Operation-Token'] = $token;
+            if (!\array_key_exists(\strtolower(Header::OPERATION_TOKEN), $present)) {
+                $headers[Header::OPERATION_TOKEN] = $token;
             }
-            if (!\array_key_exists('nexus-operation-id', $present)) {
-                $headers['nexus-operation-id'] = $token;
+            if (!\array_key_exists(\strtolower(Header::OPERATION_ID), $present)) {
+                $headers[\strtolower(Header::OPERATION_ID)] = $token;
             }
 
-            $callback = CompletionCallback::withNexusLinks($details->callbackUrl, $headers, $details->links);
+            $callback = CompletionCallback::fromNexusLinks($details->callbackUrl, $headers, $details->links);
             $options = $options->withCompletionCallbacks($callback);
         }
 
         $options = $options
             ->withLinks($details->links)
-            ->withOnConflictOptionsInternal(OnConflictOptions::forNexusCompletionCallback());
-
+            ->withOnConflictOptionsInternal(new OnConflictOptions())
         // Pin requestId so retried Nexus starts dedupe server-side.
-        $options = $options->withRequestId($details->requestId);
+            ->withRequestId($details->requestId);
 
         $stub = $client->newWorkflowStub($handle->workflowClass, $options);
         $run = $client->start($stub, ...$handle->args);
@@ -124,10 +124,11 @@ final class WorkflowRunOperation
         $event = (new WorkflowEvent())
             ->setNamespace($namespace)
             ->setWorkflowId($execution->getID())
-            ->setRunId($execution->getRunID() ?? '');
-        $event->setEventRef(
-            (new EventReference())->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED),
-        );
+            ->setRunId($execution->getRunID() ?? '')
+            ->setEventRef(
+                (new EventReference())
+                    ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED),
+            );
         return NexusLinkConverter::workflowEventToNexusLink($event);
     }
 }

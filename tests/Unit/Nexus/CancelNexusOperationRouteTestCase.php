@@ -21,6 +21,8 @@ use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
@@ -44,7 +46,7 @@ class RouteHeaderServiceImpl implements RouteHeaderService
     #[OperationCancel(operation: 'op')]
     public function cancel(string $token): void
     {
-        self::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers;
+        self::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers->all();
     }
 }
 
@@ -59,8 +61,12 @@ class RouteHeaderServiceImpl implements RouteHeaderService
 #[CoversClass(CancelNexusOperation::class)]
 final class CancelNexusOperationRouteTestCase extends AbstractUnit
 {
+    private EnvironmentInterface $env;
+
     protected function setUp(): void
     {
+        parent::setUp();
+        $this->env = new Environment();
         RouteHeaderServiceImpl::$capturedCancelHeaders = [];
     }
 
@@ -116,7 +122,7 @@ final class CancelNexusOperationRouteTestCase extends AbstractUnit
         $prototype = $reader->fromClass(RouteHeaderServiceImpl::class)->withInstance(new RouteHeaderServiceImpl());
         $collection->add($prototype, false);
 
-        return new NexusTaskHandler($collection, DataConverter::createDefault());
+        return new NexusTaskHandler($collection, DataConverter::createDefault(), $this->env);
     }
 
     private function buildMarshaller(): Marshaller

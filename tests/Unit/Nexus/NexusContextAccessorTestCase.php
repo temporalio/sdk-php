@@ -12,6 +12,8 @@ use Temporal\Nexus\Nexus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @group unit
@@ -20,6 +22,14 @@ use Temporal\Tests\Unit\AbstractUnit;
 #[CoversClass(Nexus::class)]
 final class NexusContextAccessorTestCase extends AbstractUnit
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     protected function tearDown(): void
     {
         // Always clear — leaking a context would poison sibling tests that
@@ -41,7 +51,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
         $ctx = new NexusOperationContext('ns', 'tq');
 
         Nexus::setCurrentContext(new NexusContext(
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
             operation: $ctx,
             workflowClient: $client,
         ));
@@ -64,7 +74,7 @@ final class NexusContextAccessorTestCase extends AbstractUnit
     public function testClearingRestoresOutsideBehavior(): void
     {
         Nexus::setCurrentContext(new NexusContext(
-            current: new OperationContext(service: 'svc', operation: 'op'),
+            current: new OperationContext(service: 'svc', operation: 'op', env: $this->env),
             operation: new NexusOperationContext('ns', 'tq'),
         ));
         Nexus::setCurrentContext(null);

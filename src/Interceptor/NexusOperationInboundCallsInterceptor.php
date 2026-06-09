@@ -28,7 +28,7 @@ use Temporal\Nexus\Handler\OperationStartResult;
  *
  *     public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
  *     {
- *         if (($input->operationContext->headers['authorization'] ?? null) !== 'expected-token') {
+ *         if ($input->operationContext->headers->get('authorization') !== 'expected-token') {
  *             throw HandlerException::create(ErrorType::Unauthorized, 'Unauthorized');
  *         }
  *

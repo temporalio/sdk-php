@@ -33,26 +33,13 @@ final class PrintableAsciiValidator
             throw new InvalidArgumentException("{$label} must not be empty");
         }
 
-        if (!\preg_match('/^[\x21-\x7E]+$/', $value)) {
+        if (\preg_match('/[^\x21-\x7E]/', $value, $matches, \PREG_OFFSET_CAPTURE) === 1) {
             throw new InvalidArgumentException(\sprintf(
                 '%s must contain only printable non-whitespace ASCII (0x21–0x7E); got %d bytes, first bad char at offset %d',
                 $label,
                 \strlen($value),
-                self::firstBadOffset($value),
+                $matches[0][1],
             ));
         }
-    }
-
-    private static function firstBadOffset(string $value): int
-    {
-        for ($i = 0, $n = \strlen($value); $i < $n; $i++) {
-            $c = \ord($value[$i]);
-            if ($c < 0x21 || $c > 0x7E) {
-                return $i;
-            }
-        }
-        // @codeCoverageIgnoreStart
-        throw new \LogicException('unreachable: caller already established a bad char exists');
-        // @codeCoverageIgnoreEnd
     }
 }

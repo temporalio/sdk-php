@@ -22,8 +22,8 @@ final class NexusHandlerErrorException extends \RuntimeException
 {
     public function __construct(
         public readonly HandlerError $handlerError,
-        ?\Throwable $previous = null,
+        public readonly \Throwable $cause,
     ) {
-        parent::__construct($handlerError->getFailure()?->getMessage() ?? 'handler error', 0, $previous);
+        parent::__construct($handlerError->getFailure()?->getMessage() ?? 'handler error', 0, $cause);
     }
 }

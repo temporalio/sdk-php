@@ -45,18 +45,4 @@ final class ServiceHandlerEdgeCasesTest extends TestCase
             instances: [$instance, $instance],
         );
     }
-
-    public function testGetters(): void
-    {
-        $dataConverter = DataConverter::createDefault();
-        $instance = self::bindNexusService(new VoidService());
-
-        $handler = ServiceHandler::create(
-            dataConverter: $dataConverter,
-            instances: [$instance],
-        );
-
-        self::assertSame($dataConverter, $handler->getDataConverter());
-        self::assertCount(1, $handler->getInstances());
-    }
 }

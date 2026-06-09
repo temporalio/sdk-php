@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Nexus\Attribute\AsyncOperation;
@@ -28,7 +29,7 @@ use Temporal\Nexus\OperationInfo;
  *
  * Reflection-driven discovery for Nexus service contracts. Mirrors the role
  * of {@see WorkflowReader} / {@see ActivityReader}: walks the class hierarchy
- * via `ReaderInterface` (Spiral attributes), resolves the
+ * via {@see ClassNode} (cached inheritance graph), resolves the
  * `#[Service]`-annotated contract, parses operation methods, and produces a
  * pure {@see NexusServicePrototype}.
  *
@@ -44,56 +45,55 @@ class NexusServiceReader extends Reader
     public function fromClass(string $class): NexusServicePrototype
     {
         $reflection = new \ReflectionClass($class);
-        $contract = $this->resolveContract($reflection);
+        $graph = new ClassNode($reflection);
+
+        $contract = $this->resolveContract($graph);
 
         $service = $this->reader->firstClassMetadata($contract, Service::class);
         // resolveContract guarantees a Service attribute is present.
         \assert($service !== null);
         $name = $service->name !== '' ? $service->name : $contract->getShortName();
 
-        $this->assertParentInterfacesMatch($reflection, $contract, $name);
+        $this->assertServiceNamesMatch($graph, $contract, $name);
 
-        $operations = $this->collectOperations($contract);
+        $operations = $this->collectOperations($graph);
         $operations = $this->bindCancelHandlers($reflection, $operations);
 
         return new NexusServicePrototype($name, $operations, $reflection);
     }
 
     /**
-     * Locate the `#[Service]`-bearing type for the given reflection.
+     * Locate the `#[Service]`-bearing type for the given hierarchy in a single
+     * pass.
      *
-     * If the reflection itself carries `#[Service]`, it is the contract — works for both
-     * interfaces and classes that put the attribute on themselves. Otherwise, walk the
-     * implemented interfaces and require exactly one `#[Service]`-annotated interface;
-     * zero or multiple matches are rejected.
+     * If the root reflection carries `#[Service]`, it is the contract — works
+     * for both interfaces and classes that put the attribute on themselves.
+     * Otherwise, require exactly one `#[Service]`-annotated type across the
+     * hierarchy; zero or multiple matches are rejected.
      *
-     * @param \ReflectionClass<object> $reflection
      * @return \ReflectionClass<object>
      */
-    private function resolveContract(\ReflectionClass $reflection): \ReflectionClass
+    private function resolveContract(ClassNode $graph): \ReflectionClass
     {
-        if ($this->reader->firstClassMetadata($reflection, Service::class) !== null) {
-            return $reflection;
+        $root = $graph->getReflection();
+        if ($this->reader->firstClassMetadata($root, Service::class) !== null) {
+            return $root;
         }
 
-        $matches = [];
-        foreach ($reflection->getInterfaces() as $parentInterface) {
-            if ($this->reader->firstClassMetadata($parentInterface, Service::class) !== null) {
-                $matches[$parentInterface->getName()] = $parentInterface;
-            }
-        }
+        $matches = $this->serviceNodes($graph);
+        unset($matches[$root->getName()]);
 
         if ($matches === []) {
             throw new InvalidArgumentException(\sprintf(
                 'Missing #[Service] attribute on %s or any implemented interface',
-                $reflection->getName(),
+                $root->getName(),
             ));
         }
 
         if (\count($matches) > 1) {
             throw new InvalidArgumentException(\sprintf(
                 '%s implements multiple #[Service] interfaces (%s); ambiguous',
-                $reflection->getName(),
+                $root->getName(),
                 \implode(', ', \array_keys($matches)),
             ));
         }
@@ -102,29 +102,24 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * Reject impls whose super-interfaces declare a different service name —
-     * one impl class can't quietly belong to two unrelated services.
+     * Reject hierarchies whose other `#[Service]` types declare a different
+     * service name — one type can't quietly belong to two unrelated services.
      *
-     * @param \ReflectionClass<object> $reflection
      * @param \ReflectionClass<object> $contract
      */
-    private function assertParentInterfacesMatch(
-        \ReflectionClass $reflection,
-        \ReflectionClass $contract,
-        string $name,
-    ): void {
-        foreach ($reflection->getInterfaces() as $parentInterface) {
-            if ($parentInterface->getName() === $contract->getName()) {
+    private function assertServiceNamesMatch(ClassNode $graph, \ReflectionClass $contract, string $name): void
+    {
+        foreach ($this->serviceNodes($graph) as $node) {
+            if ($node->getName() === $contract->getName()) {
                 continue;
             }
-            $parentService = $this->reader->firstClassMetadata($parentInterface, Service::class);
-            if ($parentService === null) {
-                continue;
-            }
-            $parentName = $parentService->name !== '' ? $parentService->name : $parentInterface->getShortName();
-            if ($parentName !== $name) {
+
+            $service = $this->reader->firstClassMetadata($node, Service::class);
+            \assert($service !== null);
+            $nodeName = $service->name !== '' ? $service->name : $node->getShortName();
+            if ($nodeName !== $name) {
                 throw new InvalidArgumentException(
-                    "Interface {$parentInterface->getName()} has a service attribute whose name ({$parentName}) "
+                    "Interface {$node->getName()} has a service attribute whose name ({$nodeName}) "
                     . "does not match the expected name on the contract ({$name})",
                 );
             }
@@ -132,41 +127,73 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * @param \ReflectionClass<object> $contract
+     * Collect every `#[Service]`-annotated type across the hierarchy in a
+     * single cached pass, keyed by class name (dedup across diamond edges).
+     *
+     * @return array<class-string, \ReflectionClass<object>>
+     */
+    private function serviceNodes(ClassNode $graph): array
+    {
+        $matches = [];
+        foreach ($graph as $edge) {
+            foreach ($edge as $node) {
+                $reflection = $node->getReflection();
+                if ($this->reader->firstClassMetadata($reflection, Service::class) !== null) {
+                    $matches[$reflection->getName()] = $reflection;
+                }
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
      * @return array<string, NexusOperationPrototype>
      */
-    private function collectOperations(\ReflectionClass $contract): array
+    private function collectOperations(ClassNode $graph): array
     {
-        $allMethods = $this->collectMethods($contract);
-
         $operationFailures = [];
         $operations = [];
 
-        foreach ($allMethods as $methodGroup) {
+        foreach ($graph->getAllMethods() as $name => $rootMethod) {
             $first = null;
-            foreach ($methodGroup as $method) {
-                try {
-                    $current = $this->operationFromMethod($method);
-                    if ($first === null) {
-                        $first = $current;
-                        if (isset($operations[$first->name])) {
-                            $operationFailures[] = "Multiple operations named '{$first->name}'";
-                            break;
-                        }
-                        $operations[$first->name] = $first;
-                    } elseif (
-                        $first->name !== $current->name
-                        || $first->inputType !== $current->inputType
-                        || $first->outputType !== $current->outputType
-                    ) {
+            foreach ($graph->getMethods($name) as $group) {
+                foreach ($group as $method) {
+                    $attribute = $this->operationAttribute($method);
+                    if ($attribute === false) {
                         $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
-                            . 'mismatches against another operation of the same name/signature';
-                        break;
+                            . 'declares both #[Operation] and #[AsyncOperation]';
+                        break 2;
                     }
-                } catch (\Exception $exception) {
-                    $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
-                        . "is invalid: {$exception->getMessage()}";
-                    break;
+                    if ($attribute === null) {
+                        // Plain helpers, cancel routines (#[OperationCancel]),
+                        // constructors and other infrastructure are skipped.
+                        continue;
+                    }
+
+                    try {
+                        $current = $this->operationFromMethod($method, $attribute);
+                        if ($first === null) {
+                            $first = $current;
+                            if (isset($operations[$first->name])) {
+                                $operationFailures[] = "Multiple operations named '{$first->name}'";
+                                break 2;
+                            }
+                            $operations[$first->name] = $first;
+                        } elseif (
+                            $first->name !== $current->name
+                            || $first->inputType !== $current->inputType
+                            || $first->outputType !== $current->outputType
+                        ) {
+                            $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
+                                . 'mismatches against another operation of the same name/signature';
+                            break 2;
+                        }
+                    } catch (\Exception $exception) {
+                        $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
+                            . "is invalid: {$exception->getMessage()}";
+                        break 2;
+                    }
                 }
             }
         }
@@ -186,93 +213,33 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * Group methods by signature (name + parameter types) so override chains
-     * land in the same bucket — first wins, mismatches in later overrides
-     * are flagged.
+     * Resolve the operation attribute for a method.
      *
-     * @param \ReflectionClass<object> $reflection
-     * @return list<\ReflectionMethod[]>
+     * - `null`: the method is not an operation (no `#[Operation]` /
+     *   `#[AsyncOperation]`) and should be skipped;
+     * - `false`: both attributes are present, which is invalid;
+     * - otherwise: the single resolved attribute.
      */
-    private function collectMethods(\ReflectionClass $reflection): array
-    {
-        $groups = [];
-        $visited = [];
-        $this->collectMethodsRecursive($reflection, $groups, $visited);
-        return \array_values($groups);
-    }
-
-    /**
-     * @param \ReflectionClass<object> $contract
-     * @param array<string, \ReflectionMethod[]> $groups Keyed by structural signature.
-     * @param array<string, true> $visited
-     */
-    private function collectMethodsRecursive(
-        \ReflectionClass $contract,
-        array &$groups,
-        array &$visited,
-    ): void {
-        $key = $contract->getName();
-        if (isset($visited[$key])) {
-            return;
-        }
-        $visited[$key] = true;
-
-        foreach ($contract->getMethods() as $method) {
-            if ($method->getDeclaringClass()->getName() !== $contract->getName()) {
-                continue;
-            }
-            // Only methods carrying #[Operation] or #[AsyncOperation] are operations.
-            // Plain helpers, cancel routines (#[OperationCancel]), constructors and
-            // other infrastructure on a #[Service]-annotated class are skipped here.
-            if (
-                $this->reader->firstFunctionMetadata($method, Operation::class) === null
-                && $this->reader->firstFunctionMetadata($method, AsyncOperation::class) === null
-            ) {
-                continue;
-            }
-            $groups[$this->methodSignatureKey($method)][] = $method;
-        }
-
-        foreach ($contract->getInterfaces() as $parentInterface) {
-            $this->collectMethodsRecursive($parentInterface, $groups, $visited);
-        }
-    }
-
-    private function methodSignatureKey(\ReflectionMethod $method): string
-    {
-        $parameterTypes = [];
-        foreach ($method->getParameters() as $parameter) {
-            $parameterTypes[] = $this->reflectionTypeKey($parameter->getType());
-        }
-        return $method->getName() . '(' . \implode(',', $parameterTypes) . ')';
-    }
-
-    private function reflectionTypeKey(?\ReflectionType $type): string
-    {
-        if ($type === null) {
-            return 'mixed';
-        }
-        if ($type instanceof \ReflectionNamedType) {
-            return ($type->allowsNull() ? '?' : '') . $type->getName();
-        }
-        return (string) $type;
-    }
-
-    /**
-     * Build a {@see NexusOperationPrototype} from a `#[Operation]` /
-     * `#[AsyncOperation]`-annotated method.
-     */
-    private function operationFromMethod(\ReflectionMethod $method): NexusOperationPrototype
+    private function operationAttribute(\ReflectionMethod $method): Operation|AsyncOperation|null|false
     {
         $sync = $this->reader->firstFunctionMetadata($method, Operation::class);
         $async = $this->reader->firstFunctionMetadata($method, AsyncOperation::class);
 
-        if ($sync === null && $async === null) {
-            throw new InvalidArgumentException('Missing #[Operation] or #[AsyncOperation] attribute');
-        }
         if ($sync !== null && $async !== null) {
-            throw new InvalidArgumentException('Cannot combine #[Operation] and #[AsyncOperation] on the same method');
+            return false;
         }
+
+        return $sync ?? $async;
+    }
+
+    /**
+     * Build a {@see NexusOperationPrototype} from a resolved `#[Operation]` /
+     * `#[AsyncOperation]` attribute.
+     */
+    private function operationFromMethod(
+        \ReflectionMethod $method,
+        Operation|AsyncOperation $attribute,
+    ): NexusOperationPrototype {
         if ($method->getNumberOfParameters() > 1) {
             throw new InvalidArgumentException('Can have no more than one parameter');
         }
@@ -289,6 +256,8 @@ class NexusServiceReader extends Reader
                 untypedFallback: 'mixed',
             );
         }
+
+        $async = $attribute instanceof AsyncOperation ? $attribute : null;
 
         if ($async !== null) {
             $operationName = $async->name !== '' ? $async->name : $method->getName();
@@ -311,7 +280,7 @@ class NexusServiceReader extends Reader
 
             $outputType = $async->output !== '' ? $async->output : 'void';
         } else {
-            $operationName = $sync->name !== '' ? $sync->name : $method->getName();
+            $operationName = $attribute->name !== '' ? $attribute->name : $method->getName();
             $outputType = $this->typeToString(
                 $method->getReturnType(),
                 "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",

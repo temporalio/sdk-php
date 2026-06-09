@@ -174,6 +174,14 @@ final class NexusOperationStubTestCase extends TestCase
         self::assertSame('payload', $received);
     }
 
+    public function testGetOptionsReturnsTheStubOptions(): void
+    {
+        $options = NexusOperationOptions::new()->withEndpoint('ep')->withService('svc');
+        $stub = $this->makeStub($options);
+
+        self::assertSame($options, $stub->getOptions());
+    }
+
     private function makeStub(NexusOperationOptions $options): NexusOperationStub
     {
         /** @var MarshallerInterface<array> $marshaller */

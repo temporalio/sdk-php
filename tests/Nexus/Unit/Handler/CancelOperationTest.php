@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Nexus\NexusOperationContext;
+
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -26,6 +28,8 @@ use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelSignaturesService;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -33,6 +37,14 @@ use PHPUnit\Framework\TestCase;
 final class CancelOperationTest extends TestCase
 {
     use BindNexusService;
+
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
 
     public function testCancelUnrecognizedService(): void
     {
@@ -45,8 +57,10 @@ final class CancelOperationTest extends TestCase
 
         $this->expectException(HandlerException::class);
         $handler->cancelOperation(
-            new OperationContext(service: 'NonExistent', operation: 'op'),
+            new OperationContext(service: 'NonExistent', operation: 'op', env: $this->env),
             new OperationCancelDetails(operationToken: 'token'),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -61,8 +75,10 @@ final class CancelOperationTest extends TestCase
 
         $this->expectException(HandlerException::class);
         $handler->cancelOperation(
-            new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent'),
+            new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent', env: $this->env),
             new OperationCancelDetails(operationToken: 'token'),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -88,10 +104,13 @@ final class CancelOperationTest extends TestCase
             new OperationContext(
                 service: 'GreetingServiceInterface',
                 operation: 'sayHello2',
+                env: $this->env,
                 headers: [AuthInterceptor::AUTH_HEADER => $authToken],
             ),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::fromValues(['SomeUser'], self::dataConverter()),
+            null,
+            new NexusOperationContext(),
         );
 
         $token = $result->info->token;
@@ -102,9 +121,12 @@ final class CancelOperationTest extends TestCase
             new OperationContext(
                 service: 'GreetingServiceInterface',
                 operation: 'sayHello2',
+                env: $this->env,
                 headers: [AuthInterceptor::AUTH_HEADER => $authToken],
             ),
             new OperationCancelDetails(operationToken: $token),
+            null,
+            new NexusOperationContext(),
         );
 
         // Logging interceptor saw both start and cancel.
@@ -120,8 +142,10 @@ final class CancelOperationTest extends TestCase
         );
 
         $handler->cancelOperation(
-            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'legacy'),
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'legacy', env: $this->env),
             new OperationCancelDetails(operationToken: 'token-legacy'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertSame('token-legacy', $service->cancelCalls['legacy']);
@@ -137,8 +161,10 @@ final class CancelOperationTest extends TestCase
 
         $details = new OperationCancelDetails(operationToken: 'token-cd');
         $handler->cancelOperation(
-            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'contextAndDetails'),
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'contextAndDetails', env: $this->env),
             $details,
+            null,
+            new NexusOperationContext(),
         );
 
         [$context, $passedDetails] = $service->cancelCalls['contextAndDetails'];
@@ -159,8 +185,10 @@ final class CancelOperationTest extends TestCase
 
         $details = new OperationCancelDetails(operationToken: 'token-rev');
         $handler->cancelOperation(
-            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'reversed'),
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'reversed', env: $this->env),
             $details,
+            null,
+            new NexusOperationContext(),
         );
 
         [$passedDetails, $context] = $service->cancelCalls['reversed'];
@@ -179,8 +207,10 @@ final class CancelOperationTest extends TestCase
         );
 
         $handler->cancelOperation(
-            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'noArgs'),
+            new OperationContext(service: 'CancelSignaturesServiceInterface', operation: 'noArgs', env: $this->env),
             new OperationCancelDetails(operationToken: 'token-noargs'),
+            null,
+            new NexusOperationContext(),
         );
 
         self::assertTrue($service->cancelCalls['noArgs']);

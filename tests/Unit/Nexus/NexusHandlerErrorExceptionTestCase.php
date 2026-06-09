@@ -32,6 +32,7 @@ final class NexusHandlerErrorExceptionTestCase extends AbstractUnit
 
         self::assertSame('Handler failed', $exception->getMessage());
         self::assertSame($cause, $exception->getPrevious());
+        self::assertSame($cause, $exception->cause);
     }
 
     public function testConstructionWithoutFailure(): void
@@ -39,7 +40,7 @@ final class NexusHandlerErrorExceptionTestCase extends AbstractUnit
         $handlerError = new HandlerError();
         $handlerError->setErrorType('INTERNAL');
 
-        $exception = new NexusHandlerErrorException($handlerError);
+        $exception = new NexusHandlerErrorException($handlerError, new \RuntimeException('cause'));
 
         self::assertSame('handler error', $exception->getMessage());
     }

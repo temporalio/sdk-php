@@ -70,7 +70,7 @@ final class NexusRegistrationGuardTestCase extends AbstractUnit
         $worker = WorkerFactory::create()->newWorker();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('async operations');
+        $this->expectExceptionMessage('declares async operation "runAsync", which needs cluster access');
 
         $worker->registerNexusServiceImplementation(new GuardAsyncServiceImpl());
     }

@@ -31,7 +31,7 @@ final class LinkCollection
         foreach ($initial as $i => $link) {
             if (!$link instanceof Link) {
                 throw new InvalidArgumentException(\sprintf(
-                    'initial[%s] must be a %s, got %s',
+                    'LinkCollection: initial[%s] must be a %s, got %s',
                     \is_int($i) ? (string) $i : \var_export($i, true),
                     Link::class,
                     \get_debug_type($link),
@@ -48,21 +48,11 @@ final class LinkCollection
         }
     }
 
-    public function replaceAll(Link ...$links): void
-    {
-        $this->links = $links;
-    }
-
     /**
      * @return list<Link>
      */
     public function all(): array
     {
         return $this->links;
-    }
-
-    public function count(): int
-    {
-        return \count($this->links);
     }
 }

@@ -58,10 +58,7 @@ final class CancelNexusOperation extends Route
             );
             $resolver->resolve(EncodedValues::fromValues([]));
         } catch (NexusHandlerErrorException $e) {
-            // Unwrap the proto-shaped wrapper produced by NexusTaskHandler — the
-            // outbound FailureConverter switches on the typed HandlerException
-            // (NexusHandlerException) to emit NexusHandlerFailureInfo on the wire.
-            $resolver->reject($e->getPrevious() ?? $e);
+            $resolver->reject($e->cause);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         }

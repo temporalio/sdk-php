@@ -8,6 +8,8 @@ use Temporal\Nexus\Handler\MethodCanceller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @group unit
@@ -16,6 +18,14 @@ use Temporal\Tests\Unit\AbstractUnit;
 #[CoversClass(NexusInvocationRegistry::class)]
 final class NexusInvocationRegistryTestCase extends AbstractUnit
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     public function testGetReturnsNullForUnknownId(): void
     {
         $registry = new NexusInvocationRegistry();
@@ -26,7 +36,7 @@ final class NexusInvocationRegistryTestCase extends AbstractUnit
     public function testUnregisterRemovesEntry(): void
     {
         $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $registry->register(5, $canceller);
 
         $registry->unregister(5);
@@ -47,8 +57,8 @@ final class NexusInvocationRegistryTestCase extends AbstractUnit
     public function testEntriesAreIsolatedByKey(): void
     {
         $registry = new NexusInvocationRegistry();
-        $a = new MethodCanceller();
-        $b = new MethodCanceller();
+        $a = new MethodCanceller($this->env);
+        $b = new MethodCanceller($this->env);
         $registry->register(1, $a);
         $registry->register(2, $b);
 
@@ -59,7 +69,7 @@ final class NexusInvocationRegistryTestCase extends AbstractUnit
     public function testCancelThroughRegistryAffectsOriginalCanceller(): void
     {
         $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $registry->register(7, $canceller);
 
         $registry->get(7)?->cancel('deadline');

@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Tests\Nexus\Fixtures\Service\UnionInputServiceInterface;
 use Temporal\Tests\Nexus\Fixtures\Service\UntypedInputServiceInterface;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\AmbiguousServiceImpl;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\DiamondFinalInterface;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\EmptyService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceDuplicateOperation;
@@ -51,6 +52,13 @@ final class NexusServiceReaderTest extends TestCase
         self::assertArrayHasKey('classOperation', $proto->getOperations());
         self::assertSame('string', $proto->getOperations()['classOperation']->inputType);
         self::assertSame('string', $proto->getOperations()['classOperation']->outputType);
+    }
+
+    public function testMultipleServiceInterfacesAreAmbiguous(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('implements multiple #[Service] interfaces');
+        self::reader()->fromClass(AmbiguousServiceImpl::class);
     }
 
     public function testInvalidSubServiceNameMismatch(): void

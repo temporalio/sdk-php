@@ -39,6 +39,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * Bridges Temporal RoadRunner tasks to the Nexus SDK ServiceHandler.
@@ -55,6 +56,7 @@ final class NexusTaskHandler
     public function __construct(
         private readonly NexusServiceCollection $repository,
         private readonly DataConverterInterface $dataConverter,
+        private readonly EnvironmentInterface $env,
         private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
         private readonly ?WorkflowClientInterface $workflowClient = null,
@@ -87,8 +89,8 @@ final class NexusTaskHandler
 
     public function handleStartOperation(
         Request $request,
+        NexusOperationContext $operationContext,
         ?MethodCanceller $methodCanceller = null,
-        NexusOperationContext $operationContext = new NexusOperationContext(),
     ): Response {
         $startRequest = $request->getStartOperation();
         \assert($startRequest instanceof StartOperationRequest);
@@ -112,6 +114,7 @@ final class NexusTaskHandler
             headers: $headers,
             deadline: self::deadlineFromHeaders($headers),
             methodCanceller: $methodCanceller,
+            env: $this->env,
         );
 
         $details = new OperationStartDetails(
@@ -170,19 +173,14 @@ final class NexusTaskHandler
             return $response;
         } catch (OperationException $e) {
             throw $e;
-        } catch (HandlerException $e) {
-            throw $this->convertHandlerException($e);
         } catch (\Throwable $e) {
-            throw $this->convertHandlerException(
-                HandlerErrorMapper::mapToHandlerException($e)
-                    ?? HandlerException::fromCause(ErrorType::Internal, $e),
-            );
+            throw $this->toNexusHandlerError($e);
         }
     }
 
     public function handleCancelOperation(
         Request $request,
-        NexusOperationContext $operationContext = new NexusOperationContext(),
+        NexusOperationContext $operationContext,
     ): Response {
         $cancelRequest = $request->getCancelOperation();
         \assert($cancelRequest instanceof CancelOperationRequest);
@@ -196,6 +194,7 @@ final class NexusTaskHandler
             service: $cancelRequest->getService(),
             operation: $cancelRequest->getOperation(),
             headers: $headers,
+            env: $this->env,
         );
 
         $token = $cancelRequest->getOperationToken();
@@ -217,13 +216,8 @@ final class NexusTaskHandler
             $response = new Response();
             $response->setCancelOperation(new CancelOperationResponse());
             return $response;
-        } catch (HandlerException $e) {
-            throw $this->convertHandlerException($e);
         } catch (\Throwable $e) {
-            throw $this->convertHandlerException(
-                HandlerErrorMapper::mapToHandlerException($e)
-                    ?? HandlerException::fromCause(ErrorType::Internal, $e),
-            );
+            throw $this->toNexusHandlerError($e);
         }
     }
 
@@ -249,11 +243,15 @@ final class NexusTaskHandler
         return $this->serviceHandler;
     }
 
-    private function convertHandlerException(HandlerException $e): NexusHandlerErrorException
+    private function toNexusHandlerError(\Throwable $e): NexusHandlerErrorException
     {
+        $handlerException = $e instanceof HandlerException
+            ? $e
+            : HandlerErrorMapper::mapToHandlerException($e) ?? HandlerException::fromCause(ErrorType::Internal, $e);
+
         return new NexusHandlerErrorException(
-            NexusFailureConverter::handlerExceptionToProto($e, $this->includeTracebackInFailure),
-            $e,
+            NexusFailureConverter::handlerExceptionToProto($handlerException, $this->includeTracebackInFailure),
+            $handlerException,
         );
     }
 }

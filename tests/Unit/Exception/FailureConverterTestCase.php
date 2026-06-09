@@ -261,16 +261,6 @@ final class FailureConverterTestCase extends AbstractUnit
         );
     }
 
-    public function testNexusHandlerExceptionRawErrorTypePreserved(): void
-    {
-        // fromRawType is the wire-compat path for unknown error strings.
-        $e = NexusHandlerException::fromRawType('FUTURE_TYPE_X', 'unknown error');
-
-        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
-
-        self::assertSame('FUTURE_TYPE_X', $failure->getNexusHandlerFailureInfo()->getType());
-    }
-
     // ── Nexus: OperationException → tagged ApplicationFailureInfo ──────
 
     public function testNexusOperationExceptionFailedProducesTaggedApplicationFailure(): void
@@ -333,20 +323,6 @@ final class FailureConverterTestCase extends AbstractUnit
             NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
             $exception->getRetryBehavior(),
         );
-    }
-
-    public function testNexusHandlerFailureRoundTrip(): void
-    {
-        // HandlerException → Failure → NexusHandlerFailure preserves the
-        // error-type string (round-trip wire compatibility).
-        $original = NexusHandlerException::fromRawType('CUSTOM_TYPE', 'boom');
-        $converter = DataConverter::createDefault();
-
-        $failure = FailureConverter::mapExceptionToFailure($original, $converter);
-        $restored = FailureConverter::mapFailureToException($failure, $converter);
-
-        self::assertInstanceOf(NexusHandlerFailure::class, $restored);
-        self::assertSame('CUSTOM_TYPE', $restored->getType());
     }
 
     public function testNexusOperationFailureInfoMapsToNexusOperationFailure(): void

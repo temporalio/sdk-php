@@ -9,9 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Nexus;
+namespace Temporal\Internal\Client;
 
 /**
+ * Workflow-id conflict policy options: what to attach to the existing run when
+ * a start request conflicts. Serialized to {@see \Temporal\Api\Workflow\V1\OnConflictOptions}.
+ *
  * @internal
  * @psalm-immutable
  */
@@ -22,17 +25,4 @@ final class OnConflictOptions
         public readonly bool $attachCompletionCallbacks = true,
         public readonly bool $attachLinks = true,
     ) {}
-
-    /**
-     * Canonical value used by the Nexus caller-side path so retried
-     * StartWorkflow requests attach the new callback to the existing run.
-     */
-    public static function forNexusCompletionCallback(): self
-    {
-        return new self(
-            attachRequestId: true,
-            attachCompletionCallbacks: true,
-            attachLinks: true,
-        );
-    }
 }

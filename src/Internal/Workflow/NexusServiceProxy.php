@@ -22,10 +22,6 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 final class NexusServiceProxy extends Proxy
 {
-    private const ERROR_UNDEFINED_OPERATION =
-        'Nexus service "%s" has no operation method "%s". '
-        . 'Did you forget the #[Operation] attribute on the method?';
-
     /** @var array<string, NexusOperationPrototype> Keyed by PHP method name. */
     private readonly array $operationsByMethod;
 
@@ -35,13 +31,13 @@ final class NexusServiceProxy extends Proxy
      */
     public function __construct(
         private string $class,
-        NexusServicePrototype $service,
+        NexusServicePrototype $prototype,
         private NexusOperationOptions $options,
         private WorkflowContextInterface $ctx,
         private Pipeline $callsInterceptor,
     ) {
         $byMethod = [];
-        foreach ($service->getOperations() as $operation) {
+        foreach ($prototype->getOperations() as $operation) {
             $byMethod[$operation->methodName] = $operation;
         }
         $this->operationsByMethod = $byMethod;
@@ -52,9 +48,12 @@ final class NexusServiceProxy extends Proxy
         $operation = $this->operationsByMethod[$method] ?? null;
 
         if ($operation === null) {
-            throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_OPERATION, $this->class, $method),
-            );
+            throw new \BadMethodCallException(\sprintf(
+                'Nexus service "%s" has no operation method "%s". '
+                . 'Did you forget the #[Operation] attribute on the method?',
+                $this->class,
+                $method,
+            ));
         }
 
         $service = $this->options->service;

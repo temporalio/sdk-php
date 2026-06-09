@@ -21,6 +21,7 @@ use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
 use Temporal\Internal\Transport\Request\GetNexusOperationStarted;
+use Temporal\Nexus\Internal\Headers;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -50,9 +51,9 @@ final class NexusOperationStub implements NexusOperationStubInterface
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         array $nexusHeaders = [],
     ): PromiseInterface {
-        return $this->start($operation, $args, $returnType, $nexusHeaders)->then(
-            static fn(NexusOperationHandle $handle): PromiseInterface => $handle->getResult(),
-        );
+        return $this
+            ->start($operation, $args, $returnType, $nexusHeaders)
+            ->then(static fn(NexusOperationHandle $handle): PromiseInterface => $handle->getResult());
     }
 
     public function start(
@@ -73,12 +74,12 @@ final class NexusOperationStub implements NexusOperationStubInterface
             args: EncodedValues::fromValues($args),
             options: $this->marshaller->marshal($this->options),
             header: $this->header,
-            nexusHeaders: \array_change_key_case($nexusHeaders, CASE_LOWER),
+            nexusHeaders: Headers::normalize($nexusHeaders),
         );
 
         $startId = $startRequest->getID();
 
-        $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::Abandon->value;
+        $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::Abandon;
 
         $resultPromise = $this->normalizeFailure(
             $this->request($startRequest, cancellable: $cancellable),

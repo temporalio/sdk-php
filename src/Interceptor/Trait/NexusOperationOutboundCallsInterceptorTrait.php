@@ -19,6 +19,8 @@ use Temporal\Nexus\NexusOperationContext;
  * Trait that provides a default interceptor implementation.
  *
  * @see NexusOperationOutboundCallsInterceptor
+ *
+ * @psalm-require-implements NexusOperationOutboundCallsInterceptor
  */
 trait NexusOperationOutboundCallsInterceptorTrait
 {

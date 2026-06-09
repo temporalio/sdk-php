@@ -42,7 +42,6 @@ final class LinkCollectionTest extends TestCase
         $c = new LinkCollection();
 
         self::assertSame([], $c->all());
-        self::assertSame(0, $c->count());
     }
 
     public function testSeedListIsCopied(): void
@@ -63,22 +62,5 @@ final class LinkCollectionTest extends TestCase
 
         $uris = \array_map(static fn(Link $l) => $l->uri, $c->all());
         self::assertSame(['a', 'b', 'c'], $uris);
-    }
-
-    public function testReplaceAllReplacesContents(): void
-    {
-        $c = new LinkCollection([new Link('old', 't')]);
-        $c->replaceAll(new Link('new', 't'));
-
-        self::assertCount(1, $c->all());
-        self::assertSame('new', $c->all()[0]->uri);
-    }
-
-    public function testReplaceAllWithNoArgsEmptiesBuffer(): void
-    {
-        $c = new LinkCollection([new Link('a', 't'), new Link('b', 't')]);
-        $c->replaceAll();
-
-        self::assertSame([], $c->all());
     }
 }

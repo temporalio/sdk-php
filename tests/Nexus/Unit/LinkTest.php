@@ -63,62 +63,9 @@ final class LinkTest extends TestCase
 
     public function testConstructorAcceptsRelativeUri(): void
     {
-        // The plain constructor is intentionally permissive — only non-emptiness
-        // is enforced. Use fromUri() for strict absolute-URI validation.
+        // The plain constructor is intentionally permissive — only non-emptiness is enforced.
         $link = new Link('/just-a-path', 'some-type');
         self::assertSame('/just-a-path', $link->uri);
-    }
-
-    // ── fromUri() strict factory ────────────────────────────────────
-
-    public function testFromUriAcceptsAbsoluteUrl(): void
-    {
-        $link = Link::fromUri('https://example.com/x', 'example');
-        self::assertSame('https://example.com/x', $link->uri);
-        self::assertSame('example', $link->type);
-    }
-
-    public function testFromUriAcceptsUrnScheme(): void
-    {
-        // Nexus links are opaque URI references; schemes other than http(s)
-        // must be accepted. The Java reference impl uses java.net.URI which
-        // treats URNs as valid.
-        $link = Link::fromUri('urn:temporal:workflow:abc', 'temporal.workflow');
-        self::assertSame('urn:temporal:workflow:abc', $link->uri);
-    }
-
-    /**
-     * @return iterable<string, array{0: string}>
-     */
-    public static function nonAbsoluteUriProvider(): iterable
-    {
-        yield 'relative path'        => ['/just-a-path'];
-        yield 'bare name'            => ['example.com'];
-        yield 'empty scheme'         => ['://example.com'];
-        yield 'fragment only'        => ['#section'];
-    }
-
-    #[DataProvider('nonAbsoluteUriProvider')]
-    public function testFromUriRejectsNonAbsolute(string $uri): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/must be absolute with a scheme/');
-        Link::fromUri($uri, 'example');
-    }
-
-    public function testFromUriRejectsEmpty(): void
-    {
-        // fromUri delegates to the constructor, so the empty check still fires
-        // — but from parse_url which yields no scheme.
-        $this->expectException(InvalidArgumentException::class);
-        Link::fromUri('', 'example');
-    }
-
-    public function testFromUriStillEnforcesNonEmptyType(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Link type must not be empty');
-        Link::fromUri('https://example.com', '');
     }
 
     public function testToHeaderValueWrapsUriAndQuotesType(): void

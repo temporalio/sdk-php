@@ -11,8 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
-use Psr\Clock\ClockInterface;
-use Temporal\Internal\Support\SystemClock;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * Idempotent cancellation of an in-flight handler *method* (not the Nexus
@@ -26,14 +25,11 @@ final class MethodCanceller
     /** @var \SplObjectStorage<MethodCancellationListenerInterface, null> */
     private readonly \SplObjectStorage $listeners;
 
-    private readonly ClockInterface $clock;
-
     public function __construct(
+        private readonly EnvironmentInterface $env,
         private readonly ?\DateTimeImmutable $deadline = null,
-        ?ClockInterface $clock = null,
     ) {
         $this->listeners = new \SplObjectStorage();
-        $this->clock = $clock ?? new SystemClock();
     }
 
     public function isCancelled(): bool
@@ -85,19 +81,19 @@ final class MethodCanceller
         $this->listeners->offsetUnset($listener);
     }
 
-    private static function formatDeadlineReason(\DateTimeImmutable $deadline): string
-    {
-        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
-    }
-
     private function checkDeadline(): void
     {
         if ($this->reason !== null || $this->deadline === null) {
             return;
         }
-        if ($this->deadline > $this->clock->now()) {
+        if ($this->deadline > $this->env->now()) {
             return;
         }
         $this->cancel(self::formatDeadlineReason($this->deadline));
+    }
+
+    private static function formatDeadlineReason(\DateTimeImmutable $deadline): string
+    {
+        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
     }
 }

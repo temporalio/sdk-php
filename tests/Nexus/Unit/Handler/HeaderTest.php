@@ -13,6 +13,8 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Internal\Headers;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -20,18 +22,27 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(OperationContext::class)]
 final class HeaderTest extends TestCase
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     public function testOperationContextHeaders(): void
     {
         $context = new OperationContext(
             service: 'service',
             operation: 'operation',
+            env: $this->env,
             headers: [
                 'UPPER-CASE-HEADER' => 'UPPER-VALUE',
                 'lower-case-header' => 'lower-value',
             ],
         );
 
-        $this->verifyHeaders($context->headers);
+        $this->verifyHeaders($context->headers->all());
     }
 
     /**

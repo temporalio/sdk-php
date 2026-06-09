@@ -32,13 +32,13 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
 
     public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
-        $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
+        $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         return $next($input);
     }
 
     public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
-        $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
+        $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         $next($input);
     }
 

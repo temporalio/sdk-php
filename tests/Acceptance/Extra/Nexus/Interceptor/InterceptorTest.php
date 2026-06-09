@@ -219,7 +219,7 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
         // workflow-to-workflow Nexus stubs that don't propagate caller auth
         // headers — guarding that service here would deadlock the test.
         if ($input->operationContext->service === 'GreetingService') {
-            $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
+            $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         }
         return $next($input);
     }
@@ -228,7 +228,7 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
     {
         // Same scoping rationale as startOperation().
         if ($input->operationContext->service === 'GreetingService') {
-            $this->assertAuthorized($input->operationContext->headers[self::AUTH_HEADER] ?? null);
+            $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         }
         $next($input);
     }

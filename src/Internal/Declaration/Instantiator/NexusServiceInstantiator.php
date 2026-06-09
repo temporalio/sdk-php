@@ -18,21 +18,8 @@ use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
 
 /**
- * Binds a {@see NexusServicePrototype} to a concrete implementation object,
- * producing a {@see NexusServiceInstance} ready for dispatch. Mirrors the role
- * of {@see ActivityInstantiator} / {@see WorkflowInstantiator}; the
- * implementation object is sourced from the prototype's factory closure (set
- * via `NexusServicePrototype::withInstance()` / `::withFactory()`), or
- * constructed via `newInstance()` as a last resort.
- *
- * Does not implement {@see InstantiatorInterface}: the base
- * {@see \Temporal\Internal\Declaration\InstanceInterface} returns a single
- * {@see \Temporal\Internal\Declaration\MethodHandler}, which doesn't fit a
- * Nexus service that dispatches across many operations.
- *
- * All reflection-driven validation lives in
- * {@see \Temporal\Internal\Declaration\Reader\NexusServiceReader}; this class
- * only assembles the per-operation handler map keyed by wire operation name.
+ * Binds a {@see NexusServicePrototype} to its implementation and builds the
+ * per-operation handler map keyed by wire operation name.
  */
 final class NexusServiceInstantiator
 {
@@ -41,7 +28,7 @@ final class NexusServiceInstantiator
         $instance = $this->resolveInstance($prototype);
         $handlers = $this->buildOperationHandlers($prototype, $instance);
 
-        return new NexusServiceInstance($prototype, $instance, $handlers);
+        return new NexusServiceInstance($prototype, $handlers);
     }
 
     private function resolveInstance(NexusServicePrototype $prototype): object

@@ -22,7 +22,7 @@ final class WorkflowHandle
      * @param class-string $workflowClass Workflow interface annotated with #[WorkflowInterface].
      * @param list<mixed> $args Arguments forwarded to the workflow method.
      */
-    public function __construct(
+    private function __construct(
         public readonly string $workflowClass,
         public readonly WorkflowOptions $options,
         public readonly array $args,

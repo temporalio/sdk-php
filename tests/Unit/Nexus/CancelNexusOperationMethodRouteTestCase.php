@@ -11,6 +11,8 @@ use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Transport\Router\CancelNexusOperationMethod;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Tests\Unit\AbstractUnit;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
@@ -23,6 +25,14 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 #[CoversClass(CancelNexusOperationMethod::class)]
 final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
 {
+    private EnvironmentInterface $env;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->env = new Environment();
+    }
+
     public function testRouteName(): void
     {
         $route = new CancelNexusOperationMethod(new NexusInvocationRegistry());
@@ -33,7 +43,7 @@ final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
     public function testCancelsRegisteredInvocationWithReason(): void
     {
         $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $registry->register(42, $canceller);
 
         $route = new CancelNexusOperationMethod($registry);
@@ -63,7 +73,7 @@ final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
     public function testZeroInvocationIdSkipsLookup(): void
     {
         $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         // 0 must NEVER be a valid key — RR assigns monotonic non-zero ids.
         $registry->register(0, $canceller);
 
@@ -83,7 +93,7 @@ final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
     public function testMissingReasonDefaultsToEmptyString(): void
     {
         $registry = new NexusInvocationRegistry();
-        $canceller = new MethodCanceller();
+        $canceller = new MethodCanceller($this->env);
         $registry->register(5, $canceller);
 
         $route = new CancelNexusOperationMethod($registry);

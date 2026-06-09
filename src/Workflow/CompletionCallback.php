@@ -25,7 +25,7 @@ final class CompletionCallback
 {
     /**
      * Proto Link[] attached to the Callback envelope on the wire. Populated via
-     * {@see self::withNexusLinks()} from caller-supplied Nexus links; left empty
+     * {@see self::fromNexusLinks()} from caller-supplied Nexus links; left empty
      * for non-Nexus completion callbacks.
      *
      * @var list<Link>
@@ -58,7 +58,7 @@ final class CompletionCallback
      * @param array<string, string> $headers
      * @param iterable<NexusLink> $nexusLinks
      */
-    public static function withNexusLinks(string $url, array $headers, iterable $nexusLinks): self
+    public static function fromNexusLinks(string $url, array $headers, iterable $nexusLinks): self
     {
         return new self($url, $headers, NexusLinkConverter::toProtoLinks($nexusLinks));
     }

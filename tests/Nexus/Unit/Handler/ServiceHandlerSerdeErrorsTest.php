@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
+use Temporal\Nexus\NexusOperationContext;
+
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -25,6 +27,8 @@ use Temporal\Nexus\Handler\Internal\ServiceHandler;
 use Temporal\Tests\Nexus\Fixtures\Service\ThrowingGreetingService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use Temporal\Tests\Nexus\Support\ExceptionAssertions;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -33,6 +37,14 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
 {
     use BindNexusService;
     use ExceptionAssertions;
+
+    private static EnvironmentInterface $env;
+
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        self::$env = new Environment();
+    }
 
     public function testDeserializeFailureWrapsAsBadRequestHandlerException(): void
     {
@@ -49,6 +61,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
                 self::newContext('sayHello1'),
                 new OperationStartDetails(requestId: 'r1'),
                 self::input($converter),
+                null,
+                new NexusOperationContext(),
             );
         } catch (HandlerException $e) {
             self::assertSame(ErrorType::BadRequest, $e->errorType);
@@ -72,6 +86,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
                 self::newContext('sayHello1'),
                 new OperationStartDetails(requestId: 'r1'),
                 self::input($converter),
+                null,
+                new NexusOperationContext(),
             );
         } catch (HandlerException $e) {
             self::assertSame(ErrorType::Internal, $e->errorType);
@@ -94,6 +110,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
             self::newContext('sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::fromValues(['anything'], $converter),
+            null,
+            new NexusOperationContext(),
         );
     }
 
@@ -113,6 +131,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
             self::newContext('sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::fromValues(['anything'], $converter),
+            null,
+            new NexusOperationContext(),
         ));
 
         self::assertSame(ErrorType::Unauthorized, $e->errorType);
@@ -129,6 +149,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
             self::newContext('sayHello2'),
             new OperationStartDetails(requestId: 'r1'),
             self::input($converter),
+            null,
+            new NexusOperationContext(),
         ));
 
         self::assertStringContainsString('GreetingServiceInterface', $e->getMessage());
@@ -145,6 +167,8 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
             self::newContext('sayHello1'),
             new OperationStartDetails(requestId: 'r1'),
             self::input($converter),
+            null,
+            new NexusOperationContext(),
         ));
 
         self::assertStringContainsString('as string', $e->getMessage());
@@ -165,6 +189,7 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
         return new OperationContext(
             service: 'GreetingServiceInterface',
             operation: $operation,
+            env: self::$env,
         );
     }
 

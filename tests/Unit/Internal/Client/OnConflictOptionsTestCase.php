@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Unit\Internal;
+namespace Temporal\Tests\Unit\Internal\Client;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Temporal\Internal\Nexus\OnConflictOptions;
+use Temporal\Internal\Client\OnConflictOptions;
 
 #[CoversClass(OnConflictOptions::class)]
-final class OnConflictOptionsTest extends TestCase
+final class OnConflictOptionsTestCase extends TestCase
 {
     public function testDefaultsAreAllTrue(): void
     {
@@ -42,7 +42,7 @@ final class OnConflictOptionsTest extends TestCase
 
     public function testForNexusCompletionCallbackHardcodesAllTrue(): void
     {
-        $options = OnConflictOptions::forNexusCompletionCallback();
+        $options = new OnConflictOptions();
 
         self::assertTrue($options->attachRequestId);
         self::assertTrue($options->attachCompletionCallbacks);

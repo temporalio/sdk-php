@@ -62,6 +62,12 @@ interface EchoServiceInterface
      */
     #[Operation]
     public function reportDeadline(string $input): string;
+
+    /**
+     * Polls cooperative method cancellation and reports the observed state and reason.
+     */
+    #[Operation]
+    public function pollCancellation(string $input): string;
 }
 
 class EchoServiceImpl implements EchoServiceInterface
@@ -134,6 +140,16 @@ class EchoServiceImpl implements EchoServiceInterface
         $delta = $context->deadline->getTimestamp() - (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->getTimestamp();
         return "deadline:set;delta_seconds={$delta}";
     }
+
+    public function pollCancellation(string $input): string
+    {
+        $context = Nexus::getCurrentOperationContext();
+        return \sprintf(
+            'cancelled=%s;reason=%s',
+            $context->isMethodCancelled() ? '1' : '0',
+            $context->getMethodCancellationReason() ?? '',
+        );
+    }
 }
 
 // ── Integration tests ─────────────────────────────────────────────
@@ -149,6 +165,7 @@ final class IntegrationTestCase extends AbstractUnit
     private CancelNexusOperation $cancelRoute;
     private DataConverter $dataConverter;
     private EchoServiceImpl $serviceImpl;
+    private \Temporal\Worker\Environment\Environment $env;
 
     // ── Sync operation ───────────────────────────────────────────
 
@@ -484,6 +501,46 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertStringContainsString('deadline:set', $result);
     }
 
+    // ── Cooperative deadline-trip via env->now() ─────────────────
+
+    public function testHandlerObservesDeadlineTripViaEnvNow(): void
+    {
+        // Advance env time past the operation deadline; a handler polling
+        // isMethodCancelled() must observe the cooperative deadline trip,
+        // and the reason must surface through env->now()-based checking.
+        $this->env->update(new TickInfo(new \DateTimeImmutable('+1 hour')));
+
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'pollCancellation',
+            'requestId' => 'cancel-trip-1',
+            'headers' => ['Operation-Timeout' => '1s'],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->decodePayload($this->awaitReply($deferred));
+
+        self::assertStringStartsWith('cancelled=1', $result);
+        self::assertStringContainsString('deadline exceeded', $result);
+    }
+
+    public function testHandlerSeesNoCancellationBeforeDeadline(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'pollCancellation',
+            'requestId' => 'cancel-trip-2',
+            'headers' => ['Operation-Timeout' => '3600s'],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->decodePayload($this->awaitReply($deferred));
+
+        self::assertStringStartsWith('cancelled=0', $result);
+    }
+
     // ── Route names ──────────────────────────────────────────────
 
     public function testInvokeNexusOperationRouteName(): void
@@ -508,12 +565,18 @@ final class IntegrationTestCase extends AbstractUnit
         $repository = new \Temporal\Internal\Declaration\Prototype\NexusServiceCollection();
         $repository->add($prototype, false);
 
-        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->dataConverter);
+        $this->env = new \Temporal\Worker\Environment\Environment();
+
+        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler(
+            $repository,
+            $this->dataConverter,
+            $this->env,
+        );
 
         $marshaller = new \Temporal\Internal\Marshaller\Marshaller(
             new \Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory(new \Spiral\Attributes\AttributeReader()),
         );
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter, $marshaller);
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter, $marshaller, $this->env);
         $this->cancelRoute = new CancelNexusOperation($taskHandler, $marshaller);
     }
 

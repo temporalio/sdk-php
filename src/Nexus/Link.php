@@ -14,8 +14,7 @@ namespace Temporal\Nexus;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 
 /**
- * URI + type that decodes it. Constructor rejects empty values; use
- * {@see self::fromUri()} for an absolute-URI check.
+ * URI + type that decodes it. Constructor rejects empty values.
  *
  * @see https://github.com/nexus-rpc/api/blob/main/SPEC.md (Nexus-Link header)
  */
@@ -31,22 +30,6 @@ final class Link implements \Stringable
         if ($type === '') {
             throw new InvalidArgumentException('Link type must not be empty');
         }
-    }
-
-    /**
-     * Strict variant: requires an absolute URI with an explicit scheme.
-     *
-     * @throws InvalidArgumentException
-     */
-    public static function fromUri(string $uri, string $type): self
-    {
-        $parsed = \parse_url($uri);
-        if ($parsed === false || ($parsed['scheme'] ?? '') === '') {
-            throw new InvalidArgumentException(
-                "Link URI must be absolute with a scheme (e.g. 'https://example.com/x'); got '{$uri}'",
-            );
-        }
-        return new self($uri, $type);
     }
 
     /**

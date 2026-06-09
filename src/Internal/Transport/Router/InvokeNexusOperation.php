@@ -16,6 +16,7 @@ use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Common\Uuid;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
@@ -25,6 +26,7 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\LinkParser;
 use Temporal\Nexus\NexusOperationContext;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -37,6 +39,7 @@ final class InvokeNexusOperation extends Route
         private readonly NexusInvocationRegistry $invocations,
         private readonly DataConverterInterface $dataConverter,
         private readonly MarshallerInterface $marshaller,
+        private readonly EnvironmentInterface $env,
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
@@ -47,7 +50,10 @@ final class InvokeNexusOperation extends Route
 
         $canceller = null;
         if ($invocationId !== 0) {
-            $canceller = new MethodCanceller(NexusTaskHandler::deadlineFromHeaders($options['headers'] ?? []));
+            $canceller = new MethodCanceller(
+                $this->env,
+                NexusTaskHandler::deadlineFromHeaders($options['headers'] ?? []),
+            );
             $this->invocations->register($invocationId, $canceller);
         }
 
@@ -55,8 +61,8 @@ final class InvokeNexusOperation extends Route
             $protoRequest = self::buildProtoRequest($options, $request->getPayloads());
             $response = $this->taskHandler->handleStartOperation(
                 $protoRequest,
-                $canceller,
                 $operationContext,
+                $canceller,
             );
 
             $startResponse = $response->getStartOperation();
@@ -66,40 +72,35 @@ final class InvokeNexusOperation extends Route
                 $sync = $startResponse->getSyncSuccess();
                 \assert($sync !== null);
                 $options = ['async' => false];
-                $links = self::linksToWire($sync->getLinks());
-                if ($links !== []) {
-                    $options['links'] = $links;
-                }
-                $resolver->resolve(new CommandResponse(
-                    command: self::COMMAND,
-                    options: $options,
-                    payloads: EncodedValues::fromPayload($sync->getPayload(), $this->dataConverter),
-                ));
-                return;
-            }
-
-            if ($startResponse->hasAsyncSuccess()) {
+                $protoLinks = $sync->getLinks();
+                $payloads = EncodedValues::fromPayload($sync->getPayload(), $this->dataConverter);
+            } elseif ($startResponse->hasAsyncSuccess()) {
                 $async = $startResponse->getAsyncSuccess();
                 \assert($async !== null);
                 $options = ['async' => true];
                 $token = $async->getOperationToken();
-                if ($token !== null) {
+                if ($token !== '') {
                     $options['token'] = $token;
                 }
-                $links = self::linksToWire($async->getLinks());
-                if ($links !== []) {
-                    $options['links'] = $links;
-                }
-                $resolver->resolve(new CommandResponse(
-                    command: self::COMMAND,
-                    options: $options,
-                ));
+                $protoLinks = $async->getLinks();
+                $payloads = null;
+            } else {
+                $resolver->reject(new \LogicException('NexusTaskHandler returned a response with no success variant'));
                 return;
             }
 
-            $resolver->reject(new \LogicException('NexusTaskHandler returned a response with no success variant'));
+            $links = self::linksToWire($protoLinks);
+            if ($links !== []) {
+                $options['links'] = $links;
+            }
+
+            $resolver->resolve(new CommandResponse(
+                command: self::COMMAND,
+                options: $options,
+                payloads: $payloads,
+            ));
         } catch (NexusHandlerErrorException $e) {
-            $resolver->reject($e->getPrevious() ?? $e);
+            $resolver->reject($e->cause);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         } finally {
@@ -114,10 +115,7 @@ final class InvokeNexusOperation extends Route
      */
     private static function buildProtoRequest(array $options, ValuesInterface $payloads): Request
     {
-        // Generate a fallback when the wire did not supply a requestId — Nexus
-        // traffic always carries it; the fallback covers HTTP clients that
-        // elide the header.
-        $requestId = ($options['requestId'] ?? '') ?: \bin2hex(\random_bytes(8));
+        $requestId = ((string) ($options['requestId'] ?? '')) ?: Uuid::v4();
 
         $startRequest = (new StartOperationRequest())
             ->setService((string) ($options['service'] ?? ''))

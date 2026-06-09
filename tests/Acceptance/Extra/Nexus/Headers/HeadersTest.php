@@ -69,8 +69,7 @@ class HeaderEchoService
         }
         // Headers in OperationContext are case-insensitive (lowercased)
         $context = Nexus::getCurrentOperationContext();
-        $key = \strtolower($headerName);
-        return $context->headers[$key] ?? "missing:{$headerName}";
+        return $context->headers->get($headerName) ?? "missing:{$headerName}";
     }
 }
 
