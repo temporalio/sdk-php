@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Nexus;
 
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
-use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Nexus\Exception\ErrorType;
+use Temporal\Nexus\Exception\HandlerException;
 
 /**
  * Helpers that back a Nexus operation with a Temporal workflow run.
@@ -35,18 +36,13 @@ final class WorkflowRunOperation
     public static function cancel(string $operationToken): void
     {
         $client = Nexus::getWorkflowClient();
-        $info = Nexus::getOperationContext();
-        $decoded = WorkflowRunOperationToken::load($operationToken);
 
-        if ($decoded->namespace !== '' && $decoded->namespace !== $info->namespace) {
-            throw new InvalidArgumentException(\sprintf(
-                'workflow run token namespace "%s" does not match handler namespace "%s"',
-                $decoded->namespace,
-                $info->namespace,
-            ));
+        try {
+            $decoded = WorkflowRunOperationToken::load($operationToken);
+        } catch (\InvalidArgumentException $e) {
+            throw HandlerException::create(ErrorType::BadRequest, 'failed to parse operation token', $e);
         }
 
-        $stub = $client->newUntypedRunningWorkflowStub($decoded->workflowId);
-        $stub->cancel();
+        $client->newUntypedRunningWorkflowStub($decoded->workflowId)->cancel();
     }
 }

@@ -12,16 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Tests\Nexus\Fixtures\Service;
 
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\WorkflowHandle;
 
 #[Service]
-interface GreetingServiceInterface
+interface CancelRoutingServiceInterface
 {
-    #[Operation]
-    public function sayHello1(string $name): string;
+    #[AsyncOperation(output: 'string')]
+    public function autoCancel(string $name): WorkflowHandle;
 
     #[AsyncOperation(output: 'string')]
-    public function sayHello2(string $name): WorkflowHandle;
+    public function explicitOverride(string $name): WorkflowHandle;
 }

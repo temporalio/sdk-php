@@ -13,6 +13,9 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\NexusOperationContext;
 
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -23,6 +26,7 @@ use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\Internal\ServiceHandler;
+use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
@@ -30,6 +34,8 @@ use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowRunInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -37,6 +43,9 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerTest extends TestCase
 {
     use BindNexusService;
+
+    private const NS = 'sample-ns';
+    private const TQ = 'sample-tq';
 
     private EnvironmentInterface $env;
 
@@ -75,13 +84,12 @@ final class ServiceHandlerTest extends TestCase
             $this->newGreetingContext('sayHello2'),
             new OperationStartDetails(requestId: 'r3'),
             self::encode('SomeUser'),
-            null,
-            new NexusOperationContext(),
+            $this->asyncClient(),
+            $this->asyncOperationContext(),
         );
 
-        $token = $result->info->token;
-        self::assertNotNull($token);
-        self::assertNotEmpty($token);
+        $expectedToken = WorkflowRunOperationToken::generate(self::NS, GreetingService::WORKFLOW_ID);
+        self::assertSame($expectedToken, $result->info->token);
     }
 
     public function testAsyncHandlerCollectsLinksOnLinkSuffixedInput(): void
@@ -93,13 +101,13 @@ final class ServiceHandlerTest extends TestCase
             $context,
             new OperationStartDetails(requestId: 'r4'),
             self::encode('SomeUser-link'),
-            null,
-            new NexusOperationContext(),
+            $this->asyncClient(),
+            $this->asyncOperationContext(),
         );
 
         self::assertNotNull($result->info->token);
         $links = $context->links->all();
-        self::assertCount(1, $links);
+        self::assertCount(2, $links);
         self::assertSame('http://somepath?k=v', $links[0]->uri);
         self::assertSame('com.example.MyResource', $links[0]->type);
     }
@@ -240,6 +248,23 @@ final class ServiceHandlerTest extends TestCase
     private function newGreetingContext(string $operation): OperationContext
     {
         return new OperationContext(service: 'GreetingServiceInterface', operation: $operation, env: $this->env);
+    }
+
+    private function asyncOperationContext(): NexusOperationContext
+    {
+        return new NexusOperationContext(self::NS, self::TQ);
+    }
+
+    private function asyncClient(): WorkflowClientInterface
+    {
+        $client = $this->createMock(WorkflowClientInterface::class);
+        $client->method('newWorkflowStub')->willReturn($this->createMock(WorkflowStubInterface::class));
+
+        $run = $this->createMock(WorkflowRunInterface::class);
+        $run->method('getExecution')->willReturn(new WorkflowExecution(GreetingService::WORKFLOW_ID, 'run-1'));
+        $client->method('start')->willReturn($run);
+
+        return $client;
     }
 
     private static function dataConverter(): DataConverterInterface

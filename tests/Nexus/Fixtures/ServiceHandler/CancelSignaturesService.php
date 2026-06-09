@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixtures\ServiceHandler;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\OperationInfo;
-use Temporal\Nexus\OperationState;
+use Temporal\Nexus\WorkflowHandle;
 use Temporal\Tests\Nexus\Fixtures\Service\CancelSignaturesServiceInterface;
 
 final class CancelSignaturesService implements CancelSignaturesServiceInterface
@@ -23,24 +23,36 @@ final class CancelSignaturesService implements CancelSignaturesServiceInterface
     /** @var array<string, mixed> */
     public array $cancelCalls = [];
 
-    public function legacy(string $name): OperationInfo
+    public function legacy(string $name): WorkflowHandle
     {
-        return new OperationInfo($name, OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            self::class,
+            WorkflowOptions::new()->withWorkflowId($name),
+        );
     }
 
-    public function contextAndDetails(string $name): OperationInfo
+    public function contextAndDetails(string $name): WorkflowHandle
     {
-        return new OperationInfo($name, OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            self::class,
+            WorkflowOptions::new()->withWorkflowId($name),
+        );
     }
 
-    public function reversed(string $name): OperationInfo
+    public function reversed(string $name): WorkflowHandle
     {
-        return new OperationInfo($name, OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            self::class,
+            WorkflowOptions::new()->withWorkflowId($name),
+        );
     }
 
-    public function noArgs(string $name): OperationInfo
+    public function noArgs(string $name): WorkflowHandle
     {
-        return new OperationInfo($name, OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            self::class,
+            WorkflowOptions::new()->withWorkflowId($name),
+        );
     }
 
     #[OperationCancel(operation: 'legacy')]

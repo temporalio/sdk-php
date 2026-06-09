@@ -23,6 +23,7 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\WorkflowHandle;
 
 /**
  * @template-extends Reader<NexusServicePrototype>
@@ -256,6 +257,7 @@ class NexusServiceReader extends Reader
         $async = $attribute instanceof AsyncOperation ? $attribute : null;
 
         if ($async !== null) {
+            $this->assertAsyncReturnType($method);
             $operationName = $async->name !== '' ? $async->name : $method->getName();
             $outputType = Type::create($async->output !== '' ? $async->output : Type::TYPE_VOID);
         } else {
@@ -271,6 +273,31 @@ class NexusServiceReader extends Reader
             async: $async !== null,
             handler: $method,
         );
+    }
+
+    /**
+     * An `#[AsyncOperation]` method must declare a `WorkflowHandle` return
+     * type. Cancel auto-detection keys on the start method returning
+     * {@see WorkflowHandle}; an async operation with no or a different return
+     * type would silently orphan its workflow on cancel, so the mistake is
+     * rejected at registration rather than at runtime.
+     */
+    private function assertAsyncReturnType(\ReflectionMethod $method): void
+    {
+        $returnType = $method->getReturnType();
+        if ($returnType instanceof \ReflectionNamedType) {
+            if ($returnType->getName() === WorkflowHandle::class) {
+                return;
+            }
+        }
+
+        throw new InvalidArgumentException(\sprintf(
+            '#[%s] method %s::%s() must declare a `%s` return type',
+            AsyncOperation::class,
+            $method->getDeclaringClass()->getName(),
+            $method->getName(),
+            WorkflowHandle::class,
+        ));
     }
 
     /**

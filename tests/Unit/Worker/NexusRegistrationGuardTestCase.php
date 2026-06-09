@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Worker;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\OperationInfo;
-use Temporal\Nexus\OperationState;
+use Temporal\Nexus\WorkflowHandle;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\WorkerFactory;
 
@@ -38,14 +38,17 @@ class GuardSyncOnlyServiceImpl implements GuardSyncOnlyService
 interface GuardAsyncService
 {
     #[AsyncOperation(output: 'string')]
-    public function runAsync(string $input): OperationInfo;
+    public function runAsync(string $input): WorkflowHandle;
 }
 
 class GuardAsyncServiceImpl implements GuardAsyncService
 {
-    public function runAsync(string $input): OperationInfo
+    public function runAsync(string $input): WorkflowHandle
     {
-        return new OperationInfo('token', OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            self::class,
+            WorkflowOptions::new()->withWorkflowId('guard'),
+        );
     }
 }
 

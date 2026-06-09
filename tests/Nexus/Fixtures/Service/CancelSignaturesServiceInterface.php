@@ -13,20 +13,20 @@ namespace Temporal\Tests\Nexus\Fixtures\Service;
 
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\WorkflowHandle;
 
 #[Service]
 interface CancelSignaturesServiceInterface
 {
     #[AsyncOperation(output: 'string')]
-    public function legacy(string $name): OperationInfo;
+    public function legacy(string $name): WorkflowHandle;
 
     #[AsyncOperation(output: 'string')]
-    public function contextAndDetails(string $name): OperationInfo;
+    public function contextAndDetails(string $name): WorkflowHandle;
 
     #[AsyncOperation(output: 'string')]
-    public function reversed(string $name): OperationInfo;
+    public function reversed(string $name): WorkflowHandle;
 
     #[AsyncOperation(output: 'string')]
-    public function noArgs(string $name): OperationInfo;
+    public function noArgs(string $name): WorkflowHandle;
 }

@@ -13,6 +13,8 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\NexusOperationContext;
 
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -31,6 +33,8 @@ use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowRunInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -38,6 +42,9 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerInterceptorTest extends TestCase
 {
     use BindNexusService;
+
+    private const NS = 'sample-ns';
+    private const TQ = 'sample-tq';
 
     private EnvironmentInterface $env;
 
@@ -220,8 +227,8 @@ final class ServiceHandlerInterceptorTest extends TestCase
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             self::encode('User'),
-            null,
-            new NexusOperationContext(),
+            $this->asyncClient(),
+            new NexusOperationContext(self::NS, self::TQ),
         );
 
         $token = $started->info->token;

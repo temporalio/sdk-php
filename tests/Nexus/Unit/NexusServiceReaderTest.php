@@ -20,6 +20,7 @@ use Temporal\Tests\Nexus\Fixtures\Service\UntypedInputServiceInterface;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\AmbiguousServiceImpl;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\DiamondFinalInterface;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\EmptyService;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidAsyncReturnTypeService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceDuplicateOperation;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceNoAnnotation;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\ServiceAsClass;
@@ -80,6 +81,13 @@ final class NexusServiceReaderTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Multiple operations named 'duplicateWhenNameOverridden1'");
         self::reader()->fromClass(InvalidServiceDuplicateOperation::class);
+    }
+
+    public function testAsyncOperationWithInvalidReturnTypeIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must declare a `Temporal\Nexus\WorkflowHandle` or `Temporal\Nexus\OperationInfo` return type');
+        self::reader()->fromClass(InvalidAsyncReturnTypeService::class);
     }
 
     public function testValidService(): void

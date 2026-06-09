@@ -76,9 +76,12 @@ final class NexusServiceInstantiatorTest extends TestCase
                 return '';
             }
 
-            public function sayHello2(string $name): \Temporal\Nexus\OperationInfo
+            public function sayHello2(string $name): \Temporal\Nexus\WorkflowHandle
             {
-                return new \Temporal\Nexus\OperationInfo('tok', \Temporal\Nexus\OperationState::Running);
+                return \Temporal\Nexus\WorkflowHandle::fromWorkflowMethod(
+                    self::class,
+                    \Temporal\Client\WorkflowOptions::new()->withWorkflowId('w'),
+                );
             }
 
             #[\Temporal\Nexus\Attribute\OperationCancel(operation: 'doesNotExist')]
@@ -101,9 +104,12 @@ final class NexusServiceInstantiatorTest extends TestCase
                 return '';
             }
 
-            public function sayHello2(string $name): \Temporal\Nexus\OperationInfo
+            public function sayHello2(string $name): \Temporal\Nexus\WorkflowHandle
             {
-                return new \Temporal\Nexus\OperationInfo('tok', \Temporal\Nexus\OperationState::Running);
+                return \Temporal\Nexus\WorkflowHandle::fromWorkflowMethod(
+                    self::class,
+                    \Temporal\Client\WorkflowOptions::new()->withWorkflowId('w'),
+                );
             }
 
             #[\Temporal\Nexus\Attribute\OperationCancel(operation: 'sayHello2')]
@@ -129,9 +135,12 @@ final class NexusServiceInstantiatorTest extends TestCase
                 return '';
             }
 
-            public function sayHello2(string $name): \Temporal\Nexus\OperationInfo
+            public function sayHello2(string $name): \Temporal\Nexus\WorkflowHandle
             {
-                return new \Temporal\Nexus\OperationInfo('tok', \Temporal\Nexus\OperationState::Running);
+                return \Temporal\Nexus\WorkflowHandle::fromWorkflowMethod(
+                    self::class,
+                    \Temporal\Client\WorkflowOptions::new()->withWorkflowId('w'),
+                );
             }
 
             // Stray cancel on a sync operation — sync ops have no terminal-state

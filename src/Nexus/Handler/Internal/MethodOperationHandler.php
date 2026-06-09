@@ -12,14 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Handler\Internal;
 
 use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
-use Temporal\Nexus\Exception\ErrorType;
-use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
-use Temporal\Nexus\OperationInfo;
-use Temporal\Nexus\WorkflowHandle;
 use Temporal\Nexus\WorkflowRunOperation;
 
 /**
@@ -42,20 +38,8 @@ final class MethodOperationHandler implements OperationHandlerInterface
         $args = $this->startMethod->getNumberOfParameters() === 0 ? [] : [$param];
         $result = $this->startMethod->invoke($this->instance, ...$args);
 
-        // Method's declared return type is enforced by PHP at invocation time:
-        // `: OperationInfo` or `: WorkflowHandle` for async, the wire output type for sync.
         if ($this->operation->async) {
-            if ($result instanceof WorkflowHandle) {
-                $result = WorkflowRunStarter::start($result, $details);
-            }
-            if (!$result instanceof OperationInfo) {
-                throw new \LogicException(\sprintf(
-                    'Async operation "%s" must return %s or %s.',
-                    $this->operation->name,
-                    OperationInfo::class,
-                    WorkflowHandle::class,
-                ));
-            }
+            $result = WorkflowRunStarter::start($result, $details);
             return OperationStartResult::async($result);
         }
 
@@ -69,20 +53,8 @@ final class MethodOperationHandler implements OperationHandlerInterface
         $cancelMethod = $this->operation->cancelHandler;
 
         if ($cancelMethod === null) {
-            $returnType = $this->startMethod->getReturnType();
-            if ($returnType instanceof \ReflectionNamedType && $returnType->getName() === WorkflowHandle::class) {
-                WorkflowRunOperation::cancel($details->operationToken);
-                return;
-            }
-
-            throw HandlerException::create(
-                ErrorType::NotImplemented,
-                \sprintf(
-                    'Operation %s/%s does not declare a cancel routine',
-                    $context->service,
-                    $context->operation,
-                ),
-            );
+            WorkflowRunOperation::cancel($details->operationToken);
+            return;
         }
 
         $cancelMethod->invoke($this->instance, ...$this->resolveCancelArgs($cancelMethod, $context, $details));

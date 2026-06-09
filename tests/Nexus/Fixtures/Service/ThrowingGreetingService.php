@@ -11,13 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Fixtures\Service;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Nexus\Attribute\OperationCancel;
-use Temporal\Nexus\OperationInfo;
-use Temporal\Nexus\OperationState;
+use Temporal\Nexus\WorkflowHandle;
 
 /**
  * Greeting-service implementation whose operations either trigger a configured throwable
- * (for testing exception paths) or return a benign sync stub.
+ * (for testing exception paths) or return a benign workflow-backed stub.
  */
 final class ThrowingGreetingService implements GreetingServiceInterface
 {
@@ -34,12 +34,15 @@ final class ThrowingGreetingService implements GreetingServiceInterface
         return 'ok';
     }
 
-    public function sayHello2(string $name): OperationInfo
+    public function sayHello2(string $name): WorkflowHandle
     {
         if ($this->hello2Throw !== null) {
             throw $this->hello2Throw;
         }
-        return new OperationInfo('throwing-token', OperationState::Running);
+        return WorkflowHandle::fromWorkflowMethod(
+            FakeGreetingWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId('throwing-workflow'),
+        );
     }
 
     #[OperationCancel(operation: 'sayHello2')]

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Nexus;
 
+use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
+use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
+use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
@@ -13,6 +17,8 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Internal\Nexus\NexusContext;
+use Temporal\Nexus\Exception\ErrorType;
+use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Nexus;
@@ -21,6 +27,7 @@ use Temporal\Nexus\WorkflowHandle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\Handler\Internal\WorkflowRunStarter;
 use Temporal\Nexus\WorkflowRunOperation;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelRoutingService;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -34,6 +41,7 @@ use Temporal\Worker\Environment\EnvironmentInterface;
  */
 #[CoversClass(WorkflowRunOperation::class)]
 #[CoversClass(WorkflowRunStarter::class)]
+#[CoversClass(MethodOperationHandler::class)]
 final class WorkflowRunOperationTestCase extends AbstractUnit
 {
     private const NS = 'sample-ns';
@@ -294,11 +302,63 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         WorkflowRunOperation::cancel($token);
     }
 
-    public function testCancelRejectsBadToken(): void
+    public function testCancelRejectsBadTokenAsBadRequest(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        try {
+            WorkflowRunOperation::cancel('not-a-real-token');
+            self::fail('Expected HandlerException for malformed token');
+        } catch (HandlerException $e) {
+            self::assertSame(ErrorType::BadRequest, $e->errorType);
+            self::assertFalse($e->isRetryable());
+            self::assertStringContainsString('failed to parse operation token', $e->getMessage());
+        }
+    }
 
-        WorkflowRunOperation::cancel('not-a-real-token');
+    public function testCancelIgnoresTokenNamespaceAndCancelsByWorkflowId(): void
+    {
+        $token = WorkflowRunOperationToken::generate('other-ns', self::WID);
+
+        $stub = $this->createMock(WorkflowStubInterface::class);
+        $stub->expects(self::once())->method('cancel');
+
+        $this->client->expects(self::once())
+            ->method('newUntypedRunningWorkflowStub')
+            ->with(self::WID)
+            ->willReturn($stub);
+
+        WorkflowRunOperation::cancel($token);
+    }
+
+    public function testHandlerWithoutCancelRoutineAutoCancelsWorkflowRun(): void
+    {
+        $token = WorkflowRunOperationToken::generate(self::NS, self::WID);
+
+        $stub = $this->createMock(WorkflowStubInterface::class);
+        $stub->expects(self::once())->method('cancel');
+
+        $this->client->expects(self::once())
+            ->method('newUntypedRunningWorkflowStub')
+            ->with(self::WID)
+            ->willReturn($stub);
+
+        $service = new CancelRoutingService();
+        $this->handlerFor($service, 'autoCancel')->cancel(
+            new OperationContext(service: 'svc', operation: 'autoCancel', env: $this->env),
+            new OperationCancelDetails(operationToken: $token),
+        );
+    }
+
+    public function testExplicitCancelRoutineOverridesAutoCancel(): void
+    {
+        $this->client->expects(self::never())->method('newUntypedRunningWorkflowStub');
+
+        $service = new CancelRoutingService();
+        $this->handlerFor($service, 'explicitOverride')->cancel(
+            new OperationContext(service: 'svc', operation: 'explicitOverride', env: $this->env),
+            new OperationCancelDetails(operationToken: WorkflowRunOperationToken::generate(self::NS, self::WID)),
+        );
+
+        self::assertTrue($service->explicitCancelCalled, 'user-declared cancel routine must run');
     }
 
     protected function setUp(): void
@@ -315,6 +375,18 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
     protected function tearDown(): void
     {
         Nexus::setCurrentContext(null);
+    }
+
+    private function handlerFor(object $service, string $operation): MethodOperationHandler
+    {
+        $prototype = (new NexusServiceReader(new AttributeReader()))->fromClass(\get_class($service));
+        $operationPrototype = $prototype->getOperations()[$operation];
+
+        return new MethodOperationHandler(
+            instance: $service,
+            startMethod: new \ReflectionMethod($service, $operationPrototype->methodName),
+            operation: $operationPrototype,
+        );
     }
 
     private function captureStartOptions(WorkflowOptions $handleOptions): WorkflowOptions
