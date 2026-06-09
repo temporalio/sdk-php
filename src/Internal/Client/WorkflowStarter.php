@@ -34,7 +34,6 @@ use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
-use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
@@ -326,10 +325,6 @@ final class WorkflowStarter
 
             \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
             $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
-
-            if ($request->getWorkflowIdConflictPolicy() === WorkflowIdConflictPolicy::UseExisting->value) {
-                return $execution;
-            }
 
             throw new WorkflowExecutionAlreadyStartedException(
                 $execution,

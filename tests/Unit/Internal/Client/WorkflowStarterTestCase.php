@@ -17,6 +17,7 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Nexus\NexusLinkConverter;
@@ -129,7 +130,7 @@ final class WorkflowStarterTestCase extends TestCase
         self::assertSame(WorkflowIdConflictPolicy::UseExisting->value, $request->getWorkflowIdConflictPolicy());
     }
 
-    public function testAlreadyStartedWithUseExistingReturnsExistingExecution(): void
+    public function testAlreadyStartedThrowsEvenWithUseExisting(): void
     {
         $exception = $this->alreadyStartedException('existing-run-id');
 
@@ -154,10 +155,8 @@ final class WorkflowStarterTestCase extends TestCase
             ->withWorkflowId('my-wf-id')
             ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting);
 
-        $execution = $starter->start('test-workflow', $options, []);
-
-        self::assertSame('my-wf-id', $execution->getID());
-        self::assertSame('existing-run-id', $execution->getRunID());
+        $this->expectException(WorkflowExecutionAlreadyStartedException::class);
+        $starter->start('test-workflow', $options, []);
     }
 
     private function alreadyStartedException(string $runId): ServiceClientException
