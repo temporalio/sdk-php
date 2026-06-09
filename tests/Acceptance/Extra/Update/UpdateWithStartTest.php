@@ -10,6 +10,7 @@ use Temporal\Client\Update\LifecycleStage;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowServiceException;
@@ -138,6 +139,96 @@ class UpdateWithStartTest extends TestCase
             $stub1->signal('exit');
         }
     }
+
+    #[Test]
+    public function useExistingReturnsRunningExecution(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::uuid7()->__toString();
+
+        $first = $client->newUntypedWorkflowStub(
+            'Extra_Update_UseExisting',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
+        );
+        $client->start($first);
+        $firstRunId = $first->getExecution()->getRunID();
+
+        $second = $client->newUntypedWorkflowStub(
+            'Extra_Update_UseExisting',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withWorkflowId($id)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
+        );
+
+        try {
+            $client->start($second);
+
+            $this->assertSame($id, $second->getExecution()->getID());
+            $this->assertSame(
+                $firstRunId,
+                $second->getExecution()->getRunID(),
+                'UseExisting must resolve to the already-running execution instead of throwing',
+            );
+        } finally {
+            $first->signal('exit');
+        }
+    }
+
+    #[Test]
+    public function failPolicyThrowsOnRunningWorkflowId(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::uuid7()->__toString();
+
+        $first = $client->newUntypedWorkflowStub(
+            'Extra_Update_UseExisting',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
+        );
+        $client->start($first);
+
+        $second = $client->newUntypedWorkflowStub(
+            'Extra_Update_UseExisting',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withWorkflowId($id)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::Fail),
+        );
+
+        try {
+            $this->expectException(WorkflowExecutionAlreadyStartedException::class);
+            $client->start($second);
+        } finally {
+            $first->signal('exit');
+        }
+    }
+
+    #[Test]
+    public function useExistingStartsFreshWhenNoneRunning(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::uuid7()->__toString();
+
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Update_UseExisting',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withWorkflowId($id)
+                ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting),
+        );
+
+        try {
+            $client->start($stub);
+
+            $this->assertSame($id, $stub->getExecution()->getID());
+            $this->assertNotSame('', $stub->getExecution()->getRunID());
+        } finally {
+            $stub->signal('exit');
+        }
+    }
 }
 
 #[WorkflowInterface]
@@ -194,4 +285,23 @@ class UpdateResult
         public string $name = '',
         public int $length = 0,
     ) {}
+}
+
+#[WorkflowInterface]
+class UseExistingWorkflow
+{
+    private bool $exit = false;
+
+    #[WorkflowMethod(name: 'Extra_Update_UseExisting')]
+    public function handle(): \Generator
+    {
+        yield Workflow::await(fn(): bool => $this->exit);
+        return 'done';
+    }
+
+    #[Workflow\SignalMethod]
+    public function exit(): void
+    {
+        $this->exit = true;
+    }
 }
