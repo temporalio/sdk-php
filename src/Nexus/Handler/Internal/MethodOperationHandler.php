@@ -19,6 +19,8 @@ use Temporal\Nexus\Handler\OperationContext;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\WorkflowHandle;
+use Temporal\Nexus\WorkflowRunOperation;
 
 /**
  * @internal
@@ -41,9 +43,19 @@ final class MethodOperationHandler implements OperationHandlerInterface
         $result = $this->startMethod->invoke($this->instance, ...$args);
 
         // Method's declared return type is enforced by PHP at invocation time:
-        // `: OperationInfo` for async, the wire output type for sync.
+        // `: OperationInfo` or `: WorkflowHandle` for async, the wire output type for sync.
         if ($this->operation->async) {
-            \assert($result instanceof OperationInfo);
+            if ($result instanceof WorkflowHandle) {
+                $result = WorkflowRunOperation::start($result, $details);
+            }
+            if (!$result instanceof OperationInfo) {
+                throw new \LogicException(\sprintf(
+                    'Async operation "%s" must return %s or %s.',
+                    $this->operation->name,
+                    OperationInfo::class,
+                    WorkflowHandle::class,
+                ));
+            }
             return OperationStartResult::async($result);
         }
 

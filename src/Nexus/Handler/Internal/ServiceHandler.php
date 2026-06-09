@@ -14,6 +14,7 @@ namespace Temporal\Nexus\Handler\Internal;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
@@ -88,7 +89,7 @@ final class ServiceHandler implements HandlerInterface
         $definition = $operations[$context->operation];
 
         try {
-            $inputObject = $definition->inputType === 'void'
+            $inputObject = $definition->inputType->getName() === Type::TYPE_VOID
                 ? null
                 : $input->getValue(0, $definition->inputType);
         } catch (\Throwable $e) {
@@ -98,7 +99,7 @@ final class ServiceHandler implements HandlerInterface
                     'Failed deserializing input for %s/%s as %s: %s',
                     $context->service,
                     $context->operation,
-                    $definition->inputType,
+                    $definition->inputType->getName(),
                     $e->getMessage(),
                 ),
                 $e,
@@ -225,7 +226,7 @@ final class ServiceHandler implements HandlerInterface
     private function encodeResult(
         mixed $result,
         OperationContext $context,
-        string $outputType,
+        Type $outputType,
     ): ValuesInterface {
         try {
             $payload = $this->dataConverter->toPayload($result);
@@ -238,7 +239,7 @@ final class ServiceHandler implements HandlerInterface
                     'Failed serializing result for %s/%s as %s: %s',
                     $context->service,
                     $context->operation,
-                    $outputType,
+                    $outputType->getName(),
                     $e->getMessage(),
                 ),
                 $e,

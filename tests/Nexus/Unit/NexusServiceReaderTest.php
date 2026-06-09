@@ -50,8 +50,8 @@ final class NexusServiceReaderTest extends TestCase
         self::assertSame('ServiceAsClass', $proto->getID());
         self::assertCount(1, $proto->getOperations());
         self::assertArrayHasKey('classOperation', $proto->getOperations());
-        self::assertSame('string', $proto->getOperations()['classOperation']->inputType);
-        self::assertSame('string', $proto->getOperations()['classOperation']->outputType);
+        self::assertSame('string', $proto->getOperations()['classOperation']->inputType->getName());
+        self::assertSame('string', $proto->getOperations()['classOperation']->outputType->getName());
     }
 
     public function testMultipleServiceInterfacesAreAmbiguous(): void
@@ -130,16 +130,13 @@ final class NexusServiceReaderTest extends TestCase
     public function testUntypedParameterFallsBackToMixed(): void
     {
         $proto = self::reader()->fromClass(UntypedInputServiceInterface::class);
-        self::assertSame('mixed', $proto->getOperations()['operation']->inputType);
+        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
     }
 
-    public function testUnionParameterIsRejectedAtFromMethod(): void
+    public function testUnionParameterFallsBackToMixed(): void
     {
-        // The signature key still includes the union (covering reflectionTypeKey's
-        // composite branch) before fromMethod rejects it.
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Union types');
-        self::reader()->fromClass(UnionInputServiceInterface::class);
+        $proto = self::reader()->fromClass(UnionInputServiceInterface::class);
+        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
     }
 
     private static function reader(): NexusServiceReader
@@ -157,7 +154,15 @@ final class NexusServiceReaderTest extends TestCase
         self::assertArrayHasKey($name, $operations);
         $op = $operations[$name];
         self::assertSame($name, $op->name);
-        self::assertSame($input, $op->inputType, "inputType for {$name}");
-        self::assertSame($output, $op->outputType, "outputType for {$name}");
+        self::assertSame($input, self::typeName($op->inputType), "inputType for {$name}");
+        self::assertSame($output, self::typeName($op->outputType), "outputType for {$name}");
+    }
+
+    private static function typeName(\Temporal\DataConverter\Type $type): string
+    {
+        $name = $type->getName();
+        return $type->allowsNull() && !\in_array($name, ['mixed', 'void', 'null'], true)
+            ? '?' . $name
+            : $name;
     }
 }

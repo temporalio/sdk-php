@@ -63,7 +63,7 @@ final class NexusServiceProxy extends Proxy
             );
         }
 
-        $returnType = $operation->outputType === 'void' ? null : $operation->outputType;
+        $returnType = $operation->outputType;
 
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this->ctx

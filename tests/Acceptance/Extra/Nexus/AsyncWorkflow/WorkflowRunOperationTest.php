@@ -190,20 +190,18 @@ final class RequestIdMarker
 class AsyncWorkflowService
 {
     #[AsyncOperation(output: 'string')]
-    public function hello(string $input): OperationInfo
+    public function hello(string $input): WorkflowHandle
     {
         $details = Nexus::getStartDetails();
         // Side-channel: stash the requestId so the PHPUnit process can later
         // assert that the handler workflow was started under exactly this id.
         // See RequestIdMarker for the cross-process rationale.
         RequestIdMarker::record($details->requestId);
-        return WorkflowRunOperation::start(
-            WorkflowHandle::fromWorkflowMethod(
-                AsyncHandlerWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId($details->requestId),
-                $input,
-            ),
-            $details,
+        // Declarative style: return the handle, the SDK runs WorkflowRunOperation::start.
+        return WorkflowHandle::fromWorkflowMethod(
+            AsyncHandlerWorkflow::class,
+            WorkflowOptions::new()->withWorkflowId($details->requestId),
+            $input,
         );
     }
 

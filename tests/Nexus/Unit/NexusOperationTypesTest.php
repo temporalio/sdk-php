@@ -36,29 +36,31 @@ final class NexusOperationTypesTest extends TestCase
 
         self::assertArrayHasKey('operation', $proto->getOperations());
         $op = $proto->getOperations()['operation'];
-        self::assertSame('?string', $op->inputType);
-        self::assertSame('?string', $op->outputType);
+        self::assertSame('string', $op->inputType->getName());
+        self::assertTrue($op->inputType->allowsNull());
+        self::assertSame('string', $op->outputType->getName());
+        self::assertTrue($op->outputType->allowsNull());
     }
 
-    public function testRejectsUnionInputType(): void
+    public function testUnionInputFallsBackToMixed(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Union types.*parameter \$input of/');
-        self::reader()->fromClass(UnionInputServiceInterface::class);
+        $proto = self::reader()->fromClass(UnionInputServiceInterface::class);
+
+        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
     }
 
-    public function testRejectsUnionOutputType(): void
+    public function testUnionOutputFallsBackToMixed(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Union types.*return type of/');
-        self::reader()->fromClass(UnionOutputServiceInterface::class);
+        $proto = self::reader()->fromClass(UnionOutputServiceInterface::class);
+
+        self::assertSame('mixed', $proto->getOperations()['operation']->outputType->getName());
     }
 
-    public function testRejectsIntersectionInputType(): void
+    public function testIntersectionInputFallsBackToMixed(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Intersection types.*parameter \$input of/');
-        self::reader()->fromClass(IntersectionInputServiceInterface::class);
+        $proto = self::reader()->fromClass(IntersectionInputServiceInterface::class);
+
+        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
     }
 
     public function testUntypedParameterFallsBackToMixed(): void
@@ -66,8 +68,8 @@ final class NexusOperationTypesTest extends TestCase
         $proto = self::reader()->fromClass(UntypedInputServiceInterface::class);
 
         $op = $proto->getOperations()['operation'];
-        self::assertSame('mixed', $op->inputType);
-        self::assertSame('string', $op->outputType);
+        self::assertSame('mixed', $op->inputType->getName());
+        self::assertSame('string', $op->outputType->getName());
     }
 
     public function testReaderRejectsMethodWithoutAttribute(): void

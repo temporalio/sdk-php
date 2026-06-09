@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
@@ -22,7 +23,6 @@ use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\OperationInfo;
 
 /**
  * @template-extends Reader<NexusServicePrototype>
@@ -157,6 +157,7 @@ class NexusServiceReader extends Reader
 
         foreach ($graph->getAllMethods() as $name => $rootMethod) {
             $first = null;
+            /** @var \Traversable<class-string, \ReflectionMethod> $group */
             foreach ($graph->getMethods($name) as $group) {
                 foreach ($group as $method) {
                     $attribute = $this->operationAttribute($method);
@@ -182,8 +183,8 @@ class NexusServiceReader extends Reader
                             $operations[$first->name] = $first;
                         } elseif (
                             $first->name !== $current->name
-                            || $first->inputType !== $current->inputType
-                            || $first->outputType !== $current->outputType
+                            || $first->inputType != $current->inputType
+                            || $first->outputType != $current->outputType
                         ) {
                             $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
                                 . 'mismatches against another operation of the same name/signature';
@@ -247,45 +248,19 @@ class NexusServiceReader extends Reader
             throw new InvalidArgumentException('Cannot be static');
         }
 
-        $inputType = 'void';
+        $inputType = new Type(Type::TYPE_VOID);
         if ($method->getNumberOfParameters() === 1) {
-            $parameter = $method->getParameters()[0];
-            $inputType = $this->typeToString(
-                $parameter->getType(),
-                "parameter \${$parameter->getName()} of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
-                untypedFallback: 'mixed',
-            );
+            $inputType = Type::create($method->getParameters()[0]->getType());
         }
 
         $async = $attribute instanceof AsyncOperation ? $attribute : null;
 
         if ($async !== null) {
             $operationName = $async->name !== '' ? $async->name : $method->getName();
-
-            $declaredReturn = $this->typeToString(
-                $method->getReturnType(),
-                "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
-                untypedFallback: 'void',
-            );
-            // Accept ?OperationInfo / leading-slash forms — the wire is the same.
-            if (\ltrim($declaredReturn, '?\\') !== OperationInfo::class) {
-                throw new InvalidArgumentException(\sprintf(
-                    '#[AsyncOperation] method %s::%s() must declare return type %s, got %s',
-                    $method->getDeclaringClass()->getName(),
-                    $method->getName(),
-                    OperationInfo::class,
-                    $declaredReturn,
-                ));
-            }
-
-            $outputType = $async->output !== '' ? $async->output : 'void';
+            $outputType = Type::create($async->output !== '' ? $async->output : Type::TYPE_VOID);
         } else {
             $operationName = $attribute->name !== '' ? $attribute->name : $method->getName();
-            $outputType = $this->typeToString(
-                $method->getReturnType(),
-                "return type of {$method->getDeclaringClass()->getName()}::{$method->getName()}()",
-                untypedFallback: 'void',
-            );
+            $outputType = Type::create($method->getReturnType());
         }
 
         return new NexusOperationPrototype(
@@ -296,47 +271,6 @@ class NexusServiceReader extends Reader
             async: $async !== null,
             handler: $method,
         );
-    }
-
-    /**
-     * Reject union/intersection (one concrete type per slot). Nullable named
-     * types keep the `?` prefix.
-     *
-     * @param non-empty-string $untypedFallback Used when the slot has no type hint.
-     */
-    private function typeToString(
-        ?\ReflectionType $type,
-        string $location,
-        string $untypedFallback,
-    ): string {
-        if ($type === null) {
-            return $untypedFallback;
-        }
-
-        if ($type instanceof \ReflectionUnionType) {
-            throw new InvalidArgumentException(
-                "Union types are not supported for {$location}",
-            );
-        }
-
-        if ($type instanceof \ReflectionIntersectionType) {
-            throw new InvalidArgumentException(
-                "Intersection types are not supported for {$location}",
-            );
-        }
-
-        if ($type instanceof \ReflectionNamedType) {
-            $name = $type->getName();
-            if ($type->allowsNull() && $name !== 'mixed' && $name !== 'null') {
-                return '?' . $name;
-            }
-            return $name;
-        }
-
-        // @codeCoverageIgnoreStart
-        // future-proof: unknown ReflectionType subclass
-        return $untypedFallback;
-        // @codeCoverageIgnoreEnd
     }
 
     /**

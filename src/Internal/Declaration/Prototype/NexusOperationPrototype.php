@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Prototype;
 
+use Temporal\DataConverter\Type;
 use Temporal\Nexus\Validation\OperationNameValidator;
 
 /**
@@ -32,14 +33,12 @@ final class NexusOperationPrototype
     /**
      * @param non-empty-string $name Wire-level operation name.
      * @param non-empty-string $methodName PHP method name on the contract.
-     * @param string $inputType Either a class-string, scalar, `?T`, `void`, `mixed`.
-     * @param string $outputType Same conventions as `$inputType`.
      */
     public function __construct(
         public readonly string $name,
         public readonly string $methodName,
-        public readonly string $inputType,
-        public readonly string $outputType,
+        public readonly Type $inputType,
+        public readonly Type $outputType,
         public readonly bool $async,
         public readonly \ReflectionMethod $handler,
         public readonly ?\ReflectionMethod $cancelHandler = null,
