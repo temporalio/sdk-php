@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
+use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
+use Temporal\Nexus\Exception\OperationException as NexusOperationException;
+use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
@@ -19,6 +22,8 @@ use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\CanceledFailureInfo;
 use Temporal\Api\Failure\V1\ChildWorkflowExecutionFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Api\Failure\V1\NexusHandlerFailureInfo;
+use Temporal\Api\Failure\V1\NexusOperationFailureInfo;
 use Temporal\Api\Failure\V1\ServerFailureInfo;
 use Temporal\Api\Failure\V1\TerminatedFailureInfo;
 use Temporal\Api\Failure\V1\TimeoutFailureInfo;
@@ -29,6 +34,8 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
+    public const NEXUS_OPERATION_ERROR_TYPE_PREFIX = 'nexus.OperationError.';
+
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $e = self::createFailureException($failure, $converter);
@@ -148,6 +155,45 @@ final class FailureConverter
                 $failure->setCanceledFailureInfo(new CanceledFailureInfo());
                 break;
 
+            case $e instanceof NexusHandlerException:
+                $info = new NexusHandlerFailureInfo();
+                $info->setType($e->errorType->value);
+                $info->setRetryBehavior(NexusFailureConverter::mapRetryBehavior($e->retryBehavior));
+
+                $failure->setNexusHandlerFailureInfo($info);
+                break;
+
+            case $e instanceof NexusHandlerFailure:
+                $info = new NexusHandlerFailureInfo();
+                $info->setType($e->getType());
+                $info->setRetryBehavior($e->getRetryBehavior());
+
+                $failure->setNexusHandlerFailureInfo($info);
+                break;
+
+            case $e instanceof NexusOperationException:
+                // Encode state in tagged ApplicationFailureInfo (no dedicated proto yet).
+                $info = new ApplicationFailureInfo();
+                $info->setType(self::NEXUS_OPERATION_ERROR_TYPE_PREFIX . $e->state->value);
+                $info->setNonRetryable(true);
+
+                $failure->setApplicationFailureInfo($info);
+                break;
+
+            case $e instanceof NexusOperationFailure:
+                $info = new NexusOperationFailureInfo();
+                /** @psalm-suppress DeprecatedMethod */
+                $info
+                    ->setScheduledEventId($e->getScheduledEventId())
+                    ->setEndpoint($e->getEndpoint())
+                    ->setService($e->getService())
+                    ->setOperation($e->getOperation())
+                    ->setOperationId($e->getOperationToken())
+                    ->setOperationToken($e->getOperationToken());
+
+                $failure->setNexusOperationExecutionFailureInfo($info);
+                break;
+
             default:
                 $info = new ApplicationFailureInfo();
                 $info->setType($e::class);
@@ -258,6 +304,38 @@ final class FailureConverter
                     ),
                     $info->getNamespace(),
                     $info->getRetryState(),
+                    $previous,
+                );
+
+            case $failure->hasNexusHandlerFailureInfo():
+                $info = $failure->getNexusHandlerFailureInfo();
+                \assert($info instanceof NexusHandlerFailureInfo);
+
+                return new NexusHandlerFailure(
+                    $failure->getMessage(),
+                    $info->getType(),
+                    $info->getRetryBehavior(),
+                    $previous,
+                );
+
+            case $failure->hasNexusOperationExecutionFailureInfo():
+                $info = $failure->getNexusOperationExecutionFailureInfo();
+                \assert($info instanceof NexusOperationFailureInfo);
+
+                // Fall back to deprecated operation_id for older servers.
+                $token = $info->getOperationToken();
+                if ($token === '') {
+                    /** @psalm-suppress DeprecatedMethod */
+                    $token = $info->getOperationId();
+                }
+
+                return new NexusOperationFailure(
+                    $failure->getMessage(),
+                    (int) $info->getScheduledEventId(),
+                    $info->getEndpoint(),
+                    $info->getService(),
+                    $info->getOperation(),
+                    $token,
                     $previous,
                 );
 

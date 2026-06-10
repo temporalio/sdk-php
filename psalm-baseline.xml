@@ -31,11 +31,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-    </DocblockTypeContradiction>
     <InaccessibleProperty>
       <code><![CDATA[$workflowType->name]]></code>
     </InaccessibleProperty>
@@ -99,9 +94,6 @@
       <code><![CDATA[$this->excludeCalendarList]]></code>
       <code><![CDATA[$this->excludeCalendarList]]></code>
     </DeprecatedProperty>
-    <DocblockTypeContradiction>
-      <code><![CDATA[parse]]></code>
-    </DocblockTypeContradiction>
   </file>
   <file src="src/Client/ScheduleClient.php">
     <DeprecatedProperty>
@@ -257,11 +249,6 @@
     <PossiblyNullReference>
       <code><![CDATA[getID]]></code>
     </PossiblyNullReference>
-  </file>
-  <file src="src/Exception/Client/ServiceClientException.php">
-    <ImplementedReturnTypeMismatch>
-      <code><![CDATA[RepeatedField]]></code>
-    </ImplementedReturnTypeMismatch>
   </file>
   <file src="src/Exception/Client/WorkflowException.php">
     <UnsafeInstantiation>
@@ -447,9 +434,6 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="src/Internal/Declaration/Graph/ClassNode.php">
-    <ImplicitToStringCast>
-      <code><![CDATA[list<array{class-string, \ReflectionMethod}>]]></code>
-    </ImplicitToStringCast>
     <InvalidReturnType>
       <code><![CDATA[\Traversable<ClassNode>]]></code>
     </InvalidReturnType>
@@ -515,6 +499,12 @@
     </RedundantConditionGivenDocblockType>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[\ReflectionMethod]]></code>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Internal/Declaration/Reader/NexusServiceReader.php">
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
@@ -533,7 +523,8 @@
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
     <UnnecessaryVarAnnotation>
-      <code><![CDATA[\Traversable<class-string, \ReflectionMethod>]]></code>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
@@ -585,18 +576,6 @@
       <code><![CDATA[setDataConverter]]></code>
     </UndefinedInterfaceMethod>
   </file>
-  <file src="src/Internal/Mapper/WorkflowExecutionConfigMapper.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-    </DocblockTypeContradiction>
-    <RedundantConditionGivenDocblockType>
-      <code><![CDATA[parse]]></code>
-    </RedundantConditionGivenDocblockType>
-  </file>
   <file src="src/Internal/Mapper/WorkflowExecutionInfoMapper.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$execution->getRunId()]]></code>
@@ -609,16 +588,6 @@
       <code><![CDATA[getBinaryChecksum]]></code>
       <code><![CDATA[getMostRecentWorkerVersionStamp]]></code>
     </DeprecatedMethod>
-    <DocblockTypeContradiction>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-    </DocblockTypeContradiction>
-    <RedundantConditionGivenDocblockType>
-      <code><![CDATA[parse]]></code>
-    </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Marshaller/Mapper/AttributeMapper.php">
     <MissingClosureParamType>
@@ -817,17 +786,7 @@
     </DeprecatedConstant>
     <RedundantCondition>
       <code><![CDATA[$nullEmpty && $seconds === 0 && $micros === 0]]></code>
-      <code><![CDATA[parse]]></code>
     </RedundantCondition>
-    <TypeDoesNotContainNull>
-      <code><![CDATA[parse]]></code>
-    </TypeDoesNotContainNull>
-    <TypeDoesNotContainType>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-      <code><![CDATA[parse]]></code>
-    </TypeDoesNotContainType>
   </file>
   <file src="src/Internal/Support/DateTime.php">
     <InvalidReturnStatement>
@@ -924,10 +883,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
-    <PossiblyFalseArgument>
-      <code><![CDATA[\json_encode($param)]]></code>
-      <code><![CDATA[\json_encode($param)]]></code>
-    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -936,13 +891,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$e->getMessage()]]></code>
     </ArgumentTypeCoercion>
-    <InvalidArgument>
-      <code><![CDATA[$request]]></code>
-      <code><![CDATA[$request]]></code>
-    </InvalidArgument>
-    <MismatchingDocblockParamType>
-      <code><![CDATA[RequestInterface]]></code>
-    </MismatchingDocblockParamType>
   </file>
   <file src="src/Internal/Workflow/ActivityProxy.php">
     <ArgumentTypeCoercion>
@@ -1003,6 +951,17 @@
       <code><![CDATA[$header ?? Header::empty()]]></code>
     </PropertyTypeCoercion>
   </file>
+  <file src="src/Internal/Workflow/NexusOperationStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$endpoint]]></code>
+      <code><![CDATA[$service]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Internal/Workflow/NexusServiceProxy.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$input->operation]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
     <UnevaluatedCode>
       <code><![CDATA[yield;]]></code>
@@ -1060,6 +1019,7 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$input->maxSupported]]></code>
       <code><![CDATA[$input->minSupported]]></code>
+      <code><![CDATA[$input->operation]]></code>
       <code><![CDATA[$input->type]]></code>
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
@@ -1101,6 +1061,37 @@
       <code><![CDATA[$clone->awaits = &$this->awaits]]></code>
       <code><![CDATA[$clone->trace = &$this->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
+  </file>
+  <file src="src/Nexus/Attribute/AsyncOperation.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Attribute/Operation.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Attribute/Service.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Nexus/Handler/Internal/WorkflowRunStarter.php">
+    <DeprecatedConstant>
+      <code><![CDATA[Header::OPERATION_ID]]></code>
+      <code><![CDATA[Header::OPERATION_ID]]></code>
+    </DeprecatedConstant>
+  </file>
+  <file src="src/Nexus/Handler/LinkCollection.php">
+    <RedundantFunctionCall>
+      <code><![CDATA[\array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="src/Nexus/WorkflowRunOperation.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$decoded->workflowId]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Promise.php">
     <InvalidArgument>
@@ -1182,12 +1173,6 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$frame->serializeToString()]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[string]]></code>
-    </MoreSpecificReturnType>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
@@ -1210,21 +1195,9 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
-    <PossiblyFalseArgument>
-      <code><![CDATA[\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE)]]></code>
-      <code><![CDATA[\json_encode($options)]]></code>
-    </PossiblyFalseArgument>
     <PossiblyNullArgument>
       <code><![CDATA[$cmd->getFailure()]]></code>
     </PossiblyNullArgument>
-  </file>
-  <file src="src/Worker/Transport/Command/Client/FailedClientResponse.php">
-    <InvalidNullableReturnType>
-      <code><![CDATA[\Throwable]]></code>
-    </InvalidNullableReturnType>
-    <NullableReturnStatement>
-      <code><![CDATA[$this->failure]]></code>
-    </NullableReturnStatement>
   </file>
   <file src="src/Worker/Transport/Command/Client/SuccessClientResponse.php">
     <InvalidNullableReturnType>
@@ -1360,6 +1333,12 @@
       <code><![CDATA[getUpdateContext]]></code>
     </UndefinedInterfaceMethod>
   </file>
+  <file src="src/Workflow/NexusOperationOptions.php">
+    <ImpureMethodCall>
+      <code><![CDATA[assert]]></code>
+      <code><![CDATA[parse]]></code>
+    </ImpureMethodCall>
+  </file>
   <file src="src/Workflow/QueryMethod.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -1492,19 +1471,6 @@
       <code><![CDATA[$message->getHeader()]]></code>
       <code><![CDATA[$message->getPayloads()]]></code>
     </PossiblyNullArgument>
-    <TooManyTemplateParams>
-      <code><![CDATA[$fields]]></code>
-      <code><![CDATA[$meta]]></code>
-    </TooManyTemplateParams>
-  </file>
-  <file src="testing/src/Transcript/WorkflowHistoryDumper.php">
-    <InvalidOperand>
-      <code><![CDATA[$eventTime->getSeconds() + \round($eventTime->getNanos() / 1_000_000_000, 6)]]></code>
-      <code><![CDATA[($sec - $startSec) * 1000]]></code>
-    </InvalidOperand>
-    <PossiblyInvalidOperand>
-      <code><![CDATA[$eventTime->getSeconds()]]></code>
-    </PossiblyInvalidOperand>
   </file>
   <file src="testing/src/WorkerMock.php">
     <DeprecatedMethod>
