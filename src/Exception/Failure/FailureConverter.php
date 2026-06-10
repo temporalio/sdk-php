@@ -157,8 +157,16 @@ final class FailureConverter
 
             case $e instanceof NexusHandlerException:
                 $info = new NexusHandlerFailureInfo();
-                $info->setType($e->rawErrorType);
+                $info->setType($e->errorType->value);
                 $info->setRetryBehavior(NexusFailureConverter::mapRetryBehavior($e->retryBehavior));
+
+                $failure->setNexusHandlerFailureInfo($info);
+                break;
+
+            case $e instanceof NexusHandlerFailure:
+                $info = new NexusHandlerFailureInfo();
+                $info->setType($e->getType());
+                $info->setRetryBehavior($e->getRetryBehavior());
 
                 $failure->setNexusHandlerFailureInfo($info);
                 break;

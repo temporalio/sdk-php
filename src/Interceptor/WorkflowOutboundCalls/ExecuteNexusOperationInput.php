@@ -20,8 +20,6 @@ use Temporal\Workflow\NexusOperationOptions;
 final class ExecuteNexusOperationInput
 {
     /**
-     * @param non-empty-string $service
-     * @param non-empty-string $operation
      * @param array<string, string> $nexusHeaders raw-string headers forwarded
      *        on the Nexus operation wire (separate from the Temporal `Header`
      *        that carries payload-typed values).
@@ -37,7 +35,17 @@ final class ExecuteNexusOperationInput
         public readonly NexusOperationOptions $options,
         public readonly null|Type|string|\ReflectionClass|\ReflectionType $returnType,
         public readonly array $nexusHeaders = [],
-    ) {}
+    ) {
+        if ($endpoint === '') {
+            throw new \InvalidArgumentException('$endpoint must be a non-empty string.');
+        }
+        if ($service === '') {
+            throw new \InvalidArgumentException('$service must be a non-empty string.');
+        }
+        if ($operation === '') {
+            throw new \InvalidArgumentException('$operation must be a non-empty string.');
+        }
+    }
 
     public function with(
         ?string $endpoint = null,
@@ -48,15 +56,6 @@ final class ExecuteNexusOperationInput
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
         ?array $nexusHeaders = null,
     ): self {
-        if ($endpoint !== null && $endpoint === '') {
-            throw new \InvalidArgumentException('$endpoint must be a non-empty string.');
-        }
-        if ($service !== null && $service === '') {
-            throw new \InvalidArgumentException('$service must be a non-empty string.');
-        }
-        if ($operation !== null && $operation === '') {
-            throw new \InvalidArgumentException('$operation must be a non-empty string.');
-        }
         return new self(
             $endpoint ?? $this->endpoint,
             $service ?? $this->service,
