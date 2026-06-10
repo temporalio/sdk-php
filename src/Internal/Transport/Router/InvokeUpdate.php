@@ -66,7 +66,9 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 $validator = $updateDispatcher->findValidateUpdateHandler($name);
 
                 // Validation will be passed if no validation handler is found
-                $validator === null or $validator($input);
+                if ($validator !== null) {
+                    $validator($input);
+                }
 
                 $context->getClient()->send(new CommandResponse(
                     command: self::COMMAND_VALIDATED,

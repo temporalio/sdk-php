@@ -19,6 +19,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -42,10 +43,7 @@ class TimeoutTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]

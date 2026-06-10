@@ -1,0 +1,42 @@
+<?php
+
+namespace Google\Protobuf\Internal;
+
+/**
+ * @template TKey of array-key
+ * @template TValue
+ * @implements \ArrayAccess<TKey, TValue>
+ * @implements \IteratorAggregate<TKey, TValue>
+ */
+class MapField implements \ArrayAccess, \IteratorAggregate, \Countable
+{
+    /**
+     * @param TKey $offset
+     * @return bool
+     */
+    public function offsetExists($offset): bool {}
+
+    /**
+     * @param TKey $offset
+     * @return TValue
+     */
+    public function offsetGet($offset) {}
+
+    /**
+     * @param TKey $offset
+     * @param TValue $value
+     */
+    public function offsetSet($offset, $value): void {}
+
+    /**
+     * @param TKey $offset
+     */
+    public function offsetUnset($offset): void {}
+
+    /**
+     * @return \Traversable<TKey, TValue>
+     */
+    public function getIterator(): \Traversable {}
+
+    public function count(): int {}
+}

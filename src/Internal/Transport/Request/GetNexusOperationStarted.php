@@ -14,17 +14,7 @@ namespace Temporal\Internal\Transport\Request;
 use Temporal\Worker\Transport\Command\Client\Request;
 
 /**
- * Listen-and-wait probe for the start envelope of a caller-side Nexus
- * operation. The `id` field is the original {@see ExecuteNexusOperation}
- * message ID returned to the workflow.
- *
- * RR registers the request as a listener on its `nexusStartedRegistry`; the
- * response is pushed when the SDK's started callback fires (handler ack'd
- * the start) — exactly the same pattern as
- * {@see GetChildWorkflowExecution} for child workflows.
- *
- * Response: a single payload carrying the JSON-encoded
- * {@see \Temporal\Internal\Workflow\NexusStartEnvelope} (`{async, token?}`).
+ * `id` is the original ExecuteNexusOperation message ID.
  *
  * @psalm-immutable
  */

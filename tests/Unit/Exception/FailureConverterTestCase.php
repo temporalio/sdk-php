@@ -370,6 +370,45 @@ final class FailureConverterTestCase extends AbstractUnit
         self::assertSame('tok-xyz', $info->getOperationToken());
     }
 
+    public function testNexusHandlerFailureProducesNexusHandlerFailureInfo(): void
+    {
+        $e = new NexusHandlerFailure(
+            'handler exploded',
+            'BAD_REQUEST',
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertTrue($failure->hasNexusHandlerFailureInfo());
+        $info = $failure->getNexusHandlerFailureInfo();
+        self::assertSame('BAD_REQUEST', $info->getType());
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            $info->getRetryBehavior(),
+        );
+    }
+
+    public function testNexusHandlerFailureRoundTrip(): void
+    {
+        $converter = DataConverter::createDefault();
+        $original = new NexusHandlerFailure(
+            'handler exploded',
+            'INTERNAL',
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($original, $converter);
+        $restored = FailureConverter::mapFailureToException($failure, $converter);
+
+        self::assertInstanceOf(NexusHandlerFailure::class, $restored);
+        self::assertSame('INTERNAL', $restored->getType());
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            $restored->getRetryBehavior(),
+        );
+    }
+
     public function testNexusOperationFailureRoundTrip(): void
     {
         $converter = DataConverter::createDefault();

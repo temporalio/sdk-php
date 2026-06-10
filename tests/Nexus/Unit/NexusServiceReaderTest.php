@@ -15,20 +15,23 @@ use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Tests\Nexus\Fixtures\Service\UnionInputServiceInterface;
-use Temporal\Tests\Nexus\Fixtures\Service\UntypedInputServiceInterface;
+use Temporal\Nexus\Exception\NexusException;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\AmbiguousServiceImpl;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\DiamondFinalInterface;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\FactoryWithParametersService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\EmptyService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidAsyncReturnTypeService;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\NullableAsyncReturnTypeService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceDuplicateOperation;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceNoAnnotation;
-use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\ServiceAsClass;
+use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\NonPublicOperationService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidServiceWithOperations;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\InvalidSubService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\OperationOverrideMismatchService;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\ServiceWithPlainParentInterface;
 use Temporal\Tests\Nexus\Fixtures\ServiceDefinition\ValidServiceWithOperations;
+use Temporal\Tests\Nexus\Fixtures\ServiceImplInstance\ServiceAsClass;
+use Temporal\Tests\Nexus\Fixtures\ServiceHandler\ManualTokenService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +61,7 @@ final class NexusServiceReaderTest extends TestCase
     public function testMultipleServiceInterfacesAreAmbiguous(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('implements multiple #[Service] interfaces');
+        $this->expectExceptionMessage('implements multiple #[Service] types');
         self::reader()->fromClass(AmbiguousServiceImpl::class);
     }
 
@@ -76,6 +79,13 @@ final class NexusServiceReaderTest extends TestCase
         self::reader()->fromClass(InvalidServiceWithOperations::class);
     }
 
+    public function testNonPublicOperationMethodIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Must be public');
+        self::reader()->fromClass(NonPublicOperationService::class);
+    }
+
     public function testInvalidServiceDuplicateOperation(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -86,8 +96,38 @@ final class NexusServiceReaderTest extends TestCase
     public function testAsyncOperationWithInvalidReturnTypeIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must declare a `Temporal\Nexus\WorkflowHandle` or `Temporal\Nexus\OperationInfo` return type');
+        $this->expectExceptionMessage('must declare a `Temporal\Nexus\WorkflowHandle` return type or return an');
         self::reader()->fromClass(InvalidAsyncReturnTypeService::class);
+    }
+
+    public function testAsyncOperationWithNullableReturnTypeIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must declare a `Temporal\Nexus\WorkflowHandle` return type or return an');
+        self::reader()->fromClass(NullableAsyncReturnTypeService::class);
+    }
+
+    public function testAsyncOperationWithHandlerFactoryReturnTypeIsAccepted(): void
+    {
+        $proto = self::reader()->fromClass(ManualTokenService::class);
+
+        $operations = $proto->getOperations();
+        self::assertTrue($operations['startExternal']->async);
+        self::assertTrue($operations['startUncancellable']->async);
+    }
+
+    public function testFactoryInputTypeComesFromAttribute(): void
+    {
+        $proto = self::reader()->fromClass(ManualTokenService::class);
+
+        self::assertSame('string', $proto->getOperations()['startExternal']->inputType->getName());
+    }
+
+    public function testFactoryWithParametersIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must declare no parameters');
+        self::reader()->fromClass(FactoryWithParametersService::class);
     }
 
     public function testValidService(): void
@@ -133,18 +173,6 @@ final class NexusServiceReaderTest extends TestCase
         self::assertSame('Diamond', $proto->getID());
         self::assertCount(1, $proto->getOperations());
         self::assertArrayHasKey('commonOp', $proto->getOperations());
-    }
-
-    public function testUntypedParameterFallsBackToMixed(): void
-    {
-        $proto = self::reader()->fromClass(UntypedInputServiceInterface::class);
-        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
-    }
-
-    public function testUnionParameterFallsBackToMixed(): void
-    {
-        $proto = self::reader()->fromClass(UnionInputServiceInterface::class);
-        self::assertSame('mixed', $proto->getOperations()['operation']->inputType->getName());
     }
 
     private static function reader(): NexusServiceReader

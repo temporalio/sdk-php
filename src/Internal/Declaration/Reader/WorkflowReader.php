@@ -279,7 +279,7 @@ class WorkflowReader extends Reader
      */
     private function getAttributedMethod(ClassNode $graph, \ReflectionMethod $handler, string $name): ?object
     {
-        /** @var \Traversable<class-string, \ReflectionMethod> $group */
+        /** @var \Traversable<ClassNode, \ReflectionMethod> $group */
         foreach ($graph->getMethods($handler->getName()) as $group) {
             foreach ($group as $method) {
                 $attribute = $this->reader->firstFunctionMetadata($method, $name);
@@ -302,7 +302,7 @@ class WorkflowReader extends Reader
     {
         $cronSchedule = $previousRetry = $prototype = $returnType = $versionBehavior = null;
 
-        /** @var \Traversable<class-string, \ReflectionMethod> $group */
+        /** @var \Traversable<ClassNode, \ReflectionMethod> $group */
         foreach ($graph->getMethods($handler->getName()) as $group) {
             $contextualRetry = $previousRetry;
 

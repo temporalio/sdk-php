@@ -16,28 +16,12 @@ use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Nexus\NexusOperationContext;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
- * Route for "CancelNexusOperation" from RR — wire-level Nexus cancel.
- *
- * Targets an async operation by its Nexus-spec coordinates
- * `(service, operation, operationToken)` and dispatches to the user-defined
- * `#[OperationCancel]` method. The cancel-routine itself is invoked
- * synchronously and is **not** interrupt-able from the worker side: an
- * `InterruptNexusInvocation` request will not flip
- * {@see \Temporal\Nexus\Handler\OperationContext::isMethodCancelled()}
- * for it, because no canceller is registered for cancel-routines. Authors
- * should keep cancel bodies fast and idempotent.
- *
- * Pair: {@see CancelNexusOperationMethod} interrupts an in-flight handler
- * invocation by RR-internal `invocationId` (cooperative interrupt of the
- * PHP call), not by Nexus-spec coordinates.
- *
- * Options: `{service, operation, operationToken}`.
+ * Cancel routines are not interruptible; no canceller is registered for them.
  */
 final class CancelNexusOperation extends Route
 {
@@ -57,8 +41,6 @@ final class CancelNexusOperation extends Route
                 $operationContext,
             );
             $resolver->resolve(EncodedValues::fromValues([]));
-        } catch (NexusHandlerErrorException $e) {
-            $resolver->reject($e->cause);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         }

@@ -9,18 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Fixtures\Service;
+namespace Temporal\Tests\Nexus\Fixtures\ServiceDefinition;
 
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\WorkflowHandle;
 
-#[Service]
-interface CancelRoutingServiceInterface
+#[Service(name: 'nullable-async-return-type-service')]
+interface NullableAsyncReturnTypeService
 {
-    #[AsyncOperation(output: 'string')]
-    public function autoCancel(string $name): WorkflowHandle;
-
-    #[AsyncOperation(output: 'string')]
-    public function explicitOverride(string $name): WorkflowHandle;
+    #[AsyncOperation]
+    public function badNullableReturn(string $input): ?WorkflowHandle;
 }

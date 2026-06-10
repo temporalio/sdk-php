@@ -7,7 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\ParallelMixed;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
-use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -22,6 +21,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -32,12 +33,11 @@ use Temporal\Workflow\WorkflowMethod;
 #[Worker(options: [self::class, 'workerOptions'])]
 class MixedSyncAsyncTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -83,17 +83,6 @@ class MixedSyncAsyncTest extends TestCase
             $completed,
             'Both siblings must terminate via NEXUS_OPERATION_COMPLETED.',
         );
-    }
-
-    private static function countEvents(History $history, int $type): int
-    {
-        $count = 0;
-        foreach ($history->getEvents() as $event) {
-            if ($event->getEventType() === $type) {
-                $count++;
-            }
-        }
-        return $count;
     }
 }
 

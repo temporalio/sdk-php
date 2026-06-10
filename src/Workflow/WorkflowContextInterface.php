@@ -25,6 +25,7 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\NexusServiceProxy;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Workflow;
@@ -309,9 +310,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newNexusServiceStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class Nexus service interface annotated with #[Service]
-     * @return T
+     *
+     * @return NexusServiceProxy<T>
      */
     public function newNexusServiceStub(
         string $class,

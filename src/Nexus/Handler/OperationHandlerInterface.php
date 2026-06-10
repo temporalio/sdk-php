@@ -9,17 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Nexus\Handler\Internal;
+namespace Temporal\Nexus\Handler;
 
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\OperationException;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Nexus\Handler\OperationStartDetails;
-use Temporal\Nexus\Handler\OperationStartResult;
 
 /**
- * @internal
+ * Full control over a Nexus operation: one object owns both start and cancel.
+ *
+ * Return an implementation from an `#[AsyncOperation]` method with no parameters
+ * to register a manual operation (e.g. backed by an external system). The
+ * factory method is invoked once at worker registration.
  *
  * @template T The parameter type of the operation.
  * @template R The return type of the operation.
@@ -27,8 +27,6 @@ use Temporal\Nexus\Handler\OperationStartResult;
 interface OperationHandlerInterface
 {
     /**
-     * Handle the start of an operation.
-     *
      * @param T|null $param
      * @return OperationStartResult<R>
      *
@@ -42,13 +40,6 @@ interface OperationHandlerInterface
     ): OperationStartResult;
 
     /**
-     * Cancel the asynchronously started operation.
-     *
-     * Per Nexus spec cancellation is idempotent: ignore repeat cancels for the
-     * same token (including cancels of an already-terminal operation). Throw
-     * {@see HandlerException} only for genuine routing/permission/transport
-     * errors.
-     *
      * @throws HandlerException
      */
     public function cancel(

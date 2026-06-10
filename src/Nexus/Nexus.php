@@ -25,13 +25,7 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 final class Nexus extends Facade
 {
     /**
-     * Guard accessor for the active Nexus dispatch context.
-     *
-     * Mirrors {@see \Temporal\Workflow::getCurrentContext()}: returns the composite
-     * {@see NexusContext} for the current dispatch and throws when called outside a
-     * Nexus operation handler. The handler-side {@see Handler\OperationContext}
-     * (links, headers, deadline, service definition) is reachable via
-     * {@see NexusContext::$current}.
+     * Guard accessor for the active {@see NexusContext} of the current dispatch.
      *
      * @throws \LogicException when called outside a Nexus operation dispatch.
      */
@@ -65,7 +59,7 @@ final class Nexus extends Facade
     {
         $dispatch = self::getCurrentContext();
         $info = $dispatch->operation ?? throw new \LogicException(
-            'Nexus::getOperationContext() called outside a Nexus handler.',
+            'Temporal operation context is not available for this dispatch.',
         );
 
         $pipeline = $dispatch->outboundPipeline;

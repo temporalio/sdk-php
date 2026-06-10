@@ -72,18 +72,6 @@ final class NexusOperationTypesTest extends TestCase
         self::assertSame('string', $op->outputType->getName());
     }
 
-    public function testReaderRejectsMethodWithoutAttribute(): void
-    {
-        $fixture = new class {
-            public function plainMethod(): void {}
-        };
-        // Plain methods on a #[Service]-less class never reach operationFromMethod —
-        // the reader skips them entirely. To exercise the Missing-attribute branch,
-        // we go through fromClass and it throws Missing #[Service] earlier.
-        $this->expectException(InvalidArgumentException::class);
-        self::reader()->fromClass($fixture::class);
-    }
-
     public function testRejectsTooManyParameters(): void
     {
         $iface = new #[\Temporal\Nexus\Attribute\Service] class {

@@ -19,6 +19,8 @@ use Temporal\Nexus\Handler\OperationStartDetails;
  */
 final class StartOperationInput
 {
+    private const UNSET = "\0__temporal_unset__\0";
+
     /**
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
@@ -32,12 +34,12 @@ final class StartOperationInput
     public function with(
         ?OperationContext $operationContext = null,
         ?OperationStartDetails $startDetails = null,
-        mixed $input = null,
+        mixed $input = self::UNSET,
     ): self {
         return new self(
             $operationContext ?? $this->operationContext,
             $startDetails ?? $this->startDetails,
-            $input ?? $this->input,
+            $input === self::UNSET ? $this->input : $input,
         );
     }
 }

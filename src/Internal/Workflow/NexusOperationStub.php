@@ -81,25 +81,39 @@ final class NexusOperationStub implements NexusOperationStubInterface
 
         $cancellable = $this->options->cancellationType !== NexusOperationCancellationType::Abandon;
 
+        $operationToken = '';
         $resultPromise = $this->normalizeFailure(
             $this->request($startRequest, cancellable: $cancellable),
             $endpoint,
             $service,
             $operation,
+            $operationToken,
         );
         $startedPromise = $this->normalizeFailure(
             $this->request(new GetNexusOperationStarted($startId)),
             $endpoint,
             $service,
             $operation,
+            $operationToken,
         );
 
         return $startedPromise->then(
-            fn(ValuesInterface $values): NexusOperationHandle => $this->buildHandle(
-                $values,
+            static function (ValuesInterface $values) use (
+                &$operationToken,
                 $resultPromise,
-                $returnType,
-            ),
+                $returnType
+            ): NexusOperationHandle {
+                $envelope = $values->getValue(0, NexusStartEnvelope::class);
+                if ($envelope->async) {
+                    $operationToken = $envelope->token;
+                }
+
+                return new NexusOperationHandle(
+                    operationToken: $envelope->async ? $envelope->token : null,
+                    rawResult: $resultPromise,
+                    returnType: $returnType,
+                );
+            },
         );
     }
 
@@ -126,41 +140,32 @@ final class NexusOperationStub implements NexusOperationStubInterface
         }
     }
 
-    private function buildHandle(
-        ValuesInterface $startValues,
-        PromiseInterface $resultPromise,
-        Type|string|\ReflectionClass|\ReflectionType|null $returnType,
-    ): NexusOperationHandle {
-        $envelope = $startValues->getValue(0, NexusStartEnvelope::class);
-        return new NexusOperationHandle(
-            operationToken: $envelope->async ? $envelope->token : null,
-            rawResult: $resultPromise,
-            returnType: $returnType,
-        );
-    }
-
     private function normalizeFailure(
         PromiseInterface $promise,
         string $endpoint,
         string $service,
         string $operation,
+        string &$operationToken,
     ): PromiseInterface {
-        return $promise->then(null, static function (\Throwable $e) use ($endpoint, $service, $operation): never {
-            if ($e instanceof NexusOperationFailure) {
-                throw $e;
-            }
-            $message = $e instanceof CanceledFailure
-                ? 'nexus operation cancelled'
-                : 'nexus operation completed unsuccessfully';
-            throw new NexusOperationFailure(
-                message: $message,
-                scheduledEventId: 0,
-                endpoint: $endpoint,
-                service: $service,
-                operation: $operation,
-                operationToken: '',
-                previous: $e,
-            );
-        });
+        return $promise->then(
+            null,
+            static function (\Throwable $e) use ($endpoint, $service, $operation, &$operationToken): never {
+                if ($e instanceof NexusOperationFailure) {
+                    throw $e;
+                }
+                $message = $e instanceof CanceledFailure
+                    ? 'nexus operation cancelled'
+                    : 'nexus operation completed unsuccessfully';
+                throw new NexusOperationFailure(
+                    message: $message,
+                    scheduledEventId: 0,
+                    endpoint: $endpoint,
+                    service: $service,
+                    operation: $operation,
+                    operationToken: $operationToken,
+                    previous: $e,
+                );
+            },
+        );
     }
 }

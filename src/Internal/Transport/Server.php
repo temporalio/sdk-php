@@ -22,7 +22,6 @@ use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -58,9 +57,6 @@ final class Server implements ServerInterface
         $this->onMessage = $then(...);
     }
 
-    /**
-     * @param RequestInterface $request
-     */
     public function dispatch(ServerRequestInterface $request, array $headers): void
     {
         try {
@@ -75,11 +71,13 @@ final class Server implements ServerInterface
             return;
         }
 
-        $result instanceof PromiseInterface or throw new \BadMethodCallException(\sprintf(
-            self::ERROR_INVALID_RETURN_TYPE,
-            PromiseInterface::class,
-            \get_debug_type($result),
-        ));
+        if (!$result instanceof PromiseInterface) {
+            throw new \BadMethodCallException(\sprintf(
+                self::ERROR_INVALID_RETURN_TYPE,
+                PromiseInterface::class,
+                \get_debug_type($result),
+            ));
+        }
 
         $result->then($this->onFulfilled($request), $this->onRejected($request));
     }

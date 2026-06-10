@@ -12,11 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Internal\Failure;
 
 use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
-use Temporal\Api\Nexus\V1\Failure as NexusProtoFailure;
-use Temporal\Api\Nexus\V1\HandlerError;
-use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
-use Temporal\Nexus\Exception\HandlerException;
-use Temporal\Nexus\Exception\OperationException;
 use Temporal\Nexus\Exception\RetryBehavior;
 
 /**
@@ -24,104 +19,10 @@ use Temporal\Nexus\Exception\RetryBehavior;
  */
 final class NexusFailureConverter
 {
-    public const OPERATION_ERROR_TYPE = 'nexus.OperationError';
-
-    /** Value of `metadata.type` that marks a HandlerError failure. */
-    public const HANDLER_ERROR_TYPE = 'nexus.HandlerError';
-
-    /** Key in the `metadata` map that carries the failure-shape discriminator. */
-    public const METADATA_TYPE_KEY = 'type';
-
-    /** Key inside `details` that carries an OperationError's terminal state. */
-    public const DETAILS_STATE_KEY = 'state';
-
-    /** Key inside `details` that carries a HandlerError's predefined error type. */
-    public const DETAILS_TYPE_KEY = 'type';
-
-    /** Key inside `details` that overrides a HandlerError's default retry semantics. */
-    public const DETAILS_RETRYABLE_OVERRIDE_KEY = 'retryableOverride';
-
-    /** Reserved key inside `details` for the flat cause chain. */
-    public const DETAILS_TRACEBACK_KEY = '_traceback';
-
-    /** Bounded — guard against cyclic cause chain. */
-    public const MAX_CAUSE_DEPTH = 16;
-
     /**
      * @codeCoverageIgnore
      */
     private function __construct() {}
-
-    /**
-     * Pack an {@see OperationException} into the proto-envelope
-     * {@see UnsuccessfulOperationError}. The proto `operationState` field
-     * mirrors `details.state` because the proto schema requires it.
-     */
-    public static function operationExceptionToProto(
-        OperationException $e,
-        bool $includeTraceback = true,
-    ): UnsuccessfulOperationError {
-        $details = self::tracebackDetails($e, $includeTraceback);
-        $details[self::DETAILS_STATE_KEY] = $e->state->value;
-
-        $opError = new UnsuccessfulOperationError();
-        $opError->setOperationState($e->state->value);
-        $opError->setFailure(self::buildProtoFailure(
-            $e->getMessage(),
-            self::OPERATION_ERROR_TYPE,
-            $details,
-        ));
-        return $opError;
-    }
-
-    /**
-     * Pack a {@see HandlerException} into the proto-envelope {@see HandlerError}.
-     */
-    public static function handlerExceptionToProto(
-        HandlerException $e,
-        bool $includeTraceback = true,
-    ): HandlerError {
-        $details = self::tracebackDetails($e, $includeTraceback);
-        $details[self::DETAILS_TYPE_KEY] = $e->rawErrorType;
-        if ($e->retryBehavior === RetryBehavior::Retryable) {
-            $details[self::DETAILS_RETRYABLE_OVERRIDE_KEY] = true;
-        } elseif ($e->retryBehavior === RetryBehavior::NonRetryable) {
-            $details[self::DETAILS_RETRYABLE_OVERRIDE_KEY] = false;
-        }
-
-        $handlerError = new HandlerError();
-        $handlerError->setErrorType($e->rawErrorType);
-        $handlerError->setRetryBehavior(self::mapRetryBehavior($e->retryBehavior));
-        $handlerError->setFailure(self::buildProtoFailure(
-            $e->getMessage(),
-            self::HANDLER_ERROR_TYPE,
-            $details,
-        ));
-        return $handlerError;
-    }
-
-    /**
-     * Walk {@see \Throwable::getPrevious()} chain (≤ {@see self::MAX_CAUSE_DEPTH})
-     * and serialize each level as `{type, message, trace}`. The Nexus proto
-     * envelope has no recursive `cause` field, so this flat representation is
-     * the only way to preserve trace data on the proto wire.
-     *
-     * @return list<array{type: class-string, message: string, trace: string}>
-     */
-    public static function flattenCauseChain(\Throwable $e, int $maxDepth = self::MAX_CAUSE_DEPTH): array
-    {
-        $chain = [];
-        $cursor = $e;
-        for ($depth = 0; $cursor !== null && $depth < $maxDepth; $depth++) {
-            $chain[] = [
-                'type' => $cursor::class,
-                'message' => $cursor->getMessage(),
-                'trace' => $cursor->getTraceAsString(),
-            ];
-            $cursor = $cursor->getPrevious();
-        }
-        return $chain;
-    }
 
     public static function mapRetryBehavior(RetryBehavior $behavior): int
     {
@@ -130,31 +31,5 @@ final class NexusFailureConverter
             RetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
             RetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
         };
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function tracebackDetails(\Throwable $e, bool $includeTraceback): array
-    {
-        if (!$includeTraceback) {
-            return [];
-        }
-        return [self::DETAILS_TRACEBACK_KEY => self::flattenCauseChain($e)];
-    }
-
-    /**
-     * @param array<string, mixed> $details
-     */
-    private static function buildProtoFailure(
-        string $message,
-        string $metadataType,
-        array $details,
-    ): NexusProtoFailure {
-        $proto = new NexusProtoFailure();
-        $proto->setMessage($message);
-        $proto->setMetadata([self::METADATA_TYPE_KEY => $metadataType]);
-        $proto->setDetails(\json_encode($details, \JSON_THROW_ON_ERROR));
-        return $proto;
     }
 }

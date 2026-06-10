@@ -15,8 +15,12 @@ use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
@@ -29,8 +33,26 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 #[Service(name: 'RouteHeaderService')]
 interface RouteHeaderService
 {
-    #[AsyncOperation(output: 'string')]
-    public function op(string $input): OperationInfo;
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function op(): RouteHeaderOpHandler;
+}
+
+final class RouteHeaderOpHandler implements OperationHandlerInterface
+{
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        return OperationStartResult::async(new OperationInfo('tok', OperationState::Running));
+    }
+
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {
+        RouteHeaderServiceImpl::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers->all();
+    }
 }
 
 class RouteHeaderServiceImpl implements RouteHeaderService
@@ -38,15 +60,9 @@ class RouteHeaderServiceImpl implements RouteHeaderService
     /** @var array<string, string> */
     public static array $capturedCancelHeaders = [];
 
-    public function op(string $input): OperationInfo
+    public function op(): RouteHeaderOpHandler
     {
-        return new OperationInfo('tok', OperationState::Running);
-    }
-
-    #[OperationCancel(operation: 'op')]
-    public function cancel(string $token): void
-    {
-        self::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers->all();
+        return new RouteHeaderOpHandler();
     }
 }
 
@@ -61,6 +77,8 @@ class RouteHeaderServiceImpl implements RouteHeaderService
 #[CoversClass(CancelNexusOperation::class)]
 final class CancelNexusOperationRouteTestCase extends AbstractUnit
 {
+    use AwaitsNexusPromise;
+
     private EnvironmentInterface $env;
 
     protected function setUp(): void
@@ -140,24 +158,5 @@ final class CancelNexusOperationRouteTestCase extends AbstractUnit
             info: new TickInfo(new \DateTimeImmutable()),
             options: $options,
         );
-    }
-
-    private function assertResolved(Deferred $deferred): void
-    {
-        $resolved = false;
-        $error = null;
-        $deferred->promise()->then(
-            function ($value) use (&$resolved): void {
-                $resolved = true;
-            },
-            function (\Throwable $e) use (&$error): void {
-                $error = $e;
-            },
-        );
-
-        if ($error !== null) {
-            throw $error;
-        }
-        self::assertTrue($resolved, 'promise should resolve');
     }
 }

@@ -43,8 +43,6 @@ use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertMemoInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
-use Temporal\Workflow\NexusOperationOptions;
-use Temporal\Workflow\NexusOperationStubInterface;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\EntityNameValidator;
@@ -78,6 +76,8 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
+use Temporal\Workflow\NexusOperationOptions;
+use Temporal\Workflow\NexusOperationStubInterface;
 use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -475,7 +475,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
-     * @psalm-suppress InvalidReturnType,InvalidReturnStatement — runtime proxy via __call.
+     * @template T of object
+     * @param class-string<T> $class
+     * @return NexusServiceProxy<T>
      */
     public function newNexusServiceStub(
         string $class,
@@ -517,8 +519,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
-                ->newUntypedNexusOperationStub($input->options)
+                ->newUntypedNexusOperationStub(self::effectiveNexusOptions($input))
                 ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
+            /** @see WorkflowOutboundCallsInterceptor::executeNexusOperation() */
             'executeNexusOperation',
         )(new ExecuteNexusOperationInput(
             $options->endpoint,
@@ -875,5 +878,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    private static function effectiveNexusOptions(ExecuteNexusOperationInput $input): NexusOperationOptions
+    {
+        $options = $input->options;
+        if ($input->endpoint !== '' && $input->endpoint !== $options->endpoint) {
+            $options = $options->withEndpoint($input->endpoint);
+        }
+        if ($input->service !== '' && $input->service !== $options->service) {
+            $options = $options->withService($input->service);
+        }
+        return $options;
     }
 }

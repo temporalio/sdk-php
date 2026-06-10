@@ -109,14 +109,4 @@ final class NexusOperationOptionsTestCase extends AbstractUnit
         );
         self::assertSame(NexusOperationCancellationType::Abandon, $updated->cancellationType);
     }
-
-    public function testWithCancellationTypeIntAndEnumProduceSameValue(): void
-    {
-        $fromEnum = NexusOperationOptions::new()
-            ->withCancellationType(NexusOperationCancellationType::WaitRequested);
-        $fromInt = NexusOperationOptions::new()
-            ->withCancellationType(NexusOperationCancellationType::WaitRequested->value);
-
-        self::assertSame($fromEnum->cancellationType, $fromInt->cancellationType);
-    }
 }

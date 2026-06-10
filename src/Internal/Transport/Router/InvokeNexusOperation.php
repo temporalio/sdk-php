@@ -19,7 +19,6 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusLinkConverter;
 use Temporal\Internal\Nexus\NexusTaskHandler;
@@ -52,7 +51,7 @@ final class InvokeNexusOperation extends Route
         if ($invocationId !== 0) {
             $canceller = new MethodCanceller(
                 $this->env,
-                NexusTaskHandler::deadlineFromHeaders($options['headers'] ?? []),
+                NexusTaskHandler::deadlineFromHeaders((array) ($options['headers'] ?? [])),
             );
             $this->invocations->register($invocationId, $canceller);
         }
@@ -71,16 +70,16 @@ final class InvokeNexusOperation extends Route
             if ($startResponse->hasSyncSuccess()) {
                 $sync = $startResponse->getSyncSuccess();
                 \assert($sync !== null);
-                $options = ['async' => false];
+                $responseOptions = ['async' => false];
                 $protoLinks = $sync->getLinks();
                 $payloads = EncodedValues::fromPayload($sync->getPayload(), $this->dataConverter);
             } elseif ($startResponse->hasAsyncSuccess()) {
                 $async = $startResponse->getAsyncSuccess();
                 \assert($async !== null);
-                $options = ['async' => true];
+                $responseOptions = ['async' => true];
                 $token = $async->getOperationToken();
                 if ($token !== '') {
-                    $options['token'] = $token;
+                    $responseOptions['token'] = $token;
                 }
                 $protoLinks = $async->getLinks();
                 $payloads = null;
@@ -91,16 +90,14 @@ final class InvokeNexusOperation extends Route
 
             $links = self::linksToWire($protoLinks);
             if ($links !== []) {
-                $options['links'] = $links;
+                $responseOptions['links'] = $links;
             }
 
             $resolver->resolve(new CommandResponse(
                 command: self::COMMAND,
-                options: $options,
+                options: $responseOptions,
                 payloads: $payloads,
             ));
-        } catch (NexusHandlerErrorException $e) {
-            $resolver->reject($e->cause);
         } catch (\Throwable $e) {
             $resolver->reject($e);
         } finally {

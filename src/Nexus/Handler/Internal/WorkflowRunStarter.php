@@ -76,7 +76,7 @@ final class WorkflowRunStarter
                 $headers[Header::OPERATION_TOKEN] = $token;
             }
             if (!\array_key_exists(\strtolower(Header::OPERATION_ID), $present)) {
-                $headers[\strtolower(Header::OPERATION_ID)] = $token;
+                $headers[Header::OPERATION_ID] = $token;
             }
 
             $callback = CompletionCallback::fromNexusLinks($details->callbackUrl, $headers, $details->links);

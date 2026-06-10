@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Nexus;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Temporal\Nexus\Internal\WorkflowRunOperationToken;
 use Temporal\Tests\Unit\AbstractUnit;
 
@@ -47,9 +48,7 @@ final class WorkflowRunOperationTokenTestCase extends AbstractUnit
         ];
     }
 
-    /**
-     * @dataProvider goldenVectors
-     */
+    #[DataProvider('goldenVectors')]
     public function testEncodeMatchesGoReference(string $namespace, string $workflowId, string $expected): void
     {
         self::assertSame($expected, WorkflowRunOperationToken::generate($namespace, $workflowId));

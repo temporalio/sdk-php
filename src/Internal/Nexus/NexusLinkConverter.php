@@ -58,16 +58,7 @@ final class NexusLinkConverter
     }
 
     /**
-     * Convert high-level Nexus links to {@see NexusProtoLink}[] for
-     * {@see \Temporal\Api\Nexus\V1\StartOperationResponse} bodies.
-     *
-     * Unlike {@see self::toProtoLinks()} this is a *bare* form: the wire only
-     * carries `url` + `type`, no parsed `WorkflowEvent` message. It is the
-     * shape Temporal server accepts in handler-side responses; the server
-     * re-parses the URI on its side when forwarding to the caller.
-     *
-     * Custom (non-WorkflowEvent) link types pass through unchanged — the
-     * Nexus.V1 wire is a free-form union of (url, type) pairs.
+     * Bare wire form: only `url` + `type`, no parsed `WorkflowEvent`; non-WorkflowEvent types pass through.
      *
      * @param iterable<NexusLink> $links
      * @return list<NexusProtoLink>
@@ -85,15 +76,7 @@ final class NexusLinkConverter
     }
 
     /**
-     * Encode a `Link.WorkflowEvent` into a Nexus URI link. Mirrors:
-     * - Java  `LinkConverter.workflowEventToNexusLink`
-     * - Go    `ConvertLinkWorkflowEventToNexusLink`
-     * - TS    `convertWorkflowEventLinkToNexusLink`
-     * - Py    `workflow_event_to_nexus_link`
-     *
-     * Wire `eventType` is written in PascalCase form (`WorkflowExecutionStarted`)
-     * to match Java/TypeScript/Python and modern Temporal server. Decoder
-     * accepts both PascalCase and legacy `EVENT_TYPE_*`.
+     * Wire `eventType` is written in PascalCase (`WorkflowExecutionStarted`); decoder accepts both forms.
      *
      * @throws InvalidArgumentException when WorkflowEvent has neither
      *         event_ref nor request_id_ref set, or carries an unknown
@@ -116,8 +99,7 @@ final class NexusLinkConverter
 
     private static function convertOne(NexusLink $link): Link
     {
-        // Manual scheme/path/query split — PHP's parse_url rejects `scheme:///path` URIs
-        // (empty authority) used by the Temporal Nexus link format.
+        // Manual scheme/path/query split — parse_url rejects the `scheme:///path` (empty authority) form.
         if (!\preg_match('~^([a-zA-Z][a-zA-Z0-9+.\-]*):(?://[^/?\#]*)?(/[^?\#]*)(?:\?([^\#]*))?(?:\#.*)?$~', $link->uri, $u)) {
             throw new InvalidArgumentException(\sprintf(
                 'malformed Nexus link URI: "%s"',
@@ -182,9 +164,7 @@ final class NexusLinkConverter
     }
 
     /**
-     * Resolve a wire `eventType` value to a protobuf int. Accepts both forms:
-     * - "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED" (legacy / Go SDK style)
-     * - "WorkflowExecutionStarted" (modern PascalCase, Java/TS/Python style)
+     * Accepts both legacy `EVENT_TYPE_*` and modern PascalCase wire forms.
      */
     private static function resolveEventType(string $name): ?int
     {

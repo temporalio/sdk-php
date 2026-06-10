@@ -6,7 +6,6 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Handler\MethodCanceller;
 use React\Promise\Deferred;
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Transport\Router\CancelNexusOperationMethod;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,6 +24,8 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 #[CoversClass(CancelNexusOperationMethod::class)]
 final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
 {
+    use AwaitsNexusPromise;
+
     private EnvironmentInterface $env;
 
     protected function setUp(): void
@@ -113,24 +114,5 @@ final class CancelNexusOperationMethodRouteTestCase extends AbstractUnit
             info: new TickInfo(new \DateTimeImmutable()),
             options: $options,
         );
-    }
-
-    private function assertResolved(Deferred $deferred): void
-    {
-        $resolved = false;
-        $error = null;
-        $deferred->promise()->then(
-            function ($value) use (&$resolved): void {
-                $resolved = true;
-            },
-            function (\Throwable $e) use (&$error): void {
-                $error = $e;
-            },
-        );
-
-        if ($error !== null) {
-            throw $error;
-        }
-        self::assertTrue($resolved, 'promise should resolve');
     }
 }

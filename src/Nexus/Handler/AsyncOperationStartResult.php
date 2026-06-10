@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
+use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\OperationState;
 
 /**
  * Construct via {@see OperationStartResult::async()}.
@@ -25,6 +27,13 @@ final readonly class AsyncOperationStartResult extends OperationStartResult
      */
     public function __construct(public OperationInfo $info)
     {
+        if ($info->state !== OperationState::Running) {
+            throw new InvalidArgumentException(\sprintf(
+                'Async operation start must report a running operation, got state "%s".',
+                $info->state->value,
+            ));
+        }
+
         parent::__construct();
     }
 }

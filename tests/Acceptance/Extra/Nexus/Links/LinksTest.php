@@ -17,6 +17,7 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -30,10 +31,7 @@ class LinksTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]

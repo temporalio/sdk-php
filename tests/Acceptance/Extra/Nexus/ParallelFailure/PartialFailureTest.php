@@ -7,7 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\ParallelFailure;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
-use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -21,6 +20,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -28,24 +29,18 @@ use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
- * Promise::all over Nexus ops where one of N fails.
- *
- * Surfaced product gap: a sync handler's OperationException::failed in a
- * parallel batch does not propagate as ApplicationFailure to the caller —
- * the operation surfaces as TimeoutFailure(SCHEDULE_TO_CLOSE) once the
- * timeout window elapses. Single-op fail (SyncFailureTest) works. This
- * test therefore asserts only the reproducibly observable parts: all
- * siblings get scheduled, and the caller eventually fails.
+ * Promise::all where one of N Nexus ops fails. Product gap: the sibling's failure
+ * surfaces as TimeoutFailure(SCHEDULE_TO_CLOSE) instead of ApplicationFailure, so the
+ * happy path here IS the timeout — hence the short scheduleToClose in the caller.
  */
 #[Worker(options: [self::class, 'workerOptions'])]
 class PartialFailureTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -97,17 +92,6 @@ class PartialFailureTest extends TestCase
             'At least one Nexus operation must terminate (Failed or TimedOut) so Promise::all can settle.',
         );
     }
-
-    private static function countEvents(History $history, int $type): int
-    {
-        $count = 0;
-        foreach ($history->getEvents() as $event) {
-            if ($event->getEventType() === $type) {
-                $count++;
-            }
-        }
-        return $count;
-    }
 }
 
 #[Service(name: 'PartialFailureService')]
@@ -136,7 +120,7 @@ class PartialFailureCallerWorkflow
             PartialFailureService::class,
             NexusOperationOptions::new()
                 ->withEndpoint($endpoint)
-                ->withScheduleToCloseTimeout(CarbonInterval::seconds(30)),
+                ->withScheduleToCloseTimeout(CarbonInterval::seconds(5)),
         );
 
         $promises = [

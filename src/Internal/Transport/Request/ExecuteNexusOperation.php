@@ -20,7 +20,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  * @psalm-import-type RequestOptions from RequestInterface
  * @psalm-immutable
  */
-final class ExecuteNexusOperation extends Request
+final class ExecuteNexusOperation extends Request implements RejectedOnCancelInterface
 {
     public const NAME = 'ExecuteNexusOperation';
 

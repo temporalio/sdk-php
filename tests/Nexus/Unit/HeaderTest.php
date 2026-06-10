@@ -35,18 +35,8 @@ final class HeaderTest extends TestCase
         self::assertSame('Nexus-Callback-Url', Header::CALLBACK_URL);
         self::assertSame('Nexus-Callback-Token', Header::CALLBACK_TOKEN);
         self::assertSame('Nexus-Callback-', Header::CALLBACK_PREFIX);
-        self::assertSame('Nexus-Request-Retryable', Header::RETRYABLE);
         self::assertSame('Content-Type', Header::CONTENT_TYPE);
         self::assertSame('application/json', Header::CONTENT_TYPE_JSON);
-    }
-
-    public function testHeaderCannotBeInstantiated(): void
-    {
-        $reflection = new \ReflectionClass(Header::class);
-        $ctor = $reflection->getConstructor();
-
-        self::assertNotNull($ctor);
-        self::assertTrue($ctor->isPrivate(), 'Header is a static namespace; must not be instantiable');
     }
 
     // ── get() lookup ────────────────────────────────────────────────

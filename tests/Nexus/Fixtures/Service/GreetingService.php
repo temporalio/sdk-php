@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Nexus\Fixtures\Service;
 
 use Temporal\Client\WorkflowOptions;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\WorkflowHandle;
@@ -55,6 +54,4 @@ final class GreetingService implements GreetingServiceInterface
         );
     }
 
-    #[OperationCancel(operation: 'sayHello2')]
-    public function cancelSayHello2(string $token): void {}
 }

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Nexus\Handler;
 
-use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Link;
 
 /**
@@ -28,16 +27,7 @@ final class LinkCollection
      */
     public function __construct(array $initial = [])
     {
-        foreach ($initial as $i => $link) {
-            if (!$link instanceof Link) {
-                throw new InvalidArgumentException(\sprintf(
-                    'LinkCollection: initial[%s] must be a %s, got %s',
-                    \is_int($i) ? (string) $i : \var_export($i, true),
-                    Link::class,
-                    \get_debug_type($link),
-                ));
-            }
-        }
+        Link::assertAll($initial, 'LinkCollection: initial');
         $this->links = \array_values($initial);
     }
 

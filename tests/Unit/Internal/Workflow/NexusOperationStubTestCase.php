@@ -155,6 +155,28 @@ final class NexusOperationStubTestCase extends TestCase
         self::assertSame('wire-ep', $captured->getEndpoint());
     }
 
+    public function testNormalizeFailureCarriesKnownOperationToken(): void
+    {
+        $deferred = new Deferred();
+        $token = '';
+        $normalized = $this->invokeNormalizeFailure($deferred->promise(), $token);
+
+        $captured = null;
+        $normalized->then(
+            null,
+            static function (\Throwable $e) use (&$captured): void {
+                $captured = $e;
+            },
+        );
+
+        $token = 'tok-async-1';
+        $deferred->reject(new CanceledFailure('cancelled after start'));
+
+        self::assertInstanceOf(NexusOperationFailure::class, $captured);
+        self::assertSame('tok-async-1', $captured->getOperationToken());
+        self::assertSame(0, $captured->getScheduledEventId());
+    }
+
     public function testNormalizeFailurePassesThroughResolvedValue(): void
     {
         $deferred = new Deferred();
@@ -199,7 +221,7 @@ final class NexusOperationStubTestCase extends TestCase
      * Workflow context. Reflection keeps the unit boundary at the function
      * under test without dragging in the workflow runtime.
      */
-    private function invokeNormalizeFailure(PromiseInterface $promise): PromiseInterface
+    private function invokeNormalizeFailure(PromiseInterface $promise, string &$operationToken = ''): PromiseInterface
     {
         $stub = $this->makeStub(
             NexusOperationOptions::new()->withEndpoint('ep')->withService('svc'),
@@ -207,6 +229,6 @@ final class NexusOperationStubTestCase extends TestCase
 
         $method = new \ReflectionMethod(NexusOperationStub::class, 'normalizeFailure');
 
-        return $method->invoke($stub, $promise, 'ep', 'svc', 'place-order');
+        return $method->invokeArgs($stub, [$promise, 'ep', 'svc', 'place-order', &$operationToken]);
     }
 }

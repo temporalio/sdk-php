@@ -17,6 +17,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -29,10 +30,7 @@ class MultipleCallersTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -63,15 +61,21 @@ class MultipleCallersTest extends TestCase
         $client->start($callerB, $endpoint->name, $handlerWorkflowId);
 
         $handlerStub = $client->newUntypedRunningWorkflowStub($handlerWorkflowId);
+        $signaled = false;
         $deadline = \microtime(true) + 5.0;
         do {
             try {
                 $handlerStub->signal('unblock');
+                $signaled = true;
                 break;
             } catch (WorkflowNotFoundException) {
                 \usleep(50_000);
             }
         } while (\microtime(true) < $deadline);
+
+        if (!$signaled) {
+            self::fail('handler never became signalable within 5s');
+        }
 
         self::assertSame('shared-handler-result', $callerA->getResult('string'));
         self::assertSame('shared-handler-result', $callerB->getResult('string'));

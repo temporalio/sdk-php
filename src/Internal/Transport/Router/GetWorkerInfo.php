@@ -63,7 +63,7 @@ final class GetWorkerInfo extends Route
             'operations' => \array_keys($service->getOperations()),
         ];
 
-        $map = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
+        $plugins = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
             'Name' => $plugin->getName(),
             'Version' => null,
         ]);
@@ -75,7 +75,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
-            'Plugins' => $map,
+            'Plugins' => $plugins,
             'Flags' => (object) $this->prepareFlags(),
             'NexusServices' => $this->map($worker->getNexusServices(), $nexusServiceMap),
         ];

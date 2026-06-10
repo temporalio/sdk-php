@@ -14,6 +14,7 @@ namespace Temporal\Internal\Nexus;
 use Google\Rpc\Code;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowException;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Nexus\Exception\ErrorType;
@@ -40,8 +41,15 @@ final class HandlerErrorMapper
             return HandlerException::fromCause(ErrorType::NotFound, $e);
         }
 
+        if ($e instanceof WorkflowExecutionAlreadyStartedException) {
+            return HandlerException::fromCause(ErrorType::Internal, $e, RetryBehavior::NonRetryable);
+        }
+
         if ($e instanceof WorkflowException) {
-            return HandlerException::fromCause(ErrorType::BadRequest, $e);
+            $previous = $e->getPrevious();
+            if ($previous instanceof ServiceClientException) {
+                return self::fromGrpcCode($previous);
+            }
         }
 
         if ($e instanceof ServiceClientException) {

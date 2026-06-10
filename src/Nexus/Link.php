@@ -33,12 +33,22 @@ final class Link implements \Stringable
     }
 
     /**
-     * Encode as RFC 8288 `<uri>; type="..."`. `\` and `"` in `type` are escaped.
+     * @param iterable<array-key, mixed> $links
+     * @param non-empty-string $where Label used in the error message, e.g. `Foo: links`.
      */
-    public function toHeaderValue(): string
+    public static function assertAll(iterable $links, string $where): void
     {
-        $escapedType = \addcslashes($this->type, "\\\"");
-        return "<{$this->uri}>; type=\"{$escapedType}\"";
+        foreach ($links as $i => $link) {
+            if (!$link instanceof self) {
+                throw new InvalidArgumentException(\sprintf(
+                    '%s[%s] must be a %s, got %s',
+                    $where,
+                    \is_int($i) ? (string) $i : \var_export($i, true),
+                    self::class,
+                    \get_debug_type($link),
+                ));
+            }
+        }
     }
 
     public function __toString(): string

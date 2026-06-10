@@ -27,7 +27,7 @@ final class HandlerExceptionTest extends TestCase
 
         self::assertSame('Invalid input', $ex->getMessage());
         self::assertSame(ErrorType::BadRequest, $ex->errorType);
-        self::assertSame('BAD_REQUEST', $ex->rawErrorType);
+        self::assertSame('BAD_REQUEST', $ex->errorType->value);
         self::assertNull($ex->getPrevious());
         self::assertSame(RetryBehavior::Unspecified, $ex->retryBehavior);
     }
@@ -145,11 +145,5 @@ final class HandlerExceptionTest extends TestCase
         $ex = HandlerException::create(ErrorType::Internal, 'x');
         self::assertInstanceOf(NexusException::class, $ex);
         self::assertInstanceOf(\RuntimeException::class, $ex);
-    }
-
-    public function testConstructorIsPrivate(): void
-    {
-        $reflection = new \ReflectionClass(HandlerException::class);
-        self::assertTrue($reflection->getConstructor()->isPrivate());
     }
 }

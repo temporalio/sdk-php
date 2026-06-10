@@ -64,7 +64,7 @@ final class LinkParser
     }
 
     /**
-     * @param iterable<object> $protoLinks Objects exposing `getUrl()` / `getType()`.
+     * @param iterable<\Temporal\Api\Nexus\V1\Link> $protoLinks
      * @return Link[]
      * @throws HandlerException
      */
@@ -73,11 +73,9 @@ final class LinkParser
         $links = [];
         $index = 0;
         foreach ($protoLinks as $protoLink) {
-            $url = \method_exists($protoLink, 'getUrl') ? (string) $protoLink->getUrl() : '';
-            $type = \method_exists($protoLink, 'getType') ? (string) $protoLink->getType() : '';
             $links[] = self::buildLink(
-                url: $url,
-                type: $type,
+                url: $protoLink->getUrl(),
+                type: $protoLink->getType(),
                 context: 'proto index ' . $index,
             );
             $index++;

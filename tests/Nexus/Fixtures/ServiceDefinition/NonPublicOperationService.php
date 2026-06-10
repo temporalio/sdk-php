@@ -9,17 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Nexus\Fixtures\Service;
+namespace Temporal\Tests\Nexus\Fixtures\ServiceDefinition;
 
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
 
 #[Service]
-interface TwoOperationsServiceInterface
+class NonPublicOperationService
 {
-    #[Operation(name: 'shared')]
-    public function alpha(): void;
-
     #[Operation]
-    public function beta(): void;
+    protected function hiddenOperation(string $input): string
+    {
+        return $input;
+    }
 }

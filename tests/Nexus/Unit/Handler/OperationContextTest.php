@@ -62,20 +62,21 @@ final class OperationContextTest extends TestCase
             service: 's',
             operation: 'o',
             env: $this->env,
-            headers: ['Content-Type' => 'text/plain'],
+            headers: [
+                'Content-Type' => 'text/plain',
+                'UPPER-CASE-HEADER' => 'UPPER-VALUE',
+                'lower-case-header' => 'lower-value',
+            ],
         );
-        self::assertSame(['content-type' => 'text/plain'], $ctx->headers->all());
-    }
 
-    public function testCreateNormalizesHeaders(): void
-    {
-        $ctx = new OperationContext(
-            service: 's',
-            operation: 'o',
-            env: $this->env,
-            headers: ['X-Trace-Id' => 'abc'],
+        self::assertSame(
+            [
+                'content-type' => 'text/plain',
+                'upper-case-header' => 'UPPER-VALUE',
+                'lower-case-header' => 'lower-value',
+            ],
+            $ctx->headers->all(),
         );
-        self::assertSame(['x-trace-id' => 'abc'], $ctx->headers->all());
     }
 
     public function testLinksPassedAsExistingCollectionAreUsedAsIs(): void

@@ -20,10 +20,8 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 final class OperationContext
 {
     public readonly HeaderCollection $headers;
-
     public readonly LinkCollection $links;
     private readonly ?MethodCanceller $methodCanceller;
-    private readonly EnvironmentInterface $env;
 
     /**
      * @param array<string, string>|HeaderCollection $headers Reused if a collection, wrapped if an array (keys lowercased).
@@ -40,9 +38,8 @@ final class OperationContext
     ) {
         $this->headers = $headers instanceof HeaderCollection ? $headers : new HeaderCollection($headers);
         $this->links = $links instanceof LinkCollection ? $links : new LinkCollection($links);
-        $this->env = $env;
         $this->methodCanceller = $methodCanceller
-            ?? ($deadline !== null ? new MethodCanceller($this->env, $deadline) : null);
+            ?? ($deadline !== null ? new MethodCanceller($env, $deadline) : null);
     }
 
     /**

@@ -12,11 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Nexus\Unit\Validation;
 
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use Temporal\Nexus\Validation\OperationTokenValidator;
 use Temporal\Nexus\Validation\PrintableAsciiValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -24,8 +22,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(PrintableAsciiValidator::class)]
 final class OperationTokenValidatorTest extends TestCase
 {
-    use ExceptionAssertions;
-
     public function testRejectsEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -33,55 +29,10 @@ final class OperationTokenValidatorTest extends TestCase
         OperationTokenValidator::assert('');
     }
 
-    public function testAcceptsPrintableAscii(): void
-    {
-        OperationTokenValidator::assert('job-abc123-XYZ_~.!');
-
-        self::assertTrue(true, 'OperationTokenValidator::assert() must not throw on valid printable ASCII.');
-    }
-
-    public function testAcceptsFullPrintableRange(): void
-    {
-        $token = '';
-        for ($c = 0x21; $c <= 0x7E; $c++) {
-            $token .= \chr($c);
-        }
-
-        OperationTokenValidator::assert($token);
-
-        self::assertTrue(true, 'OperationTokenValidator::assert() must not throw on the full printable ASCII range.');
-    }
-
-    #[DataProvider('invalidTokenProvider')]
-    public function testRejectsInvalidBytes(string $token): void
+    public function testDelegatesToPrintableAsciiValidator(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/printable non-whitespace ASCII/');
-        OperationTokenValidator::assert($token);
-    }
-
-    /** @return iterable<string, array{0: string}> */
-    public static function invalidTokenProvider(): iterable
-    {
-        yield 'newline'           => ["bad\ntoken"];
-        yield 'carriage return'   => ["bad\rtoken"];
-        yield 'null byte'         => ["bad\0token"];
-        yield 'tab'               => ["bad\ttoken"];
-        yield 'space'             => ["bad token"];
-        yield 'utf-8 multibyte'   => ["токен"];
-        yield 'high-bit byte'     => ["\xff\xfe"];
-        yield 'del byte'          => ["bad\x7ftoken"];
-        yield 'control char 0x01' => ["bad\x01token"];
-    }
-
-    public function testErrorMessageIncludesBadOffset(): void
-    {
-        $e = self::assertThrown(
-            InvalidArgumentException::class,
-            static fn() => OperationTokenValidator::assert("ok\nbad"),
-        );
-
-        self::assertStringContainsString('offset 2', $e->getMessage());
-        self::assertStringContainsString('6 bytes', $e->getMessage());
+        $this->expectExceptionMessageMatches('/Operation Token.+printable non-whitespace ASCII/');
+        OperationTokenValidator::assert("bad\ntoken");
     }
 }

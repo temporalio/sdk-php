@@ -15,6 +15,13 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
 use Temporal\Nexus\Attribute\Service;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
+use Temporal\Nexus\OperationInfo;
+use Temporal\Nexus\OperationState;
 use Temporal\Nexus\WorkflowHandle;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\WorkerFactory;
@@ -52,6 +59,37 @@ class GuardAsyncServiceImpl implements GuardAsyncService
     }
 }
 
+#[Service]
+interface GuardManualService
+{
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function manualOp(): GuardManualHandler;
+}
+
+final class GuardManualHandler implements OperationHandlerInterface
+{
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        return OperationStartResult::async(new OperationInfo('guard-token', OperationState::Running));
+    }
+
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {}
+}
+
+class GuardManualServiceImpl implements GuardManualService
+{
+    public function manualOp(): GuardManualHandler
+    {
+        return new GuardManualHandler();
+    }
+}
+
 /**
  * @group unit
  * @group worker
@@ -76,5 +114,14 @@ final class NexusRegistrationGuardTestCase extends AbstractUnit
         $this->expectExceptionMessage('declares async operation "runAsync", which needs cluster access');
 
         $worker->registerNexusServiceImplementation(new GuardAsyncServiceImpl());
+    }
+
+    public function testFactoryBackedAsyncServiceWithoutClientIsAllowed(): void
+    {
+        $worker = WorkerFactory::create()->newWorker();
+
+        $worker->registerNexusServiceImplementation(new GuardManualServiceImpl());
+
+        self::assertCount(1, $worker->getNexusServices());
     }
 }

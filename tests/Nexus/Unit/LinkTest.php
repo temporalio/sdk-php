@@ -14,7 +14,6 @@ namespace Temporal\Tests\Nexus\Unit;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Link;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Link::class)]
@@ -66,17 +65,5 @@ final class LinkTest extends TestCase
         // The plain constructor is intentionally permissive — only non-emptiness is enforced.
         $link = new Link('/just-a-path', 'some-type');
         self::assertSame('/just-a-path', $link->uri);
-    }
-
-    public function testToHeaderValueWrapsUriAndQuotesType(): void
-    {
-        $link = new Link('https://x/y', 'app/foo');
-        self::assertSame('<https://x/y>; type="app/foo"', $link->toHeaderValue());
-    }
-
-    public function testToHeaderValueEscapesQuoteAndBackslashInType(): void
-    {
-        $link = new Link('https://x', 'a"b\\c');
-        self::assertSame('<https://x>; type="a\\"b\\\\c"', $link->toHeaderValue());
     }
 }

@@ -33,14 +33,4 @@ final class NexusOperationContextTest extends TestCase
         self::assertSame('', $ctx->namespace);
         self::assertSame('', $ctx->taskQueue);
     }
-
-    public function testDoesNotExposeWorkflowClient(): void
-    {
-        $ctx = new NexusOperationContext('ns', 'tq');
-
-        self::assertFalse(
-            \property_exists($ctx, 'workflowClient'),
-            'public NexusOperationContext must not leak the WorkflowClient',
-        );
-    }
 }

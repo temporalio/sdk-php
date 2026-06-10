@@ -51,7 +51,7 @@ class Encoder
                 }
 
                 $msg->setCommand($cmd->getName());
-                $msg->setOptions(\json_encode($options));
+                $msg->setOptions(\json_encode($options, \JSON_THROW_ON_ERROR));
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
                 $msg->setHeader($header->toHeader());
 
@@ -62,21 +62,30 @@ class Encoder
                 return $msg;
 
             case $cmd instanceof FailureResponseInterface:
-                \is_int($cmd->getID()) and $msg->setId($cmd->getID());
+                if (\is_int($cmd->getID())) {
+                    $msg->setId($cmd->getID());
+                }
                 $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
 
                 return $msg;
 
             case $cmd instanceof SuccessResponseInterface:
-                \is_int($cmd->getID()) and $msg->setId($cmd->getID());
+                if (\is_int($cmd->getID())) {
+                    $msg->setId($cmd->getID());
+                }
                 $cmd->getPayloads()->setDataConverter($this->converter);
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
                 return $msg;
 
             case $cmd instanceof CommandResponse:
+                $options = $cmd->getOptions();
+                if ($options === []) {
+                    $options = new \stdClass();
+                }
+
                 $msg->setCommand($cmd->getCommand());
-                $msg->setOptions(\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE));
+                $msg->setOptions(\json_encode($options, \JSON_THROW_ON_ERROR));
 
                 if ($cmd->getFailure() !== null) {
                     $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));

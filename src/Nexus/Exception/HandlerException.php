@@ -16,7 +16,6 @@ namespace Temporal\Nexus\Exception;
  */
 final class HandlerException extends NexusException
 {
-    public readonly string $rawErrorType;
     public readonly ErrorType $errorType;
     public readonly RetryBehavior $retryBehavior;
 
@@ -26,7 +25,6 @@ final class HandlerException extends NexusException
         ?\Throwable $cause,
         RetryBehavior $retryBehavior,
     ) {
-        $this->rawErrorType = $errorType->value;
         $this->errorType = $errorType;
         $this->retryBehavior = $retryBehavior;
 

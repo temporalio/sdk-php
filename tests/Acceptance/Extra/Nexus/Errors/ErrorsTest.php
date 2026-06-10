@@ -18,6 +18,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoint;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -30,10 +31,7 @@ class ErrorsTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -117,9 +115,14 @@ class ErrorsTest extends TestCase
 
         $endpoint = $this->endpoint($endpoints, $state->namespace);
 
-        [$code] = $http->post($endpoint, 'ErrorService', 'notFoundOp', 'missing');
+        [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'notFoundOp', 'missing');
 
-        self::assertSame(404, $code);
+        self::assertSame(404, $code, "Handler NotFound error must map to 404, got {$code}. Body: {$resp}");
+        self::assertStringContainsString(
+            'missing: missing',
+            $resp,
+            'Body must carry the handler\'s NotFound message — otherwise this 404 may be an endpoint-cache miss.',
+        );
     }
 
     #[Test]
@@ -133,6 +136,10 @@ class ErrorsTest extends TestCase
         $stub->getResult('string');
 
         $endpoint = $this->endpoint($endpoints, $state->namespace);
+
+        // Prove the endpoint is routable first, so the 404 below cannot be an endpoint-cache miss.
+        [$probeCode, $probeResp, ] = $http->post($endpoint, 'ErrorService', 'echoOp', 'probe');
+        self::assertSame(200, $probeCode, "Routability probe failed: {$probeCode}. Body: {$probeResp}");
 
         [$code, $resp, ] = $http->post($endpoint, 'ErrorService', 'nonExistentOp', 'whatever');
 
@@ -188,6 +195,12 @@ class ErrorsTest extends TestCase
 #[Service(name: 'ErrorService')]
 class ErrorService
 {
+    #[Operation]
+    public function echoOp(string $input): string
+    {
+        return $input;
+    }
+
     #[Operation]
     public function failOp(string $reason): string
     {

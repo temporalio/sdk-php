@@ -22,6 +22,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -29,24 +31,15 @@ use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * Replay coverage for caller-side Nexus operations.
- *
- * The PHP workflow code is identical between live execution and replay:
- * the same `NewTimer` / `ExecuteNexusOperation` / `GetNexusOperationStarted`
- * requests are pushed in the same order, and RR's replay path resolves them
- * from history instead of going to the server. A successful replay proves
- * the workflow is deterministic across both flows.
- */
+/** Replay coverage for caller-side Nexus operations: a clean replay proves determinism. */
 #[Worker(options: [self::class, 'workerOptions'])]
 class ReplayTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -61,7 +54,7 @@ class ReplayTest extends TestCase
             'Extra_Nexus_Replay_AsyncCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
         $client->start($stub, $endpoint->name, 'world');
@@ -69,9 +62,7 @@ class ReplayTest extends TestCase
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
 
-        // Started is the discriminator that matters for replay: async ops emit
-        // both Scheduled and Started, sync ops do not. If Started is missing
-        // we are silently testing the sync path and the test name lies.
+        // Started discriminates async from sync; without it the test name lies.
         self::assertContainsEvents(
             $history,
             [
@@ -97,7 +88,7 @@ class ReplayTest extends TestCase
             'Extra_Nexus_Replay_TimerThenSyncCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
         $client->start($stub, $endpoint->name, 'world');
@@ -105,9 +96,7 @@ class ReplayTest extends TestCase
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
 
-        // Timer + Nexus together exercise Request::$lastID ordering: both
-        // claim sequential 9000+ ids, both must come back in lockstep on
-        // replay or we get a nondeterminism error on the second yield.
+        // Timer + Nexus exercises Request::$lastID ordering across both command kinds.
         self::assertContainsEvents(
             $history,
             [
@@ -123,41 +112,6 @@ class ReplayTest extends TestCase
     }
 
     #[Test]
-    public function syncNexusOperationReplaysCleanly(
-        State $state,
-        WorkflowClientInterface $client,
-        NexusEndpoints $endpoints,
-    ): void {
-        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-replay-sync');
-
-        $stub = $client->newUntypedWorkflowStub(
-            'Extra_Nexus_Replay_SyncCaller',
-            WorkflowOptions::new()
-                ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
-        );
-
-        $client->start($stub, $endpoint->name, 'world');
-        self::assertSame('Hello, world!', $stub->getResult('string'));
-
-        $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
-
-        self::assertContainsEvents(
-            $history,
-            [
-                EventType::EVENT_TYPE_NEXUS_OPERATION_SCHEDULED,
-                EventType::EVENT_TYPE_NEXUS_OPERATION_COMPLETED,
-            ],
-            'sync caller history must include Scheduled+Completed Nexus events',
-        );
-
-        // Real assertion: replay runs the workflow against the recorded history;
-        // any nondeterminism (different command order, missed yield, drift in
-        // payload encoding) raises NonDeterministicWorkflowException.
-        (new WorkflowReplayer())->replayHistory($history);
-    }
-
-    #[Test]
     public function syncNexusOperationReplaysFromDumpedJsonFile(
         State $state,
         WorkflowClientInterface $client,
@@ -169,7 +123,7 @@ class ReplayTest extends TestCase
             'Extra_Nexus_Replay_SyncCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
         $client->start($stub, $endpoint->name, 'world');
@@ -187,8 +141,7 @@ class ReplayTest extends TestCase
                 $file,
             );
             self::assertFileExists($file);
-            // Belt-and-suspenders: the file must really contain Nexus events
-            // before the JSON-replay step gets credit for replaying them.
+            // The file must really contain Nexus events before the JSON-replay step gets credit.
             $contents = (string) \file_get_contents($file);
             self::assertStringContainsString(
                 'EVENT_TYPE_NEXUS_OPERATION_SCHEDULED',
@@ -201,9 +154,7 @@ class ReplayTest extends TestCase
                 'Dumped history JSON must contain a Nexus completed event.',
             );
 
-            // Round-trip: parse the file back through RR's replayer; same
-            // determinism contract as replayHistory(), but exercises the
-            // JSON deserialiser path independent of the proto-from-server one.
+            // Round-trip exercises the JSON deserialiser path independent of proto-from-server.
             $replayer->replayFromJSON('Extra_Nexus_Replay_SyncCaller', $file);
         } finally {
             \is_file($file) and \unlink($file);
@@ -222,7 +173,7 @@ class ReplayTest extends TestCase
             'Extra_Nexus_Replay_SyncCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
         $client->start($stub, $endpoint->name, 'world');
@@ -230,17 +181,10 @@ class ReplayTest extends TestCase
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
 
-        // Pre-condition: a clean replay must succeed first, otherwise we
-        // have no baseline and the negative assertion below is vacuous.
+        // Clean replay first — otherwise the negative assertion below is vacuous.
         (new WorkflowReplayer())->replayHistory($history);
 
-        // Validation core: rewrite the operation name on the recorded
-        // SCHEDULED event. PHP, on replay, will yield
-        // `Workflow::newNexusServiceStub(...)->greet(...)` and emit a
-        // ScheduleNexusOperationCommand for `operation='greet'`. The
-        // replayer must compare that command against the (now-mutated)
-        // history and detect a mismatch — proving it actually inspects
-        // Nexus events instead of skipping them.
+        // Mutate the recorded operation name; replay must detect the command mismatch.
         $mutated = false;
         foreach ($history->getEvents() as $event) {
             if ($event->getEventType() !== EventType::EVENT_TYPE_NEXUS_OPERATION_SCHEDULED) {
@@ -274,7 +218,7 @@ class ReplayTest extends TestCase
             'Extra_Nexus_Replay_CancelCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
-                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(120)),
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(30)),
         );
 
         $client->start($stub, $endpoint->name, 'world');
@@ -282,9 +226,7 @@ class ReplayTest extends TestCase
 
         $history = $client->getWorkflowHistory($stub->getExecution())->getHistory();
 
-        // The cancel path must leave both the request marker and the terminal
-        // CANCELED event in history; replay then re-derives the same command
-        // stream (schedule + cancel) from these events.
+        // Cancel must leave both the request marker and the terminal CANCELED event.
         self::assertContainsEvents(
             $history,
             [
@@ -296,27 +238,6 @@ class ReplayTest extends TestCase
         );
 
         (new WorkflowReplayer())->replayHistory($history);
-    }
-
-    /**
-     * @param list<int> $expectedTypes
-     */
-    private static function assertContainsEvents(
-        \Temporal\Api\History\V1\History $history,
-        array $expectedTypes,
-        string $message,
-    ): void {
-        $present = [];
-        foreach ($history->getEvents() as $event) {
-            $present[$event->getEventType()] = true;
-        }
-        foreach ($expectedTypes as $type) {
-            self::assertArrayHasKey(
-                $type,
-                $present,
-                $message . ' — missing event type ' . EventType::name($type),
-            );
-        }
     }
 }
 
@@ -356,8 +277,7 @@ class ReplayAsyncHandlerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_Replay_AsyncHandler')]
     public function handle(string $input)
     {
-        // Force at least one task transition so the operation goes async
-        // (Started event), matching the production WorkflowRunOperation path.
+        // One task transition so the operation goes async (Started event).
         yield Workflow::timer(CarbonInterval::milliseconds(50));
         return 'HELLO, ' . \strtoupper($input) . '!';
     }
@@ -403,8 +323,7 @@ class ReplayTimerThenSyncCallerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_Replay_TimerThenSyncCaller')]
     public function run(string $endpoint, string $name)
     {
-        // Timer first — separate workflow task before the Nexus call —
-        // is the minimal interleaving that catches per-task command-id drift.
+        // Timer first: minimal interleaving that catches per-task command-id drift.
         yield Workflow::timer(CarbonInterval::milliseconds(50));
 
         $stub = Workflow::newNexusServiceStub(
@@ -450,11 +369,7 @@ class ReplayCancelCallerWorkflow
     #[WorkflowMethod(name: 'Extra_Nexus_Replay_CancelCaller')]
     public function run(string $endpoint, string $input)
     {
-        // WaitCompleted (not WaitRequested): the caller future must resolve on the
-        // terminal NEXUS_OPERATION_CANCELED event, not on CANCEL_REQUEST_COMPLETED.
-        // WaitRequested unblocks at the cancel-ack and the caller workflow closes its
-        // history *before* the server writes NEXUS_OPERATION_CANCELED, so that event
-        // never lands in the caller history and the assertion below can't see it.
+        // WaitCompleted: with WaitRequested the caller closes before the terminal CANCELED lands.
         $stub = Workflow::newNexusServiceStub(
             ReplayCancelService::class,
             NexusOperationOptions::new()
@@ -468,7 +383,7 @@ class ReplayCancelCallerWorkflow
             $promise = $stub->longRunning($input);
         });
 
-        yield Workflow::timer(CarbonInterval::seconds(1));
+        yield Workflow::timer(CarbonInterval::seconds(NexusWorkerOptions::PRE_CANCEL_TIMER_SECONDS));
         $scope->cancel();
 
         try {

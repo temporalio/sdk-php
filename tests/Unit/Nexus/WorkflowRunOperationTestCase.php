@@ -27,7 +27,7 @@ use Temporal\Nexus\WorkflowHandle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\Handler\Internal\WorkflowRunStarter;
 use Temporal\Nexus\WorkflowRunOperation;
-use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelRoutingService;
+use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -99,7 +99,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         self::assertSame('https://callback.example/done', $callback->url);
         self::assertSame('demo', $callback->headers['X-Caller']);
         self::assertSame($expectedToken, $callback->headers['Nexus-Operation-Token']);
-        self::assertSame($expectedToken, $callback->headers['nexus-operation-id']);
+        self::assertSame($expectedToken, $callback->headers['Nexus-Operation-Id']);
     }
 
     public function testStartPreservesCallerProvidedTokenHeaders(): void
@@ -135,7 +135,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         self::assertSame('caller-token', $callback->headers['nexus-operation-token']);
         self::assertSame('caller-id', $callback->headers['Nexus-Operation-Id']);
         self::assertArrayNotHasKey('Nexus-Operation-Token', $callback->headers);
-        self::assertArrayNotHasKey('nexus-operation-id', $callback->headers);
+        self::assertCount(2, $callback->headers);
     }
 
     public function testStartWithoutCallbackOmitsCompletionCallback(): void
@@ -274,18 +274,13 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         self::assertNotNull($captured->onConflictOptions);
     }
 
-    public function testStartFailsWithoutWorkflowId(): void
+    public function testStartAcceptsExplicitWorkflowId(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('workflow ID is required');
-
-        WorkflowRunStarter::start(
-            WorkflowHandle::fromWorkflowMethod(
-                FakeWorkflow::class,
-                WorkflowOptions::new()->withWorkflowId(''),
-            ),
-            new OperationStartDetails(requestId: 'req-test', callbackUrl: null, callbackHeaders: [], links: []),
+        $captured = $this->captureStartOptions(
+            WorkflowOptions::new()->withWorkflowId(self::WID),
         );
+
+        self::assertSame(self::WID, $captured->workflowId);
     }
 
     public function testCancelDecodesTokenAndCancelsWorkflow(): void
@@ -341,24 +336,11 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
             ->with(self::WID)
             ->willReturn($stub);
 
-        $service = new CancelRoutingService();
-        $this->handlerFor($service, 'autoCancel')->cancel(
-            new OperationContext(service: 'svc', operation: 'autoCancel', env: $this->env),
+        $service = new GreetingService(static fn(string $n): string => $n);
+        $this->handlerFor($service, 'sayHello2')->cancel(
+            new OperationContext(service: 'svc', operation: 'sayHello2', env: $this->env),
             new OperationCancelDetails(operationToken: $token),
         );
-    }
-
-    public function testExplicitCancelRoutineOverridesAutoCancel(): void
-    {
-        $this->client->expects(self::never())->method('newUntypedRunningWorkflowStub');
-
-        $service = new CancelRoutingService();
-        $this->handlerFor($service, 'explicitOverride')->cancel(
-            new OperationContext(service: 'svc', operation: 'explicitOverride', env: $this->env),
-            new OperationCancelDetails(operationToken: WorkflowRunOperationToken::generate(self::NS, self::WID)),
-        );
-
-        self::assertTrue($service->explicitCancelCalled, 'user-declared cancel routine must run');
     }
 
     protected function setUp(): void

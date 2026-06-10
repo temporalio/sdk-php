@@ -44,7 +44,6 @@ final class ServiceContainer
     public readonly ActivityCollection $activities;
     public readonly WorkflowReader $workflowsReader;
     public readonly ActivityReader $activitiesReader;
-
     public readonly NexusServiceCollection $nexusServices;
     public readonly NexusInvocationRegistry $nexusInvocations;
     public readonly NexusTaskHandler $nexusTaskHandler;

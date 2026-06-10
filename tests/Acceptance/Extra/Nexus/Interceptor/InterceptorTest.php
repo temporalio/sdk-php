@@ -30,6 +30,7 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -38,14 +39,8 @@ use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
- * Acceptance tests for {@see NexusOperationInboundCallsInterceptor} registered
- * on the worker via {@see PipelineProvider}.
- *
- * Cross-process assertion strategy: interceptors record markers in
- * {@see WorkerLocalMarker} (a worker-local static); the underlying handler
- * code reads those markers and embeds them in its return value, so the
- * PHPUnit process can observe the interceptor's effect via the response
- * payload alone — no shared mutable state across processes.
+ * {@see NexusOperationInboundCallsInterceptor} registered via {@see PipelineProvider};
+ * interceptors record markers in {@see WorkerLocalMarker} that handlers/tests read back.
  */
 #[Worker(
     pipelineProvider: [InterceptorTestServices::class, 'interceptors'],
@@ -57,10 +52,7 @@ class InterceptorTest extends TestCase
 
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -83,10 +75,9 @@ class InterceptorTest extends TestCase
         );
 
         self::assertSame(200, $code, "Expected 200, got {$code}. Response: {$body}");
-        // Greeting from the handler proves the pipeline reached the underlying impl.
+        // Greeting proves the pipeline reached the handler.
         self::assertStringContainsString('Hello, World!', $body);
-        // Marker proves the LoggingInterceptor ran *before* the handler in the worker
-        // process: the handler reads the worker-local static the interceptor wrote.
+        // Marker proves the LoggingInterceptor ran before the handler.
         self::assertStringContainsString('seen-by-interceptor', $body);
     }
 
@@ -108,23 +99,13 @@ class InterceptorTest extends TestCase
             'World',
         );
 
-        // Nexus maps `ErrorType::Unauthorized` (permission denied) to HTTP 403.
+        // Nexus maps `ErrorType::Unauthorized` to HTTP 403.
         self::assertSame(403, $code, "Expected 403, got {$code}. Response: {$body}");
-        // Auth interceptor short-circuited the pipeline — handler greeting must
-        // not appear in the body.
+        // Auth interceptor short-circuited the pipeline — no handler greeting in the body.
         self::assertStringNotContainsString('Hello, World!', $body);
     }
 
-    /**
-     * Drives an async Nexus operation that the caller cancels mid-flight.
-     *
-     * Two assertions:
-     *   1. Caller's promise rejects with {@see NexusOperationFailure}/{@see CanceledFailure}.
-     *   2. Handler workflow caught the cancel and returned `"cancelled:{marker}"`,
-     *      where the marker comes from the cancel-side interceptor running in
-     *      the same worker process. We read the handler workflow's return
-     *      value directly (its workflow id is deterministic, see {@see CancelHandlerWorkflow}).
-     */
+    /** Caller cancels an async op mid-flight; the cancel-side interceptor must leave its marker. */
     #[Test]
     public function cancelInvokesInterceptorAndHandlerSeesMarker(
         State $state,
@@ -153,10 +134,7 @@ class InterceptorTest extends TestCase
         $handlerResult = $handlerStub->getResult('string', timeout: 10);
         self::assertStringStartsWith('cancelled:', $handlerResult);
 
-        // File-backed marker proves the cancel-side interceptor ran in some
-        // RR worker process before WorkflowRunOperation::cancel reached
-        // Temporal. File store survives cross-process dispatch (interceptor
-        // and handler workflow may run in different RR worker processes).
+        // File-backed marker survives cross-process dispatch between RR workers.
         $marker = WorkerLocalMarker::readCancel();
         self::assertNotNull($marker, 'Cancel interceptor never wrote its marker.');
         self::assertStringContainsString('cancel-seen-by-interceptor', $marker);
@@ -165,20 +143,12 @@ class InterceptorTest extends TestCase
 }
 
 /**
- * Markers shared between interceptors (writers) and downstream readers.
- *
- *   - $lastSeen: process-local static for the sync GreetingService case —
- *     the LoggingInterceptor and GreetingService always run in the same
- *     RR worker process, so an in-memory static is enough.
- *   - cancel marker file: filesystem-backed for the async-cancel case. The
- *     cancel-side interceptor and the handler workflow may be dispatched to
- *     different RR worker processes (RR spawns multiple workers per pool),
- *     so a file is the only reliable handoff. The PHPUnit process reads it
- *     directly to assert the cancel interceptor actually ran.
+ * Markers shared between interceptors (writers) and downstream readers:
+ * $lastSeen is process-local (sync case); the cancel marker is file-backed (cross-process).
  */
 final class WorkerLocalMarker
 {
-    public const CANCEL_MARKER_FILE = '/tmp/nexus-interceptor-cancel-marker';
+    public const CANCEL_MARKER_FILE = '/tmp/nexus-interceptor-cancel-marker-test-nexus-interceptor-cancel';
 
     public static ?string $lastSeen = null;
 
@@ -210,10 +180,7 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
 
     public function startOperation(StartOperationInput $input, callable $next): OperationStartResult
     {
-        // Scope auth to GreetingService only. The async cancel test below uses
-        // a different service (InterceptorCancelService) reached via
-        // workflow-to-workflow Nexus stubs that don't propagate caller auth
-        // headers — guarding that service here would deadlock the test.
+        // Auth is scoped to GreetingService; workflow-to-workflow stubs carry no auth header.
         if ($input->operationContext->service === 'GreetingService') {
             $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         }
@@ -222,7 +189,6 @@ final class AuthInterceptor implements NexusOperationInboundCallsInterceptor
 
     public function cancelOperation(CancelOperationInput $input, callable $next): void
     {
-        // Same scoping rationale as startOperation().
         if ($input->operationContext->service === 'GreetingService') {
             $this->assertAuthorized($input->operationContext->headers->get(self::AUTH_HEADER));
         }
@@ -305,11 +271,7 @@ class CancelHandlerWorkflow
             yield Workflow::timer(CarbonInterval::seconds(30));
             return "completed:{$input}";
         } catch (CanceledFailure) {
-            // We don't read the cancel marker here on purpose: the handler
-            // workflow can land on a different RR worker process than the one
-            // that ran the cancel-side interceptor, so the marker isn't
-            // guaranteed to be process-local. The test reads the file-backed
-            // marker directly from the PHPUnit process instead.
+            // Marker isn't read here: handler may run in a different RR worker process.
             return "cancelled:{$input}";
         }
     }
@@ -335,7 +297,7 @@ class CancelCallerWorkflow
         });
 
         // Give the handler workflow a chance to actually start before cancelling.
-        yield Workflow::timer(CarbonInterval::seconds(1));
+        yield Workflow::timer(CarbonInterval::seconds(NexusWorkerOptions::PRE_CANCEL_TIMER_SECONDS));
         $scope->cancel();
 
         try {

@@ -45,6 +45,21 @@ class DupBetaImpl implements DupBetaInterface
     }
 }
 
+#[Service(name: 'CollectionSolo')]
+interface CollectionSoloInterface
+{
+    #[Operation]
+    public function op(string $in): string;
+}
+
+class CollectionSoloImpl implements CollectionSoloInterface
+{
+    public function op(string $in): string
+    {
+        return "solo:{$in}";
+    }
+}
+
 /**
  * @group unit
  * @group nexus
@@ -64,7 +79,7 @@ final class NexusServiceCollectionTestCase extends AbstractUnit
     public function testAddAndRetrieve(): void
     {
         $repo = new NexusServiceCollection();
-        $prototype = self::buildPrototype(new TestGreetingServiceImpl());
+        $prototype = self::buildPrototype(new CollectionSoloImpl());
 
         $repo->add($prototype);
 
@@ -88,15 +103,15 @@ final class NexusServiceCollectionTestCase extends AbstractUnit
         $repo = new NexusServiceCollection();
 
         $alpha = self::buildPrototype(new DupAlphaImpl());
-        $greeting = self::buildPrototype(new TestGreetingServiceImpl());
+        $solo = self::buildPrototype(new CollectionSoloImpl());
 
         $repo->add($alpha);
-        $repo->add($greeting);
+        $repo->add($solo);
 
         self::assertCount(2, $repo);
         $items = \array_values(\iterator_to_array($repo));
         self::assertSame($alpha, $items[0]);
-        self::assertSame($greeting, $items[1]);
+        self::assertSame($solo, $items[1]);
     }
 
     public function testSelfRegistrationRejected(): void

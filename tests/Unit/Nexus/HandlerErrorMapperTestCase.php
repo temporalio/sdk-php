@@ -11,6 +11,7 @@ use Temporal\Exception\Client\WorkflowException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Internal\Nexus\HandlerErrorMapper;
 use Temporal\Workflow\WorkflowExecution;
@@ -120,39 +121,43 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
         self::assertSame($cause, $mapped->getPrevious());
     }
 
-    public function testWorkflowExceptionBecomesBadRequest(): void
+    public function testWorkflowExceptionWithoutGrpcCauseIsNotMapped(): void
     {
         $cause = new WorkflowException(null, new WorkflowExecution('wf-id', 'run-id'));
 
-        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
-
-        self::assertInstanceOf(HandlerException::class, $mapped);
-        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
-        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
-        self::assertSame($cause, $mapped->getPrevious());
+        self::assertNull(HandlerErrorMapper::mapToHandlerException($cause));
     }
 
-    public function testWorkflowFailedExceptionBecomesBadRequest(): void
+    public function testWorkflowFailedExceptionIsNotMapped(): void
     {
         $cause = new WorkflowFailedException(new WorkflowExecution('wf-id', 'run-id'), 'WorkflowType', 1, 0);
 
+        self::assertNull(HandlerErrorMapper::mapToHandlerException($cause));
+    }
+
+    public function testWorkflowServiceExceptionUnwrapsTransientGrpcCause(): void
+    {
+        $grpc = self::makeServiceClientException(Code::UNAVAILABLE, 'frontend unavailable');
+        $cause = new WorkflowServiceException(null, new WorkflowExecution('wf-id', 'run-id'), null, $grpc);
+
         $mapped = HandlerErrorMapper::mapToHandlerException($cause);
 
         self::assertInstanceOf(HandlerException::class, $mapped);
-        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
+        self::assertSame(ErrorType::Unavailable, $mapped->errorType);
         self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
-        self::assertSame($cause, $mapped->getPrevious());
+        self::assertTrue($mapped->isRetryable());
+        self::assertSame($grpc, $mapped->getPrevious());
     }
 
-    public function testWorkflowExecutionAlreadyStartedExceptionBecomesBadRequest(): void
+    public function testWorkflowExecutionAlreadyStartedExceptionBecomesInternalNonRetryable(): void
     {
         $cause = new WorkflowExecutionAlreadyStartedException(new WorkflowExecution('wf-id', 'run-id'), 'WorkflowType');
 
         $mapped = HandlerErrorMapper::mapToHandlerException($cause);
 
         self::assertInstanceOf(HandlerException::class, $mapped);
-        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
-        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame(ErrorType::Internal, $mapped->errorType);
+        self::assertSame(RetryBehavior::NonRetryable, $mapped->retryBehavior);
         self::assertSame($cause, $mapped->getPrevious());
     }
 

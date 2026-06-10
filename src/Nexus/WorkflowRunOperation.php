@@ -16,10 +16,7 @@ use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 
 /**
- * Helpers that back a Nexus operation with a Temporal workflow run.
- *
- * Return a {@see WorkflowHandle} from your #[AsyncOperation] method to start the
- * backing workflow; use ::cancel() inside #[OperationCancel] to cancel it.
+ * Helpers for Nexus operations backed by a Temporal workflow run (SDK-minted tokens only).
  */
 final class WorkflowRunOperation
 {

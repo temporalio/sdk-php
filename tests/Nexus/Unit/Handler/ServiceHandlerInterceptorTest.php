@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,11 +13,6 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\NexusOperationContext;
 
-use Temporal\Client\WorkflowClientInterface;
-use Temporal\Client\WorkflowStubInterface;
-use Temporal\DataConverter\DataConverter;
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\NexusOperationInbound\CancelOperationInput;
 use Temporal\Interceptor\NexusOperationInbound\StartOperationInput;
 use Temporal\Interceptor\NexusOperationInboundCallsInterceptor;
@@ -31,10 +26,10 @@ use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
+use Temporal\Tests\Nexus\Support\EncodesValues;
+use Temporal\Tests\Nexus\Support\MocksAsyncWorkflowClient;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
-use Temporal\Workflow\WorkflowExecution;
-use Temporal\Workflow\WorkflowRunInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -42,6 +37,8 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerInterceptorTest extends TestCase
 {
     use BindNexusService;
+    use EncodesValues;
+    use MocksAsyncWorkflowClient;
 
     private const NS = 'sample-ns';
     private const TQ = 'sample-tq';
@@ -111,7 +108,8 @@ final class ServiceHandlerInterceptorTest extends TestCase
                 StartOperationInput $input,
                 callable $next,
             ): OperationStartResult {
-                return OperationStartResult::sync("rewritten-{$input->input}");
+                \assert($input->input instanceof \Temporal\DataConverter\ValuesInterface);
+                return OperationStartResult::sync('rewritten-' . $input->input->getValue(0, 'string'));
             }
         };
 
@@ -237,20 +235,10 @@ final class ServiceHandlerInterceptorTest extends TestCase
         $handler->cancelOperation(
             new OperationContext(service: 'GreetingServiceInterface', operation: 'sayHello2', env: $this->env),
             new \Temporal\Nexus\Handler\OperationCancelDetails(operationToken: $token),
-            null,
-            new NexusOperationContext(),
+            $this->asyncClient(),
+            new NexusOperationContext('test-ns', 'test-tq'),
         );
 
         self::assertSame(["sayHello2:{$token}"], $seen);
-    }
-
-    private static function dataConverter(): DataConverterInterface
-    {
-        return DataConverter::createDefault();
-    }
-
-    private static function encode(mixed $value): EncodedValues
-    {
-        return EncodedValues::fromValues([$value], self::dataConverter());
     }
 }

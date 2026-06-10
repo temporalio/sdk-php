@@ -18,8 +18,7 @@ use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 
 /**
  * Test helper: wires Reader + Instantiator the same way Worker does, returning
- * a {@see NexusServiceInstance} bound to the given impl object. Replaces the
- * removed `ServiceImplInstance::fromInstance()` shortcut.
+ * a {@see NexusServiceInstance} bound to the given impl object.
  */
 trait BindNexusService
 {

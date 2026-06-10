@@ -47,10 +47,4 @@ final class HeadersTest extends TestCase
             Headers::normalize(['X-Custom' => 'first', 'x-custom' => 'second']),
         );
     }
-
-    public function testConstructorIsPrivate(): void
-    {
-        $reflection = new \ReflectionClass(Headers::class);
-        self::assertTrue($reflection->getConstructor()->isPrivate());
-    }
 }

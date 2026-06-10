@@ -6,6 +6,7 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncFailure;
 
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
+use Temporal\Api\Enums\V1\EventType;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -19,6 +20,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -39,12 +42,11 @@ use Temporal\Workflow\WorkflowMethod;
 #[Worker(options: [self::class, 'workerOptions'])]
 class AsyncFailureTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -84,9 +86,9 @@ class AsyncFailureTest extends TestCase
 
         $client->start($callerStub, $endpoint->name);
 
-        // Give the handler workflow a chance to start before we terminate it.
-        // Same timing pattern as `AsyncCancelByTokenTest`.
-        \usleep(1_500_000);
+        if (!self::historyContains($client, $callerStub, EventType::EVENT_TYPE_NEXUS_OPERATION_STARTED, 5.0)) {
+            self::fail('Handler workflow never reached NEXUS_OPERATION_STARTED within 5s; nothing to terminate.');
+        }
 
         $handlerStub = $client->newUntypedRunningWorkflowStub(HandlerWorkflowToTerminate::ID);
         $handlerStub->terminate('test-terminate');

@@ -25,6 +25,8 @@ final class ServiceNameValidator
 
     /**
      * @throws InvalidArgumentException
+     *
+     * @psalm-mutation-free
      */
     public static function assert(string $name): void
     {

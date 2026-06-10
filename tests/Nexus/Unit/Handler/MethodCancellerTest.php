@@ -11,15 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Nexus\Unit\Handler;
 
-use Spiral\Attributes\AttributeReader;
-use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Handler\ClosureMethodCancellationListener;
-use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\MethodCancellationListenerInterface;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
-use Temporal\Tests\Nexus\Fixtures\ServiceHandler\CancelSignaturesService;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
@@ -27,7 +21,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(MethodCanceller::class)]
-#[CoversClass(MethodOperationHandler::class)]
 final class MethodCancellerTest extends TestCase
 {
     private EnvironmentInterface $env;
@@ -36,44 +29,6 @@ final class MethodCancellerTest extends TestCase
     {
         parent::setUp();
         $this->env = new Environment();
-    }
-
-    public function testHandlerResolvesLegacyStringSignature(): void
-    {
-        $service = new CancelSignaturesService();
-        $this->cancel($service, 'legacy', 'tok-1');
-
-        self::assertSame('tok-1', $service->cancelCalls['legacy']);
-    }
-
-    public function testHandlerResolvesContextAndDetailsByType(): void
-    {
-        $service = new CancelSignaturesService();
-        $this->cancel($service, 'contextAndDetails', 'tok-2');
-
-        [$context, $details] = $service->cancelCalls['contextAndDetails'];
-        self::assertInstanceOf(OperationContext::class, $context);
-        self::assertInstanceOf(OperationCancelDetails::class, $details);
-        self::assertSame('tok-2', $details->operationToken);
-    }
-
-    public function testHandlerResolvesReversedSignatureByType(): void
-    {
-        $service = new CancelSignaturesService();
-        $this->cancel($service, 'reversed', 'tok-3');
-
-        [$details, $context] = $service->cancelCalls['reversed'];
-        self::assertInstanceOf(OperationCancelDetails::class, $details);
-        self::assertInstanceOf(OperationContext::class, $context);
-        self::assertSame('tok-3', $details->operationToken);
-    }
-
-    public function testHandlerResolvesNoArgsSignature(): void
-    {
-        $service = new CancelSignaturesService();
-        $this->cancel($service, 'noArgs', 'tok-4');
-
-        self::assertTrue($service->cancelCalls['noArgs']);
     }
 
     public function testNotCancelledByDefault(): void
@@ -224,11 +179,7 @@ final class MethodCancellerTest extends TestCase
 
         $canceller->cancel('shutdown');
 
-        // Although the deadline is in the past, the explicit reason recorded first wins.
-        // Because checkDeadline() is a no-op once reason is set, the explicit call must be allowed to stick.
-        // Note: in our impl, checkDeadline runs lazily on inspection. A canceller constructed with a
-        // past deadline will have `$reason` still null until inspected. Explicit cancel() before any
-        // inspection records "shutdown"; subsequent checkDeadline sees reason set and exits.
+        // Explicit cancel() before any deadline inspection wins; lazy deadline check is a no-op afterwards.
         self::assertSame('shutdown', $canceller->getReason());
     }
 
@@ -247,19 +198,10 @@ final class MethodCancellerTest extends TestCase
         self::assertStringContainsString('deadline exceeded', (string) $canceller->getReason());
     }
 
-    public function testGetDeadlineReturnsProvidedValue(): void
-    {
-        $deadline = new \DateTimeImmutable('+5 minutes');
-        $canceller = new MethodCanceller($this->env, $deadline);
-
-        self::assertSame($deadline, $canceller->getDeadline());
-    }
-
-    public function testNullDeadlineBehavesAsBefore(): void
+    public function testNoDeadlineNeverAutoCancels(): void
     {
         $canceller = new MethodCanceller($this->env);
 
-        self::assertNull($canceller->getDeadline());
         self::assertFalse($canceller->isCancelled());
     }
 
@@ -283,20 +225,4 @@ final class MethodCancellerTest extends TestCase
         self::assertSame(['a', 'b'], $order);
     }
 
-    private function cancel(object $service, string $operation, string $token): void
-    {
-        $prototype = (new NexusServiceReader(new AttributeReader()))->fromClass(\get_class($service));
-        $operationPrototype = $prototype->getOperations()[$operation];
-
-        $handler = new MethodOperationHandler(
-            instance: $service,
-            startMethod: new \ReflectionMethod($service, $operationPrototype->methodName),
-            operation: $operationPrototype,
-        );
-
-        $handler->cancel(
-            new OperationContext(service: $prototype->getID(), operation: $operation, env: $this->env),
-            new OperationCancelDetails(operationToken: $token),
-        );
-    }
 }

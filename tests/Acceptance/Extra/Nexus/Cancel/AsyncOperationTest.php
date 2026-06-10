@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Nexus\Cancel;
 
 use Temporal\Nexus\Attribute\AsyncOperation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
-use Temporal\Nexus\Nexus;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\OperationInfo;
 use Temporal\Nexus\OperationState;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,26 +21,18 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * Acceptance test: async Nexus operation — handler returns an operation token,
- * Temporal preserves it for later polling/cancel.
- *
- * This exercises the async branch of OperationStartResult::async() that the
- * existing Errors/Headers/Basic suites do not touch.
- */
+/** Async Nexus operation over HTTP: handler returns an operation token (manual-token start). */
 #[Worker(options: [self::class, 'workerOptions'])]
 class AsyncOperationTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -57,38 +52,21 @@ class AsyncOperationTest extends TestCase
             'AsyncJobService',
             'startJob',
             'payload',
-            [
-                // Callback URL is required by the Nexus wire protocol for async starts
-                // so that the caller can receive completion.
-                'Nexus-Callback-Url' => 'http://callback.example.local/done',
-            ],
+            ['Nexus-Callback-Url' => 'http://callback.example.local/done'],
         );
 
-        // Per Nexus spec (and the Go reference handler in nexus-rpc/sdk-go), an
-        // async StartOperation returns `201 Created` with a JSON OperationInfo
-        // body carrying the token. Pin both the status and the token shape so
-        // the test name actually matches what is asserted.
+        // Nexus spec: async StartOperation → 201 Created with a JSON OperationInfo body.
         self::assertSame(201, $code, "Expected 201 Created for async start, got {$code}. Body: {$resp}");
 
         $decoded = \json_decode($resp, true);
         self::assertIsArray($decoded, "Async start body must be JSON OperationInfo. Body: {$resp}");
-        // Spec field is `token`; tolerate `operationToken` for forward-compat
-        // with any future server rename.
+        // Spec field is `token`; tolerate `operationToken` for forward-compat.
         $token = $decoded['token'] ?? $decoded['operationToken'] ?? null;
         self::assertIsString($token, "Async start body must carry a token field. Body: {$resp}");
         self::assertNotSame('', $token, 'Operation token must be non-empty.');
     }
 
-    /**
-     * Async start without `Nexus-Callback-Url`. Whether Temporal accepts
-     * callback-less async starts is policy on the server side: it can return
-     * either `201 Created` (accepted) or a 4xx (refused for missing required
-     * header). What we lock down here is:
-     *   - the SDK handler itself never produces a 5xx (no internal crash),
-     *   - on success (any 2xx) the body is a real OperationInfo with a
-     *     non-empty token — i.e. the handler genuinely produced a token,
-     *     not just an opaque 200.
-     */
+    /** Async start without `Nexus-Callback-Url`: server policy decides 201 vs 4xx; never a 5xx. */
     #[Test]
     public function asyncOperationWithoutCallbackStillStarts(
         State $state,
@@ -116,6 +94,12 @@ class AsyncOperationTest extends TestCase
             $token = $decoded['token'] ?? $decoded['operationToken'] ?? null;
             self::assertIsString($token, "2xx async start must carry a token field. Body: {$resp}");
             self::assertNotSame('', $token, 'Operation token must be non-empty on a 2xx response.');
+        } else {
+            self::assertStringContainsStringIgnoringCase(
+                'callback',
+                $resp,
+                "A 4xx refusal must be about the missing callback, not some other failure. Code {$code}. Body: {$resp}",
+            );
         }
     }
 }
@@ -125,21 +109,29 @@ class AsyncOperationTest extends TestCase
 #[Service(name: 'AsyncJobService')]
 class AsyncJobService
 {
-    #[AsyncOperation(output: 'string')]
-    public function startJob(string $input): OperationInfo
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function startJob(): AsyncJobHandler
     {
-        $details = Nexus::getStartDetails();
-        // Generate a deterministic-ish token derived from requestId so the caller
-        // can correlate.
-        $token = 'job-' . \substr(\hash('sha1', $details->requestId . ':' . $input), 0, 12);
-        return new OperationInfo($token, OperationState::Running);
+        return new AsyncJobHandler();
+    }
+}
+
+final class AsyncJobHandler implements OperationHandlerInterface
+{
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        // Deterministic-ish token derived from requestId so the caller can correlate.
+        $token = 'job-' . \substr(\hash('sha1', $details->requestId . ':' . $param), 0, 12);
+        return OperationStartResult::async(new OperationInfo($token, OperationState::Running));
     }
 
-    #[OperationCancel(operation: 'startJob')]
-    public function cancelStartJob(string $token): void
-    {
-        // No-op: real cancellation would notify an external job queue.
-    }
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {}
 }
 
 // ── Bootstrap workflows ──────────────────────────────────────────────

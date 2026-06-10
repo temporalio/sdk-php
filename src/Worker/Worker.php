@@ -13,6 +13,7 @@ namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\EntityNameValidator;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -120,15 +121,15 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $hasClient = $this->services->workflowClient !== null;
 
         foreach ($services as $service) {
-            $prototype = $this->services->nexusServicesReader->fromClass(\get_class($service));
+            $prototype = $this->services->nexusServicesReader->fromClass($service::class);
 
             if (!$hasClient) {
                 foreach ($prototype->getOperations() as $operation) {
-                    if ($operation->async) {
+                    if ($operation->async && !NexusServiceReader::returnsOperationHandler($operation->handler)) {
                         throw new \LogicException(\sprintf(
                             'Nexus service %s declares async operation "%s", which needs cluster access. '
                             . 'Pass a WorkflowClient to the worker: WorkerFactory::create(client: $workflowClient).',
-                            \get_class($service),
+                            $service::class,
                             $operation->name,
                         ));
                     }
@@ -164,8 +165,17 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $router->add(new Router\StackTrace($this->services->running));
 
         // Nexus routes
-        $router->add(new Router\InvokeNexusOperation($this->services->nexusTaskHandler, $this->services->nexusInvocations, $this->services->dataConverter, $this->services->marshaller, $this->services->env));
-        $router->add(new Router\CancelNexusOperation($this->services->nexusTaskHandler, $this->services->marshaller));
+        $router->add(new Router\InvokeNexusOperation(
+            $this->services->nexusTaskHandler,
+            $this->services->nexusInvocations,
+            $this->services->dataConverter,
+            $this->services->marshaller,
+            $this->services->env,
+        ));
+        $router->add(new Router\CancelNexusOperation(
+            $this->services->nexusTaskHandler,
+            $this->services->marshaller,
+        ));
         $router->add(new Router\CancelNexusOperationMethod($this->services->nexusInvocations));
 
         return $router;

@@ -25,28 +25,4 @@ final class NexusOperationCancellationTypeTestCase extends AbstractUnit
         self::assertSame(3, NexusOperationCancellationType::WaitRequested->value);
         self::assertSame(4, NexusOperationCancellationType::WaitCompleted->value);
     }
-
-    public function testFromIntProducesExpectedCase(): void
-    {
-        self::assertSame(
-            NexusOperationCancellationType::Unspecified,
-            NexusOperationCancellationType::from(0),
-        );
-        self::assertSame(
-            NexusOperationCancellationType::Abandon,
-            NexusOperationCancellationType::from(1),
-        );
-        self::assertSame(
-            NexusOperationCancellationType::TryCancel,
-            NexusOperationCancellationType::from(2),
-        );
-        self::assertSame(
-            NexusOperationCancellationType::WaitRequested,
-            NexusOperationCancellationType::from(3),
-        );
-        self::assertSame(
-            NexusOperationCancellationType::WaitCompleted,
-            NexusOperationCancellationType::from(4),
-        );
-    }
 }

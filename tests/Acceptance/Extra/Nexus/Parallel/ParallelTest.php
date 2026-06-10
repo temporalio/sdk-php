@@ -15,6 +15,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
@@ -35,10 +36,7 @@ class ParallelTest extends TestCase
 {
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -58,9 +56,8 @@ class ParallelTest extends TestCase
 
         $client->start($stub, $endpoint->name);
 
-        // Caller sums the results of N parallel ops; expectation hardcoded
-        // to match the workflow body.
-        self::assertSame('sum=15', $stub->getResult('string'));
+        // double(1..5) → 2+4+6+8+10 = 30.
+        self::assertSame('sum=30', $stub->getResult('string'));
     }
 }
 
@@ -87,9 +84,6 @@ class ParallelCallerWorkflow
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(15)),
         );
 
-        // Schedule 5 sync operations in parallel (1*2 + 2*2 + 3*2 + 4*2 + 5*2 = 30/2 = 15 inputs sum, sum of doubles = 30).
-        // Wait — sum of doubles = 2+4+6+8+10 = 30. But sum of inputs = 15. The
-        // assertion uses input-sum to keep the math obvious.
         $promises = [];
         for ($i = 1; $i <= 5; $i++) {
             $promises[] = $stub->double($i);
@@ -97,9 +91,6 @@ class ParallelCallerWorkflow
 
         $results = yield Promise::all($promises);
 
-        // results = [2,4,6,8,10]; halve each to recover the inputs and sum them.
-        $sumOfInputs = \array_sum(\array_map(static fn(int $r): int => (int) ($r / 2), $results));
-
-        return "sum={$sumOfInputs}";
+        return 'sum=' . \array_sum($results);
     }
 }

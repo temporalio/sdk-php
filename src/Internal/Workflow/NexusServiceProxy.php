@@ -20,21 +20,26 @@ use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 
+/**
+ * @template-covariant T of object
+ * @mixin T
+ * @internal
+ */
 final class NexusServiceProxy extends Proxy
 {
     /** @var array<string, NexusOperationPrototype> Keyed by PHP method name. */
     private readonly array $operationsByMethod;
 
     /**
-     * @param class-string $class
+     * @param class-string<T> $class
      * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
-        private string $class,
+        private readonly string $class,
         NexusServicePrototype $prototype,
-        private NexusOperationOptions $options,
-        private WorkflowContextInterface $ctx,
-        private Pipeline $callsInterceptor,
+        private readonly NexusOperationOptions $options,
+        private readonly WorkflowContextInterface $ctx,
+        private readonly Pipeline $callsInterceptor,
     ) {
         $byMethod = [];
         foreach ($prototype->getOperations() as $operation) {
@@ -56,30 +61,35 @@ final class NexusServiceProxy extends Proxy
             ));
         }
 
-        $service = $this->options->service;
-        if ($service === '') {
-            throw new \InvalidArgumentException(
-                \sprintf('Nexus service name resolved to empty for stub class %s', $this->class),
-            );
-        }
-
-        $returnType = $operation->outputType;
+        \assert($this->options->service !== '');
 
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this->ctx
-                ->newUntypedNexusOperationStub($input->options)
+                ->newUntypedNexusOperationStub(self::effectiveOptions($input))
                 ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             /** @see WorkflowOutboundCallsInterceptor::executeNexusOperation() */
             'executeNexusOperation',
         )(
             new ExecuteNexusOperationInput(
                 $this->options->endpoint,
-                $service,
+                $this->options->service,
                 $operation->name,
                 $args,
                 $this->options,
-                $returnType,
+                $operation->outputType,
             ),
         );
+    }
+
+    private static function effectiveOptions(ExecuteNexusOperationInput $input): NexusOperationOptions
+    {
+        $options = $input->options;
+        if ($input->endpoint !== '' && $input->endpoint !== $options->endpoint) {
+            $options = $options->withEndpoint($input->endpoint);
+        }
+        if ($input->service !== '' && $input->service !== $options->service) {
+            $options = $options->withService($input->service);
+        }
+        return $options;
     }
 }

@@ -94,8 +94,12 @@ final class NexusOperationOptions extends Options
     #[Pure]
     public function withScheduleToCloseTimeout($timeout): self
     {
+        \assert(DateInterval::assert($timeout));
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+        \assert($timeout->totalMicroseconds >= 0);
+
         $self = clone $this;
-        $self->scheduleToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+        $self->scheduleToCloseTimeout = $timeout;
         return $self;
     }
 

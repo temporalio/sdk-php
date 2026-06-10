@@ -34,6 +34,25 @@ final class PrintableAsciiValidatorTest extends TestCase
         self::assertTrue(true);
     }
 
+    public function testAcceptsFullPrintableRange(): void
+    {
+        $value = '';
+        for ($c = 0x21; $c <= 0x7E; $c++) {
+            $value .= \chr($c);
+        }
+
+        PrintableAsciiValidator::assert($value, 'Thing');
+
+        self::assertTrue(true);
+    }
+
+    public function testErrorMessageIncludesByteLengthAndOffset(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('got 6 bytes, first bad char at offset 2');
+        PrintableAsciiValidator::assert("ok\nbad", 'Thing');
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */
@@ -43,8 +62,12 @@ final class PrintableAsciiValidatorTest extends TestCase
         yield 'embedded space'  => ['a b', 1];
         yield 'tab'             => ["a\tb", 1];
         yield 'newline'         => ["a\nb", 1];
+        yield 'carriage return' => ["a\rb", 1];
+        yield 'null byte'       => ["a\0b", 1];
+        yield 'control 0x01'    => ["a\x01b", 1];
         yield 'del'             => ["a\x7Fb", 1];
         yield 'high byte'       => ["a\xFFb", 1];
+        yield 'utf-8 multibyte' => ['имя', 0];
     }
 
     #[DataProvider('badCharProvider')]

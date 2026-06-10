@@ -14,6 +14,7 @@ namespace Temporal\Nexus\Handler\Internal;
 use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\WorkflowRunOperation;
@@ -39,8 +40,7 @@ final class MethodOperationHandler implements OperationHandlerInterface
         $result = $this->startMethod->invoke($this->instance, ...$args);
 
         if ($this->operation->async) {
-            $result = WorkflowRunStarter::start($result, $details);
-            return OperationStartResult::async($result);
+            return OperationStartResult::async(WorkflowRunStarter::start($result, $details));
         }
 
         return OperationStartResult::sync($result);
@@ -50,36 +50,6 @@ final class MethodOperationHandler implements OperationHandlerInterface
         OperationContext $context,
         OperationCancelDetails $details,
     ): void {
-        $cancelMethod = $this->operation->cancelHandler;
-
-        if ($cancelMethod === null) {
-            WorkflowRunOperation::cancel($details->operationToken);
-            return;
-        }
-
-        $cancelMethod->invoke($this->instance, ...$this->resolveCancelArgs($cancelMethod, $context, $details));
-    }
-
-    /**
-     * @return list<mixed>
-     */
-    private function resolveCancelArgs(
-        \ReflectionMethod $cancelMethod,
-        OperationContext $context,
-        OperationCancelDetails $details,
-    ): array {
-        $args = [];
-        foreach ($cancelMethod->getParameters() as $parameter) {
-            $type = $parameter->getType();
-            $typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
-
-            $args[] = match ($typeName) {
-                OperationContext::class => $context,
-                OperationCancelDetails::class => $details,
-                default => $details->operationToken,
-            };
-        }
-
-        return $args;
+        WorkflowRunOperation::cancel($details->operationToken);
     }
 }

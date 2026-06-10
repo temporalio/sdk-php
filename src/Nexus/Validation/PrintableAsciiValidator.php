@@ -26,6 +26,8 @@ final class PrintableAsciiValidator
     /**
      * @throws InvalidArgumentException when $value is empty or contains a byte
      *         outside the printable ASCII range 0x21–0x7E.
+     *
+     * @psalm-mutation-free
      */
     public static function assert(string $value, string $label): void
     {

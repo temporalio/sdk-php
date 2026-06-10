@@ -49,7 +49,7 @@ final class Header
     /** Caller-provided opaque non-empty id for retry de-duplication. */
     public const REQUEST_ID = 'Nexus-Request-Id';
 
-    /** RFC 5988 link header; `<uri>; type="..."`. May repeat. */
+    /** RFC 8288 link header; `<uri>; type="..."`. May repeat. */
     public const LINK = 'Nexus-Link';
 
     /**
@@ -63,11 +63,6 @@ final class Header
 
     /** Inbound name of the opaque auth token; outbound it is sent as `Token: ...` (secret). */
     public const CALLBACK_TOKEN = self::CALLBACK_PREFIX . 'Token';
-
-    /**
-     * @deprecated Legacy. Prefer {@see \Temporal\Nexus\Exception\HandlerException}'s {@see RetryBehavior}.
-     */
-    public const RETRYABLE = 'Nexus-Request-Retryable';
 
     /** Standard HTTP `Content-Type` header. */
     public const CONTENT_TYPE = 'Content-Type';

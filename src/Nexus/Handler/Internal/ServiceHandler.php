@@ -30,6 +30,7 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
 use Temporal\Nexus\Handler\OperationStartDetails;
 use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Handler\SyncOperationStartResult;
@@ -44,7 +45,7 @@ final class ServiceHandler implements HandlerInterface
     /**
      * @param array<string, NexusServiceInstance> $instances
      */
-    public function __construct(
+    private function __construct(
         private readonly array $instances,
         private readonly DataConverterInterface $dataConverter,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
@@ -88,24 +89,6 @@ final class ServiceHandler implements HandlerInterface
         $operations = $instance->prototype->getOperations();
         $definition = $operations[$context->operation];
 
-        try {
-            $inputObject = $definition->inputType->getName() === Type::TYPE_VOID
-                ? null
-                : $input->getValue(0, $definition->inputType);
-        } catch (\Throwable $e) {
-            throw HandlerException::create(
-                ErrorType::BadRequest,
-                \sprintf(
-                    'Failed deserializing input for %s/%s as %s: %s',
-                    $context->service,
-                    $context->operation,
-                    $definition->inputType->getName(),
-                    $e->getMessage(),
-                ),
-                $e,
-            );
-        }
-
         $result = $this->dispatch(
             new NexusContext(
                 operation: self::publicOperationContext($operationContext),
@@ -118,10 +101,12 @@ final class ServiceHandler implements HandlerInterface
             static fn(StartOperationInput $input): OperationStartResult => $handler->start(
                 $input->operationContext,
                 $input->startDetails,
-                $input->input,
+                $input->input instanceof ValuesInterface
+                    ? self::decodeInput($input->input, $input->operationContext, $definition->inputType)
+                    : $input->input,
             ),
             'startOperation',
-            new StartOperationInput($context, $details, $inputObject),
+            new StartOperationInput($context, $details, $input),
         );
 
         \assert($result instanceof OperationStartResult);
@@ -182,6 +167,30 @@ final class ServiceHandler implements HandlerInterface
             return null;
         }
         return $operationContext;
+    }
+
+    private static function decodeInput(
+        ValuesInterface $input,
+        OperationContext $context,
+        Type $inputType,
+    ): mixed {
+        try {
+            return $inputType->getName() === Type::TYPE_VOID
+                ? null
+                : $input->getValue(0, $inputType);
+        } catch (\Throwable $e) {
+            throw HandlerException::create(
+                ErrorType::BadRequest,
+                \sprintf(
+                    'Failed deserializing input for %s/%s as %s: %s',
+                    $context->service,
+                    $context->operation,
+                    $inputType->getName(),
+                    $e->getMessage(),
+                ),
+                $e,
+            );
+        }
     }
 
     /**

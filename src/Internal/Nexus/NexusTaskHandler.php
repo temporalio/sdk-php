@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Nexus;
 
 use Temporal\Nexus\Exception\HandlerException;
+use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Exception\RetryBehavior;
 use Temporal\Nexus\Handler\AsyncOperationStartResult;
 use Temporal\Nexus\Handler\MethodCanceller;
 use Temporal\Nexus\Handler\OperationCancelDetails;
@@ -38,34 +40,25 @@ use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Nexus\Exception\ErrorType;
-use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
- * Bridges Temporal RoadRunner tasks to the Nexus SDK ServiceHandler.
- * ServiceHandler is built lazily so services may be registered after construction.
+ * Bridges Temporal RoadRunner tasks to the Nexus SDK ServiceHandler; ServiceHandler is built lazily.
  */
 final class NexusTaskHandler
 {
     private ?ServiceHandler $serviceHandler = null;
 
-    /**
-     * @param bool $includeTracebackInFailure Disable in cross-trust-boundary
-     *        deployments — traces leak filesystem paths and argument values.
-     */
     public function __construct(
         private readonly NexusServiceCollection $repository,
         private readonly DataConverterInterface $dataConverter,
         private readonly EnvironmentInterface $env,
-        private readonly bool $includeTracebackInFailure = true,
         private readonly PipelineProvider $interceptorProvider = new SimplePipelineProvider(),
         private readonly ?WorkflowClientInterface $workflowClient = null,
     ) {}
 
     /**
-     * Resolve absolute deadline from Operation-Timeout (preferred) or Request-Timeout.
-     * Case-insensitive; an absent or unparseable header yields null (the real
-     * deadline is enforced by RoadRunner/server).
+     * Absolute deadline from Operation-Timeout (preferred) or Request-Timeout; absent or unparseable yields null.
      *
      * @param array<string, string> $headers
      */
@@ -82,7 +75,7 @@ final class NexusTaskHandler
 
         try {
             return NexusHeader::deadlineFromTimeout($value);
-        } catch (\Temporal\Nexus\Exception\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return null;
         }
     }
@@ -117,16 +110,16 @@ final class NexusTaskHandler
             env: $this->env,
         );
 
-        $details = new OperationStartDetails(
-            requestId: $startRequest->getRequestId(),
-            callbackUrl: $startRequest->getCallback() ?: null,
-            callbackHeaders: $callbackHeaders,
-            links: $links,
-        );
-
         $input = EncodedValues::fromPayload($startRequest->getPayload(), $this->dataConverter);
 
         try {
+            $details = new OperationStartDetails(
+                requestId: $startRequest->getRequestId(),
+                callbackUrl: $startRequest->getCallback() ?: null,
+                callbackHeaders: $callbackHeaders,
+                links: $links,
+            );
+
             $result = $this->getServiceHandler()->startOperation(
                 $context,
                 $details,
@@ -140,9 +133,10 @@ final class NexusTaskHandler
             if ($result instanceof SyncOperationStartResult) {
                 $syncResponse = new StartOperationResponse\Sync();
 
-                $resultPayload = $result->value instanceof ValuesInterface
-                    ? EncodedValues::firstPayload($result->value)
-                    : null;
+                if (!$result->value instanceof ValuesInterface) {
+                    throw new \LogicException('sync start result must be ValuesInterface');
+                }
+                $resultPayload = EncodedValues::firstPayload($result->value);
                 if ($resultPayload !== null) {
                     $syncResponse->setPayload($resultPayload);
                 }
@@ -174,7 +168,7 @@ final class NexusTaskHandler
         } catch (OperationException $e) {
             throw $e;
         } catch (\Throwable $e) {
-            throw $this->toNexusHandlerError($e);
+            throw $this->toHandlerException($e);
         }
     }
 
@@ -203,9 +197,9 @@ final class NexusTaskHandler
             $token = $cancelRequest->getOperationId();
         }
 
-        $details = new OperationCancelDetails(operationToken: $token);
-
         try {
+            $details = new OperationCancelDetails(operationToken: $token);
+
             $this->getServiceHandler()->cancelOperation(
                 $context,
                 $details,
@@ -217,7 +211,7 @@ final class NexusTaskHandler
             $response->setCancelOperation(new CancelOperationResponse());
             return $response;
         } catch (\Throwable $e) {
-            throw $this->toNexusHandlerError($e);
+            throw $this->toHandlerException($e);
         }
     }
 
@@ -243,15 +237,16 @@ final class NexusTaskHandler
         return $this->serviceHandler;
     }
 
-    private function toNexusHandlerError(\Throwable $e): NexusHandlerErrorException
+    private function toHandlerException(\Throwable $e): HandlerException
     {
-        $handlerException = $e instanceof HandlerException
-            ? $e
-            : HandlerErrorMapper::mapToHandlerException($e) ?? HandlerException::fromCause(ErrorType::Internal, $e);
+        if ($e instanceof HandlerException) {
+            return $e;
+        }
 
-        return new NexusHandlerErrorException(
-            NexusFailureConverter::handlerExceptionToProto($handlerException, $this->includeTracebackInFailure),
-            $handlerException,
-        );
+        if ($e instanceof InvalidArgumentException) {
+            return HandlerException::fromCause(ErrorType::BadRequest, $e, RetryBehavior::NonRetryable);
+        }
+
+        return HandlerErrorMapper::mapToHandlerException($e) ?? HandlerException::fromCause(ErrorType::Internal, $e);
     }
 }

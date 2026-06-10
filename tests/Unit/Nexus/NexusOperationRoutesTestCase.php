@@ -6,11 +6,15 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\ErrorType as NexusErrorType;
 use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
 use Temporal\Nexus\Exception\OperationException;
+use Temporal\Nexus\Handler\OperationCancelDetails;
+use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
+use Temporal\Nexus\Handler\OperationStartDetails;
+use Temporal\Nexus\Handler\OperationStartResult;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\Nexus;
 use Temporal\Nexus\OperationInfo;
@@ -36,17 +40,17 @@ interface EchoServiceInterface
     #[Operation]
     public function echo(string $input): string;
 
-    #[AsyncOperation(output: 'string')]
-    public function asyncEcho(string $input): OperationInfo;
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function asyncEcho(): EchoAsyncHandler;
 
     #[Operation]
     public function failOp(string $input): string;
 
-    #[AsyncOperation(output: 'string')]
-    public function cancelOp(string $input): OperationInfo;
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function cancelOp(): EchoCancelRecordingHandler;
 
-    #[AsyncOperation(output: 'string')]
-    public function cancelThrowsOp(string $input): OperationInfo;
+    #[AsyncOperation(output: 'string', input: 'string')]
+    public function cancelThrowsOp(): EchoCancelThrowsHandler;
 
     #[Operation]
     public function echoWithLinks(string $input): string;
@@ -68,6 +72,68 @@ interface EchoServiceInterface
      */
     #[Operation]
     public function pollCancellation(string $input): string;
+
+    /**
+     * Serialises the request headers visible on the handler context into the result.
+     */
+    #[Operation]
+    public function reportHeaders(string $input): string;
+}
+
+final class EchoAsyncHandler implements OperationHandlerInterface
+{
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        return OperationStartResult::async(new OperationInfo('async-token-' . $param, OperationState::Running));
+    }
+
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {}
+}
+
+final class EchoCancelRecordingHandler implements OperationHandlerInterface
+{
+    public function __construct(
+        private readonly EchoServiceImpl $service,
+    ) {}
+
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        return OperationStartResult::async(new OperationInfo('cancel-token-' . $param, OperationState::Running));
+    }
+
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {
+        $this->service->canceledTokens[] = $details->operationToken;
+    }
+}
+
+final class EchoCancelThrowsHandler implements OperationHandlerInterface
+{
+    public function start(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $param,
+    ): OperationStartResult {
+        return OperationStartResult::async(new OperationInfo('cancel-throws-token-' . $param, OperationState::Running));
+    }
+
+    public function cancel(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {
+        throw new \RuntimeException("cancel routine blew up for {$details->operationToken}");
+    }
 }
 
 class EchoServiceImpl implements EchoServiceInterface
@@ -80,9 +146,9 @@ class EchoServiceImpl implements EchoServiceInterface
         return "echo:{$input}";
     }
 
-    public function asyncEcho(string $input): OperationInfo
+    public function asyncEcho(): EchoAsyncHandler
     {
-        return new OperationInfo('async-token-' . $input, OperationState::Running);
+        return new EchoAsyncHandler();
     }
 
     public function failOp(string $input): string
@@ -90,26 +156,14 @@ class EchoServiceImpl implements EchoServiceInterface
         throw OperationException::failed("fail:{$input}");
     }
 
-    public function cancelOp(string $input): OperationInfo
+    public function cancelOp(): EchoCancelRecordingHandler
     {
-        return new OperationInfo('cancel-token-' . $input, OperationState::Running);
+        return new EchoCancelRecordingHandler($this);
     }
 
-    #[OperationCancel(operation: 'cancelOp')]
-    public function cancelCancelOp(string $token): void
+    public function cancelThrowsOp(): EchoCancelThrowsHandler
     {
-        $this->canceledTokens[] = $token;
-    }
-
-    public function cancelThrowsOp(string $input): OperationInfo
-    {
-        return new OperationInfo('cancel-throws-token-' . $input, OperationState::Running);
-    }
-
-    #[OperationCancel(operation: 'cancelThrowsOp')]
-    public function cancelCancelThrowsOp(string $token): void
-    {
-        throw new \RuntimeException("cancel routine blew up for {$token}");
+        return new EchoCancelThrowsHandler();
     }
 
     public function echoWithLinks(string $input): string
@@ -150,6 +204,15 @@ class EchoServiceImpl implements EchoServiceInterface
             $context->getMethodCancellationReason() ?? '',
         );
     }
+
+    public function reportHeaders(string $input): string
+    {
+        $parts = [];
+        foreach (Nexus::getCurrentOperationContext()->headers->all() as $name => $value) {
+            $parts[] = "{$name}={$value}";
+        }
+        return \implode(';', $parts);
+    }
 }
 
 // ── Integration tests ─────────────────────────────────────────────
@@ -159,13 +222,16 @@ class EchoServiceImpl implements EchoServiceInterface
  * @group nexus
  */
 #[CoversClass(NexusTaskHandler::class)]
-final class IntegrationTestCase extends AbstractUnit
+final class NexusOperationRoutesTestCase extends AbstractUnit
 {
+    use AwaitsNexusPromise;
+
     private InvokeNexusOperation $invokeRoute;
     private CancelNexusOperation $cancelRoute;
     private DataConverter $dataConverter;
     private EchoServiceImpl $serviceImpl;
     private \Temporal\Worker\Environment\Environment $env;
+    private \Temporal\Internal\Nexus\NexusInvocationRegistry $invocationRegistry;
 
     // ── Sync operation ───────────────────────────────────────────
 
@@ -223,7 +289,7 @@ final class IntegrationTestCase extends AbstractUnit
             self::fail('Expected HandlerException');
         } catch (NexusHandlerException $e) {
             self::assertSame(NexusErrorType::NotFound, $e->errorType);
-            self::assertSame('NOT_FOUND', $e->rawErrorType);
+            self::assertSame('NOT_FOUND', $e->errorType->value);
         }
     }
 
@@ -291,18 +357,60 @@ final class IntegrationTestCase extends AbstractUnit
 
     // ── Headers ──────────────────────────────────────────────────
 
-    public function testRequestHeaders(): void
+    public function testRequestHeadersSurfaceOnHandlerContext(): void
     {
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
-            'operation' => 'echo',
+            'operation' => 'reportHeaders',
             'requestId' => 'req-1',
             'headers' => ['Authorization' => 'Bearer token123'],
         ], EncodedValues::fromValues(['test'], $this->dataConverter));
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
         $reply = $this->awaitReply($deferred);
-        self::assertSame('echo:test', $this->decodePayload($reply));
+
+        // Header keys are normalized to lowercase on the handler side.
+        self::assertSame('authorization=Bearer token123', $this->decodePayload($reply));
+    }
+
+    // ── Method-cancel registry lifecycle ─────────────────────────
+
+    public function testInvocationUnregisteredAfterSuccessfulStart(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'echo',
+            'requestId' => 'reg-1',
+            'invocationId' => 7,
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $reply = $this->awaitReply($deferred);
+
+        self::assertSame('echo:x', $this->decodePayload($reply));
+        self::assertNull($this->invocationRegistry->get(7), 'entry must be unregistered after success');
+    }
+
+    public function testInvocationUnregisteredAfterFailedStart(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'failOp',
+            'requestId' => 'reg-2',
+            'invocationId' => 7,
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+
+        $error = null;
+        $deferred->promise()->then(null, static function (\Throwable $e) use (&$error): void {
+            $error = $e;
+        });
+
+        self::assertInstanceOf(OperationException::class, $error);
+        self::assertNull($this->invocationRegistry->get(7), 'entry must be unregistered after failure');
     }
 
     // ── Caller-side Nexus-Link propagation ───────────────────────
@@ -576,7 +684,8 @@ final class IntegrationTestCase extends AbstractUnit
         $marshaller = new \Temporal\Internal\Marshaller\Marshaller(
             new \Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory(new \Spiral\Attributes\AttributeReader()),
         );
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry(), $this->dataConverter, $marshaller, $this->env);
+        $this->invocationRegistry = new \Temporal\Internal\Nexus\NexusInvocationRegistry();
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, $this->invocationRegistry, $this->dataConverter, $marshaller, $this->env);
         $this->cancelRoute = new CancelNexusOperation($taskHandler, $marshaller);
     }
 
@@ -623,49 +732,5 @@ final class IntegrationTestCase extends AbstractUnit
             options: $options,
             payloads: $payloads,
         );
-    }
-
-    private function awaitReply(Deferred $deferred): CommandResponse
-    {
-        $result = null;
-        $error = null;
-
-        $deferred->promise()->then(
-            static function ($value) use (&$result): void {
-                $result = $value;
-            },
-            static function (\Throwable $e) use (&$error): void {
-                $error = $e;
-            },
-        );
-
-        if ($error !== null) {
-            throw $error;
-        }
-
-        self::assertInstanceOf(CommandResponse::class, $result);
-        return $result;
-    }
-
-    private function awaitCancelResult(Deferred $deferred): ValuesInterface
-    {
-        $result = null;
-        $error = null;
-
-        $deferred->promise()->then(
-            static function ($value) use (&$result): void {
-                $result = $value;
-            },
-            static function (\Throwable $e) use (&$error): void {
-                $error = $e;
-            },
-        );
-
-        if ($error !== null) {
-            throw $error;
-        }
-
-        self::assertInstanceOf(ValuesInterface::class, $result);
-        return $result;
     }
 }

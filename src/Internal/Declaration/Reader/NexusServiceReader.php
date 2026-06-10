@@ -17,29 +17,31 @@ use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Nexus\Attribute\AsyncOperation;
 use Temporal\Nexus\Attribute\Operation;
-use Temporal\Nexus\Attribute\OperationCancel;
 use Temporal\Nexus\Attribute\Service;
 use Temporal\Nexus\Exception\InvalidArgumentException;
-use Temporal\Nexus\Exception\NexusException;
-use Temporal\Nexus\Handler\OperationCancelDetails;
-use Temporal\Nexus\Handler\OperationContext;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
 use Temporal\Nexus\WorkflowHandle;
 
 /**
+ * Reflection-driven discovery of `#[Service]` contracts producing a {@see NexusServicePrototype}.
+ *
  * @template-extends Reader<NexusServicePrototype>
- *
- * Reflection-driven discovery for Nexus service contracts. Mirrors the role
- * of {@see WorkflowReader} / {@see ActivityReader}: walks the class hierarchy
- * via {@see ClassNode} (cached inheritance graph), resolves the
- * `#[Service]`-annotated contract, parses operation methods, and produces a
- * pure {@see NexusServicePrototype}.
- *
- * When `fromClass` is called against an impl class (rather than the contract
- * interface), the reader also picks up `#[OperationCancel]` methods from the
- * impl and binds them onto the matching operation prototype.
  */
 class NexusServiceReader extends Reader
 {
+    /**
+     * @internal
+     */
+    public static function returnsOperationHandler(\ReflectionMethod $method): bool
+    {
+        $returnType = $method->getReturnType();
+
+        return $returnType instanceof \ReflectionNamedType
+            && !$returnType->allowsNull()
+            && !$returnType->isBuiltin()
+            && \is_a($returnType->getName(), OperationHandlerInterface::class, true);
+    }
+
     /**
      * @param class-string $class
      */
@@ -48,41 +50,33 @@ class NexusServiceReader extends Reader
         $reflection = new \ReflectionClass($class);
         $graph = new ClassNode($reflection);
 
-        $contract = $this->resolveContract($graph);
+        $serviceNodes = $this->serviceNodes($graph);
+        $contract = $this->resolveContract($reflection, $serviceNodes);
 
         $service = $this->reader->firstClassMetadata($contract, Service::class);
         // resolveContract guarantees a Service attribute is present.
         \assert($service !== null);
         $name = $service->name !== '' ? $service->name : $contract->getShortName();
 
-        $this->assertServiceNamesMatch($graph, $contract, $name);
+        $this->assertServiceNamesMatch($serviceNodes, $contract, $name);
 
         $operations = $this->collectOperations($graph);
-        $operations = $this->bindCancelHandlers($reflection, $operations);
 
         return new NexusServicePrototype($name, $operations, $reflection);
     }
 
     /**
-     * Locate the `#[Service]`-bearing type for the given hierarchy in a single
-     * pass.
+     * Locate the single `#[Service]`-bearing type for the hierarchy; the root wins if annotated.
      *
-     * If the root reflection carries `#[Service]`, it is the contract — works
-     * for both interfaces and classes that put the attribute on themselves.
-     * Otherwise, require exactly one `#[Service]`-annotated type across the
-     * hierarchy; zero or multiple matches are rejected.
-     *
+     * @param \ReflectionClass<object> $root
+     * @param array<class-string, \ReflectionClass<object>> $matches
      * @return \ReflectionClass<object>
      */
-    private function resolveContract(ClassNode $graph): \ReflectionClass
+    private function resolveContract(\ReflectionClass $root, array $matches): \ReflectionClass
     {
-        $root = $graph->getReflection();
         if ($this->reader->firstClassMetadata($root, Service::class) !== null) {
             return $root;
         }
-
-        $matches = $this->serviceNodes($graph);
-        unset($matches[$root->getName()]);
 
         if ($matches === []) {
             throw new InvalidArgumentException(\sprintf(
@@ -93,7 +87,7 @@ class NexusServiceReader extends Reader
 
         if (\count($matches) > 1) {
             throw new InvalidArgumentException(\sprintf(
-                '%s implements multiple #[Service] interfaces (%s); ambiguous',
+                '%s implements multiple #[Service] types (%s); ambiguous',
                 $root->getName(),
                 \implode(', ', \array_keys($matches)),
             ));
@@ -103,14 +97,14 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * Reject hierarchies whose other `#[Service]` types declare a different
-     * service name — one type can't quietly belong to two unrelated services.
+     * Reject hierarchies whose other `#[Service]` types declare a different service name.
      *
+     * @param array<class-string, \ReflectionClass<object>> $serviceNodes
      * @param \ReflectionClass<object> $contract
      */
-    private function assertServiceNamesMatch(ClassNode $graph, \ReflectionClass $contract, string $name): void
+    private function assertServiceNamesMatch(array $serviceNodes, \ReflectionClass $contract, string $name): void
     {
-        foreach ($this->serviceNodes($graph) as $node) {
+        foreach ($serviceNodes as $node) {
             if ($node->getName() === $contract->getName()) {
                 continue;
             }
@@ -128,8 +122,7 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * Collect every `#[Service]`-annotated type across the hierarchy in a
-     * single cached pass, keyed by class name (dedup across diamond edges).
+     * Collect every `#[Service]`-annotated type across the hierarchy, keyed by class name.
      *
      * @return array<class-string, \ReflectionClass<object>>
      */
@@ -156,24 +149,17 @@ class NexusServiceReader extends Reader
         $operationFailures = [];
         $operations = [];
 
-        foreach ($graph->getAllMethods() as $name => $rootMethod) {
+        foreach (\array_keys($graph->getAllMethods()) as $name) {
             $first = null;
-            /** @var \Traversable<class-string, \ReflectionMethod> $group */
+            /** @var \Traversable<ClassNode, \ReflectionMethod> $group */
             foreach ($graph->getMethods($name) as $group) {
                 foreach ($group as $method) {
-                    $attribute = $this->operationAttribute($method);
-                    if ($attribute === false) {
-                        $operationFailures[] = "{$method->getName()} on {$method->getDeclaringClass()->getName()} "
-                            . 'declares both #[Operation] and #[AsyncOperation]';
-                        break 2;
-                    }
-                    if ($attribute === null) {
-                        // Plain helpers, cancel routines (#[OperationCancel]),
-                        // constructors and other infrastructure are skipped.
-                        continue;
-                    }
-
                     try {
+                        $attribute = $this->operationAttribute($method);
+                        if ($attribute === null) {
+                            continue;
+                        }
+
                         $current = $this->operationFromMethod($method, $attribute);
                         if ($first === null) {
                             $first = $current;
@@ -215,28 +201,22 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * Resolve the operation attribute for a method.
-     *
-     * - `null`: the method is not an operation (no `#[Operation]` /
-     *   `#[AsyncOperation]`) and should be skipped;
-     * - `false`: both attributes are present, which is invalid;
-     * - otherwise: the single resolved attribute.
+     * Resolve the operation attribute for a method; `null` means the method is not an operation.
      */
-    private function operationAttribute(\ReflectionMethod $method): Operation|AsyncOperation|null|false
+    private function operationAttribute(\ReflectionMethod $method): Operation|AsyncOperation|null
     {
         $sync = $this->reader->firstFunctionMetadata($method, Operation::class);
         $async = $this->reader->firstFunctionMetadata($method, AsyncOperation::class);
 
         if ($sync !== null && $async !== null) {
-            return false;
+            throw new InvalidArgumentException('declares both #[Operation] and #[AsyncOperation]');
         }
 
         return $sync ?? $async;
     }
 
     /**
-     * Build a {@see NexusOperationPrototype} from a resolved `#[Operation]` /
-     * `#[AsyncOperation]` attribute.
+     * Build a {@see NexusOperationPrototype} from a resolved `#[Operation]` / `#[AsyncOperation]` attribute.
      */
     private function operationFromMethod(
         \ReflectionMethod $method,
@@ -247,6 +227,9 @@ class NexusServiceReader extends Reader
         }
         if ($method->isStatic()) {
             throw new InvalidArgumentException('Cannot be static');
+        }
+        if (!$this->isValidMethod($method)) {
+            throw new InvalidArgumentException('Must be public');
         }
 
         $inputType = new Type(Type::TYPE_VOID);
@@ -260,6 +243,16 @@ class NexusServiceReader extends Reader
             $this->assertAsyncReturnType($method);
             $operationName = $async->name !== '' ? $async->name : $method->getName();
             $outputType = Type::create($async->output !== '' ? $async->output : Type::TYPE_VOID);
+
+            if (self::returnsOperationHandler($method)) {
+                if ($method->getNumberOfParameters() !== 0) {
+                    throw new InvalidArgumentException(
+                        'Operation handler factory must declare no parameters; '
+                        . 'the input arrives in OperationHandlerInterface::start()',
+                    );
+                }
+                $inputType = Type::create($async->input !== '' ? $async->input : Type::TYPE_ANY);
+            }
         } else {
             $operationName = $attribute->name !== '' ? $attribute->name : $method->getName();
             $outputType = Type::create($method->getReturnType());
@@ -276,153 +269,31 @@ class NexusServiceReader extends Reader
     }
 
     /**
-     * An `#[AsyncOperation]` method must declare a `WorkflowHandle` return
-     * type. Cancel auto-detection keys on the start method returning
-     * {@see WorkflowHandle}; an async operation with no or a different return
-     * type would silently orphan its workflow on cancel, so the mistake is
-     * rejected at registration rather than at runtime.
+     * An `#[AsyncOperation]` method must return a non-nullable `WorkflowHandle`
+     * (SDK-managed workflow run) or an `OperationHandlerInterface` implementation
+     * (manual operation owning both start and cancel).
      */
     private function assertAsyncReturnType(\ReflectionMethod $method): void
     {
         $returnType = $method->getReturnType();
-        if ($returnType instanceof \ReflectionNamedType) {
-            if ($returnType->getName() === WorkflowHandle::class) {
-                return;
-            }
+        if (
+            $returnType instanceof \ReflectionNamedType
+            && !$returnType->allowsNull()
+            && $returnType->getName() === WorkflowHandle::class
+        ) {
+            return;
+        }
+        if (self::returnsOperationHandler($method)) {
+            return;
         }
 
         throw new InvalidArgumentException(\sprintf(
-            '#[%s] method %s::%s() must declare a `%s` return type',
+            '#[%s] method %s::%s() must declare a `%s` return type or return an `%s` implementation',
             AsyncOperation::class,
             $method->getDeclaringClass()->getName(),
             $method->getName(),
             WorkflowHandle::class,
-        ));
-    }
-
-    /**
-     * Discover `#[OperationCancel]` methods on the impl class and attach them
-     * to matching operation prototypes. Validates cancel-method shape (token
-     * parameter + void return) and rejects strays.
-     *
-     * Called against the impl class — when `fromClass` is invoked against a
-     * pure interface (caller-side stub), this finds nothing and is a no-op.
-     *
-     * @param \ReflectionClass<object> $reflection
-     * @param array<string, NexusOperationPrototype> $operations
-     * @return array<string, NexusOperationPrototype>
-     */
-    private function bindCancelHandlers(\ReflectionClass $reflection, array $operations): array
-    {
-        if ($reflection->isInterface()) {
-            return $operations;
-        }
-
-        $byOperation = [];
-        foreach ($reflection->getMethods() as $method) {
-            $cancel = $this->reader->firstFunctionMetadata($method, OperationCancel::class);
-            if ($cancel === null) {
-                continue;
-            }
-
-            $this->assertCancelMethodSignature($method);
-
-            $operationName = $cancel->operation;
-            if (isset($byOperation[$operationName])) {
-                throw new NexusException(\sprintf(
-                    'Multiple #[%s(operation: "%s")] methods on %s',
-                    OperationCancel::class,
-                    $operationName,
-                    $reflection->getName(),
-                ));
-            }
-            $byOperation[$operationName] = $method;
-        }
-
-        foreach ($byOperation as $operationName => $cancelMethod) {
-            if (!isset($operations[$operationName])) {
-                throw new NexusException(\sprintf(
-                    '#[%s] on %s targets unknown operation(s): %s. Available operations: %s.',
-                    OperationCancel::class,
-                    $reflection->getName(),
-                    $operationName,
-                    \implode(', ', \array_keys($operations)),
-                ));
-            }
-
-            $operationPrototype = $operations[$operationName];
-            if (!$operationPrototype->async) {
-                // Sync operations have no terminal-state cancellation; binding a
-                // cancel routine to one is always a programmer error. Catch it
-                // at registration so the user sees it at worker boot rather
-                // than on first cancel attempt.
-                throw new NexusException(\sprintf(
-                    '#[%s(operation: "%s")] on %s::%s() targets a synchronous operation; '
-                    . 'only #[%s] operations support cancellation',
-                    OperationCancel::class,
-                    $operationName,
-                    $reflection->getName(),
-                    $cancelMethod->getName(),
-                    AsyncOperation::class,
-                ));
-            }
-
-            $operations[$operationName] = $operationPrototype->withCancelHandler($cancelMethod);
-        }
-
-        return $operations;
-    }
-
-    private function assertCancelMethodSignature(\ReflectionMethod $method): void
-    {
-        $where = \sprintf('%s::%s()', $method->getDeclaringClass()->getName(), $method->getName());
-
-        if (!$method->isPublic()) {
-            throw new InvalidArgumentException("#[OperationCancel] method {$where} must be public");
-        }
-        if ($method->isStatic()) {
-            throw new InvalidArgumentException("#[OperationCancel] method {$where} cannot be static");
-        }
-
-        foreach ($method->getParameters() as $parameter) {
-            $this->assertCancelParameterType($parameter, $where);
-        }
-
-        $returnType = $method->getReturnType();
-        if ($returnType instanceof \ReflectionNamedType && $returnType->getName() !== 'void') {
-            throw new InvalidArgumentException(\sprintf(
-                '#[OperationCancel] method %s must declare return type `void`, got `%s`',
-                $where,
-                (string) $returnType,
-            ));
-        }
-    }
-
-    /**
-     * A cancel-method parameter may be untyped, `mixed`, `string` (operation
-     * token) or one of the handler context objects ({@see OperationContext},
-     * {@see OperationCancelDetails}). Any other concrete type is rejected so the
-     * mistake surfaces at registration rather than as a runtime TypeError.
-     */
-    private function assertCancelParameterType(\ReflectionParameter $parameter, string $where): void
-    {
-        $type = $parameter->getType();
-        if (!$type instanceof \ReflectionNamedType) {
-            return;
-        }
-
-        $allowed = ['string', 'mixed', OperationContext::class, OperationCancelDetails::class];
-        if (\in_array($type->getName(), $allowed, true)) {
-            return;
-        }
-
-        throw new InvalidArgumentException(\sprintf(
-            '#[OperationCancel] method %s parameter $%s must be typed as `string` (operation token), `%s` or `%s`, got `%s`',
-            $where,
-            $parameter->getName(),
-            OperationContext::class,
-            OperationCancelDetails::class,
-            (string) $type,
+            OperationHandlerInterface::class,
         ));
     }
 }

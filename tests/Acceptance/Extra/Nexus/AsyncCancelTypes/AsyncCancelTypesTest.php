@@ -7,7 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancelTypes;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
-use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -21,6 +20,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -28,36 +29,15 @@ use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * P1 #6–9 — async-cancel matrix.
- *
- * Existing {@see \Temporal\Tests\Acceptance\Extra\Nexus\AsyncCancel\AsyncCancelByTokenTest}
- * covers `WaitRequested`. This suite covers the rest:
- *   - `TryCancel`     — caller resumes after cancel is sent; handler observes
- *                       a CanceledFailure too.
- *   - `WaitCompleted` — caller waits until the handler workflow has fully
- *                       finished after the cancel.
- *   - `Unspecified`   — the "not configured" sentinel; defaults to the
- *                       WaitCompleted behaviour.
- *   - `Abandon`       — caller's wire cancel is suppressed AND the caller's
- *                       future resolves immediately with a CanceledFailure;
- *                       the handler keeps running server-side. The caller does
- *                       NOT await the handler, and no
- *                       `RequestCancelNexusOperation` reaches the server.
- *   - cancel-before-sent — scope cancelled in the same task that issued the
- *                       operation, before the schedule command is flushed; the
- *                       caller resumes with a CanceledFailure and nothing is
- *                       ever scheduled on the server.
- */
+/** Async-cancel matrix: TryCancel, WaitCompleted, Unspecified, Abandon, cancel-before-sent. */
 #[Worker(options: [self::class, 'workerOptions'])]
 class AsyncCancelTypesTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -82,11 +62,7 @@ class AsyncCancelTypesTest extends TestCase
     ): void {
         $stub = $this->runCancelScenario($state, $client, $endpoints, 'unspecified');
 
-        // Unspecified is the "not configured" sentinel (value 0, dropped on the
-        // wire by RR's omitempty). The SDK treats it as the WaitCompleted default:
-        // the caller waits for the handler to fully finish after the cancel and
-        // observes the handler's own 'cancelled:payload' result — identical to the
-        // explicit wait-completed scenario, NOT an early CanceledFailure ('ok').
+        // Unspecified (value 0, dropped on the wire) must behave like WaitCompleted.
         self::assertSame(
             'cancelled:payload',
             $stub->getResult('string'),
@@ -136,17 +112,6 @@ class AsyncCancelTypesTest extends TestCase
             self::countEvents($history, EventType::EVENT_TYPE_NEXUS_OPERATION_SCHEDULED),
             'Nothing must be scheduled on the server when the operation is cancelled before being sent.',
         );
-    }
-
-    private static function countEvents(History $history, int $type): int
-    {
-        $count = 0;
-        foreach ($history->getEvents() as $event) {
-            if ($event->getEventType() === $type) {
-                $count++;
-            }
-        }
-        return $count;
     }
 
     private function runCancelScenario(
@@ -201,11 +166,7 @@ class LongRunningHandlerWorkflow
     }
 }
 
-// ── Service B: handler for the Abandon scenario ────────────────────
-//
-// Abandon resolves the caller immediately and never sends a wire cancel,
-// so the handler is expected to keep running server-side. The caller does
-// not await it, so the handler's eventual result is irrelevant to the test.
+// ── Service B: Abandon scenario — handler keeps running server-side ─
 
 #[Service(name: 'AbandonService')]
 class AbandonService

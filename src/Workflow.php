@@ -28,6 +28,7 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\NexusServiceProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -1017,10 +1018,11 @@ final class Workflow extends Facade
      * Returns a typed proxy for a Nexus service interface.
      * Method calls on the returned object will execute Nexus operations.
      *
-     * @psalm-template T of object
-     * @param class-string<T> $class Nexus service interface annotated with #[Service]
-     * @return T
+     * @template T of object
      *
+     * @param class-string<T> $class Nexus service interface annotated with #[Service]
+     *
+     * @return NexusServiceProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newNexusServiceStub(

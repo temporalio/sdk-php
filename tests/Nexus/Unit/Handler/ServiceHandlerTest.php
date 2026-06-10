@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Nexus RPC SDK for PHP package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,14 +13,10 @@ namespace Temporal\Tests\Nexus\Unit\Handler;
 
 use Temporal\Nexus\NexusOperationContext;
 
-use Temporal\Client\WorkflowClientInterface;
-use Temporal\Client\WorkflowOptions;
-use Temporal\Client\WorkflowStubInterface;
-use Temporal\DataConverter\DataConverter;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Nexus\Exception\ErrorType;
 use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Handler\OperationCancelDetails;
 use Temporal\Nexus\Handler\OperationContext;
@@ -32,10 +28,11 @@ use Temporal\Tests\Nexus\Fixtures\ServiceHandler\AuthInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\LoggingInterceptor;
 use Temporal\Tests\Nexus\Fixtures\ServiceHandler\VoidService;
 use Temporal\Tests\Nexus\Support\BindNexusService;
+use Temporal\Tests\Nexus\Support\EncodesValues;
+use Temporal\Tests\Nexus\Support\ExceptionAssertions;
+use Temporal\Tests\Nexus\Support\MocksAsyncWorkflowClient;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
-use Temporal\Workflow\WorkflowExecution;
-use Temporal\Workflow\WorkflowRunInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -43,6 +40,9 @@ use PHPUnit\Framework\TestCase;
 final class ServiceHandlerTest extends TestCase
 {
     use BindNexusService;
+    use EncodesValues;
+    use ExceptionAssertions;
+    use MocksAsyncWorkflowClient;
 
     private const NS = 'sample-ns';
     private const TQ = 'sample-tq';
@@ -92,6 +92,25 @@ final class ServiceHandlerTest extends TestCase
         self::assertSame($expectedToken, $result->info->token);
     }
 
+    public function testAsyncHandlerWithoutWorkflowClientSurfacesLogicException(): void
+    {
+        $handler = self::newGreetingHandler();
+
+        $e = self::assertThrown(\LogicException::class, fn() => $handler->startOperation(
+            $this->newGreetingContext('sayHello2'),
+            new OperationStartDetails(requestId: 'r3'),
+            self::encode('SomeUser'),
+            null,
+            $this->asyncOperationContext(),
+        ));
+
+        self::assertSame(
+            'Nexus::getWorkflowClient() requires a WorkflowClient. Async Nexus operations (WorkflowRunOperation)'
+            . ' need cluster access; provide a WorkflowClient to the WorkerFactory.',
+            $e->getMessage(),
+        );
+    }
+
     public function testAsyncHandlerCollectsLinksOnLinkSuffixedInput(): void
     {
         $handler = self::newGreetingHandler();
@@ -110,6 +129,12 @@ final class ServiceHandlerTest extends TestCase
         self::assertCount(2, $links);
         self::assertSame('http://somepath?k=v', $links[0]->uri);
         self::assertSame('com.example.MyResource', $links[0]->type);
+        self::assertSame(
+            'temporal:///namespaces/sample-ns/workflows/greeting-workflow/run-1/history'
+            . '?referenceType=EventReference&eventType=WorkflowExecutionStarted',
+            $links[1]->uri,
+        );
+        self::assertSame('temporal.api.common.v1.Link.WorkflowEvent', $links[1]->type);
     }
 
     public function testAuthInterceptorAllowsCallWithValidToken(): void
@@ -190,14 +215,16 @@ final class ServiceHandlerTest extends TestCase
             instances: [self::bindNexusService(new VoidService())],
         );
 
-        $this->expectException(HandlerException::class);
-        $handler->startOperation(
+        $e = self::assertThrown(HandlerException::class, fn() => $handler->startOperation(
             new OperationContext(service: 'NonExistent', operation: 'op', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::empty(),
             null,
             new NexusOperationContext(),
-        );
+        ));
+
+        self::assertSame(ErrorType::NotFound, $e->errorType);
+        self::assertStringContainsString("Unrecognized service 'NonExistent'", $e->getMessage());
     }
 
     public function testUnrecognizedOperation(): void
@@ -207,14 +234,16 @@ final class ServiceHandlerTest extends TestCase
             instances: [self::bindNexusService(new VoidService())],
         );
 
-        $this->expectException(HandlerException::class);
-        $handler->startOperation(
+        $e = self::assertThrown(HandlerException::class, fn() => $handler->startOperation(
             new OperationContext(service: 'VoidServiceInterface', operation: 'nonExistent', env: $this->env),
             new OperationStartDetails(requestId: 'r1'),
             EncodedValues::empty(),
             null,
             new NexusOperationContext(),
-        );
+        ));
+
+        self::assertSame(ErrorType::NotFound, $e->errorType);
+        self::assertStringContainsString("has no operation 'nonExistent'", $e->getMessage());
     }
 
     public function testCancelOnSyncHandlerThrowsNotImplemented(): void
@@ -253,27 +282,5 @@ final class ServiceHandlerTest extends TestCase
     private function asyncOperationContext(): NexusOperationContext
     {
         return new NexusOperationContext(self::NS, self::TQ);
-    }
-
-    private function asyncClient(): WorkflowClientInterface
-    {
-        $client = $this->createMock(WorkflowClientInterface::class);
-        $client->method('newWorkflowStub')->willReturn($this->createMock(WorkflowStubInterface::class));
-
-        $run = $this->createMock(WorkflowRunInterface::class);
-        $run->method('getExecution')->willReturn(new WorkflowExecution(GreetingService::WORKFLOW_ID, 'run-1'));
-        $client->method('start')->willReturn($run);
-
-        return $client;
-    }
-
-    private static function dataConverter(): DataConverterInterface
-    {
-        return DataConverter::createDefault();
-    }
-
-    private static function encode(mixed $value): EncodedValues
-    {
-        return EncodedValues::fromValues([$value], self::dataConverter());
     }
 }

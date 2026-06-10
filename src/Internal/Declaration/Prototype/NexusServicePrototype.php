@@ -14,9 +14,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 use Temporal\Nexus\Validation\ServiceNameValidator;
 
 /**
- * Storage DTO for a `#[Service]`-annotated Nexus contract; same shape as
- * {@see ActivityPrototype}. The base handler slot stays null — operations are
- * exposed via {@see self::getOperations()}; the impl is bound via the factory.
+ * Storage DTO for a `#[Service]`-annotated Nexus contract; same shape as {@see ActivityPrototype}.
  */
 final class NexusServicePrototype extends Prototype
 {

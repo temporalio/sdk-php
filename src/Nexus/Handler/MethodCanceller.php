@@ -44,11 +44,6 @@ final class MethodCanceller
         return $this->reason;
     }
 
-    public function getDeadline(): ?\DateTimeImmutable
-    {
-        return $this->deadline;
-    }
-
     /**
      * Idempotent. Listeners run in registration order. Not reentrant.
      */
@@ -81,6 +76,11 @@ final class MethodCanceller
         $this->listeners->offsetUnset($listener);
     }
 
+    private static function formatDeadlineReason(\DateTimeImmutable $deadline): string
+    {
+        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
+    }
+
     private function checkDeadline(): void
     {
         if ($this->reason !== null || $this->deadline === null) {
@@ -90,10 +90,5 @@ final class MethodCanceller
             return;
         }
         $this->cancel(self::formatDeadlineReason($this->deadline));
-    }
-
-    private static function formatDeadlineReason(\DateTimeImmutable $deadline): string
-    {
-        return \sprintf('deadline exceeded (%s)', $deadline->format(\DATE_ATOM));
     }
 }

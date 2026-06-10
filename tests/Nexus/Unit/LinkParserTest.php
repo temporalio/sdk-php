@@ -16,6 +16,7 @@ use Temporal\Nexus\Exception\HandlerException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Link;
 use Temporal\Nexus\LinkParser;
+use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ErrorType::class)]
 final class LinkParserTest extends TestCase
 {
+    use ExceptionAssertions;
+
     public function testFromRawNullReturnsEmpty(): void
     {
         self::assertSame([], LinkParser::fromRaw(null));
@@ -54,46 +57,37 @@ final class LinkParserTest extends TestCase
 
     public function testFromRawRejectsNonArrayPayload(): void
     {
-        try {
-            LinkParser::fromRaw('not-an-array');
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertStringContainsString('must be an array', $e->getMessage());
-        }
+        $e = self::assertThrown(HandlerException::class, static fn() => LinkParser::fromRaw('not-an-array'));
+
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertStringContainsString('must be an array', $e->getMessage());
     }
 
     public function testFromRawRejectsNonObjectEntry(): void
     {
-        try {
-            LinkParser::fromRaw([['url' => 'https://a', 'type' => 't'], 'bad']);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertStringContainsString('index 1 is not an object', $e->getMessage());
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            static fn() => LinkParser::fromRaw([['url' => 'https://a', 'type' => 't'], 'bad']),
+        );
+
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertStringContainsString('index 1 is not an object', $e->getMessage());
     }
 
     public function testFromRawRejectsMissingUrl(): void
     {
-        try {
-            LinkParser::fromRaw([['type' => 't']]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertStringContainsString('"url"', $e->getMessage());
-        }
+        $e = self::assertThrown(HandlerException::class, static fn() => LinkParser::fromRaw([['type' => 't']]));
+
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertStringContainsString('"url"', $e->getMessage());
     }
 
     public function testFromRawRejectsMissingType(): void
     {
-        try {
-            LinkParser::fromRaw([['url' => 'https://a']]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertStringContainsString('"type"', $e->getMessage());
-        }
+        $e = self::assertThrown(HandlerException::class, static fn() => LinkParser::fromRaw([['url' => 'https://a']]));
+
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertStringContainsString('"type"', $e->getMessage());
     }
 
     public function testFromRawRejectsEmptyUrl(): void
@@ -101,6 +95,13 @@ final class LinkParserTest extends TestCase
         $this->expectException(HandlerException::class);
         $this->expectExceptionMessage('Nexus link at index 0 has missing or empty "url"');
         LinkParser::fromRaw([['url' => '', 'type' => 't']]);
+    }
+
+    public function testFromRawRejectsNonStringUrl(): void
+    {
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at index 0 has missing or empty "url"');
+        LinkParser::fromRaw([['url' => 42, 'type' => 't']]);
     }
 
     public function testFromRawRejectsEmptyType(): void
@@ -124,10 +125,9 @@ final class LinkParserTest extends TestCase
 
     public function testFromProtoHappyPath(): void
     {
-        $proto = new class {
-            public function getUrl(): string { return 'https://p/1'; }
-            public function getType(): string { return 'com.example.P'; }
-        };
+        $proto = (new \Temporal\Api\Nexus\V1\Link())
+            ->setUrl('https://p/1')
+            ->setType('com.example.P');
 
         $links = LinkParser::fromProto([$proto, $proto]);
 
@@ -136,29 +136,22 @@ final class LinkParserTest extends TestCase
         self::assertSame('com.example.P', $links[0]->type);
     }
 
-    public function testFromProtoRejectsMissingAccessors(): void
+    public function testFromProtoRejectsEmptyUrl(): void
     {
-        $bare = new \stdClass();
+        $proto = (new \Temporal\Api\Nexus\V1\Link())->setType('com.example.P');
 
-        try {
-            LinkParser::fromProto([$bare]);
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertStringContainsString('proto index 0', $e->getMessage());
-        }
+        $this->expectException(HandlerException::class);
+        $this->expectExceptionMessage('Nexus link at proto index 0 has missing or empty "url"');
+        LinkParser::fromProto([$proto]);
     }
 
     public function testFromProtoIndexAdvances(): void
     {
-        $good = new class {
-            public function getUrl(): string { return 'https://ok'; }
-            public function getType(): string { return 't'; }
-        };
-        $bad = new class {
-            public function getUrl(): string { return 'https://ok'; }
-            public function getType(): string { return ''; }
-        };
+        $good = (new \Temporal\Api\Nexus\V1\Link())
+            ->setUrl('https://ok')
+            ->setType('t');
+        $bad = (new \Temporal\Api\Nexus\V1\Link())
+            ->setUrl('https://ok');
 
         $this->expectException(HandlerException::class);
         $this->expectExceptionMessage('Nexus link at proto index 2 has missing or empty "type"');

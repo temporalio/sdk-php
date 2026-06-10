@@ -7,7 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Nexus\ParallelCancel;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
-use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -23,6 +22,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
@@ -36,12 +37,11 @@ use Temporal\Workflow\WorkflowMethod;
 #[Worker(options: [self::class, 'workerOptions'])]
 class CancelPropagationTest extends TestCase
 {
+    use NexusHistoryAssertions;
+
     public static function workerOptions(): WorkerOptions
     {
-        return WorkerOptions::new()
-            ->withMaxConcurrentActivityExecutionSize(10)
-            ->withMaxConcurrentNexusTaskExecutionSize(10)
-            ->withMaxConcurrentNexusTaskPollers(2);
+        return NexusWorkerOptions::default();
     }
 
     #[Test]
@@ -97,17 +97,6 @@ class CancelPropagationTest extends TestCase
             'No sibling may close as COMPLETED once cancellation propagated.',
         );
     }
-
-    private static function countEvents(History $history, int $type): int
-    {
-        $count = 0;
-        foreach ($history->getEvents() as $event) {
-            if ($event->getEventType() === $type) {
-                $count++;
-            }
-        }
-        return $count;
-    }
 }
 
 #[Service(name: 'CancelPropagationService')]
@@ -146,32 +135,43 @@ class CancelPropagationCallerWorkflow
             NexusOperationOptions::new()
                 ->withEndpoint($endpoint)
                 ->withScheduleToCloseTimeout(CarbonInterval::seconds(60))
-                ->withCancellationType(NexusOperationCancellationType::WaitRequested),
+                ->withCancellationType(NexusOperationCancellationType::WaitCompleted),
         );
 
+        $promises = [];
         $combined = null;
-        $scope = Workflow::async(static function () use ($stub, &$combined): void {
-            $combined = Promise::all([
+        $scope = Workflow::async(static function () use ($stub, &$combined, &$promises): void {
+            $promises = [
                 $stub->longRunning('a'),
                 $stub->longRunning('b'),
                 $stub->longRunning('c'),
-            ]);
+            ];
+            $combined = Promise::all($promises);
         });
 
-        yield Workflow::timer(CarbonInterval::seconds(2));
+        yield Workflow::timer(CarbonInterval::seconds(NexusWorkerOptions::PRE_CANCEL_TIMER_SECONDS));
         $scope->cancel();
 
+        $outcome = 'unexpected-no-failure';
         try {
             yield $combined;
-            return 'unexpected-no-failure';
         } catch (NexusOperationFailure $e) {
-            if ($e->getPrevious() instanceof CanceledFailure) {
-                return 'cancelled';
-            }
-            return 'unexpected-cause:' . ($e->getPrevious()?->getMessage() ?? 'null');
+            $outcome = $e->getPrevious() instanceof CanceledFailure
+                ? 'cancelled'
+                : 'unexpected-cause:' . ($e->getPrevious()?->getMessage() ?? 'null');
         } catch (CanceledFailure) {
-            return 'cancelled';
+            $outcome = 'cancelled';
         }
+
+        // Drain every sibling so all terminal events land before the caller closes.
+        foreach ($promises as $promise) {
+            try {
+                yield $promise;
+            } catch (\Throwable) {
+            }
+        }
+
+        return $outcome;
     }
 }
 

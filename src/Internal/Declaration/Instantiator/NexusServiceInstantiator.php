@@ -13,9 +13,11 @@ namespace Temporal\Internal\Declaration\Instantiator;
 
 use Temporal\Internal\Declaration\NexusServiceInstance;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Exception\NexusException;
 use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
 
 /**
  * Binds a {@see NexusServicePrototype} to its implementation and builds the
@@ -47,24 +49,18 @@ final class NexusServiceInstantiator
         }
 
         $reflection = $prototype->getClass();
-        if ($reflection->isInterface() || $reflection->isAbstract()) {
-            throw new InvalidArgumentException(\sprintf(
-                'Service implementation for "%s" must be an instantiable class — bind via withInstance() or withFactory()',
-                $prototype->getID(),
-            ));
-        }
-        try {
-            return $reflection->newInstance();
-        } catch (\ReflectionException $e) {
+        if (!$reflection->isInstantiable() || $reflection->getConstructor()?->getNumberOfRequiredParameters() > 0) {
             throw new NexusException(\sprintf(
                 'Service implementation for "%s" cannot be instantiated without arguments — bind via withInstance() or withFactory()',
                 $prototype->getID(),
-            ), 0, $e);
+            ));
         }
+
+        return $reflection->newInstance();
     }
 
     /**
-     * @return array<string, MethodOperationHandler>
+     * @return array<string, OperationHandlerInterface>
      */
     private function buildOperationHandlers(NexusServicePrototype $prototype, object $instance): array
     {
@@ -89,6 +85,21 @@ final class NexusServiceInstantiator
                     $reflection->getName(),
                     $operation->methodName,
                 ));
+            }
+
+            if (NexusServiceReader::returnsOperationHandler($startMethod)) {
+                $handler = $startMethod->invoke($instance);
+                if (!$handler instanceof OperationHandlerInterface) {
+                    throw new NexusException(\sprintf(
+                        'Operation handler factory %s::%s() must return an %s instance, got %s',
+                        $reflection->getName(),
+                        $operation->methodName,
+                        OperationHandlerInterface::class,
+                        \get_debug_type($handler),
+                    ));
+                }
+                $handlers[$operation->name] = $handler;
+                continue;
             }
 
             $handlers[$operation->name] = new MethodOperationHandler(

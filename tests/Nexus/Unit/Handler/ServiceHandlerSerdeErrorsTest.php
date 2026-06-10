@@ -51,24 +51,20 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
         $converter = self::failingDeserializeConverter();
         $handler = self::newHandler($converter);
 
-        $this->expectException(HandlerException::class);
-        $this->expectExceptionMessageMatches(
-            '#Failed deserializing input for GreetingServiceInterface/sayHello1 as string: Bad JSON#',
-        );
+        $e = self::assertThrown(HandlerException::class, static fn() => $handler->startOperation(
+            self::newContext('sayHello1'),
+            new OperationStartDetails(requestId: 'r1'),
+            self::input($converter),
+            null,
+            new NexusOperationContext(),
+        ));
 
-        try {
-            $handler->startOperation(
-                self::newContext('sayHello1'),
-                new OperationStartDetails(requestId: 'r1'),
-                self::input($converter),
-                null,
-                new NexusOperationContext(),
-            );
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
-            throw $e;
-        }
+        self::assertStringContainsString(
+            'Failed deserializing input for GreetingServiceInterface/sayHello1 as string: Bad JSON',
+            $e->getMessage(),
+        );
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertInstanceOf(\JsonException::class, $e->getPrevious());
     }
 
     public function testSerializeFailureWrapsAsInternalHandlerException(): void
@@ -76,24 +72,20 @@ final class ServiceHandlerSerdeErrorsTest extends TestCase
         $converter = self::failingSerializeConverter();
         $handler = self::newHandler($converter);
 
-        $this->expectException(HandlerException::class);
-        $this->expectExceptionMessageMatches(
-            '#Failed serializing result for GreetingServiceInterface/sayHello1 as string: cannot serialize#',
-        );
+        $e = self::assertThrown(HandlerException::class, static fn() => $handler->startOperation(
+            self::newContext('sayHello1'),
+            new OperationStartDetails(requestId: 'r1'),
+            self::input($converter),
+            null,
+            new NexusOperationContext(),
+        ));
 
-        try {
-            $handler->startOperation(
-                self::newContext('sayHello1'),
-                new OperationStartDetails(requestId: 'r1'),
-                self::input($converter),
-                null,
-                new NexusOperationContext(),
-            );
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::Internal, $e->errorType);
-            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
-            throw $e;
-        }
+        self::assertStringContainsString(
+            'Failed serializing result for GreetingServiceInterface/sayHello1 as string: cannot serialize',
+            $e->getMessage(),
+        );
+        self::assertSame(ErrorType::Internal, $e->errorType);
+        self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
     }
 
     public function testOperationExceptionFromHandlerIsNotWrapped(): void

@@ -31,15 +31,6 @@ final class OperationStartDetails
         if ($requestId === '') {
             throw new InvalidArgumentException('OperationStartDetails requires a non-empty requestId');
         }
-        foreach ($links as $i => $link) {
-            if (!$link instanceof Link) {
-                throw new InvalidArgumentException(\sprintf(
-                    'OperationStartDetails: links[%s] must be a %s, got %s',
-                    \is_int($i) ? (string) $i : \var_export($i, true),
-                    Link::class,
-                    \get_debug_type($link),
-                ));
-            }
-        }
+        Link::assertAll($links, 'OperationStartDetails: links');
     }
 }

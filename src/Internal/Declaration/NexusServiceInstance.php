@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
-use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
+use Temporal\Nexus\Handler\OperationHandlerInterface;
 
 /**
  * Live binding of a {@see NexusServicePrototype} to its implementation,
@@ -21,7 +21,7 @@ use Temporal\Nexus\Handler\Internal\MethodOperationHandler;
 final class NexusServiceInstance
 {
     /**
-     * @param array<string, MethodOperationHandler> $operationHandlers Keyed by wire operation name.
+     * @param array<string, OperationHandlerInterface> $operationHandlers Keyed by wire operation name.
      */
     public function __construct(
         public readonly NexusServicePrototype $prototype,
