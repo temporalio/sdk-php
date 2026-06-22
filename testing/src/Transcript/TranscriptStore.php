@@ -16,7 +16,6 @@ final class TranscriptStore
     private const BASE_DIR_ENV = 'TEMPORAL_TRANSCRIPT_DIR';
 
     private readonly LoggerInterface $stderr;
-
     private readonly Filesystem $filesystem;
 
     public function __construct(

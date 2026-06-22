@@ -41,6 +41,7 @@ class EncodedValues implements ValuesInterface
     protected ?array $values = null;
 
     private ?DataConverterInterface $converter = null;
+    private ?SerializationContext $serializationContext = null;
 
     /**
      * Can not be constructed directly.
@@ -134,10 +135,9 @@ class EncodedValues implements ValuesInterface
         }
 
         $count > $index or throw new \OutOfBoundsException("Index {$index} is out of bounds.");
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
         \assert($this->payloads !== null);
-        return $this->converter->fromPayload(
+        return $this->converter()->fromPayload(
             $this->payloads[$index],
             $type,
         );
@@ -151,10 +151,10 @@ class EncodedValues implements ValuesInterface
             return $result;
         }
 
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+        $converter = $this->converter();
 
         foreach ($this->payloads as $key => $payload) {
-            $result[$key] = $this->converter->fromPayload($payload, null);
+            $result[$key] = $converter->fromPayload($payload, null);
         }
 
         return $result;
@@ -163,6 +163,16 @@ class EncodedValues implements ValuesInterface
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
+    }
+
+    public function setSerializationContext(?SerializationContext $context): void
+    {
+        $this->serializationContext = $context;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->serializationContext;
     }
 
     /**
@@ -222,9 +232,15 @@ class EncodedValues implements ValuesInterface
 
     private function valueToPayload(mixed $value): Payload
     {
+        return $this->converter()->toPayload($value);
+    }
+
+    private function converter(): DataConverterInterface
+    {
         if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
+            throw new \LogicException('DataConverter is not set.');
         }
-        return $this->converter->toPayload($value);
+
+        return SerializationContextBinder::bind($this->converter, $this->serializationContext);
     }
 }

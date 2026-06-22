@@ -1,0 +1,25 @@
+{
+  "run_id": "fibers-bugs-fix-20260523-153544",
+  "task_alias": "fibers-bugs-fix",
+  "status": "running",
+  "iteration": 1,
+  "max_iterations": 10,
+  "phase": "A",
+  "current_step": "PRODUCE",
+  "task": {
+    "prompt": "Fix 4 remaining Fiber-runtime bugs so all suites (test:unit, test:func, test:accept-fast, test:accept-slow) pass without markTestSkipped/markTestIncomplete.",
+    "bugs": [
+      "Versioning/Fibers/Classic::replayDifferentVersions (accept-fast, order-dependent)",
+      "Versioning/Fibers/Deployment (slow, 4 fails — defaultBehaviorAuto/customBehaviorPinned/versionBehaviorOverrideAutoUpgrade/versionBehaviorOverridePinned)",
+      "Workflow/Fibers/BuiltInPrefixedHandlers::enhancedStackTrace (slow, order-dependent stack frame)",
+      "Harness/ChildWorkflow/CancelAbandon::childWorkflowInClosingInnerScope (slow, timeout)"
+    ],
+    "hard_rules": [
+      "NEVER use markTestSkipped/markTestIncomplete",
+      "NEVER commit changes (uncommitted working tree only)",
+      "Edit working tree directly via absolute paths"
+    ]
+  },
+  "created_at": "2026-05-23T15:35:44Z",
+  "updated_at": "2026-05-23T15:35:44Z"
+}

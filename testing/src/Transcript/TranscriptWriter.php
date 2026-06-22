@@ -12,7 +12,6 @@ use Symfony\Component\Filesystem\Filesystem;
 final class TranscriptWriter
 {
     private const SIZE_CAP_BYTES = 50 * 1024 * 1024;
-
     private const JSON_FLAGS = \JSON_UNESCAPED_UNICODE
         | \JSON_UNESCAPED_SLASHES
         | \JSON_INVALID_UTF8_SUBSTITUTE;
@@ -21,17 +20,11 @@ final class TranscriptWriter
     private $fileDescriptor;
 
     private string $currentPath;
-
     private int $sequence = 0;
-
     private int $rotationCounter = 0;
-
     private readonly int $processId;
-
     private readonly LoggerInterface $stderr;
-
     private readonly Filesystem $filesystem;
-
     private bool $inWrite = false;
 
     /**

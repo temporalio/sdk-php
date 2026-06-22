@@ -15,6 +15,7 @@ use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Exception\TemporalException;
 
 /**
@@ -80,6 +81,14 @@ class TemporalFailure extends TemporalException implements \Stringable
     public function setDataConverter(DataConverterInterface $converter): void
     {
         // typically handled by children
+    }
+
+    public function setSerializationContext(?SerializationContext $context): void
+    {
+        $previous = $this->getPrevious();
+        if ($previous instanceof self) {
+            $previous->setSerializationContext($context);
+        }
     }
 
     public function __toString(): string

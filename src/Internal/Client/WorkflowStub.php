@@ -41,6 +41,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
@@ -146,6 +147,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $request->setNamespace($this->clientOptions->namespace);
         $serviceClient = $this->serviceClient;
 
+        $signalArguments = EncodedValues::fromValues($args, $this->converter);
+        $signalArguments->setSerializationContext(
+            new WorkflowSerializationContext($this->clientOptions->namespace, $this->getExecution()->getID()),
+        );
+
         $this->interceptors->with(
             static function (SignalInput $input) use ($request, $serviceClient): void {
                 $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
@@ -175,7 +181,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->getExecution(),
             $this->workflowType,
             $name,
-            EncodedValues::fromValues($args, $this->converter),
+            $signalArguments,
         ));
     }
 
@@ -186,9 +192,13 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $serviceClient = $this->serviceClient;
         $converter = $this->converter;
         $clientOptions = $this->clientOptions;
+        $context = new WorkflowSerializationContext($clientOptions->namespace, $this->getExecution()->getID());
+
+        $queryArguments = EncodedValues::fromValues($args, $this->converter);
+        $queryArguments->setSerializationContext($context);
 
         return $this->interceptors->with(
-            static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+            static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions, $context): ?EncodedValues {
                 $request = new QueryWorkflowRequest();
                 $request->setNamespace($clientOptions->namespace);
                 $request->setQueryRejectCondition($clientOptions->queryRejectionCondition);
@@ -224,7 +234,10 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         return null;
                     }
 
-                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                    $queryResult = EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                    $queryResult->setSerializationContext($context);
+
+                    return $queryResult;
                 }
 
                 throw new WorkflowQueryRejectedException(
@@ -241,7 +254,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->getExecution(),
             $this->workflowType,
             $name,
-            EncodedValues::fromValues($args, $this->converter),
+            $queryArguments,
         ));
     }
 
@@ -264,6 +277,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $serviceClient = $this->serviceClient;
         $converter = $this->converter;
         $clientOptions = $this->clientOptions;
+
+        $updateArguments = EncodedValues::fromValues($args, $this->converter);
+        $updateArguments->setSerializationContext(
+            new WorkflowSerializationContext($clientOptions->namespace, $this->getExecution()->getID()),
+        );
 
         /**
          * @var StartUpdateOutput $result
@@ -319,6 +337,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         $input->updateName,
                         $input->workflowType,
                         $input->workflowExecution,
+                        $clientOptions->namespace,
                     );
             },
             /** @see WorkflowClientCallsInterceptor::update() */
@@ -327,7 +346,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             workflowExecution: $this->getExecution(),
             workflowType: $this->workflowType,
             updateName: $nameOrOptions->updateName,
-            arguments: EncodedValues::fromValues($args, $this->converter),
+            arguments: $updateArguments,
             header: Header::empty(),
             waitPolicy: $nameOrOptions->waitPolicy,
             updateId: $nameOrOptions->updateId ?? '',
@@ -515,7 +534,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     return null;
                 }
 
-                return EncodedValues::fromPayloads($attr->getResult(), $this->converter);
+                $result = EncodedValues::fromPayloads($attr->getResult(), $this->converter);
+                $result->setSerializationContext(
+                    new WorkflowSerializationContext($this->clientOptions->namespace, $this->getExecution()->getID()),
+                );
+
+                return $result;
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED:
                 $attr = $closeEvent->getWorkflowExecutionFailedEventAttributes();
 
@@ -531,6 +555,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $details = $attr->hasDetails()
                     ? EncodedValues::fromPayloads($attr->getDetails(), $this->converter)
                     : EncodedValues::fromValues([]);
+                $details->setSerializationContext(
+                    new WorkflowSerializationContext($this->clientOptions->namespace, $this->getExecution()->getID()),
+                );
 
                 throw new WorkflowFailedException(
                     $this->execution,
@@ -638,12 +665,17 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     {
         switch (true) {
             case $failure instanceof WorkflowExecutionFailedException:
+                $cause = FailureConverter::mapFailureToException($failure->getFailure(), $this->converter);
+                $cause->setSerializationContext(
+                    new WorkflowSerializationContext($this->clientOptions->namespace, $this->getExecution()->getID()),
+                );
+
                 return new WorkflowFailedException(
                     $this->execution,
                     $this->workflowType,
                     $failure->getWorkflowTaskCompletedEventId(),
                     $failure->getRetryState(),
-                    FailureConverter::mapFailureToException($failure->getFailure(), $this->converter),
+                    $cause,
                 );
 
             case $failure instanceof ServiceClientException:

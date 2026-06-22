@@ -13,7 +13,10 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -37,7 +40,7 @@ final class Client implements ClientInterface
         'a request with that identifier was not sent';
 
     /**
-     * @var array<int, array{Deferred, WorkflowContextInterface|null}>
+     * @var array<int, array{Deferred, WorkflowContextInterface|null, SerializationContext|null}>
      */
     private array $requests = [];
 
@@ -55,7 +58,7 @@ final class Client implements ClientInterface
             return;
         }
 
-        [$deferred, $context] = $this->requests[$id];
+        [$deferred, $context, $serializationContext] = $this->requests[$id];
         unset($this->requests[$id]);
 
         $info = $context->getInfo();
@@ -66,9 +69,18 @@ final class Client implements ClientInterface
         // Bind workflow context for promise resolution
         Workflow::setCurrentContext($context);
         if ($response instanceof FailureResponseInterface) {
-            $deferred->reject($response->getFailure());
+            $failure = $response->getFailure();
+            if ($serializationContext !== null && $failure instanceof TemporalFailure) {
+                $failure->setSerializationContext($serializationContext);
+            }
+
+            $deferred->reject($failure);
         } else {
-            $deferred->resolve($response->getPayloads());
+            $payloads = $response->getPayloads();
+            if ($serializationContext !== null && $payloads instanceof EncodedValues) {
+                $payloads->setSerializationContext($serializationContext);
+            }
+            $deferred->resolve($payloads);
         }
     }
 
@@ -82,8 +94,13 @@ final class Client implements ClientInterface
             \sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id),
         );
 
+        $payloads = $request->getPayloads();
+        $serializationContext = $payloads instanceof EncodedValues
+            ? $payloads->getSerializationContext()
+            : null;
+
         $deferred = new Deferred();
-        $this->requests[$id] = [$deferred, $context];
+        $this->requests[$id] = [$deferred, $context, $serializationContext];
 
         return $deferred->promise();
     }

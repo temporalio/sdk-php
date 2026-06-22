@@ -144,7 +144,7 @@ final class ScheduleClient implements ScheduleClientInterface
         }
 
         $mapper = new ScheduleMapper($this->converter, $this->marshaller);
-        $scheduleMessage = $mapper->toMessage($schedule);
+        $scheduleMessage = $mapper->toMessage($schedule, $this->clientOptions->namespace);
 
         $request
             ->setSchedule($scheduleMessage)

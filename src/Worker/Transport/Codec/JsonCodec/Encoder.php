@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContextBinder;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -54,7 +56,14 @@ class Encoder
                 ];
 
                 if ($cmd->getFailure() !== null) {
-                    $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
+                    $payloads = $cmd->getPayloads();
+                    $context = $payloads instanceof EncodedValues
+                        ? $payloads->getSerializationContext()
+                        : null;
+                    $failure = FailureConverter::mapExceptionToFailure(
+                        $cmd->getFailure(),
+                        SerializationContextBinder::bind($this->converter, $context),
+                    );
                     $data['failure'] = \base64_encode($failure->serializeToString());
                 }
 

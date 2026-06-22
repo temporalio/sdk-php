@@ -6,7 +6,6 @@ namespace Temporal\Testing\Transcript;
 
 use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\WorkerPluginContext;
-use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class TranscriptPlugin extends AbstractPlugin
 {

@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
@@ -69,9 +70,21 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             throw new \LogicException('Child workflow already has been executed');
         }
 
+        $arguments = EncodedValues::fromValues($args);
+        $workflowId = $this->options->workflowId;
+        if ($workflowId !== null) {
+            $namespace = $this->options->namespace !== ''
+                ? $this->options->namespace
+                : Workflow::getCurrentContext()->getInfo()->namespace;
+            $arguments->setSerializationContext(new WorkflowSerializationContext(
+                namespace: $namespace,
+                workflowId: $workflowId,
+            ));
+        }
+
         $this->request = new ExecuteChildWorkflow(
             $this->workflow,
-            EncodedValues::fromValues($args),
+            $arguments,
             $this->getOptionArray(),
             $this->header,
         );
@@ -113,12 +126,22 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     {
         return $this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
+                $namespace = $this->getOptions()->namespace !== ''
+                    ? $this->getOptions()->namespace
+                    : Workflow::getCurrentContext()->getInfo()->namespace;
+
+                $arguments = EncodedValues::fromValues($args);
+                $arguments->setSerializationContext(new WorkflowSerializationContext(
+                    namespace: $namespace,
+                    workflowId: $execution->getID(),
+                ));
+
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,
                     $execution->getID(),
                     null,
                     $name,
-                    EncodedValues::fromValues($args),
+                    $arguments,
                     true,
                 );
 

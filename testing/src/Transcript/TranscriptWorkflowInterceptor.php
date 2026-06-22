@@ -10,7 +10,6 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
-use Temporal\Testing\Transcript\TranscriptWriter;
 
 final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterceptor
 {
@@ -28,7 +27,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'run_id' => $input->info->execution->getRunID(),
             'is_replaying' => $input->isReplaying,
         ];
-        $this->runPhase('workflow_execute', $attributes, fn() => $next($input));
+        $this->runPhase('workflow_execute', $attributes, static fn() => $next($input));
     }
 
     public function handleSignal(SignalInput $input, callable $next): void
@@ -38,7 +37,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'workflow_id' => $input->info->execution->getID(),
             'is_replaying' => $input->isReplaying,
         ];
-        $this->runPhase('workflow_signal', $attributes, fn() => $next($input));
+        $this->runPhase('workflow_signal', $attributes, static fn() => $next($input));
     }
 
     public function handleQuery(QueryInput $input, callable $next): mixed
@@ -47,7 +46,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'query_name' => $input->queryName,
             'workflow_id' => $input->info->execution->getID(),
         ];
-        return $this->runPhase('workflow_query', $attributes, fn() => $next($input));
+        return $this->runPhase('workflow_query', $attributes, static fn() => $next($input));
     }
 
     public function handleUpdate(UpdateInput $input, callable $next): mixed
@@ -58,7 +57,7 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
             'workflow_id' => $input->info->execution->getID(),
             'is_replaying' => $input->isReplaying,
         ];
-        return $this->runPhase('workflow_update', $attributes, fn() => $next($input));
+        return $this->runPhase('workflow_update', $attributes, static fn() => $next($input));
     }
 
     public function validateUpdate(UpdateInput $input, callable $next): void

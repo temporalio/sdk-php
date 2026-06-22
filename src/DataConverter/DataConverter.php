@@ -17,12 +17,14 @@ use Temporal\Exception\DataConverterException;
 /**
  * @psalm-import-type TType from Type
  */
-final class DataConverter implements DataConverterInterface
+final class DataConverter implements DataConverterInterface, SerializationContextAwareInterface
 {
     /**
      * @var array<PayloadConverterInterface>
      */
     private array $converters = [];
+
+    private ?SerializationContext $serializationContext = null;
 
     public function __construct(PayloadConverterInterface ...$converter)
     {
@@ -40,6 +42,24 @@ final class DataConverter implements DataConverterInterface
             new ProtoConverter(),
             new JsonConverter(),
         );
+    }
+
+    public function withSerializationContext(?SerializationContext $context): static
+    {
+        if ($context === $this->serializationContext) {
+            return $this;
+        }
+
+        $clone = clone $this;
+        $clone->serializationContext = $context;
+
+        foreach ($this->converters as $encoding => $converter) {
+            if ($converter instanceof SerializationContextAwareInterface) {
+                $clone->converters[$encoding] = $converter->withSerializationContext($context);
+            }
+        }
+
+        return $clone;
     }
 
     /**

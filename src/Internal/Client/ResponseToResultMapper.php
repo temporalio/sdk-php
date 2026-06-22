@@ -7,6 +7,7 @@ namespace Temporal\Internal\Client;
 use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionResponse;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
@@ -27,6 +28,7 @@ final class ResponseToResultMapper
         string $updateName,
         ?string $workflowType,
         WorkflowExecution $workflowExecution,
+        ?string $namespace = null,
     ): StartUpdateOutput {
         $outcome = $result->getOutcome();
         $updateRef = $result->getUpdateRef();
@@ -49,15 +51,25 @@ final class ResponseToResultMapper
 
 
         if ($success !== null) {
-            return new StartUpdateOutput(
-                $updateRefDto,
-                true,
-                EncodedValues::fromPayloads($success, $this->converter),
-            );
+            $values = EncodedValues::fromPayloads($success, $this->converter);
+            if ($namespace !== null) {
+                $values->setSerializationContext(
+                    new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
+                );
+            }
+
+            return new StartUpdateOutput($updateRefDto, true, $values);
         }
 
         if ($failure !== null) {
             $execution = $updateRef->getWorkflowExecution();
+            $cause = FailureConverter::mapFailureToException($failure, $this->converter);
+            if ($namespace !== null) {
+                $cause->setSerializationContext(
+                    new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
+                );
+            }
+
             throw new WorkflowUpdateException(
                 null,
                 $execution === null
@@ -66,7 +78,7 @@ final class ResponseToResultMapper
                 workflowType: $workflowType,
                 updateId: $updateRef->getUpdateId(),
                 updateName: $updateName,
-                previous: FailureConverter::mapFailureToException($failure, $this->converter),
+                previous: $cause,
             );
         }
 

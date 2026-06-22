@@ -19,6 +19,8 @@ use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Action\ScheduleAction;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
 final class ScheduleMapper
@@ -28,11 +30,17 @@ final class ScheduleMapper
         private readonly MarshallerInterface $marshaller,
     ) {}
 
-    public function toMessage(Schedule $dto): \Temporal\Api\Schedule\V1\Schedule
+    public function toMessage(Schedule $dto, ?string $namespace = null): \Temporal\Api\Schedule\V1\Schedule
     {
         if ($dto->action instanceof StartWorkflowAction) {
             $action = $dto->action;
             $action->input?->setDataConverter($this->converter);
+            if ($namespace !== null && $action->workflowId !== '' && $action->input instanceof EncodedValues) {
+                $action->input->setSerializationContext(new WorkflowSerializationContext(
+                    namespace: $namespace,
+                    workflowId: $action->workflowId,
+                ));
+            }
             $action->header?->setDataConverter($this->converter);
             $action->memo?->setDataConverter($this->converter);
             $action->searchAttributes?->setDataConverter($this->converter);

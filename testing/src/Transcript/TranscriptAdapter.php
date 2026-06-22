@@ -14,8 +14,7 @@ final class TranscriptAdapter implements LoggerInterface
     public function __construct(
         private readonly TranscriptWriter $writer,
         private readonly LoggerInterface $stderr,
-    ) {
-    }
+    ) {}
 
     public function log($level, \Stringable|string $message, array $context = []): void
     {

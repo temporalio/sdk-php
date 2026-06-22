@@ -1,0 +1,21 @@
+{
+  "run_id": "fibers-review-cleanup-20260523-190533",
+  "task_alias": "fibers-review-cleanup",
+  "status": "running",
+  "iteration": 1,
+  "max_iterations": 3,
+  "phase": "A",
+  "current_step": "PRODUCE",
+  "task": {
+    "prompt": "Review every changed file vs master against 5 criteria (task relevance, change quality, SDK style consistency, userland acceptability, generator→fiber migration ease). Save .review.md sidecar per file. Plan + implement fixes. Verify with unit/func/accept tests.",
+    "groups": [
+      "A: Fiber facade core (12 files in src/Experiments/Fibers)",
+      "B: SDK internals + interfaces (13 files in src/Internal, src/Workflow, src/Interceptor, testing)",
+      "C: Acceptance Fiber tests (~30 files)",
+      "D: Unit Fiber tests (9 files)",
+      "E: Test infrastructure (5 files)"
+    ]
+  },
+  "created_at": "2026-05-23T19:05:33Z",
+  "updated_at": "2026-05-23T19:05:33Z"
+}

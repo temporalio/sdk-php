@@ -27,6 +27,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
@@ -279,9 +280,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         } catch (\Throwable) {
         }
 
+        $values = EncodedValues::fromValues([$value]);
+        $values->setSerializationContext(
+            new WorkflowSerializationContext($this->getInfo()->namespace, $this->getInfo()->execution->getID()),
+        );
+
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
             $this->request(new SideEffect(
-                EncodedValues::fromValues([$value]),
+                $values,
                 $options === null ? [] : $this->services->marshaller->marshal($options),
             )),
             $returnType,
@@ -305,6 +311,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $values = $input->result !== null
                     ? EncodedValues::fromValues($input->result)
                     : EncodedValues::empty();
+
+                $values->setSerializationContext(
+                    new WorkflowSerializationContext(
+                        $this->getInfo()->namespace,
+                        $this->getInfo()->execution->getID(),
+                    ),
+                );
 
                 return $this->request(new CompleteWorkflow($values, $input->failure), false);
             },
@@ -331,9 +344,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             function (ContinueAsNewInput $input): PromiseInterface {
                 $this->continueAsNew = true;
 
+                $arguments = EncodedValues::fromValues($input->args);
+                $arguments->setSerializationContext(
+                    new WorkflowSerializationContext(
+                        $this->getInfo()->namespace,
+                        $this->getInfo()->execution->getID(),
+                    ),
+                );
+
                 $request = new ContinueAsNew(
                     $input->type,
-                    EncodedValues::fromValues($input->args),
+                    $arguments,
                     $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions()),
                     $this->getHeader(),
                 );

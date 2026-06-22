@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
@@ -61,9 +63,24 @@ final class ActivityStub implements ActivityStubInterface
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         bool $isLocalActivity = false,
     ): PromiseInterface {
+        $info = Workflow::getCurrentContext()->getInfo();
+        $taskQueue = $this->options instanceof ActivityOptions && $this->options->taskQueue !== null
+            ? $this->options->taskQueue
+            : $info->taskQueue;
+
+        $arguments = EncodedValues::fromValues($args);
+        $arguments->setSerializationContext(new ActivitySerializationContext(
+            namespace: $info->namespace,
+            workflowId: $info->execution->getID(),
+            workflowType: $info->type->name,
+            activityType: $name,
+            taskQueue: $taskQueue,
+            isLocal: $isLocalActivity,
+        ));
+
         $request = $isLocalActivity ?
-            new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header) :
-            new ExecuteActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header);
+            new ExecuteLocalActivity($name, $arguments, $this->getOptionsArray(), $this->header) :
+            new ExecuteActivity($name, $arguments, $this->getOptionsArray(), $this->header);
 
         return EncodedValues::decodePromise($this->request($request), $returnType);
     }
