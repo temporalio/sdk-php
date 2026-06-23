@@ -40,6 +40,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContextBinder;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\CanceledException;
@@ -423,7 +424,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $request->setReason($input->reason);
 
                 if ($details !== []) {
-                    $request->setDetails(EncodedValues::fromValues($details, $converter)->toPayloads());
+                    $values = EncodedValues::fromValues($details, $converter);
+                    $values->setSerializationContext(
+                        new WorkflowSerializationContext($clientOptions->namespace, $input->workflowExecution->getID()),
+                    );
+                    $request->setDetails($values->toPayloads());
                 }
 
                 $serviceClient->TerminateWorkflowExecution($request);
@@ -481,7 +486,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
 
-                $activityMapper = new PendingActivityInfoMapper($this->converter);
+                $converter = SerializationContextBinder::bind(
+                    $this->converter,
+                    new WorkflowSerializationContext($input->namespace, $input->workflowExecution->getID()),
+                );
+
+                $activityMapper = new PendingActivityInfoMapper($converter);
                 $pendingActivities = [];
                 /** @psalm-suppress TooManyTemplateParams */
                 foreach ($response->getPendingActivities() as $pendingActivity) {
@@ -490,9 +500,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 /** @psalm-suppress PossiblyNullArgument */
                 return new WorkflowExecutionDescription(
-                    config: (new WorkflowExecutionConfigMapper($this->converter))
+                    config: (new WorkflowExecutionConfigMapper($converter))
                         ->fromMessage($response->getExecutionConfig()),
-                    info: (new WorkflowExecutionInfoMapper($this->converter))
+                    info: (new WorkflowExecutionInfoMapper($converter))
                         ->fromMessage($response->getWorkflowExecutionInfo()),
                     pendingActivities: $pendingActivities,
                 );

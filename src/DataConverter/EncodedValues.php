@@ -42,6 +42,7 @@ class EncodedValues implements ValuesInterface
 
     private ?DataConverterInterface $converter = null;
     private ?SerializationContext $serializationContext = null;
+    private ?DataConverterInterface $boundConverter = null;
 
     /**
      * Can not be constructed directly.
@@ -163,11 +164,13 @@ class EncodedValues implements ValuesInterface
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
+        $this->boundConverter = null;
     }
 
     public function setSerializationContext(?SerializationContext $context): void
     {
         $this->serializationContext = $context;
+        $this->boundConverter = null;
     }
 
     public function getSerializationContext(): ?SerializationContext
@@ -241,6 +244,9 @@ class EncodedValues implements ValuesInterface
             throw new \LogicException('DataConverter is not set.');
         }
 
-        return SerializationContextBinder::bind($this->converter, $this->serializationContext);
+        return $this->boundConverter ??= SerializationContextBinder::bind(
+            $this->converter,
+            $this->serializationContext,
+        );
     }
 }
