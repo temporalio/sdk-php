@@ -27,6 +27,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
@@ -102,6 +103,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $readonly = true;
     protected ?string $currentDetails = null;
 
+    private ?WorkflowSerializationContext $serializationContext = null;
+
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
 
@@ -158,6 +161,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->input->info;
     }
 
+    private function getSerializationContext(): WorkflowSerializationContext
+    {
+        return $this->serializationContext ??= new WorkflowSerializationContext(
+            $this->getInfo()->namespace,
+            $this->getInfo()->execution->getID(),
+        );
+    }
+
     public function getHeader(): HeaderInterface
     {
         return $this->input->header;
@@ -180,6 +191,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $clone->awaits = &$this->awaits;
         $clone->trace = &$this->trace;
         $clone->input = $input;
+        $clone->serializationContext = null;
         return $clone;
     }
 
@@ -279,9 +291,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         } catch (\Throwable) {
         }
 
+        $values = EncodedValues::fromValues([$value]);
+        $values->setSerializationContext($this->getSerializationContext());
+
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
             $this->request(new SideEffect(
-                EncodedValues::fromValues([$value]),
+                $values,
                 $options === null ? [] : $this->services->marshaller->marshal($options),
             )),
             $returnType,
@@ -305,6 +320,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $values = $input->result !== null
                     ? EncodedValues::fromValues($input->result)
                     : EncodedValues::empty();
+
+                $values->setSerializationContext($this->getSerializationContext());
 
                 return $this->request(new CompleteWorkflow($values, $input->failure), false);
             },
@@ -331,9 +348,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             function (ContinueAsNewInput $input): PromiseInterface {
                 $this->continueAsNew = true;
 
+                $arguments = EncodedValues::fromValues($input->args);
+                $arguments->setSerializationContext($this->getSerializationContext());
+
                 $request = new ContinueAsNew(
                     $input->type,
-                    EncodedValues::fromValues($input->args),
+                    $arguments,
                     $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions()),
                     $this->getHeader(),
                 );

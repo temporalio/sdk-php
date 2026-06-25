@@ -14,8 +14,10 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\PipelineProvider;
@@ -74,6 +76,19 @@ class InvokeActivity extends Route
         /** @var ActivityContext $context */
         $context = $this->services->marshaller->unmarshal($options, $context);
 
+        $info = $context->getInfo();
+        $serializationContext = new ActivitySerializationContext(
+            namespace: $info->workflowNamespace,
+            workflowId: $info->workflowExecution?->getID(),
+            workflowType: $info->workflowType?->name,
+            activityType: $info->type->name,
+            taskQueue: $info->taskQueue,
+            isLocal: $this->isLocal(),
+        );
+
+        $payloads->setSerializationContext($serializationContext);
+        $heartbeatDetails?->setSerializationContext($serializationContext);
+
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
@@ -106,9 +121,15 @@ class InvokeActivity extends Route
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resolver->resolve(EncodedValues::fromValues([$result]));
+                $resultPayloads = EncodedValues::fromValues([$result]);
+                $resultPayloads->setSerializationContext($serializationContext);
+                $resolver->resolve($resultPayloads);
             }
         } catch (\Throwable $e) {
+            if ($e instanceof TemporalFailure) {
+                $e->setSerializationContext($serializationContext);
+            }
+
             $resolver->reject($e);
         } finally {
             $finalizer = $this->services->activities->getFinalizer();
@@ -117,6 +138,11 @@ class InvokeActivity extends Route
             }
             Activity::setCurrentContext(null);
         }
+    }
+
+    protected function isLocal(): bool
+    {
+        return false;
     }
 
     private function findDeclarationOrFail(ActivityInfo $info): ActivityPrototype

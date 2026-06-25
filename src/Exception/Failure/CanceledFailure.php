@@ -34,4 +34,9 @@ class CanceledFailure extends TemporalFailure
     {
         $this->details->setDataConverter($converter);
     }
+
+    protected function serializationContextDetails(): ?ValuesInterface
+    {
+        return $this->details;
+    }
 }

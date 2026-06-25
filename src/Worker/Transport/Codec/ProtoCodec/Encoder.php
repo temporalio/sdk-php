@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\SerializationContextBinder;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\Client\UpdateResponse;
@@ -56,7 +57,11 @@ class Encoder
                 $msg->setHeader($header->toHeader());
 
                 if ($cmd->getFailure() !== null) {
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                    $context = $cmd->getPayloads()?->getSerializationContext();
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
+                        $cmd->getFailure(),
+                        SerializationContextBinder::bind($this->converter, $context),
+                    ));
                 }
 
                 return $msg;
@@ -78,13 +83,18 @@ class Encoder
                 $msg->setCommand($cmd->getCommand());
                 $msg->setOptions(\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE));
 
+                $updatePayloads = $cmd->getPayloads();
                 if ($cmd->getFailure() !== null) {
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                    $context = $updatePayloads?->getSerializationContext();
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
+                        $cmd->getFailure(),
+                        SerializationContextBinder::bind($this->converter, $context),
+                    ));
                 }
 
-                if ($cmd->getPayloads() !== null) {
-                    $cmd->getPayloads()->setDataConverter($this->converter);
-                    $msg->setPayloads($cmd->getPayloads()->toPayloads());
+                if ($updatePayloads !== null) {
+                    $updatePayloads->setDataConverter($this->converter);
+                    $msg->setPayloads($updatePayloads->toPayloads());
                 }
 
                 return $msg;

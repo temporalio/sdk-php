@@ -119,7 +119,7 @@ final class ScheduleHandle
         }
 
         $mapper = new ScheduleMapper($this->converter, $this->marshaller);
-        $scheduleMessage = $mapper->toMessage($schedule);
+        $scheduleMessage = $mapper->toMessage($schedule, $this->namespace);
         $request->setSchedule($scheduleMessage);
 
 

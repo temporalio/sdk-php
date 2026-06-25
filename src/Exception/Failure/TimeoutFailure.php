@@ -49,4 +49,9 @@ class TimeoutFailure extends TemporalFailure
     {
         $this->lastHeartbeatDetails->setDataConverter($converter);
     }
+
+    protected function serializationContextDetails(): ?ValuesInterface
+    {
+        return $this->lastHeartbeatDetails;
+    }
 }

@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -42,8 +43,17 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function signal(string $name, array $args = []): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(SignalExternalWorkflowInput $input): PromiseInterface => $this
-                ->request(
+            function (SignalExternalWorkflowInput $input): PromiseInterface {
+                $namespace = $input->namespace !== ''
+                    ? $input->namespace
+                    : Workflow::getCurrentContext()->getInfo()->namespace;
+
+                $input->input->setSerializationContext(new WorkflowSerializationContext(
+                    namespace: $namespace,
+                    workflowId: $input->workflowId,
+                ));
+
+                return $this->request(
                     new SignalExternalWorkflow(
                         $input->namespace,
                         $input->workflowId,
@@ -52,7 +62,8 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
                         $input->input,
                         $input->childWorkflowOnly,
                     ),
-                ),
+                );
+            },
             /** @see WorkflowOutboundCallsInterceptor::signalExternalWorkflow() */
             'signalExternalWorkflow',
         )(new SignalExternalWorkflowInput(

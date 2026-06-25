@@ -17,6 +17,7 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -71,6 +72,10 @@ final class StartWorkflow extends Route
 
         $info = $input->info;
         $request->getTickInfo()->applyTo($info);
+
+        $input->input->setSerializationContext(
+            new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
+        );
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 

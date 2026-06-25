@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
@@ -37,7 +38,12 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $info = $context->getInfo();
         $request->getTickInfo()->applyTo($info);
 
-        $handler($request->getPayloads());
+        $payloads = $request->getPayloads();
+        $payloads->setSerializationContext(
+            new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
+        );
+
+        $handler($payloads);
 
         $resolver->resolve(EncodedValues::fromValues([null]));
     }

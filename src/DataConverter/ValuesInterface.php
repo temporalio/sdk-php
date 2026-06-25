@@ -27,6 +27,10 @@ interface ValuesInterface extends \Countable
 
     public function setDataConverter(DataConverterInterface $converter): void;
 
+    public function setSerializationContext(?SerializationContext $context): void;
+
+    public function getSerializationContext(): ?SerializationContext;
+
     /**
      * Get value by it's index.
      *

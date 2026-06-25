@@ -16,6 +16,7 @@ use React\Promise\Deferred;
 use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
@@ -82,8 +83,19 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $info = $context->getInfo();
                     $request->getTickInfo()->applyTo($info);
 
-                    $result = $handler(new QueryInput($name, $request->getPayloads(), $info));
-                    $resolver->resolve(EncodedValues::fromValues([$result]));
+                    $serializationContext = new WorkflowSerializationContext(
+                        $info->namespace,
+                        $info->execution->getID(),
+                    );
+
+                    $arguments = $request->getPayloads();
+                    $arguments->setSerializationContext($serializationContext);
+
+                    $result = $handler(new QueryInput($name, $arguments, $info));
+
+                    $resultValues = EncodedValues::fromValues([$result]);
+                    $resultValues->setSerializationContext($serializationContext);
+                    $resolver->resolve($resultValues);
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
                 }
