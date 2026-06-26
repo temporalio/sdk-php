@@ -33,6 +33,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         // Update requests don't require a response
         $resolver->promise()->cancel();
 
+        $serializationContext = null;
         try {
             /** @var non-empty-string $name */
             $name = $request->getOptions()['name'];
@@ -83,9 +84,11 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         } catch (\Throwable $e) {
             if ($e instanceof TemporalFailure) {
                 $info = $context->getInfo();
-                $e->setSerializationContext(
-                    new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
+                $serializationContext ??= new WorkflowSerializationContext(
+                    $info->namespace,
+                    $info->execution->getID(),
                 );
+                $e->setSerializationContext($serializationContext);
             }
 
             $context->getClient()->send(
