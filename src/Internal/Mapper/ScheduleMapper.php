@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Mapper;
 
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Schedule\V1\CalendarSpec;
 use Temporal\Api\Schedule\V1\IntervalSpec;
@@ -77,8 +76,8 @@ final class ScheduleMapper
                     /** Because it is mapped with wrong key {@see \Temporal\Workflow\WorkflowType::$name} */
                     ->setName($values['workflow_type']['Name']);
                 $values['task_queue'] = new TaskQueue($values['task_queue']);
-                $action->input?->setDataConverter($this->converter);
-                $values['input'] = $action->input?->toPayloads() ?? new Payloads();
+                $action->input->setDataConverter($this->converter);
+                $values['input'] = $action->input->toPayloads();
                 $values['workflow_id_reuse_policy'] = $action->workflowIdReusePolicy->value;
                 $values['retry_policy'] = $action->retryPolicy?->toWorkflowRetryPolicy();
                 $values['user_metadata'] = (new UserMetadata())

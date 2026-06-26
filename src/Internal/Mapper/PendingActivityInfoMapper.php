@@ -53,6 +53,7 @@ final class PendingActivityInfoMapper
             namespace: $this->namespace,
             workflowId: $this->workflowId,
             activityType: $message->getActivityType()?->getName(),
+            taskQueue: $message->getActivityOptions()?->getTaskQueue()?->getName(),
         );
 
         return new PendingActivityInfoDto(
