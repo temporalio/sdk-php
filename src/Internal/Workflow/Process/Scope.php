@@ -26,6 +26,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
@@ -461,7 +462,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         $id = ++$this->cancelID;
 
-        if ($this->cancelled && $cancellable) {
+        if (FeatureFlags::$propagateCancellationToNewScopes && $this->cancelled && $cancellable) {
             $this->makeCurrent();
             $handler($this->cancelReason);
             return $id;
@@ -474,7 +475,9 @@ class Scope implements CancellationScopeInterface, Destroyable
     private function nextPromise(PromiseInterface $promise): void
     {
         if ($promise instanceof CancellationScopeInterface && $promise->isCancelled()) {
-            $reason = $promise instanceof self ? $promise->cancelReason : null;
+            $reason = FeatureFlags::$propagateCancellationToNewScopes && $promise instanceof self
+                ? $promise->cancelReason
+                : null;
             $this->handleError($reason ?? new CanceledFailure(''));
             return;
         }
