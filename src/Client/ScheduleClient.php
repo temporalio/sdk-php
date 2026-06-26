@@ -143,8 +143,10 @@ final class ScheduleClient implements ScheduleClientInterface
                 ->setTriggerImmediately((new TriggerImmediatelyRequest())->setOverlapPolicy($overlap));
         }
 
+        $namespace = $options->namespace ?? $this->clientOptions->namespace;
+
         $mapper = new ScheduleMapper($this->converter, $this->marshaller);
-        $scheduleMessage = $mapper->toMessage($schedule, $this->clientOptions->namespace);
+        $scheduleMessage = $mapper->toMessage($schedule, $namespace);
 
         $request
             ->setSchedule($scheduleMessage)
@@ -161,7 +163,7 @@ final class ScheduleClient implements ScheduleClientInterface
             $this->converter,
             $this->marshaller,
             $this->protoConverter,
-            $options->namespace ?? $this->clientOptions->namespace,
+            $namespace,
             $scheduleId,
         );
     }

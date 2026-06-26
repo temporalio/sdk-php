@@ -11,10 +11,23 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Common\RetryOptions;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\Schedule\ScheduleOptions;
+use Temporal\Client\Schedule\Spec\ScheduleSpec;
+use Temporal\Client\Schedule\Spec\ScheduleState;
+use Temporal\Client\ScheduleClient;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\ActivitySerializationContext;
+use Temporal\DataConverter\BinaryConverter;
+use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HasWorkflowSerializationContext;
+use Temporal\DataConverter\JsonConverter;
+use Temporal\DataConverter\NullConverter;
+use Temporal\DataConverter\ProtoConverter;
+use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\SerializationContextAwareInterface;
@@ -163,6 +176,54 @@ class SerializationContextTest extends TestCase
 
         self::assertInstanceOf(SignedDto::class, $result);
         self::assertSame('beat', $result->value);
+    }
+
+    #[Test]
+    public function scheduleActionInputAndMemoCarryWorkflowContext(
+        WorkflowClientInterface $client,
+    ): void {
+        $converter = new DataConverter(
+            new NullConverter(),
+            new BinaryConverter(),
+            new ProtoJsonConverter(),
+            new ProtoConverter(),
+            new SignedPayloadConverter(),
+            new JsonConverter(),
+        );
+
+        $scheduleClient = new ScheduleClient($client->getServiceClient(), null, $converter);
+
+        $workflowId = 'Extra_DataConverter_SerializationContext_Schedule-' . \uniqid();
+        $scheduleId = 'sctx-schedule-' . \uniqid();
+
+        $handle = $scheduleClient->createSchedule(
+            Schedule::new()
+                ->withAction(
+                    StartWorkflowAction::new('Extra_DataConverter_SerializationContext')
+                        ->withWorkflowId($workflowId)
+                        ->withInput([new SignedDto('scheduled-input')])
+                        ->withMemo(['note' => new SignedDto('scheduled-memo')]),
+                )
+                ->withSpec(ScheduleSpec::new()->withStartTime('+1 hour'))
+                ->withState(ScheduleState::new()->withPaused(true)),
+            ScheduleOptions::new(),
+            $scheduleId,
+        );
+
+        try {
+            $action = $handle->describe()->schedule->action;
+            self::assertInstanceOf(StartWorkflowAction::class, $action);
+
+            $input = $action->input->getValue(0, SignedDto::class);
+            self::assertInstanceOf(SignedDto::class, $input);
+            self::assertSame('scheduled-input', $input->value);
+
+            $memo = $action->memo->getValue('note', SignedDto::class);
+            self::assertInstanceOf(SignedDto::class, $memo);
+            self::assertSame('scheduled-memo', $memo->value);
+        } finally {
+            $handle->delete();
+        }
     }
 }
 

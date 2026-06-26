@@ -26,6 +26,8 @@ use Temporal\Api\Common\V1\Payload;
 class EncodedCollection implements \IteratorAggregate, \Countable
 {
     private ?DataConverterInterface $converter = null;
+    private ?SerializationContext $serializationContext = null;
+    private ?DataConverterInterface $boundConverter = null;
 
     /**
      * @psalm-var TPayloadsCollection|null
@@ -102,11 +104,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
             return null;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set.');
-        }
-
-        return $this->converter->fromPayload($this->payloads[$name], $type);
+        return $this->converter()->fromPayload($this->payloads[$name], $type);
     }
 
     public function getValues(): array
@@ -117,10 +115,9 @@ class EncodedCollection implements \IteratorAggregate, \Countable
             return $result;
         }
 
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
-
+        $converter = $this->converter();
         foreach ($this->payloads as $key => $payload) {
-            $result[$key] = $this->converter->fromPayload($payload, null);
+            $result[$key] = $converter->fromPayload($payload, null);
         }
 
         return $result;
@@ -130,10 +127,9 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     {
         yield from $this->values;
         if ($this->payloads !== null && $this->payloads->count() > 0) {
-            $this->converter === null and throw new \LogicException('DataConverter is not set.');
-
+            $converter = $this->converter();
             foreach ($this->payloads as $key => $payload) {
-                yield $key => $this->converter->fromPayload($payload, null);
+                yield $key => $converter->fromPayload($payload, null);
             }
         }
     }
@@ -151,10 +147,9 @@ class EncodedCollection implements \IteratorAggregate, \Countable
             return $data;
         }
 
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
-
+        $converter = $this->converter();
         foreach ($this->values as $key => $value) {
-            $data[$key] = $this->converter->toPayload($value);
+            $data[$key] = $converter->toPayload($value);
         }
 
         return $data;
@@ -183,6 +178,18 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
+        $this->boundConverter = null;
+    }
+
+    public function setSerializationContext(?SerializationContext $context): void
+    {
+        $this->serializationContext = $context;
+        $this->boundConverter = null;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->serializationContext;
     }
 
     public function __clone()
@@ -190,5 +197,16 @@ class EncodedCollection implements \IteratorAggregate, \Countable
         if ($this->payloads !== null) {
             $this->payloads = clone $this->payloads;
         }
+
+        $this->boundConverter = null;
+    }
+
+    private function converter(): DataConverterInterface
+    {
+        if ($this->converter === null) {
+            throw new \LogicException('DataConverter is not set.');
+        }
+
+        return $this->boundConverter ??= SerializationContextBinder::bind($this->converter, $this->serializationContext);
     }
 }
