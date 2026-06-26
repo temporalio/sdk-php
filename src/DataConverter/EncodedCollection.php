@@ -25,9 +25,7 @@ use Temporal\Api\Common\V1\Payload;
  */
 class EncodedCollection implements \IteratorAggregate, \Countable
 {
-    private ?DataConverterInterface $converter = null;
-    private ?SerializationContext $serializationContext = null;
-    private ?DataConverterInterface $boundConverter = null;
+    use SerializationContextBindingTrait;
 
     /**
      * @psalm-var TPayloadsCollection|null
@@ -175,23 +173,6 @@ class EncodedCollection implements \IteratorAggregate, \Countable
         return $clone;
     }
 
-    public function setDataConverter(DataConverterInterface $converter): void
-    {
-        $this->converter = $converter;
-        $this->boundConverter = null;
-    }
-
-    public function setSerializationContext(?SerializationContext $context): void
-    {
-        $this->serializationContext = $context;
-        $this->boundConverter = null;
-    }
-
-    public function getSerializationContext(): ?SerializationContext
-    {
-        return $this->serializationContext;
-    }
-
     public function __clone()
     {
         if ($this->payloads !== null) {
@@ -199,14 +180,5 @@ class EncodedCollection implements \IteratorAggregate, \Countable
         }
 
         $this->boundConverter = null;
-    }
-
-    private function converter(): DataConverterInterface
-    {
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set.');
-        }
-
-        return $this->boundConverter ??= SerializationContextBinder::bind($this->converter, $this->serializationContext);
     }
 }
