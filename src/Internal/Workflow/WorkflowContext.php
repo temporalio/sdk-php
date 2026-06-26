@@ -102,7 +102,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
     protected ?string $currentDetails = null;
-
     private ?WorkflowSerializationContext $serializationContext = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
@@ -159,14 +158,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function getInfo(): WorkflowInfo
     {
         return $this->input->info;
-    }
-
-    private function getSerializationContext(): WorkflowSerializationContext
-    {
-        return $this->serializationContext ??= new WorkflowSerializationContext(
-            $this->getInfo()->namespace,
-            $this->getInfo()->execution->getID(),
-        );
     }
 
     public function getHeader(): HeaderInterface
@@ -835,5 +826,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    private function getSerializationContext(): WorkflowSerializationContext
+    {
+        return $this->serializationContext ??= new WorkflowSerializationContext(
+            $this->getInfo()->namespace,
+            $this->getInfo()->execution->getID(),
+        );
     }
 }

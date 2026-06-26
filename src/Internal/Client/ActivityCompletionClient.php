@@ -24,6 +24,7 @@ use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\ActivityNotExistsException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Exception\Failure\TemporalFailure;
 
 final class ActivityCompletionClient implements ActivityCompletionClientInterface
 {
@@ -105,6 +106,13 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         string $activityId,
         \Throwable $error,
     ): void {
+        if ($error instanceof TemporalFailure) {
+            $error->setSerializationContext(new ActivitySerializationContext(
+                namespace: $this->clientOptions->namespace,
+                workflowId: $workflowId,
+            ));
+        }
+
         $r = new Proto\RespondActivityTaskFailedByIdRequest();
         $r
             ->setIdentity($this->clientOptions->identity)
@@ -127,6 +135,12 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
     public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void
     {
+        if ($error instanceof TemporalFailure) {
+            $error->setSerializationContext(new ActivitySerializationContext(
+                namespace: $this->clientOptions->namespace,
+            ));
+        }
+
         $r = new Proto\RespondActivityTaskFailedRequest();
         $r
             ->setIdentity($this->clientOptions->identity)

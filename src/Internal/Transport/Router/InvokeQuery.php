@@ -17,6 +17,7 @@ use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\WorkflowSerializationContext;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
@@ -76,6 +77,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $this->loop->once(
             LoopInterface::ON_QUERY,
             static function () use ($name, $request, $resolver, $handler, $context, $headers): void {
+                $serializationContext = null;
                 try {
                     // Define Context for interceptors Pipeline
                     Workflow::setCurrentContext($context);
@@ -97,6 +99,10 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $resultValues->setSerializationContext($serializationContext);
                     $resolver->resolve($resultValues);
                 } catch (\Throwable $e) {
+                    if ($serializationContext !== null && $e instanceof TemporalFailure) {
+                        $e->setSerializationContext($serializationContext);
+                    }
+
                     $resolver->reject($e);
                 }
             },

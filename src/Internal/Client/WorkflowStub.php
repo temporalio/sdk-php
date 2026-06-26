@@ -125,14 +125,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         return $this->execution;
     }
 
-    private function getSerializationContext(): WorkflowSerializationContext
-    {
-        return $this->serializationContext ??= new WorkflowSerializationContext(
-            $this->clientOptions->namespace,
-            $this->getExecution()->getID(),
-        );
-    }
-
     /**
      * Connects stub to running workflow.
      */
@@ -486,7 +478,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
 
-                $activityMapper = new PendingActivityInfoMapper($this->converter);
+                $activityMapper = new PendingActivityInfoMapper(
+                    $this->converter,
+                    $input->namespace,
+                    $this->getExecution()->getID(),
+                );
                 $pendingActivities = [];
                 /** @psalm-suppress TooManyTemplateParams */
                 foreach ($response->getPendingActivities() as $pendingActivity) {
@@ -508,6 +504,14 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->execution,
             $this->clientOptions->namespace,
         ));
+    }
+
+    private function getSerializationContext(): WorkflowSerializationContext
+    {
+        return $this->serializationContext ??= new WorkflowSerializationContext(
+            $this->clientOptions->namespace,
+            $this->getExecution()->getID(),
+        );
     }
 
     /**

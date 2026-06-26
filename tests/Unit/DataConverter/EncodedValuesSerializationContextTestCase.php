@@ -57,6 +57,73 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
 
         self::assertNull($converter->lastUsedContext);
     }
+
+    public function testChangingContextAfterUseRebindsConverter(): void
+    {
+        $recorder = new ContextUsageRecorder();
+        $converter = new CloningContextRecordingDataConverter($recorder);
+        $contextA = new WorkflowSerializationContext('default', 'wf-A');
+        $contextB = new WorkflowSerializationContext('default', 'wf-B');
+
+        $values = EncodedValues::fromValues(['hello'], $converter);
+
+        $values->setSerializationContext($contextA);
+        $values->toPayloads();
+        self::assertSame($contextA, $recorder->lastUsedContext);
+
+        $values->setSerializationContext($contextB);
+        $values->toPayloads();
+        self::assertSame($contextB, $recorder->lastUsedContext);
+    }
+
+    public function testChangingConverterAfterUseRebinds(): void
+    {
+        $recorderA = new ContextUsageRecorder();
+        $recorderB = new ContextUsageRecorder();
+        $context = new WorkflowSerializationContext('default', 'wf-1');
+
+        $values = EncodedValues::fromValues(['hello'], new CloningContextRecordingDataConverter($recorderA));
+        $values->setSerializationContext($context);
+        $values->toPayloads();
+        self::assertSame($context, $recorderA->lastUsedContext);
+
+        $values->setDataConverter(new CloningContextRecordingDataConverter($recorderB));
+        $values->toPayloads();
+        self::assertSame($context, $recorderB->lastUsedContext);
+    }
+}
+
+final class ContextUsageRecorder
+{
+    public ?SerializationContext $lastUsedContext = null;
+}
+
+final class CloningContextRecordingDataConverter implements DataConverterInterface, SerializationContextAwareInterface
+{
+    private ?SerializationContext $boundContext = null;
+
+    public function __construct(
+        private readonly ContextUsageRecorder $recorder,
+    ) {}
+
+    public function withSerializationContext(?SerializationContext $context): static
+    {
+        $clone = clone $this;
+        $clone->boundContext = $context;
+        return $clone;
+    }
+
+    public function fromPayload(Payload $payload, mixed $type): mixed
+    {
+        $this->recorder->lastUsedContext = $this->boundContext;
+        return 'hello';
+    }
+
+    public function toPayload(mixed $value): Payload
+    {
+        $this->recorder->lastUsedContext = $this->boundContext;
+        return new Payload();
+    }
 }
 
 final class ContextRecordingDataConverter implements DataConverterInterface, SerializationContextAwareInterface

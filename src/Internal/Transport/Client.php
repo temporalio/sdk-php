@@ -93,7 +93,7 @@ final class Client implements ClientInterface
             \sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id),
         );
 
-        $serializationContext = $request->getPayloads()?->getSerializationContext();
+        $serializationContext = $request->getPayloads()->getSerializationContext();
 
         $deferred = new Deferred();
         $this->requests[$id] = [$deferred, $context, $serializationContext];

@@ -14,6 +14,7 @@ use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo;
 use Temporal\Common\Priority as PriorityDto;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -32,6 +33,8 @@ final class PendingActivityInfoMapper
 {
     public function __construct(
         private readonly DataConverterInterface $converter,
+        private readonly string $namespace,
+        private readonly ?string $workflowId = null,
     ) {}
 
     /**
@@ -46,18 +49,24 @@ final class PendingActivityInfoMapper
         $retryInterval = $message->getCurrentRetryInterval();
         $retryInterval === null or $retryInterval = DateInterval::parse($retryInterval);
 
+        $serializationContext = new ActivitySerializationContext(
+            namespace: $this->namespace,
+            workflowId: $this->workflowId,
+            activityType: $message->getActivityType()?->getName(),
+        );
+
         return new PendingActivityInfoDto(
             activityId: $message->getActivityId(),
             activityType: $activityType,
             state: PendingActivityState::from($message->getState()),
-            heartbeatDetails: $this->prepareHeartbeatDetails($message),
+            heartbeatDetails: $this->prepareHeartbeatDetails($message, $serializationContext),
             lastHeartbeatTime: $message->getLastHeartbeatTime()?->toDateTime(),
             lastStartedTime: $message->getLastStartedTime()?->toDateTime(),
             attempt: $message->getAttempt(),
             maximumAttempts: $message->getMaximumAttempts(),
             scheduledTime: $message->getScheduledTime()?->toDateTime(),
             expirationTime: $message->getExpirationTime()?->toDateTime(),
-            lastFailure: $this->prepareFailure($message->getLastFailure()),
+            lastFailure: $this->prepareFailure($message->getLastFailure(), $serializationContext),
             lastWorkerIdentity: $message->getLastWorkerIdentity(),
             currentRetryInterval: $retryInterval,
             lastAttemptCompleteTime: $message->getLastAttemptCompleteTime()?->toDateTime(),
@@ -70,20 +79,31 @@ final class PendingActivityInfoMapper
         );
     }
 
-    private function prepareHeartbeatDetails(PendingActivityInfo $message): ValuesInterface
-    {
+    private function prepareHeartbeatDetails(
+        PendingActivityInfo $message,
+        ActivitySerializationContext $context,
+    ): ValuesInterface {
         $details = $message->getHeartbeatDetails();
+        if ($details === null) {
+            return EncodedValues::empty();
+        }
 
-        return $details === null
-            ? EncodedValues::empty()
-            : EncodedValues::fromPayloads($details, $this->converter);
+        $values = EncodedValues::fromPayloads($details, $this->converter);
+        $values->setSerializationContext($context);
+
+        return $values;
     }
 
-    private function prepareFailure(?Failure $failure): ?TemporalFailure
+    private function prepareFailure(?Failure $failure, ActivitySerializationContext $context): ?TemporalFailure
     {
-        return $failure === null
-            ? null
-            : FailureConverter::mapFailureToException($failure, $this->converter);
+        if ($failure === null) {
+            return null;
+        }
+
+        $exception = FailureConverter::mapFailureToException($failure, $this->converter);
+        $exception->setSerializationContext($context);
+
+        return $exception;
     }
 
     /**

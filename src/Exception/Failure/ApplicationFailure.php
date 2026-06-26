@@ -101,11 +101,6 @@ class ApplicationFailure extends TemporalFailure
         $this->details->setDataConverter($converter);
     }
 
-    protected function serializationContextDetails(): ?ValuesInterface
-    {
-        return $this->details;
-    }
-
     public function setNextRetryDelay(?\DateInterval $nextRetryDelay): void
     {
         $this->nextRetryDelay = $nextRetryDelay;
@@ -114,5 +109,10 @@ class ApplicationFailure extends TemporalFailure
     public function getApplicationErrorCategory(): ApplicationErrorCategory
     {
         return $this->category;
+    }
+
+    protected function serializationContextDetails(): ?ValuesInterface
+    {
+        return $this->details;
     }
 }

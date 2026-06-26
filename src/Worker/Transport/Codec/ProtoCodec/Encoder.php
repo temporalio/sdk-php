@@ -57,7 +57,7 @@ class Encoder
                 $msg->setHeader($header->toHeader());
 
                 if ($cmd->getFailure() !== null) {
-                    $context = $cmd->getPayloads()?->getSerializationContext();
+                    $context = $cmd->getPayloads()->getSerializationContext();
                     $msg->setFailure(FailureConverter::mapExceptionToFailure(
                         $cmd->getFailure(),
                         SerializationContextBinder::bind($this->converter, $context),

@@ -99,14 +99,6 @@ class TemporalFailure extends TemporalException implements \Stringable
         }
     }
 
-    /**
-     * Payload-carrying details of this failure that must be (de)serialized with the same context.
-     */
-    protected function serializationContextDetails(): ?ValuesInterface
-    {
-        return null;
-    }
-
     public function __toString(): string
     {
         if ($this->hasOriginalStackTrace()) {
@@ -137,5 +129,10 @@ class TemporalFailure extends TemporalException implements \Stringable
         }
 
         return parent::buildMessage($result);
+    }
+
+    protected function serializationContextDetails(): ?ValuesInterface
+    {
+        return null;
     }
 }

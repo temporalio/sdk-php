@@ -28,7 +28,7 @@ final class ResponseToResultMapper
         string $updateName,
         ?string $workflowType,
         WorkflowExecution $workflowExecution,
-        ?string $namespace = null,
+        string $namespace,
     ): StartUpdateOutput {
         $outcome = $result->getOutcome();
         $updateRef = $result->getUpdateRef();
@@ -52,11 +52,9 @@ final class ResponseToResultMapper
 
         if ($success !== null) {
             $values = EncodedValues::fromPayloads($success, $this->converter);
-            if ($namespace !== null) {
-                $values->setSerializationContext(
-                    new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
-                );
-            }
+            $values->setSerializationContext(
+                new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
+            );
 
             return new StartUpdateOutput($updateRefDto, true, $values);
         }
@@ -64,11 +62,9 @@ final class ResponseToResultMapper
         if ($failure !== null) {
             $execution = $updateRef->getWorkflowExecution();
             $cause = FailureConverter::mapFailureToException($failure, $this->converter);
-            if ($namespace !== null) {
-                $cause->setSerializationContext(
-                    new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
-                );
-            }
+            $cause->setSerializationContext(
+                new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
+            );
 
             throw new WorkflowUpdateException(
                 null,

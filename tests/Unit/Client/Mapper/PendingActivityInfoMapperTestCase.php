@@ -31,7 +31,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
     public function testFromMessageFullyPopulated(): void
     {
         $converter = DataConverter::createDefault();
-        $mapper = new PendingActivityInfoMapper($converter);
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1');
 
         $info = $mapper->fromMessage(
             new PendingActivityInfo([
@@ -133,7 +133,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
 
     public function testFromMessageMinimal(): void
     {
-        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault());
+        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault(), 'default', 'wf-1');
 
         $info = $mapper->fromMessage(new PendingActivityInfo());
 
@@ -161,7 +161,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
 
     public function testPauseInfoByRule(): void
     {
-        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault());
+        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault(), 'default', 'wf-1');
 
         $info = $mapper->fromMessage(
             new PendingActivityInfo([

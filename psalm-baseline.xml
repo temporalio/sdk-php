@@ -974,12 +974,22 @@
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
+                $namespace = $this->getOptions()->namespace !== ''
+                    ? $this->getOptions()->namespace
+                    : Workflow::getCurrentContext()->getInfo()->namespace;
+
+                $arguments = EncodedValues::fromValues($args);
+                $arguments->setSerializationContext(new WorkflowSerializationContext(
+                    namespace: $namespace,
+                    workflowId: $execution->getID(),
+                ));
+
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,
                     $execution->getID(),
                     null,
                     $name,
-                    EncodedValues::fromValues($args),
+                    $arguments,
                     true,
                 );
 
