@@ -420,7 +420,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $request->setReason($input->reason);
 
                 if ($details !== []) {
-                    $request->setDetails(EncodedValues::fromValues($details, $converter)->toPayloads());
+                    $values = EncodedValues::fromValues($details, $converter);
+                    $values->setSerializationContext(new WorkflowSerializationContext(
+                        $clientOptions->namespace,
+                        $input->workflowExecution->getID(),
+                    ));
+                    $request->setDetails($values->toPayloads());
                 }
 
                 $serviceClient->TerminateWorkflowExecution($request);

@@ -89,9 +89,9 @@ final class Client implements ClientInterface
 
         $id = $request->getID();
 
-        \array_key_exists($id, $this->requests) and throw new \OutOfBoundsException(
-            \sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id),
-        );
+        if (\array_key_exists($id, $this->requests)) {
+            throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
+        }
 
         $serializationContext = $request->getPayloads()->getSerializationContext();
 

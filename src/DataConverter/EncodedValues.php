@@ -135,7 +135,9 @@ class EncodedValues implements ValuesInterface
             return null;
         }
 
-        $count > $index or throw new \OutOfBoundsException("Index {$index} is out of bounds.");
+        if ($count <= $index) {
+            throw new \OutOfBoundsException("Index {$index} is out of bounds.");
+        }
 
         \assert($this->payloads !== null);
         return $this->converter()->fromPayload(

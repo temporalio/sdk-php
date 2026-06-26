@@ -20,8 +20,14 @@ use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo\Manual;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo\Rule;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\DataConverter\SerializationContext;
+use Temporal\DataConverter\SerializationContextAwareInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Internal\Mapper\PendingActivityInfoMapper;
 use Temporal\Workflow\PendingActivityState;
@@ -182,5 +188,77 @@ final class PendingActivityInfoMapperTestCase extends TestCase
         self::assertSame('rule-1', $info->pauseInfo->rule->ruleId);
         self::assertSame('system', $info->pauseInfo->rule->identity);
         self::assertSame('flaky activity', $info->pauseInfo->rule->reason);
+    }
+
+    public function testHeartbeatDetailsDecodeWithActivityContext(): void
+    {
+        $converter = new DataConverter(new ActivityContextSigningConverter());
+
+        $signed = EncodedValues::fromValues(['hb-progress'], $converter);
+        $signed->setSerializationContext(new ActivitySerializationContext(
+            namespace: 'default',
+            workflowId: 'wf-1',
+            activityType: 'MyActivity',
+        ));
+
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1');
+        $info = $mapper->fromMessage(new PendingActivityInfo([
+            'activity_type' => new ActivityType(['name' => 'MyActivity']),
+            'heartbeat_details' => $signed->toPayloads(),
+        ]));
+
+        self::assertSame('hb-progress', $info->heartbeatDetails->getValue(0, Type::TYPE_STRING));
+    }
+}
+
+final class ActivityContextSigningConverter implements PayloadConverterInterface, SerializationContextAwareInterface
+{
+    private const ENCODING = 'act-signed';
+
+    private ?SerializationContext $context = null;
+
+    public function withSerializationContext(?SerializationContext $context): static
+    {
+        $clone = clone $this;
+        $clone->context = $context;
+        return $clone;
+    }
+
+    public function getEncodingType(): string
+    {
+        return self::ENCODING;
+    }
+
+    public function toPayload($value): ?Payload
+    {
+        if (!\is_string($value)) {
+            return null;
+        }
+
+        return (new Payload())
+            ->setMetadata(['encoding' => self::ENCODING, 'signature' => $this->signature()])
+            ->setData($value);
+    }
+
+    public function fromPayload(Payload $payload, Type $type): mixed
+    {
+        $metadata = $payload->getMetadata();
+        $actual = $metadata['signature'] ?? '';
+        $expected = $this->signature();
+
+        if ($actual !== $expected) {
+            throw new \RuntimeException(
+                \sprintf('Signature mismatch: expected "%s", got "%s"', $expected, $actual),
+            );
+        }
+
+        return $payload->getData();
+    }
+
+    private function signature(): string
+    {
+        return $this->context instanceof ActivitySerializationContext
+            ? (string) $this->context->workflowId . ':' . (string) $this->context->activityType
+            : '';
     }
 }

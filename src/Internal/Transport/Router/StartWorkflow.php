@@ -73,9 +73,9 @@ final class StartWorkflow extends Route
         $info = $input->info;
         $request->getTickInfo()->applyTo($info);
 
-        $input->input->setSerializationContext(
-            new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
-        );
+        $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+        $input->input->setSerializationContext($serializationContext);
+        $lastCompletionResult?->setSerializationContext($serializationContext);
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
