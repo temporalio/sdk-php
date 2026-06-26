@@ -199,11 +199,14 @@ final class PendingActivityInfoMapperTestCase extends TestCase
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'MyActivity',
+            taskQueue: 'my-tq',
         ));
 
         $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1');
         $info = $mapper->fromMessage(new PendingActivityInfo([
             'activity_type' => new ActivityType(['name' => 'MyActivity']),
+            'activity_options' => (new ActivityOptionsMessage())
+                ->setTaskQueue((new TaskQueueMessage())->setName('my-tq')),
             'heartbeat_details' => $signed->toPayloads(),
         ]));
 
@@ -258,7 +261,9 @@ final class ActivityContextSigningConverter implements PayloadConverterInterface
     private function signature(): string
     {
         return $this->context instanceof ActivitySerializationContext
-            ? (string) $this->context->workflowId . ':' . (string) $this->context->activityType
+            ? (string) $this->context->workflowId
+                . ':' . (string) $this->context->activityType
+                . ':' . (string) $this->context->taskQueue
             : '';
     }
 }
