@@ -116,10 +116,12 @@ final class ScheduleClient implements ScheduleClientInterface
         $options->memo->setDataConverter($this->converter);
         $options->searchAttributes->setDataConverter($this->converter);
 
+        $namespace = $options->namespace ?? $this->clientOptions->namespace;
+
         $request = new CreateScheduleRequest();
         $request
             ->setRequestId(Uuid::v4())
-            ->setNamespace($options->namespace ?? $this->clientOptions->namespace)
+            ->setNamespace($namespace)
             ->setScheduleId($scheduleId)
             ->setIdentity($this->clientOptions->identity);
 
@@ -142,8 +144,6 @@ final class ScheduleClient implements ScheduleClientInterface
             $initialPatch
                 ->setTriggerImmediately((new TriggerImmediatelyRequest())->setOverlapPolicy($overlap));
         }
-
-        $namespace = $options->namespace ?? $this->clientOptions->namespace;
 
         $mapper = new ScheduleMapper($this->converter, $this->marshaller);
         $scheduleMessage = $mapper->toMessage($schedule, $namespace);

@@ -464,6 +464,11 @@ class SignedPayloadConverter implements PayloadConverterInterface, Serialization
 {
     private ?SerializationContext $context = null;
 
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->context;
+    }
+
     public function withSerializationContext(?SerializationContext $context): static
     {
         $clone = clone $this;
