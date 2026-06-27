@@ -90,7 +90,7 @@ final class PendingActivityInfoMapper
         }
 
         $values = EncodedValues::fromPayloads($details, $this->converter);
-        $values->setSerializationContext($context);
+        $values = $values->withSerializationContext($context);
 
         return $values;
     }
@@ -102,7 +102,7 @@ final class PendingActivityInfoMapper
         }
 
         $exception = FailureConverter::mapFailureToException($failure, $this->converter);
-        $exception->setSerializationContext($context);
+        $exception = $exception->withSerializationContext($context);
 
         return $exception;
     }

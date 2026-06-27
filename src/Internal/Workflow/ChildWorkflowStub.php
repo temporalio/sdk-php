@@ -76,7 +76,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             $namespace = $this->options->namespace !== ''
                 ? $this->options->namespace
                 : Workflow::getCurrentContext()->getInfo()->namespace;
-            $arguments->setSerializationContext(new WorkflowSerializationContext(
+            $arguments = $arguments->withSerializationContext(new WorkflowSerializationContext(
                 namespace: $namespace,
                 workflowId: $workflowId,
             ));
@@ -131,7 +131,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     : Workflow::getCurrentContext()->getInfo()->namespace;
 
                 $arguments = EncodedValues::fromValues($args);
-                $arguments->setSerializationContext(new WorkflowSerializationContext(
+                $arguments = $arguments->withSerializationContext(new WorkflowSerializationContext(
                     namespace: $namespace,
                     workflowId: $execution->getID(),
                 ));

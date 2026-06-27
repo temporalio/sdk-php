@@ -36,10 +36,17 @@ class Encoder
     public function encode(CommandInterface $cmd): Message
     {
         $msg = new Message();
+        $context = match (true) {
+            $cmd instanceof RequestInterface,
+            $cmd instanceof SuccessResponseInterface => $cmd->getPayloads()->getSerializationContext(),
+            $cmd instanceof UpdateResponse => $cmd->getPayloads()?->getSerializationContext(),
+            default => null,
+        };
+        $converter = SerializationContextBinder::bind($this->converter, $context);
 
         switch (true) {
             case $cmd instanceof RequestInterface:
-                $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getPayloads()->setDataConverter($converter);
                 $msg->setId($cmd->getID());
 
                 $header = $cmd->getHeader();
@@ -57,24 +64,20 @@ class Encoder
                 $msg->setHeader($header->toHeader());
 
                 if ($cmd->getFailure() !== null) {
-                    $context = $cmd->getPayloads()->getSerializationContext();
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
-                        $cmd->getFailure(),
-                        SerializationContextBinder::bind($this->converter, $context),
-                    ));
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter));
                 }
 
                 return $msg;
 
             case $cmd instanceof FailureResponseInterface:
                 \is_int($cmd->getID()) and $msg->setId($cmd->getID());
-                $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter));
 
                 return $msg;
 
             case $cmd instanceof SuccessResponseInterface:
                 \is_int($cmd->getID()) and $msg->setId($cmd->getID());
-                $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getPayloads()->setDataConverter($converter);
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
                 return $msg;
@@ -85,15 +88,11 @@ class Encoder
 
                 $updatePayloads = $cmd->getPayloads();
                 if ($cmd->getFailure() !== null) {
-                    $context = $updatePayloads?->getSerializationContext();
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
-                        $cmd->getFailure(),
-                        SerializationContextBinder::bind($this->converter, $context),
-                    ));
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter));
                 }
 
                 if ($updatePayloads !== null) {
-                    $updatePayloads->setDataConverter($this->converter);
+                    $updatePayloads->setDataConverter($converter);
                     $msg->setPayloads($updatePayloads->toPayloads());
                 }
 

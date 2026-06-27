@@ -44,6 +44,11 @@ final class DataConverter implements DataConverterInterface, SerializationContex
         );
     }
 
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->serializationContext;
+    }
+
     public function withSerializationContext(?SerializationContext $context): static
     {
         if ($context === $this->serializationContext) {

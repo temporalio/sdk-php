@@ -86,8 +86,12 @@ class InvokeActivity extends Route
             isLocal: $this->isLocal(),
         );
 
-        $payloads->setSerializationContext($serializationContext);
-        $heartbeatDetails?->setSerializationContext($serializationContext);
+        $context = $context->withInput($context->getInput()->withSerializationContext($serializationContext));
+        if ($heartbeatDetails !== null) {
+            $context = $context->withLastHeartbeatDetails(
+                $heartbeatDetails->withSerializationContext($serializationContext),
+            );
+        }
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
@@ -122,12 +126,12 @@ class InvokeActivity extends Route
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
                 $resultPayloads = EncodedValues::fromValues([$result]);
-                $resultPayloads->setSerializationContext($serializationContext);
+                $resultPayloads = $resultPayloads->withSerializationContext($serializationContext);
                 $resolver->resolve($resultPayloads);
             }
         } catch (\Throwable $e) {
             if ($e instanceof TemporalFailure) {
-                $e->setSerializationContext($serializationContext);
+                $e = $e->withSerializationContext($serializationContext);
             }
 
             $resolver->reject($e);

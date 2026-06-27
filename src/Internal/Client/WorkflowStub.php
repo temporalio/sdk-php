@@ -149,7 +149,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $serviceClient = $this->serviceClient;
 
         $signalArguments = EncodedValues::fromValues($args, $this->converter);
-        $signalArguments->setSerializationContext($this->getSerializationContext());
+        $signalArguments = $signalArguments->withSerializationContext($this->getSerializationContext());
 
         $this->interceptors->with(
             static function (SignalInput $input) use ($request, $serviceClient): void {
@@ -194,7 +194,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $context = $this->getSerializationContext();
 
         $queryArguments = EncodedValues::fromValues($args, $this->converter);
-        $queryArguments->setSerializationContext($context);
+        $queryArguments = $queryArguments->withSerializationContext($context);
 
         return $this->interceptors->with(
             static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions, $context): ?EncodedValues {
@@ -234,7 +234,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     }
 
                     $queryResult = EncodedValues::fromPayloads($result->getQueryResult(), $converter);
-                    $queryResult->setSerializationContext($context);
+                    $queryResult = $queryResult->withSerializationContext($context);
 
                     return $queryResult;
                 }
@@ -278,7 +278,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $clientOptions = $this->clientOptions;
 
         $updateArguments = EncodedValues::fromValues($args, $this->converter);
-        $updateArguments->setSerializationContext($this->getSerializationContext());
+        $updateArguments = $updateArguments->withSerializationContext($this->getSerializationContext());
 
         /**
          * @var StartUpdateOutput $result
@@ -421,7 +421,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 if ($details !== []) {
                     $values = EncodedValues::fromValues($details, $converter);
-                    $values->setSerializationContext(new WorkflowSerializationContext(
+                    $values = $values->withSerializationContext(new WorkflowSerializationContext(
                         $clientOptions->namespace,
                         $input->workflowExecution->getID(),
                     ));
@@ -549,7 +549,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 }
 
                 $result = EncodedValues::fromPayloads($attr->getResult(), $this->converter);
-                $result->setSerializationContext($this->getSerializationContext());
+                $result = $result->withSerializationContext($this->getSerializationContext());
 
                 return $result;
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED:
@@ -567,7 +567,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $details = $attr->hasDetails()
                     ? EncodedValues::fromPayloads($attr->getDetails(), $this->converter)
                     : EncodedValues::fromValues([]);
-                $details->setSerializationContext($this->getSerializationContext());
+                $details = $details->withSerializationContext($this->getSerializationContext());
 
                 throw new WorkflowFailedException(
                     $this->execution,
@@ -676,7 +676,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         switch (true) {
             case $failure instanceof WorkflowExecutionFailedException:
                 $cause = FailureConverter::mapFailureToException($failure->getFailure(), $this->converter);
-                $cause->setSerializationContext($this->getSerializationContext());
+                $cause = $cause->withSerializationContext($this->getSerializationContext());
 
                 return new WorkflowFailedException(
                     $this->execution,

@@ -33,9 +33,16 @@ class Encoder
 
     public function encode(CommandInterface $cmd): array
     {
+        $context = match (true) {
+            $cmd instanceof RequestInterface,
+            $cmd instanceof SuccessResponseInterface => $cmd->getPayloads()->getSerializationContext(),
+            default => null,
+        };
+        $converter = SerializationContextBinder::bind($this->converter, $context);
+
         switch (true) {
             case $cmd instanceof RequestInterface:
-                $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getPayloads()->setDataConverter($converter);
 
                 $header = $cmd->getHeader();
                 \assert($header instanceof Header);
@@ -55,25 +62,21 @@ class Encoder
                 ];
 
                 if ($cmd->getFailure() !== null) {
-                    $context = $cmd->getPayloads()->getSerializationContext();
-                    $failure = FailureConverter::mapExceptionToFailure(
-                        $cmd->getFailure(),
-                        SerializationContextBinder::bind($this->converter, $context),
-                    );
+                    $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter);
                     $data['failure'] = \base64_encode($failure->serializeToString());
                 }
 
                 return $data;
 
             case $cmd instanceof FailureResponseInterface:
-                $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
+                $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter);
 
                 $result = \is_int($cmd->getID()) ? ['id' => $cmd->getID()] : [];
                 $result['failure'] = \base64_encode($failure->serializeToString());
                 return $result;
 
             case $cmd instanceof SuccessResponseInterface:
-                $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getPayloads()->setDataConverter($converter);
 
                 $result = \is_int($cmd->getID()) ? ['id' => $cmd->getID()] : [];
                 $result['payloads'] = \base64_encode($cmd->getPayloads()->toPayloads()->serializeToString());

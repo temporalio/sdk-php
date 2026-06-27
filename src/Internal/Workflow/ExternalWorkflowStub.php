@@ -48,7 +48,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
                     ? $input->namespace
                     : Workflow::getCurrentContext()->getInfo()->namespace;
 
-                $input->input->setSerializationContext(new WorkflowSerializationContext(
+                $payloads = $input->input->withSerializationContext(new WorkflowSerializationContext(
                     namespace: $namespace,
                     workflowId: $input->workflowId,
                 ));
@@ -59,7 +59,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
                         $input->workflowId,
                         $input->runId,
                         $input->signal,
-                        $input->input,
+                        $payloads,
                         $input->childWorkflowOnly,
                     ),
                 );

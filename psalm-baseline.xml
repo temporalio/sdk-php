@@ -979,7 +979,7 @@
                     : Workflow::getCurrentContext()->getInfo()->namespace;
 
                 $arguments = EncodedValues::fromValues($args);
-                $arguments->setSerializationContext(new WorkflowSerializationContext(
+                $arguments = $arguments->withSerializationContext(new WorkflowSerializationContext(
                     namespace: $namespace,
                     workflowId: $execution->getID(),
                 ));

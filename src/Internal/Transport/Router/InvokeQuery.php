@@ -91,16 +91,16 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     );
 
                     $arguments = $request->getPayloads();
-                    $arguments->setSerializationContext($serializationContext);
+                    $arguments = $arguments->withSerializationContext($serializationContext);
 
                     $result = $handler(new QueryInput($name, $arguments, $info));
 
                     $resultValues = EncodedValues::fromValues([$result]);
-                    $resultValues->setSerializationContext($serializationContext);
+                    $resultValues = $resultValues->withSerializationContext($serializationContext);
                     $resolver->resolve($resultValues);
                 } catch (\Throwable $e) {
                     if ($serializationContext !== null && $e instanceof TemporalFailure) {
-                        $e->setSerializationContext($serializationContext);
+                        $e = $e->withSerializationContext($serializationContext);
                     }
 
                     $resolver->reject($e);

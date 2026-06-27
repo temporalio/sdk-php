@@ -29,7 +29,7 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
         $context = new WorkflowSerializationContext('default', 'wf-1');
 
         $values = EncodedValues::fromValues(['hello'], $converter);
-        $values->setSerializationContext($context);
+        $values = $values->withSerializationContext($context);
         $values->toPayloads();
 
         self::assertSame($context, $converter->lastUsedContext);
@@ -42,7 +42,7 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
 
         $payloads = EncodedValues::fromValues(['hello'], $converter)->toPayloads();
         $values = EncodedValues::fromPayloads($payloads, $converter);
-        $values->setSerializationContext($context);
+        $values = $values->withSerializationContext($context);
         $values->getValue(0);
 
         self::assertSame($context, $converter->lastUsedContext);
@@ -67,11 +67,11 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
 
         $values = EncodedValues::fromValues(['hello'], $converter);
 
-        $values->setSerializationContext($contextA);
+        $values = $values->withSerializationContext($contextA);
         $values->toPayloads();
         self::assertSame($contextA, $recorder->lastUsedContext);
 
-        $values->setSerializationContext($contextB);
+        $values = $values->withSerializationContext($contextB);
         $values->toPayloads();
         self::assertSame($contextB, $recorder->lastUsedContext);
     }
@@ -83,13 +83,24 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
         $context = new WorkflowSerializationContext('default', 'wf-1');
 
         $values = EncodedValues::fromValues(['hello'], new CloningContextRecordingDataConverter($recorderA));
-        $values->setSerializationContext($context);
+        $values = $values->withSerializationContext($context);
         $values->toPayloads();
         self::assertSame($context, $recorderA->lastUsedContext);
 
         $values->setDataConverter(new CloningContextRecordingDataConverter($recorderB));
         $values->toPayloads();
         self::assertSame($context, $recorderB->lastUsedContext);
+    }
+
+    public function testWithSerializationContextReturnsCloneAndLeavesOriginalUnchanged(): void
+    {
+        $context = new WorkflowSerializationContext('default', 'wf-1');
+        $original = EncodedValues::fromValues(['x']);
+        $clone = $original->withSerializationContext($context);
+
+        self::assertNotSame($original, $clone);
+        self::assertNull($original->getSerializationContext());
+        self::assertSame($context, $clone->getSerializationContext());
     }
 }
 
@@ -111,6 +122,11 @@ final class CloningContextRecordingDataConverter implements DataConverterInterfa
         $clone = clone $this;
         $clone->boundContext = $context;
         return $clone;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->boundContext;
     }
 
     public function fromPayload(Payload $payload, mixed $type): mixed
@@ -135,6 +151,11 @@ final class ContextRecordingDataConverter implements DataConverterInterface, Ser
     {
         $this->boundContext = $context;
         return $this;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->boundContext;
     }
 
     public function fromPayload(Payload $payload, mixed $type): mixed

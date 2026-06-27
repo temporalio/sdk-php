@@ -16,7 +16,7 @@ use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\SerializationContext;
-use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\SerializationContextAwareInterface;
 use Temporal\Exception\TemporalException;
 
 /**
@@ -31,11 +31,12 @@ use Temporal\Exception\TemporalException;
  * <p>Any unhandled exception thrown by an activity or workflow will be converted to an instance of
  * {@link ApplicationFailure}.
  */
-class TemporalFailure extends TemporalException implements \Stringable
+class TemporalFailure extends TemporalException implements \Stringable, SerializationContextAwareInterface
 {
     private ?Failure $failure = null;
     private string $originalMessage;
     private ?string $originalStackTrace = null;
+    private ?SerializationContext $serializationContext = null;
 
     public function __construct(string $message, ?string $originalMessage = null, ?\Throwable $previous = null)
     {
@@ -84,19 +85,27 @@ class TemporalFailure extends TemporalException implements \Stringable
         // typically handled by children
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
+    public function getSerializationContext(): ?SerializationContext
     {
-        $this->serializationContextDetails()?->setSerializationContext($context);
+        return $this->serializationContext;
+    }
+
+    public function withSerializationContext(?SerializationContext $context): static
+    {
+        $this->serializationContext = $context;
+        $this->applySerializationContext($context);
 
         $previous = $this->getPrevious();
         while ($previous !== null) {
             if ($previous instanceof self) {
-                $previous->setSerializationContext($context);
-                return;
+                $previous->withSerializationContext($context);
+                return $this;
             }
 
             $previous = $previous->getPrevious();
         }
+
+        return $this;
     }
 
     public function __toString(): string
@@ -131,8 +140,5 @@ class TemporalFailure extends TemporalException implements \Stringable
         return parent::buildMessage($result);
     }
 
-    protected function serializationContextDetails(): ?ValuesInterface
-    {
-        return null;
-    }
+    protected function applySerializationContext(?SerializationContext $context): void {}
 }

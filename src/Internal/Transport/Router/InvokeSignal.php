@@ -39,7 +39,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $request->getTickInfo()->applyTo($info);
 
         $payloads = $request->getPayloads();
-        $payloads->setSerializationContext(
+        $payloads = $payloads->withSerializationContext(
             new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
         );
 

@@ -24,6 +24,7 @@ use Temporal\Client\Schedule\Update\ScheduleUpdate;
 use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\SerializationContextBinder;
 use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Mapper\ScheduleMapper;
@@ -146,10 +147,9 @@ final class ScheduleHandle
         $action = $description->schedule->action;
         if ($action instanceof StartWorkflowAction && $action->workflowId !== '') {
             $context = new WorkflowSerializationContext($this->namespace, $action->workflowId);
-            $action->input->setDataConverter($this->converter);
-            $action->input->setSerializationContext($context);
-            $action->memo->setDataConverter($this->converter);
-            $action->memo->setSerializationContext($context);
+            $converter = SerializationContextBinder::bind($this->converter, $context);
+            $action->input->setDataConverter($converter);
+            $action->memo->setDataConverter($converter);
         }
 
         return $description;

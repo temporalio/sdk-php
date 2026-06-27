@@ -98,6 +98,11 @@ final class RecordingAwarePayloadConverter implements PayloadConverterInterface,
         return $clone;
     }
 
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->boundContext;
+    }
+
     public function getEncodingType(): string
     {
         return EncodingKeys::METADATA_ENCODING_RAW;

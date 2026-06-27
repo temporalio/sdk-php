@@ -43,7 +43,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         private readonly DataConverterInterface $converter,
         private ValuesInterface $input,
         private HeaderInterface $header,
-        private readonly ?ValuesInterface $lastHeartbeatDetails = null,
+        private ?ValuesInterface $lastHeartbeatDetails = null,
     ) {
         $this->info = new ActivityInfo();
     }
@@ -75,6 +75,14 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
     {
         $context = clone $this;
         $context->header = $header;
+
+        return $context;
+    }
+
+    public function withLastHeartbeatDetails(?ValuesInterface $lastHeartbeatDetails): self
+    {
+        $context = clone $this;
+        $context->lastHeartbeatDetails = $lastHeartbeatDetails;
 
         return $context;
     }
@@ -126,7 +134,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         );
 
         $heartbeatPayloads = EncodedValues::fromValues([$details], $this->converter);
-        $heartbeatPayloads->setSerializationContext($serializationContext);
+        $heartbeatPayloads = $heartbeatPayloads->withSerializationContext($serializationContext);
 
         $details = $heartbeatPayloads
             ->toPayloads()

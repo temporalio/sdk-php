@@ -20,32 +20,31 @@ final class TemporalFailureSerializationContextTestCase extends TestCase
 {
     public function testContextPropagatesToDetailsAndDirectCause(): void
     {
-        $causeDetails = EncodedValues::fromValues(['cause']);
-        $cause = new ApplicationFailure('cause', 'T', true, $causeDetails);
-
-        $outerDetails = EncodedValues::fromValues(['outer']);
-        $outer = new ApplicationFailure('outer', 'T', true, $outerDetails, previous: $cause);
+        $cause = new ApplicationFailure('cause', 'T', true, EncodedValues::fromValues(['cause']));
+        $outer = new ApplicationFailure('outer', 'T', true, EncodedValues::fromValues(['outer']), previous: $cause);
 
         $context = new WorkflowSerializationContext('default', 'wf-1');
-        $outer->setSerializationContext($context);
+        $outer = $outer->withSerializationContext($context);
 
-        self::assertSame($context, $outerDetails->getSerializationContext());
-        self::assertSame($context, $causeDetails->getSerializationContext());
+        self::assertSame($context, $outer->getSerializationContext());
+        self::assertSame($context, $outer->getDetails()->getSerializationContext());
+        self::assertSame($context, $cause->getSerializationContext());
+        self::assertSame($context, $cause->getDetails()->getSerializationContext());
     }
 
     public function testContextWalksPastNonTemporalCause(): void
     {
-        $causeDetails = EncodedValues::fromValues(['cause']);
-        $cause = new ApplicationFailure('cause', 'T', true, $causeDetails);
+        $cause = new ApplicationFailure('cause', 'T', true, EncodedValues::fromValues(['cause']));
         $wrapper = new \RuntimeException('wrapper', 0, $cause);
 
-        $outerDetails = EncodedValues::fromValues(['outer']);
-        $outer = new ApplicationFailure('outer', 'T', true, $outerDetails, previous: $wrapper);
+        $outer = new ApplicationFailure('outer', 'T', true, EncodedValues::fromValues(['outer']), previous: $wrapper);
 
         $context = new WorkflowSerializationContext('default', 'wf-1');
-        $outer->setSerializationContext($context);
+        $outer = $outer->withSerializationContext($context);
 
-        self::assertSame($context, $outerDetails->getSerializationContext());
-        self::assertSame($context, $causeDetails->getSerializationContext());
+        self::assertSame($context, $outer->getSerializationContext());
+        self::assertSame($context, $outer->getDetails()->getSerializationContext());
+        self::assertSame($context, $cause->getSerializationContext());
+        self::assertSame($context, $cause->getDetails()->getSerializationContext());
     }
 }

@@ -66,16 +66,15 @@ final class StartWorkflow extends Route
         $input = $this->services->marshaller->unmarshal($options, new Input());
 
         /** @psalm-suppress InaccessibleProperty */
-        $input->input = $payloads;
-        /** @psalm-suppress InaccessibleProperty */
         $input->header = $request->getHeader();
 
         $info = $input->info;
         $request->getTickInfo()->applyTo($info);
 
         $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
-        $input->input->setSerializationContext($serializationContext);
-        $lastCompletionResult?->setSerializationContext($serializationContext);
+        /** @psalm-suppress InaccessibleProperty */
+        $input->input = $payloads->withSerializationContext($serializationContext);
+        $lastCompletionResult = $lastCompletionResult?->withSerializationContext($serializationContext);
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 

@@ -18,7 +18,7 @@ use Temporal\Api\Common\V1\Payloads;
  *
  * @method mixed[] getValues() Returns all values as array.
  */
-interface ValuesInterface extends \Countable
+interface ValuesInterface extends \Countable, SerializationContextAwareInterface
 {
     /**
      * Checks if any value present.
@@ -26,10 +26,6 @@ interface ValuesInterface extends \Countable
     public function isEmpty(): bool;
 
     public function setDataConverter(DataConverterInterface $converter): void;
-
-    public function setSerializationContext(?SerializationContext $context): void;
-
-    public function getSerializationContext(): ?SerializationContext;
 
     /**
      * Get value by it's index.

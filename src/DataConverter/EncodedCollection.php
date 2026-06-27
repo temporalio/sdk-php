@@ -23,7 +23,7 @@ use Temporal\Api\Common\V1\Payload;
  *
  * @implements \IteratorAggregate<TKey, TValue>
  */
-class EncodedCollection implements \IteratorAggregate, \Countable
+class EncodedCollection implements \IteratorAggregate, \Countable, SerializationContextAwareInterface
 {
     use SerializationContextBindingTrait;
 

@@ -13,6 +13,7 @@ namespace Temporal\Exception\Failure;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 
 class CanceledFailure extends TemporalFailure
@@ -35,8 +36,8 @@ class CanceledFailure extends TemporalFailure
         $this->details->setDataConverter($converter);
     }
 
-    protected function serializationContextDetails(): ?ValuesInterface
+    protected function applySerializationContext(?SerializationContext $context): void
     {
-        return $this->details;
+        $this->details = $this->details->withSerializationContext($context);
     }
 }

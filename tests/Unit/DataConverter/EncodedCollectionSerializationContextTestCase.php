@@ -32,11 +32,11 @@ final class EncodedCollectionSerializationContextTestCase extends AbstractUnit
         $context = new WorkflowSerializationContext('default', 'wf-1');
 
         $encoded = EncodedCollection::fromValues(['note' => 'remember'], $converter);
-        $encoded->setSerializationContext($context);
+        $encoded = $encoded->withSerializationContext($context);
         $payloads = $encoded->toPayloadArray();
 
         $decoded = EncodedCollection::fromPayloadCollection($payloads, $converter);
-        $decoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
+        $decoded = $decoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
 
         self::assertSame('remember', $decoded->getValue('note', Type::TYPE_STRING));
     }
@@ -46,11 +46,11 @@ final class EncodedCollectionSerializationContextTestCase extends AbstractUnit
         $converter = new DataConverter(new CollectionSigningConverter());
 
         $encoded = EncodedCollection::fromValues(['note' => 'remember'], $converter);
-        $encoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
+        $encoded = $encoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
         $payloads = $encoded->toPayloadArray();
 
         $decoded = EncodedCollection::fromPayloadCollection($payloads, $converter);
-        $decoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
+        $decoded = $decoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Signature mismatch: expected "wf-B", got "wf-A"');
@@ -63,11 +63,11 @@ final class EncodedCollectionSerializationContextTestCase extends AbstractUnit
 
         $collection = EncodedCollection::fromValues(['note' => 'remember'], $converter);
 
-        $collection->setSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
+        $collection = $collection->withSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
         $first = $collection->toPayloadArray();
         self::assertSame('wf-A', $first['note']->getMetadata()['signature']);
 
-        $collection->setSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
+        $collection = $collection->withSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
         $second = $collection->toPayloadArray();
         self::assertSame('wf-B', $second['note']->getMetadata()['signature']);
     }
@@ -87,14 +87,25 @@ final class EncodedCollectionSerializationContextTestCase extends AbstractUnit
         $converter = new DataConverter(new CollectionSigningConverter());
 
         $original = EncodedCollection::fromValues(['note' => 'remember'], $converter);
-        $original->setSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
+        $original = $original->withSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
         self::assertSame('wf-A', $original->toPayloadArray()['note']->getMetadata()['signature']);
 
         $clone = $original->withValue('extra', 'value');
-        $clone->setSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
+        $clone = $clone->withSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
 
         self::assertSame('wf-B', $clone->toPayloadArray()['note']->getMetadata()['signature']);
         self::assertSame('wf-A', $original->toPayloadArray()['note']->getMetadata()['signature']);
+    }
+
+    public function testWithSerializationContextReturnsCloneAndLeavesOriginalUnchanged(): void
+    {
+        $context = new WorkflowSerializationContext('default', 'wf-1');
+        $original = EncodedCollection::fromValues(['note' => 'remember']);
+        $clone = $original->withSerializationContext($context);
+
+        self::assertNotSame($original, $clone);
+        self::assertNull($original->getSerializationContext());
+        self::assertSame($context, $clone->getSerializationContext());
     }
 }
 
@@ -109,6 +120,11 @@ final class CollectionSigningConverter implements PayloadConverterInterface, Ser
         $clone = clone $this;
         $clone->context = $context;
         return $clone;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->context;
     }
 
     public function getEncodingType(): string

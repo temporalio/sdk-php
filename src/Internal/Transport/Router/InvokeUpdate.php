@@ -46,7 +46,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
 
             $arguments = $request->getPayloads();
-            $arguments->setSerializationContext($serializationContext);
+            $arguments = $arguments->withSerializationContext($serializationContext);
 
             $input = new UpdateInput(
                 updateName: $name,
@@ -88,7 +88,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                     $info->namespace,
                     $info->execution->getID(),
                 );
-                $e->setSerializationContext($serializationContext);
+                $e = $e->withSerializationContext($serializationContext);
             }
 
             $context->getClient()->send(
@@ -108,7 +108,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $deferred->promise()->then(
             static function (mixed $value) use ($updateId, $context, $serializationContext): void {
                 $values = EncodedValues::fromValues([$value]);
-                $values->setSerializationContext($serializationContext);
+                $values = $values->withSerializationContext($serializationContext);
 
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,
@@ -119,7 +119,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             },
             static function (\Throwable $err) use ($updateId, $context, $serializationContext): void {
                 if ($err instanceof TemporalFailure) {
-                    $err->setSerializationContext($serializationContext);
+                    $err = $err->withSerializationContext($serializationContext);
                 }
 
                 $context->getClient()->send(new UpdateResponse(

@@ -23,10 +23,17 @@ trait SerializationContextBindingTrait
         $this->boundConverter = null;
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
+    public function withSerializationContext(?SerializationContext $context): static
     {
-        $this->serializationContext = $context;
-        $this->boundConverter = null;
+        if ($context === $this->serializationContext) {
+            return $this;
+        }
+
+        $clone = clone $this;
+        $clone->serializationContext = $context;
+        $clone->boundConverter = null;
+
+        return $clone;
     }
 
     public function getSerializationContext(): ?SerializationContext

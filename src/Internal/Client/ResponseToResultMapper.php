@@ -52,7 +52,7 @@ final class ResponseToResultMapper
 
         if ($success !== null) {
             $values = EncodedValues::fromPayloads($success, $this->converter);
-            $values->setSerializationContext(
+            $values = $values->withSerializationContext(
                 new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
             );
 
@@ -62,7 +62,7 @@ final class ResponseToResultMapper
         if ($failure !== null) {
             $execution = $updateRef->getWorkflowExecution();
             $cause = FailureConverter::mapFailureToException($failure, $this->converter);
-            $cause->setSerializationContext(
+            $cause = $cause->withSerializationContext(
                 new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
             );
 

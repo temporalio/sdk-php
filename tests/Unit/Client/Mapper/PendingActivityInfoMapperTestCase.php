@@ -195,7 +195,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
         $converter = new DataConverter(new ActivityContextSigningConverter());
 
         $signed = EncodedValues::fromValues(['hb-progress'], $converter);
-        $signed->setSerializationContext(new ActivitySerializationContext(
+        $signed = $signed->withSerializationContext(new ActivitySerializationContext(
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'MyActivity',
@@ -225,6 +225,11 @@ final class ActivityContextSigningConverter implements PayloadConverterInterface
         $clone = clone $this;
         $clone->context = $context;
         return $clone;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->context;
     }
 
     public function getEncodingType(): string

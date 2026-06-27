@@ -69,7 +69,7 @@ final class ActivityStub implements ActivityStubInterface
             : $info->taskQueue;
 
         $arguments = EncodedValues::fromValues($args);
-        $arguments->setSerializationContext(new ActivitySerializationContext(
+        $arguments = $arguments->withSerializationContext(new ActivitySerializationContext(
             namespace: $info->namespace,
             workflowId: $info->execution->getID(),
             workflowType: $info->type->name,

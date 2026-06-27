@@ -32,15 +32,17 @@ final class ScheduleMapper
     {
         if ($dto->action instanceof StartWorkflowAction) {
             $action = $dto->action;
-            $action->input->setDataConverter($this->converter);
             if ($namespace !== null && $action->workflowId !== '') {
                 $context = new WorkflowSerializationContext(
                     namespace: $namespace,
                     workflowId: $action->workflowId,
                 );
-                $action->input->setSerializationContext($context);
-                $action->memo->setSerializationContext($context);
+                $action = $action
+                    ->withInput($action->input->withSerializationContext($context))
+                    ->withMemo($action->memo->withSerializationContext($context));
+                $dto = $dto->withAction($action);
             }
+            $action->input->setDataConverter($this->converter);
             $action->header->setDataConverter($this->converter);
             $action->memo->setDataConverter($this->converter);
             $action->searchAttributes->setDataConverter($this->converter);

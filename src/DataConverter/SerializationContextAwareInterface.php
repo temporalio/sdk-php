@@ -13,5 +13,7 @@ namespace Temporal\DataConverter;
 
 interface SerializationContextAwareInterface
 {
+    public function getSerializationContext(): ?SerializationContext;
+
     public function withSerializationContext(?SerializationContext $context): static;
 }

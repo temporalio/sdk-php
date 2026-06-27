@@ -70,14 +70,14 @@ final class Client implements ClientInterface
         if ($response instanceof FailureResponseInterface) {
             $failure = $response->getFailure();
             if ($serializationContext !== null && $failure instanceof TemporalFailure) {
-                $failure->setSerializationContext($serializationContext);
+                $failure = $failure->withSerializationContext($serializationContext);
             }
 
             $deferred->reject($failure);
         } else {
             $payloads = $response->getPayloads();
             if ($serializationContext !== null && $payloads !== null) {
-                $payloads->setSerializationContext($serializationContext);
+                $payloads = $payloads->withSerializationContext($serializationContext);
             }
             $deferred->resolve($payloads);
         }

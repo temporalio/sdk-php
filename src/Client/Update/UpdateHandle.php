@@ -154,7 +154,7 @@ final class UpdateHandle
         $success = $result->getSuccess();
         if ($success !== null) {
             $values = EncodedValues::fromPayloads($success, $this->converter);
-            $values->setSerializationContext($context);
+            $values = $values->withSerializationContext($context);
             $this->result = $values;
             return;
         }
@@ -163,7 +163,7 @@ final class UpdateHandle
         $failure = $result->getFailure();
         \assert($failure !== null);
         $e = FailureConverter::mapFailureToException($failure, $this->converter);
-        $e->setSerializationContext($context);
+        $e = $e->withSerializationContext($context);
 
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),

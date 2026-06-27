@@ -33,11 +33,11 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $converter = new DataConverter(new SigningPayloadConverter());
 
         $encoded = EncodedValues::fromValues(['payload'], $converter);
-        $encoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
+        $encoded = $encoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
         $payloads = $encoded->toPayloads();
 
         $decoded = EncodedValues::fromPayloads($payloads, $converter);
-        $decoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
+        $decoded = $decoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
 
         self::assertSame('payload', $decoded->getValue(0, Type::TYPE_STRING));
     }
@@ -47,11 +47,11 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $converter = new DataConverter(new SigningPayloadConverter());
 
         $encoded = EncodedValues::fromValues(['payload'], $converter);
-        $encoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
+        $encoded = $encoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-A'));
         $payloads = $encoded->toPayloads();
 
         $decoded = EncodedValues::fromPayloads($payloads, $converter);
-        $decoded->setSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
+        $decoded = $decoded->withSerializationContext(new WorkflowSerializationContext('default', 'wf-B'));
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Signature mismatch: expected "wf-B", got "wf-A"');
@@ -63,7 +63,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $converter = new DataConverter(new SigningPayloadConverter());
 
         $encoded = EncodedValues::fromValues(['payload'], $converter);
-        $encoded->setSerializationContext(new ActivitySerializationContext(
+        $encoded = $encoded->withSerializationContext(new ActivitySerializationContext(
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'Charge',
@@ -71,7 +71,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $payloads = $encoded->toPayloads();
 
         $decoded = EncodedValues::fromPayloads($payloads, $converter);
-        $decoded->setSerializationContext(new ActivitySerializationContext(
+        $decoded = $decoded->withSerializationContext(new ActivitySerializationContext(
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'Refund',
@@ -92,11 +92,11 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $converter = new DataConverter(new SigningPayloadConverter());
 
         $encoded = EncodedValues::fromValues(['payload'], $converter);
-        $encoded->setSerializationContext($context);
+        $encoded = $encoded->withSerializationContext($context);
         $payloads = $encoded->toPayloads();
 
         $decoded = EncodedValues::fromPayloads($payloads, $converter);
-        $decoded->setSerializationContext(new ActivitySerializationContext(namespace: 'default', activityType: 'Charge'));
+        $decoded = $decoded->withSerializationContext(new ActivitySerializationContext(namespace: 'default', activityType: 'Charge'));
 
         self::assertSame('payload', $decoded->getValue(0, Type::TYPE_STRING));
     }
@@ -113,6 +113,11 @@ final class SigningPayloadConverter implements PayloadConverterInterface, Serial
         $clone = clone $this;
         $clone->context = $context;
         return $clone;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->context;
     }
 
     public function getEncodingType(): string

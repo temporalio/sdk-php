@@ -75,6 +75,11 @@ final class RecordingAwareDataConverter implements DataConverterInterface, Seria
         return $clone;
     }
 
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->boundContext;
+    }
+
     public function fromPayload(Payload $payload, mixed $type): mixed
     {
         return null;
