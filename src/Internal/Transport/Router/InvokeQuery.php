@@ -55,6 +55,13 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         };
     }
 
+    private static function serializationContext(WorkflowContext $context): WorkflowSerializationContext
+    {
+        $info = $context->getInfo();
+
+        return new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+    }
+
     /**
      * Handles the query request by finding the appropriate query handler and executing it.
      *
@@ -85,10 +92,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $info = $context->getInfo();
                     $request->getTickInfo()->applyTo($info);
 
-                    $serializationContext = new WorkflowSerializationContext(
-                        $info->namespace,
-                        $info->execution->getID(),
-                    );
+                    $serializationContext = self::serializationContext($context);
 
                     $arguments = $request->getPayloads();
                     $arguments = $arguments->withSerializationContext($serializationContext);
@@ -143,6 +147,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                             )
                             ->setCurrentDetails((string) $context->getCurrentDetails()),
                     ]);
+                    $result = $result->withSerializationContext(self::serializationContext($context));
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
@@ -159,6 +164,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             static function () use ($resolver, $context): void {
                 try {
                     $result = EncodedValues::fromValues([$context->getStackTrace()]);
+                    $result = $result->withSerializationContext(self::serializationContext($context));
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
@@ -177,6 +183,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $result = EncodedValues::fromValues([
                         $context->getEnhancedStackTrace(),
                     ]);
+                    $result = $result->withSerializationContext(self::serializationContext($context));
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
