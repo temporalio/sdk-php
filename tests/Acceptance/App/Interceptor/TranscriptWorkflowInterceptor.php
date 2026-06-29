@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Testing\Transcript;
+namespace Temporal\Tests\Acceptance\App\Interceptor;
 
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
@@ -10,14 +10,14 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
+use Temporal\Tests\Acceptance\App\Logger\TranscriptWriter;
+use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 
 final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterceptor
 {
     use WorkflowInboundCallsInterceptorTrait;
 
-    public function __construct(
-        private readonly TranscriptWriter $transcript,
-    ) {}
+    private ?TranscriptWriter $writer = null;
 
     public function execute(WorkflowInput $input, callable $next): void
     {
@@ -62,7 +62,13 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
 
     public function validateUpdate(UpdateInput $input, callable $next): void
     {
-        $next($input);
+        $attributes = [
+            'update_name' => $input->updateName,
+            'update_id' => $input->updateId,
+            'workflow_id' => $input->info->execution->getID(),
+            'is_replaying' => $input->isReplaying,
+        ];
+        $this->runPhase('workflow_validate_update', $attributes, static fn() => $next($input));
     }
 
     /**
@@ -73,14 +79,31 @@ final class TranscriptWorkflowInterceptor implements WorkflowInboundCallsInterce
      */
     private function runPhase(string $phase, array $attributes, callable $execution): mixed
     {
-        $this->transcript->writeMeta($phase . '_start', $attributes);
+        $writer = $this->resolveWriter();
+        $writer?->writeMeta($phase . '_start', $attributes);
         try {
             $result = $execution();
-            $this->transcript->writeMeta($phase . '_completed', $attributes);
+            $writer?->writeMeta($phase . '_completed', $attributes);
             return $result;
         } catch (\Throwable $exception) {
-            $this->transcript->writeException($phase . '_failed', $attributes, $exception);
+            $writer?->writeException($phase, $attributes, $exception);
             throw $exception;
         }
+    }
+
+    private function resolveWriter(): ?TranscriptWriter
+    {
+        if ($this->writer !== null) {
+            return $this->writer;
+        }
+        try {
+            $container = ContainerFacade::$container ?? null;
+            if ($container !== null && $container->has(TranscriptWriter::class)) {
+                $this->writer = $container->get(TranscriptWriter::class);
+            }
+        } catch (\Throwable) {
+            // intentionally swallow
+        }
+        return $this->writer;
     }
 }

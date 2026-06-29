@@ -2,44 +2,47 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Testing\Transcript;
+namespace Temporal\Tests\Acceptance\App\Logger;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
-
+/**
+ * Persistent-FD, lock-serialized, append-only transcript writer.
+ *
+ * Every public write method catches every internal Throwable and emits to STDERR only —
+ * transcript writes must never throw upward, because they are invoked from shutdown
+ * handlers, destructors, and exception interceptors where re-entry would mask the
+ * original failure.
+ */
 final class TranscriptWriter
 {
     private const SIZE_CAP_BYTES = 50 * 1024 * 1024;
-    private const JSON_FLAGS = \JSON_UNESCAPED_UNICODE
-        | \JSON_UNESCAPED_SLASHES
-        | \JSON_INVALID_UTF8_SUBSTITUTE;
 
     /** @var resource|null */
     private $fileDescriptor;
 
     private string $currentPath;
+
     private int $sequence = 0;
+
     private int $rotationCounter = 0;
+
     private readonly int $processId;
-    private readonly LoggerInterface $stderr;
-    private readonly Filesystem $filesystem;
+
+    private readonly int $workerStartEpochMs;
+
     private bool $inWrite = false;
 
     /**
-     * @param non-empty-string $path
+     * @param non-empty-string $path Initial transcript file path
      */
-    public function __construct(string $path, ?LoggerInterface $stderr = null)
+    public function __construct(string $path)
     {
         $this->processId = \getmypid() ?: 0;
+        $this->workerStartEpochMs = (int) (\microtime(true) * 1000);
         $this->currentPath = $path;
-        $this->stderr = $stderr ?? new NullLogger();
-        $this->filesystem = new Filesystem();
         $this->openFileDescriptor($path);
         $this->writeMeta('writer_initialized', [
             'path' => $path,
-            'worker_start_epoch_ms' => TranscriptPaths::currentEpochMs(),
+            'worker_start_epoch_ms' => $this->workerStartEpochMs,
         ]);
         \register_shutdown_function(function (): void {
             if ($this->fileDescriptor !== null) {
@@ -68,10 +71,7 @@ final class TranscriptWriter
         try {
             $this->doWrite($section, $attributes, $payload);
         } catch (\Throwable $e) {
-            $this->stderr->error('transcript-writer-internal-error', [
-                'class' => $e::class,
-                'message' => $e->getMessage(),
-            ]);
+            \fwrite(\STDERR, '[transcript-writer-internal-error] ' . $e::class . ': ' . $e->getMessage() . "\n");
         } finally {
             $this->inWrite = false;
         }
@@ -81,14 +81,14 @@ final class TranscriptWriter
     {
         $this->write(TranscriptSection::LOG, [
             'level' => $level,
-            'message' => $message,
+            'message' => $this->oneLine($message),
         ], $context === [] ? null : $context);
     }
 
-    public function writeWireInbound(string $frame, array $headers, int $inboundBatchId): void
+    public function writeWireInbound(string $frame, array $headers, int $frameId): void
     {
         $this->write(TranscriptSection::WIRE_INBOUND, [
-            'inbound_batch_id' => $inboundBatchId,
+            'frame_id' => $frameId,
             'bytes' => \strlen($frame),
         ], [
             'headers' => $headers,
@@ -96,11 +96,10 @@ final class TranscriptWriter
         ]);
     }
 
-    public function writeWireOutbound(string $frame, int $inboundBatchId, int $outboundSeq): void
+    public function writeWireOutbound(string $frame, int $frameId): void
     {
         $this->write(TranscriptSection::WIRE_OUTBOUND, [
-            'inbound_batch_id' => $inboundBatchId,
-            'outbound_seq' => $outboundSeq,
+            'frame_id' => $frameId,
             'bytes' => \strlen($frame),
         ], [
             'body' => $this->safeDecodeFrame($frame),
@@ -216,38 +215,21 @@ final class TranscriptWriter
         $this->rotateIfNeeded();
 
         $this->sequence++;
-        $record = [
-            'ts' => (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:s.uP'),
-            'pid' => $this->processId,
-            'seq' => $this->sequence,
-            'section' => $section->value,
-            'attributes' => (object) $attributes,
-        ];
+        $timestamp = (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:s.uP');
+        $line = $timestamp . ' '
+            . $this->processId . ' '
+            . $this->sequence . ' '
+            . '[' . $section->value . '] '
+            . $this->formatAttributes($attributes);
+
         if ($payload !== null) {
-            $record['payload'] = $payload;
+            $line .= ' payload=' . $this->encodePayload($payload);
         }
 
-        $encoded = \json_encode($record, self::JSON_FLAGS);
-        if ($encoded === false) {
-            $encoded = \json_encode([
-                'ts' => $record['ts'],
-                'pid' => $this->processId,
-                'seq' => $this->sequence,
-                'section' => $section->value,
-                'attributes' => (object) $attributes,
-                'payload' => ['error' => 'json_encode_failed', 'message' => \json_last_error_msg()],
-            ], self::JSON_FLAGS);
-        }
-        if ($encoded === false) {
-            $this->stderr->error('transcript-writer-internal-error: json fallback failed', [
-                'message' => \json_last_error_msg(),
-            ]);
-            return;
-        }
-        $line = $encoded . "\n";
+        $line .= "\n";
 
         if (!\flock($this->fileDescriptor, \LOCK_EX)) {
-            $this->stderr->error('transcript-writer-internal-error: flock failed');
+            \fwrite(\STDERR, "[transcript-writer-internal-error] flock failed\n");
             return;
         }
         try {
@@ -268,69 +250,94 @@ final class TranscriptWriter
             return;
         }
         $this->rotationCounter++;
-        $rotated = TranscriptPaths::rotatedFile($this->currentPath, $this->rotationCounter);
-        try {
-            $this->filesystem->rename($this->currentPath, $rotated, true);
-        } catch (IOException $ioError) {
-            $this->stderr->error('transcript-writer-internal-error: rotate rename failed', [
-                'from' => $this->currentPath,
-                'to' => $rotated,
-                'message' => $ioError->getMessage(),
-            ]);
-            return;
-        }
+        $rotated = $this->currentPath . '.' . $this->rotationCounter;
+        @\rename($this->currentPath, $rotated);
         $this->openFileDescriptor($this->currentPath);
-        $this->doWrite(TranscriptSection::META, [
-            'event' => 'writer_rotated',
+        $this->writeMeta('writer_rotated', [
             'from' => $rotated,
             'to' => $this->currentPath,
             'reason' => 'size_cap',
-        ], null);
+        ]);
     }
 
     private function openFileDescriptor(string $path): void
     {
-        try {
-            $this->filesystem->mkdir(\dirname($path));
-        } catch (IOException $ioError) {
-            $this->stderr->error('transcript-writer-internal-error: mkdir failed', [
-                'path' => $path,
-                'message' => $ioError->getMessage(),
-            ]);
+        $directory = \dirname($path);
+        if (!\is_dir($directory)) {
+            @\mkdir($directory, 0777, true);
         }
         $resource = @\fopen($path, 'ab');
         if ($resource === false) {
-            $this->stderr->error('transcript-writer-internal-error: fopen failed', ['path' => $path]);
-            if (\is_resource($this->fileDescriptor)) {
-                @\fclose($this->fileDescriptor);
-            }
+            \fwrite(\STDERR, "[transcript-writer-internal-error] fopen failed for {$path}\n");
             $this->fileDescriptor = null;
             return;
         }
-        if (\is_resource($this->fileDescriptor)) {
-            @\fclose($this->fileDescriptor);
-        }
         $this->fileDescriptor = $resource;
+    }
+
+    /**
+     * @param array<string, scalar|null> $attributes
+     */
+    private function formatAttributes(array $attributes): string
+    {
+        if ($attributes === []) {
+            return '';
+        }
+        $parts = [];
+        foreach ($attributes as $key => $value) {
+            $parts[] = $key . '=' . $this->encodeAttributeValue($value);
+        }
+        return \implode(' ', $parts);
+    }
+
+    private function encodeAttributeValue(mixed $value): string
+    {
+        if ($value === null) {
+            return 'null';
+        }
+        if (\is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (\is_int($value) || \is_float($value)) {
+            return (string) $value;
+        }
+        $stringValue = (string) $value;
+        if (\preg_match('/[\s"]/', $stringValue) === 1) {
+            return '"' . \str_replace(['\\', '"'], ['\\\\', '\\"'], $stringValue) . '"';
+        }
+        return $stringValue;
+    }
+
+    private function encodePayload(mixed $payload): string
+    {
+        $encoded = \json_encode($payload, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES | \JSON_PARTIAL_OUTPUT_ON_ERROR | \JSON_INVALID_UTF8_SUBSTITUTE);
+        if ($encoded === false) {
+            return '"<json_encode_failed>"';
+        }
+        return $encoded;
+    }
+
+    private function oneLine(string $value): string
+    {
+        return \strtr($value, ["\n" => '\\n', "\r" => '\\r', "\t" => '\\t']);
     }
 
     private function safeDecodeFrame(string $frame): mixed
     {
         $trimmed = \ltrim($frame);
-        if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
-            $decoded = \json_decode($frame, true);
-            if ($decoded !== null || \json_last_error() === \JSON_ERROR_NONE) {
-                return ['encoding' => 'json', 'value' => $decoded];
-            }
+        if ($trimmed === '' || ($trimmed[0] !== '{' && $trimmed[0] !== '[')) {
+            return [
+                'encoding' => 'raw',
+                'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
+            ];
         }
-
-        $temporalFrame = WireFrameDecoder::decode($frame);
-        if ($temporalFrame !== null) {
-            return $temporalFrame;
+        $decoded = \json_decode($frame, true);
+        if ($decoded === null && \json_last_error() !== \JSON_ERROR_NONE) {
+            return [
+                'encoding' => 'raw',
+                'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
+            ];
         }
-
-        return [
-            'encoding' => 'raw',
-            'preview_base64' => \base64_encode(\substr($frame, 0, 512)),
-        ];
+        return ['encoding' => 'json', 'value' => $decoded];
     }
 }

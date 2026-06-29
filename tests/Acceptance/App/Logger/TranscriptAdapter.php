@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Testing\Transcript;
+namespace Temporal\Tests\Acceptance\App\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
@@ -13,7 +13,6 @@ final class TranscriptAdapter implements LoggerInterface
 
     public function __construct(
         private readonly TranscriptWriter $writer,
-        private readonly LoggerInterface $stderr,
     ) {}
 
     public function log($level, \Stringable|string $message, array $context = []): void
@@ -21,9 +20,7 @@ final class TranscriptAdapter implements LoggerInterface
         try {
             $this->writer->writeLog((string) $level, (string) $message, $context);
         } catch (\Throwable $error) {
-            $this->stderr->error('transcript-adapter-error', [
-                'message' => $error->getMessage(),
-            ]);
+            \fwrite(\STDERR, '[transcript-adapter-error] ' . $error->getMessage() . "\n");
         }
     }
 }
