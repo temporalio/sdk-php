@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\DataConverter\ActivitySerializationContext;
+
 /**
  * Used to complete asynchronously activities that called {@link
  * ActivityContext->doNotCompleteOnReturn()}.
@@ -19,6 +21,8 @@ namespace Temporal\Client;
  */
 interface ActivityCompletionClientInterface
 {
+    public function withContext(ActivitySerializationContext $context): self;
+
     /**
      * @param mixed $result
      */

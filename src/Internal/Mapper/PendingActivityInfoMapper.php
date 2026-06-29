@@ -52,8 +52,8 @@ final class PendingActivityInfoMapper
         $serializationContext = new ActivitySerializationContext(
             namespace: $this->namespace,
             workflowId: $this->workflowId,
-            activityType: $message->getActivityType()?->getName(),
-            taskQueue: $message->getActivityOptions()?->getTaskQueue()?->getName(),
+            activityType: $message->getActivityType()?->getName() ?? '',
+            taskQueue: $message->getActivityOptions()?->getTaskQueue()?->getName() ?? '',
         );
 
         return new PendingActivityInfoDto(

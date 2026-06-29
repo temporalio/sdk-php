@@ -67,6 +67,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'Charge',
+            taskQueue: 'tq',
         ));
         $payloads = $encoded->toPayloads();
 
@@ -75,6 +76,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
             namespace: 'default',
             workflowId: 'wf-1',
             activityType: 'Refund',
+            taskQueue: 'tq',
         ));
 
         $this->expectException(\RuntimeException::class);
@@ -84,7 +86,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
 
     public function testStandaloneActivityContextAllowsNullWorkflowFields(): void
     {
-        $context = new ActivitySerializationContext(namespace: 'default', activityType: 'Charge');
+        $context = new ActivitySerializationContext(namespace: 'default', activityType: 'Charge', taskQueue: 'tq');
 
         self::assertNull($context->getWorkflowId());
         self::assertNull($context->workflowType);
@@ -96,7 +98,7 @@ final class SerializationContextSigningTestCase extends AbstractUnit
         $payloads = $encoded->toPayloads();
 
         $decoded = EncodedValues::fromPayloads($payloads, $converter);
-        $decoded = $decoded->withSerializationContext(new ActivitySerializationContext(namespace: 'default', activityType: 'Charge'));
+        $decoded = $decoded->withSerializationContext(new ActivitySerializationContext(namespace: 'default', activityType: 'Charge', taskQueue: 'tq'));
 
         self::assertSame('payload', $decoded->getValue(0, Type::TYPE_STRING));
     }

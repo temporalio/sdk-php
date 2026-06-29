@@ -23,6 +23,7 @@ use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Internal\Workflow\WorkflowSerializationContextFactory;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -57,9 +58,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
     private static function serializationContext(WorkflowContext $context): WorkflowSerializationContext
     {
-        $info = $context->getInfo();
-
-        return new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+        return WorkflowSerializationContextFactory::fromInfo($context->getInfo());
     }
 
     /**

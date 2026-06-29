@@ -15,10 +15,10 @@ final class ActivitySerializationContext implements HasWorkflowSerializationCont
 {
     public function __construct(
         public readonly string $namespace,
+        public readonly string $activityType,
+        public readonly string $taskQueue,
         public readonly ?string $workflowId = null,
         public readonly ?string $workflowType = null,
-        public readonly ?string $activityType = null,
-        public readonly ?string $taskQueue = null,
         public readonly bool $isLocal = false,
     ) {}
 

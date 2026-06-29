@@ -14,7 +14,6 @@ namespace Temporal\Internal\Activity;
 use Temporal\Activity\ActivityCancellationDetails;
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
-use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -124,14 +123,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         // we use native host process RPC here to avoid excessive GRPC connections and to handle throttling
         // on Golang end
 
-        $serializationContext = new ActivitySerializationContext(
-            namespace: $this->info->workflowNamespace,
-            workflowId: $this->info->workflowExecution?->getID(),
-            workflowType: $this->info->workflowType?->name,
-            activityType: $this->info->type->name,
-            taskQueue: $this->info->taskQueue,
-            isLocal: false,
-        );
+        $serializationContext = ActivitySerializationContextFactory::fromActivityInfo($this->info, false);
 
         $heartbeatPayloads = EncodedValues::fromValues([$details], $this->converter);
         $heartbeatPayloads = $heartbeatPayloads->withSerializationContext($serializationContext);

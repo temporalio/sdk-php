@@ -14,10 +14,10 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
+use Temporal\Internal\Workflow\WorkflowSerializationContextFactory;
 use Temporal\Worker\Transport\Command\Client\UpdateResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -43,7 +43,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             $info = $context->getInfo();
             $request->getTickInfo()->applyTo($info);
 
-            $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+            $serializationContext = WorkflowSerializationContextFactory::fromInfo($info);
 
             $arguments = $request->getPayloads();
             $arguments = $arguments->withSerializationContext($serializationContext);
@@ -84,10 +84,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         } catch (\Throwable $e) {
             if ($e instanceof TemporalFailure) {
                 $info = $context->getInfo();
-                $serializationContext ??= new WorkflowSerializationContext(
-                    $info->namespace,
-                    $info->execution->getID(),
-                );
+                $serializationContext ??= WorkflowSerializationContextFactory::fromInfo($info);
                 $e = $e->withSerializationContext($serializationContext);
             }
 

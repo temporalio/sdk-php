@@ -17,13 +17,13 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Internal\Workflow\WorkflowSerializationContextFactory;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Workflow\WorkflowInfo;
@@ -71,7 +71,7 @@ final class StartWorkflow extends Route
         $info = $input->info;
         $request->getTickInfo()->applyTo($info);
 
-        $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+        $serializationContext = WorkflowSerializationContextFactory::fromInfo($info);
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads->withSerializationContext($serializationContext);
         $lastCompletionResult = $lastCompletionResult?->withSerializationContext($serializationContext);

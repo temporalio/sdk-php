@@ -15,7 +15,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
-use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
@@ -73,13 +72,9 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $arguments = EncodedValues::fromValues($args);
         $workflowId = $this->options->workflowId;
         if ($workflowId !== null) {
-            $namespace = $this->options->namespace !== ''
-                ? $this->options->namespace
-                : Workflow::getCurrentContext()->getInfo()->namespace;
-            $arguments = $arguments->withSerializationContext(new WorkflowSerializationContext(
-                namespace: $namespace,
-                workflowId: $workflowId,
-            ));
+            $arguments = $arguments->withSerializationContext(
+                WorkflowSerializationContextFactory::fromTarget($this->options->namespace, $workflowId),
+            );
         }
 
         $this->request = new ExecuteChildWorkflow(
@@ -126,15 +121,10 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     {
         return $this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
-                $namespace = $this->getOptions()->namespace !== ''
-                    ? $this->getOptions()->namespace
-                    : Workflow::getCurrentContext()->getInfo()->namespace;
-
                 $arguments = EncodedValues::fromValues($args);
-                $arguments = $arguments->withSerializationContext(new WorkflowSerializationContext(
-                    namespace: $namespace,
-                    workflowId: $execution->getID(),
-                ));
+                $arguments = $arguments->withSerializationContext(
+                    WorkflowSerializationContextFactory::fromTarget($this->getOptions()->namespace, $execution->getID()),
+                );
 
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,

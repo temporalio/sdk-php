@@ -14,7 +14,6 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
-use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Exception\Failure\TemporalFailure;
@@ -22,6 +21,7 @@ use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Activity\ActivityContext;
+use Temporal\Internal\Activity\ActivitySerializationContextFactory;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -77,14 +77,7 @@ class InvokeActivity extends Route
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $info = $context->getInfo();
-        $serializationContext = new ActivitySerializationContext(
-            namespace: $info->workflowNamespace,
-            workflowId: $info->workflowExecution?->getID(),
-            workflowType: $info->workflowType?->name,
-            activityType: $info->type->name,
-            taskQueue: $info->taskQueue,
-            isLocal: $this->isLocal(),
-        );
+        $serializationContext = ActivitySerializationContextFactory::fromActivityInfo($info, $this->isLocal());
 
         $context = $context->withInput($context->getInput()->withSerializationContext($serializationContext));
         if ($heartbeatDetails !== null) {
