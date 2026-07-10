@@ -91,7 +91,21 @@ final class StartWorkflow extends Route
 
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
-        return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(
+        $found = $this->services->workflows->find($info->type->name);
+
+        if ($found instanceof WorkflowPrototype) {
+            return $found;
+        }
+
+        // Fall back to the dynamic (catch-all) workflow, if one is registered.
+        // The handler reads the real type name via Workflow::getInfo()->type.
+        foreach ($this->services->workflows as $prototype) {
+            if ($prototype instanceof WorkflowPrototype && $prototype->isDynamic()) {
+                return $prototype;
+            }
+        }
+
+        throw new \OutOfRangeException(
             \sprintf(self::ERROR_NOT_FOUND, $info->type->name),
         );
     }
