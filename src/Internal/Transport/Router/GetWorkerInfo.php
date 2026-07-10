@@ -51,6 +51,9 @@ final class GetWorkerInfo extends Route
             'queries' => \array_keys($workflow->getQueryHandlers()),
             'signals' => \array_keys($workflow->getSignalHandlers()),
             'versioning_behavior' => $workflow->getVersioningBehavior()->value,
+            // Advertise the dynamic (catch-all) workflow so the RoadRunner
+            // temporal plugin registers a Go dynamic-workflow proxy for it.
+            'dynamic' => $workflow->isDynamic(),
         ];
 
         $activityMap = static fn(ActivityPrototype $activity): array => [

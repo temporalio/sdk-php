@@ -432,6 +432,9 @@ class WorkflowReader extends Reader
 
         $name = $info->name ?? $interface->getShortName();
 
-        return new WorkflowPrototype($name, $handler, $class);
+        $prototype = new WorkflowPrototype($name, $handler, $class);
+        $prototype->setDynamic($info->dynamic);
+
+        return $prototype;
     }
 }
