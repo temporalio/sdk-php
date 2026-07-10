@@ -102,6 +102,7 @@ final class RuntimeBuilder
         FeatureFlags::$workflowDeferredHandlerStart = true;
         FeatureFlags::$cancelAbandonedChildWorkflows = false;
         FeatureFlags::$warnOnActivityMethodWithoutAttribute = true;
+        FeatureFlags::$propagateCancellationToNewScopes = true;
     }
 
     /**

@@ -1440,12 +1440,6 @@
       <code><![CDATA[\getmypid()]]></code>
     </RiskyTruthyFalsyComparison>
   </file>
-  <file src="testing/src/Transcript/TranscriptWorkflowInterceptor.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[fn() => $next($input)]]></code>
-      <code><![CDATA[fn() => $next($input)]]></code>
-    </MissingClosureReturnType>
-  </file>
   <file src="testing/src/Transcript/TranscriptWriter.php">
     <InvalidPropertyAssignmentValue>
       <code><![CDATA[$this->fileDescriptor]]></code>

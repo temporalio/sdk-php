@@ -27,6 +27,7 @@ use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Transport\Request\RejectedOnCancelInterface;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
@@ -88,6 +89,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private bool $detached = false;
     private bool $cancelled = false;
+    private bool $closed = false;
+    private ?\Throwable $cancelReason = null;
 
     public function __construct(
         ServiceContainer $services,
@@ -192,7 +195,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function onCancel(callable $then): self
     {
-        $this->onCancel[++$this->cancelID] = $then;
+        $this->addOnCancel($then);
         return $this;
     }
 
@@ -218,6 +221,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
 
         $this->cancelled = true;
+        $this->cancelReason = $reason;
 
         foreach ($this->onCancel as $i => $handler) {
             $this->makeCurrent();
@@ -281,12 +285,9 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function onAwait(Deferred $deferred): void
     {
-        $this->onCancel[++$this->cancelID] = static function (?\Throwable $e = null) use ($deferred): void {
+        $cancelID = $this->addOnCancel(static function (?\Throwable $e = null) use ($deferred): void {
             $deferred->reject($e ?? new CanceledFailure(''));
-        };
-
-        $cancelID = $this->cancelID;
-
+        });
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
@@ -330,8 +331,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             $scope->layer = $layer;
         }
 
-        $cancelID = ++$this->cancelID;
-        $this->onCancel[$cancelID] = $scope->cancel(...);
+        $cancelID = $this->addOnCancel($scope->cancel(...));
 
         $scope->onClose(
             function () use ($cancelID): void {
@@ -372,7 +372,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request, $cancellable): void {
+        $cancelID = $this->addOnCancel(function (?\Throwable $reason = null) use ($request, $cancellable): void {
             $client = $this->context->getClient();
             if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
@@ -394,9 +394,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             }
 
             $client->request(new Cancel($request->getID()), $this->scopeContext);
-        };
-
-        $cancelID = $this->cancelID;
+        }, $cancellable);
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
@@ -464,10 +462,27 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
+    private function addOnCancel(callable $handler, bool $cancellable = true): int
+    {
+        $id = ++$this->cancelID;
+
+        if (FeatureFlags::$propagateCancellationToNewScopes && $this->cancelled && $cancellable) {
+            $this->makeCurrent();
+            $handler($this->cancelReason);
+            return $id;
+        }
+
+        $this->onCancel[$id] = $handler;
+        return $id;
+    }
+
     private function nextPromise(PromiseInterface $promise): void
     {
         if ($promise instanceof CancellationScopeInterface && $promise->isCancelled()) {
-            $this->handleError(new CanceledFailure(''));
+            $reason = FeatureFlags::$propagateCancellationToNewScopes && $promise instanceof self
+                ? $promise->cancelReason
+                : null;
+            $this->handleError($reason ?? new CanceledFailure(''));
             return;
         }
 
@@ -529,6 +544,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function onException(\Throwable $e): void
     {
+        if ($this->closed) {
+            return;
+        }
+
+        $this->closed = true;
         $this->deferred->reject($e);
 
         $this->makeCurrent();
@@ -541,6 +561,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function onResult(mixed $result): void
     {
+        if ($this->closed) {
+            return;
+        }
+
+        $this->closed = true;
         $this->deferred->resolve($result);
 
         $this->makeCurrent();

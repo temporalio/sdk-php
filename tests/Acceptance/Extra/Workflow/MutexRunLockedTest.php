@@ -30,6 +30,7 @@ class MutexRunLockedTest extends TestCase
         $this->assertTrue($result[1], 'The function inside runLocked mist wait for signal');
         $this->assertTrue($result[2], 'Mutex must be locked during runLocked');
         $this->assertNull($result[3], 'No exception must be thrown');
+        $this->assertFalse($result[4], 'The trailed runLocked must not run: the permanent lock is held');
     }
 
     #[Test]
@@ -44,6 +45,7 @@ class MutexRunLockedTest extends TestCase
         $this->assertTrue($result[0], 'Mutex must be unlocked after runLocked is cancelled');
         $this->assertNull($result[2], 'Mutex must be locked during runLocked');
         $this->assertSame(CanceledFailure::class, $result[3], 'CanceledFailure must be thrown');
+        $this->assertTrue($result[4], 'Cancelling the outer runLocked releases the inner permanent lock, so the trailed runLocked runs');
     }
 }
 
@@ -83,11 +85,7 @@ class TestWorkflow
             }),
         );
 
-        // The last runLocked must not be executed because there a permanent lock
-        // that was created inside the first runLocked
-        $trailed and throw new \Exception('The trailed runLocked must not be executed.');
-
-        return [$this->unlocked, $this->unblock, $result, $exception];
+        return [$this->unlocked, $this->unblock, $result, $exception, $trailed];
     }
 
     #[Workflow\SignalMethod]
