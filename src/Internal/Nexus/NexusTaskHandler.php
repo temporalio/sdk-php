@@ -58,7 +58,8 @@ final class NexusTaskHandler
     ) {}
 
     /**
-     * Absolute deadline from Operation-Timeout (preferred) or Request-Timeout; absent or unparseable yields null.
+     * Absolute deadline from Request-Timeout (how long the handler has to act); absent or unparseable yields null.
+     * Operation-Timeout is the total operation budget and is left in the headers forwarded to the handler.
      *
      * @param array<string, string> $headers
      */
@@ -66,8 +67,7 @@ final class NexusTaskHandler
     {
         $lowerHeaders = \array_change_key_case($headers, \CASE_LOWER);
 
-        $value = NexusHeader::get($lowerHeaders, NexusHeader::OPERATION_TIMEOUT)
-            ?? NexusHeader::get($lowerHeaders, NexusHeader::REQUEST_TIMEOUT);
+        $value = NexusHeader::get($lowerHeaders, NexusHeader::REQUEST_TIMEOUT);
 
         if ($value === null || $value === '') {
             return null;
@@ -188,6 +188,7 @@ final class NexusTaskHandler
             service: $cancelRequest->getService(),
             operation: $cancelRequest->getOperation(),
             headers: $headers,
+            deadline: self::deadlineFromHeaders($headers),
             env: $this->env,
         );
 

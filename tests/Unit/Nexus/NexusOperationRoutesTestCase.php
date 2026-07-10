@@ -519,7 +519,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
 
     // ── Deadline from Nexus timeout headers ──────────────────────
 
-    public function testOperationTimeoutHeaderSetsDeadline(): void
+    public function testOperationTimeoutHeaderDoesNotSetDeadline(): void
     {
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
@@ -533,11 +533,10 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
         $reply = $this->awaitReply($deferred);
         $result = $this->decodePayload($reply);
 
-        self::assertStringContainsString('deadline:set', $result);
-        self::assertMatchesRegularExpression('/delta_seconds=(2[5-9]|30|31)/', $result);
+        self::assertStringContainsString('deadline:none', $result);
     }
 
-    public function testRequestTimeoutUsedWhenOperationTimeoutAbsent(): void
+    public function testRequestTimeoutSetsDeadline(): void
     {
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
@@ -555,7 +554,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
         self::assertMatchesRegularExpression('/delta_seconds=([5-9]|1[0-1])/', $result);
     }
 
-    public function testOperationTimeoutWinsOverRequestTimeout(): void
+    public function testRequestTimeoutUsedIgnoringOperationTimeout(): void
     {
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
@@ -572,7 +571,8 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
         $reply = $this->awaitReply($deferred);
         $result = $this->decodePayload($reply);
 
-        self::assertMatchesRegularExpression('/delta_seconds=1(1[5-9]|2[01])/', $result);
+        self::assertStringContainsString('deadline:set', $result);
+        self::assertMatchesRegularExpression('/delta_seconds=[1-5]/', $result);
     }
 
     public function testMalformedTimeoutHeaderIsSilentlyIgnored(): void
@@ -581,7 +581,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
             'service' => 'EchoService',
             'operation' => 'reportDeadline',
             'requestId' => 'dl-4',
-            'headers' => ['Operation-Timeout' => 'garbage'],
+            'headers' => ['Request-Timeout' => 'garbage'],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();
@@ -598,7 +598,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
             'service' => 'EchoService',
             'operation' => 'reportDeadline',
             'requestId' => 'dl-5',
-            'headers' => ['operation-timeout' => '15s'],
+            'headers' => ['request-timeout' => '15s'],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();
@@ -613,7 +613,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
 
     public function testHandlerObservesDeadlineTripViaEnvNow(): void
     {
-        // Advance env time past the operation deadline; a handler polling
+        // Advance env time past the handler deadline; a handler polling
         // isMethodCancelled() must observe the cooperative deadline trip,
         // and the reason must surface through env->now()-based checking.
         $this->env->update(new TickInfo(new \DateTimeImmutable('+1 hour')));
@@ -622,7 +622,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
             'service' => 'EchoService',
             'operation' => 'pollCancellation',
             'requestId' => 'cancel-trip-1',
-            'headers' => ['Operation-Timeout' => '1s'],
+            'headers' => ['Request-Timeout' => '1s'],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();
@@ -639,7 +639,7 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
             'service' => 'EchoService',
             'operation' => 'pollCancellation',
             'requestId' => 'cancel-trip-2',
-            'headers' => ['Operation-Timeout' => '3600s'],
+            'headers' => ['Request-Timeout' => '3600s'],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();

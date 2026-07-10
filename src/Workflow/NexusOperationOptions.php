@@ -46,6 +46,18 @@ final class NexusOperationOptions extends Options
     public \DateInterval $scheduleToCloseTimeout;
 
     /**
+     * Maximum time the operation may wait to be started by the handler.
+     */
+    #[Marshal(name: 'scheduleToStartTimeout', type: DateIntervalType::class)]
+    public \DateInterval $scheduleToStartTimeout;
+
+    /**
+     * Maximum time an asynchronous operation may take to complete after it has started.
+     */
+    #[Marshal(name: 'startToCloseTimeout', type: DateIntervalType::class)]
+    public \DateInterval $startToCloseTimeout;
+
+    /**
      * Behaviour applied when the caller workflow is cancelled.
      *
      * Defaults to {@see NexusOperationCancellationType::Unspecified}, which
@@ -60,6 +72,8 @@ final class NexusOperationOptions extends Options
     public function __construct()
     {
         $this->scheduleToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
+        $this->scheduleToStartTimeout = \Carbon\CarbonInterval::seconds(0);
+        $this->startToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
         $this->cancellationType = NexusOperationCancellationType::Unspecified;
         parent::__construct();
     }
@@ -100,6 +114,36 @@ final class NexusOperationOptions extends Options
 
         $self = clone $this;
         $self->scheduleToCloseTimeout = $timeout;
+        return $self;
+    }
+
+    /**
+     * @param DateIntervalValue $timeout
+     */
+    #[Pure]
+    public function withScheduleToStartTimeout($timeout): self
+    {
+        \assert(DateInterval::assert($timeout));
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+        \assert($timeout->totalMicroseconds >= 0);
+
+        $self = clone $this;
+        $self->scheduleToStartTimeout = $timeout;
+        return $self;
+    }
+
+    /**
+     * @param DateIntervalValue $timeout
+     */
+    #[Pure]
+    public function withStartToCloseTimeout($timeout): self
+    {
+        \assert(DateInterval::assert($timeout));
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+        \assert($timeout->totalMicroseconds >= 0);
+
+        $self = clone $this;
+        $self->startToCloseTimeout = $timeout;
         return $self;
     }
 

@@ -81,6 +81,9 @@ class TestGreetingServiceImpl implements TestGreetingService
     /** @var array<string, string> Headers seen by the most recent cancel dispatch. */
     public static array $capturedCancelHeaders = [];
 
+    /** @var \DateTimeImmutable|null Deadline seen by the most recent cancel dispatch. */
+    public static ?\DateTimeImmutable $capturedCancelDeadline = null;
+
     /** @var string|null Namespace seen by the most recent start dispatch. */
     public static ?string $capturedStartNamespace = null;
 
@@ -195,6 +198,7 @@ final class GreetingCancelableOpHandler implements OperationHandlerInterface
         OperationCancelDetails $details,
     ): void {
         TestGreetingServiceImpl::$capturedCancelHeaders = Nexus::getCurrentOperationContext()->headers->all();
+        TestGreetingServiceImpl::$capturedCancelDeadline = Nexus::getCurrentOperationContext()->deadline;
         if ($details->operationToken === 'unknown') {
             throw HandlerException::create(ErrorType::NotFound, 'Not found');
         }
@@ -476,6 +480,49 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
         self::assertSame('none', $this->decodeSyncStringResult($response->getStartOperation()));
+    }
+
+    public function testDeadlineFromHeadersIgnoresOperationTimeout(): void
+    {
+        self::assertNull(NexusTaskHandler::deadlineFromHeaders(['Operation-Timeout' => '30s']));
+    }
+
+    public function testDeadlineFromHeadersUsesRequestTimeoutNotOperationTimeout(): void
+    {
+        $before = new \DateTimeImmutable();
+
+        $deadline = NexusTaskHandler::deadlineFromHeaders([
+            'Request-Timeout' => '5s',
+            'Operation-Timeout' => '120s',
+        ]);
+
+        self::assertNotNull($deadline);
+        $delta = $deadline->getTimestamp() - $before->getTimestamp();
+        self::assertLessThanOrEqual(
+            60,
+            $delta,
+            'deadline must derive from Request-Timeout (5s), not Operation-Timeout (120s)',
+        );
+    }
+
+    public function testCancelOperationSetsDeadlineFromRequestTimeout(): void
+    {
+        $request = $this->buildCancelRequest('TestGreetingService', 'cancelableOp', 'cancel-token-456', [
+            'Request-Timeout' => '30s',
+        ]);
+
+        $this->handler->handleCancelOperation($request, new NexusOperationContext());
+
+        self::assertNotNull(TestGreetingServiceImpl::$capturedCancelDeadline);
+    }
+
+    public function testCancelOperationHasNoDeadlineWithoutRequestTimeout(): void
+    {
+        $request = $this->buildCancelRequest('TestGreetingService', 'cancelableOp', 'cancel-token-456');
+
+        $this->handler->handleCancelOperation($request, new NexusOperationContext());
+
+        self::assertNull(TestGreetingServiceImpl::$capturedCancelDeadline);
     }
 
     public function testStartOperationWithCallbackUrl(): void
