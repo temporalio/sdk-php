@@ -120,7 +120,7 @@ class EncodedValues implements ValuesInterface
         return new Payloads(['payloads' => $this->toProtoCollection()]);
     }
 
-    public function getValue(int|string $index, $type = null): mixed
+    public function getValue(int|string|\Stringable $index, $type = null): mixed
     {
         if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
             return $this->values[$index];
