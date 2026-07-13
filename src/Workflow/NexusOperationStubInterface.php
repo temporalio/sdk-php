@@ -36,19 +36,9 @@ interface NexusOperationStubInterface
     ): PromiseInterface;
 
     /**
-     * Start a Nexus operation. The returned promise resolves with a
-     * {@see NexusOperationHandle} once the start response arrives — by that
-     * point the discriminator is known, so the handle's `operationToken` is
-     * fully populated (string for async, null for sync) and its result-promise
-     * is wired (already-resolved for sync, pending-poll for async).
-     *
-     * Workflow code yields the returned promise:
-     *
-     * ```php
-     * $handle = yield $stub->start('order.place', [$order]);
-     * $token  = $handle->getOperationToken();
-     * $result = yield $handle->getResult();
-     * ```
+     * Start a Nexus operation. The returned promise resolves with a {@see NexusOperationHandle}
+     * once the start response arrives — at that point the discriminator is known, so the handle's
+     * operationToken (string for async, null for sync) and result-promise are populated.
      *
      * @param non-empty-string $operation
      * @param array<string, string> $nexusHeaders

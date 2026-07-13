@@ -93,7 +93,6 @@ final class NexusTaskHandler
             $headers[(string) $key] = (string) $value;
         }
 
-        // Strict link parsing: malformed → BadRequest.
         $links = LinkParser::fromProto($startRequest->getLinks());
 
         $callbackHeaders = [];

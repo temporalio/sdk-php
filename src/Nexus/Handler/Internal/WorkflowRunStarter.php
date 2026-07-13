@@ -30,10 +30,7 @@ use Temporal\Workflow\CompletionCallback;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * Starts the backing workflow described by a {@see WorkflowHandle} returned from
- * an #[AsyncOperation] method, layering Nexus concerns on top of the user-supplied
- * options: requestId pinning, completion callback, default task queue, async token
- * encoding.
+ * Starts the backing workflow for a {@see WorkflowHandle} returned from an #[AsyncOperation] method.
  *
  * @internal
  */

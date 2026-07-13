@@ -100,15 +100,15 @@ final class NexusLinkConverter
     private static function convertOne(NexusLink $link): Link
     {
         // Manual scheme/path/query split — parse_url rejects the `scheme:///path` (empty authority) form.
-        if (!\preg_match('~^([a-zA-Z][a-zA-Z0-9+.\-]*):(?://[^/?\#]*)?(/[^?\#]*)(?:\?([^\#]*))?(?:\#.*)?$~', $link->uri, $u)) {
+        if (!\preg_match('~^([a-zA-Z][a-zA-Z0-9+.\-]*):(?://[^/?\#]*)?(/[^?\#]*)(?:\?([^\#]*))?(?:\#.*)?$~', $link->uri, $uriParts)) {
             throw new InvalidArgumentException(\sprintf(
                 'malformed Nexus link URI: "%s"',
                 $link->uri,
             ));
         }
-        $scheme = $u[1];
-        $path = $u[2];
-        $queryString = $u[3] ?? '';
+        $scheme = $uriParts[1];
+        $path = $uriParts[2];
+        $queryString = $uriParts[3] ?? '';
 
         if ($scheme !== self::SCHEME) {
             throw new InvalidArgumentException(\sprintf(
@@ -117,15 +117,15 @@ final class NexusLinkConverter
                 $link->uri,
             ));
         }
-        if (!\preg_match(self::PATH_REGEX, $path, $m)) {
+        if (!\preg_match(self::PATH_REGEX, $path, $pathMatches)) {
             throw new InvalidArgumentException(\sprintf(
                 'Nexus link URI path does not match /namespaces/{ns}/workflows/{wf}/{run}/history: "%s"',
                 $path,
             ));
         }
-        $namespace = \rawurldecode($m[1]);
-        $workflowId = \rawurldecode($m[2]);
-        $runId = \rawurldecode($m[3]);
+        $namespace = \rawurldecode($pathMatches[1]);
+        $workflowId = \rawurldecode($pathMatches[2]);
+        $runId = \rawurldecode($pathMatches[3]);
 
         $query = [];
         if ($queryString !== '') {

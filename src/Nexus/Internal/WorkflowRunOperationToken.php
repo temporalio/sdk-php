@@ -77,7 +77,6 @@ final class WorkflowRunOperationToken
             );
         }
 
-        // Non-zero version = newer producer.
         if (\array_key_exists('v', $parsed) && $parsed['v'] !== 0) {
             throw new \InvalidArgumentException(\sprintf(
                 'invalid workflow run token: unsupported version %s',

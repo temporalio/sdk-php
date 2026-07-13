@@ -35,16 +35,18 @@ final class ExecuteNexusOperationInput
         public readonly NexusOperationOptions $options,
         public readonly null|Type|string|\ReflectionClass|\ReflectionType $returnType,
         public readonly array $nexusHeaders = [],
-    ) {
-        if ($endpoint === '') {
-            throw new \InvalidArgumentException('$endpoint must be a non-empty string.');
+    ) {}
+
+    public function effectiveOptions(): NexusOperationOptions
+    {
+        $options = $this->options;
+        if ($this->endpoint !== '' && $this->endpoint !== $options->endpoint) {
+            $options = $options->withEndpoint($this->endpoint);
         }
-        if ($service === '') {
-            throw new \InvalidArgumentException('$service must be a non-empty string.');
+        if ($this->service !== '' && $this->service !== $options->service) {
+            $options = $options->withService($this->service);
         }
-        if ($operation === '') {
-            throw new \InvalidArgumentException('$operation must be a non-empty string.');
-        }
+        return $options;
     }
 
     public function with(

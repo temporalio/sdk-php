@@ -6,7 +6,6 @@ namespace Temporal\Tests\Unit\Internal\Workflow;
 
 use PHPUnit\Framework\TestCase;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
-use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
 
@@ -54,8 +53,6 @@ final class WorkflowContextNexusOptionsTestCase extends TestCase
 
     private function deriveOptions(ExecuteNexusOperationInput $input): NexusOperationOptions
     {
-        $method = new \ReflectionMethod(WorkflowContext::class, 'effectiveNexusOptions');
-
-        return $method->invoke(null, $input);
+        return $input->effectiveOptions();
     }
 }

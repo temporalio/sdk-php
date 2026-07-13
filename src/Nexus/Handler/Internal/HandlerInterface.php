@@ -27,8 +27,6 @@ use Temporal\Nexus\NexusOperationContext;
 interface HandlerInterface
 {
     /**
-     * Handle the start of an operation.
-     *
      * @return OperationStartResult<ValuesInterface>
      *
      * @throws OperationException
@@ -43,14 +41,8 @@ interface HandlerInterface
     ): OperationStartResult;
 
     /**
-     * Cancel the asynchronously started operation.
-     *
-     * Per Nexus spec, cancellation is **idempotent**: implementations must
-     * ignore repeat cancel requests for the same operation token (including
-     * cancels for an operation that has already reached a terminal state) and
-     * return successfully. Throw {@see HandlerException} only for genuine
-     * routing/permission/transport errors, never for "already cancelled" or
-     * "already completed".
+     * Idempotent per Nexus spec: repeat or already-terminal cancels must return successfully;
+     * throw {@see HandlerException} only for genuine routing/permission/transport errors.
      *
      * @throws HandlerException
      */

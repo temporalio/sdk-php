@@ -61,11 +61,9 @@ final class NexusServiceProxy extends Proxy
             ));
         }
 
-        \assert($this->options->service !== '');
-
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this->ctx
-                ->newUntypedNexusOperationStub(self::effectiveOptions($input))
+                ->newUntypedNexusOperationStub($input->effectiveOptions())
                 ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             /** @see WorkflowOutboundCallsInterceptor::executeNexusOperation() */
             'executeNexusOperation',
@@ -79,17 +77,5 @@ final class NexusServiceProxy extends Proxy
                 $operation->outputType,
             ),
         );
-    }
-
-    private static function effectiveOptions(ExecuteNexusOperationInput $input): NexusOperationOptions
-    {
-        $options = $input->options;
-        if ($input->endpoint !== '' && $input->endpoint !== $options->endpoint) {
-            $options = $options->withEndpoint($input->endpoint);
-        }
-        if ($input->service !== '' && $input->service !== $options->service) {
-            $options = $options->withService($input->service);
-        }
-        return $options;
     }
 }

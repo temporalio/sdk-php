@@ -54,7 +54,6 @@ class NexusServiceReader extends Reader
         $contract = $this->resolveContract($reflection, $serviceNodes);
 
         $service = $this->reader->firstClassMetadata($contract, Service::class);
-        // resolveContract guarantees a Service attribute is present.
         \assert($service !== null);
         $name = $service->name !== '' ? $service->name : $contract->getShortName();
 

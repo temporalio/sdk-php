@@ -13,8 +13,7 @@ namespace Temporal\Nexus;
 
 enum OperationState: string
 {
-    // Values match the lowercase strings defined in the Nexus spec:
-    // https://github.com/nexus-rpc/api/blob/main/SPEC.md
+    // Wire values — must match the Nexus spec verbatim.
     case Running = 'running';
     case Succeeded = 'succeeded';
     case Failed = 'failed';

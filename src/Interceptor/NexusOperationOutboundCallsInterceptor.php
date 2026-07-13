@@ -17,13 +17,6 @@ use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Nexus\NexusOperationContext;
 
 /**
- * Intercepts calls a Nexus operation handler makes back into the Temporal APIs,
- * counterpart to Java's {@code NexusOperationOutboundCallsInterceptor}.
- *
- * Java additionally intercepts {@code getMetricsScope()} and {@code getWorkflowClient()};
- * neither has a clean PHP handler analogue (the metrics scope is RoadRunner-owned and the
- * WorkflowClient is kept on the internal channel), so only {@see self::getInfo()} is exposed.
- *
  * It's recommended to use `NexusOperationOutboundCallsInterceptorTrait` when implementing this
  * interface because the interface might be extended in the future. The trait will provide forward
  * compatibility.
@@ -36,7 +29,7 @@ use Temporal\Nexus\NexusOperationContext;
  *     public function getInfo(GetInfoInput $input, callable $next): NexusOperationContext
  *     {
  *         $info = $next($input);
- *         // observe namespace/taskQueue, e.g. attach to a span
+ *
  *         return $info;
  *     }
  * }
