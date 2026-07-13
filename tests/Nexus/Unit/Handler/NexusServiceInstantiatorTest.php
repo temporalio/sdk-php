@@ -41,7 +41,7 @@ final class NexusServiceInstantiatorTest extends TestCase
     public function testMissingContractInterfaceRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Missing #\[Service\] attribute/');
+        $this->expectExceptionMessage('Missing #[Service] attribute on ');
         self::bind(new NoServiceAnnotation());
     }
 

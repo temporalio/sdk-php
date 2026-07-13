@@ -32,7 +32,7 @@ final class OperationNameValidatorTest extends TestCase
     public function testDelegatesToPrintableAsciiValidator(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Operation Name.+printable non-whitespace ASCII/');
+        $this->expectExceptionMessage('Operation Name must contain only printable non-whitespace ASCII (0x21–0x7E); got');
         OperationNameValidator::assert("bad\nname");
     }
 }

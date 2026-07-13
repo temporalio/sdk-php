@@ -32,7 +32,7 @@ final class ServiceNameValidatorTest extends TestCase
     public function testDelegatesToPrintableAsciiValidator(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Service Name.+printable non-whitespace ASCII/');
+        $this->expectExceptionMessage('Service Name must contain only printable non-whitespace ASCII (0x21–0x7E); got');
         ServiceNameValidator::assert("bad\nname");
     }
 }

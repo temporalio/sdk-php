@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Nexus\Handler\Internal\WorkflowRunStarter;
 use Temporal\Nexus\WorkflowRunOperation;
 use Temporal\Tests\Nexus\Fixtures\Service\GreetingService;
+use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -44,6 +45,8 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 #[CoversClass(MethodOperationHandler::class)]
 final class WorkflowRunOperationTestCase extends AbstractUnit
 {
+    use ExceptionAssertions;
+
     private const NS = 'sample-ns';
     private const WID = 'sample-wid';
 
@@ -299,14 +302,13 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
     public function testCancelRejectsBadTokenAsBadRequest(): void
     {
-        try {
-            WorkflowRunOperation::cancel('not-a-real-token');
-            self::fail('Expected HandlerException for malformed token');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertFalse($e->isRetryable());
-            self::assertStringContainsString('failed to parse operation token', $e->getMessage());
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            static fn() => WorkflowRunOperation::cancel('not-a-real-token'),
+        );
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertFalse($e->isRetryable());
+        self::assertStringContainsString('failed to parse operation token', $e->getMessage());
     }
 
     public function testCancelIgnoresTokenNamespaceAndCancelsByWorkflowId(): void

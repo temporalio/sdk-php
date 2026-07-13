@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Workflow;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
@@ -24,6 +25,7 @@ use function React\Promise\resolve;
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusServiceProxy::class)]
 final class NexusServiceProxyTestCase extends TestCase
 {
     public function testInterceptorEndpointRewriteChangesOutgoingOptions(): void

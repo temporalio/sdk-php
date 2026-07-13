@@ -52,7 +52,7 @@ final class OperationInfoTest extends TestCase
     public function testRejectsInvalidTokenBytes(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/printable non-whitespace ASCII/');
+        $this->expectExceptionMessage('Operation Token must contain only printable non-whitespace ASCII (0x21–0x7E); got');
         new OperationInfo("bad\ntoken", OperationState::Failed);
     }
 }

@@ -106,7 +106,7 @@ final class HeaderTest extends TestCase
     public function testParseTimeoutRejectsMalformed(string $input): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Invalid Nexus timeout/');
+        $this->expectExceptionMessage("Invalid Nexus timeout '{$input}'");
 
         Header::parseTimeout($input);
     }

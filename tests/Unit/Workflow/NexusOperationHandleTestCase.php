@@ -31,7 +31,6 @@ final class NexusOperationHandleTestCase extends AbstractUnit
             },
         );
 
-        // A non-Values resolution flows through decodePromise unchanged.
         $deferred->resolve('hello');
         self::assertSame('hello', $received);
     }
@@ -43,17 +42,11 @@ final class NexusOperationHandleTestCase extends AbstractUnit
             rawResult: (new Deferred())->promise(),
         );
 
-        // Multiple calls must return the same promise — callers may attach
-        // handlers at different points in the workflow without spawning
-        // duplicate operations.
         self::assertSame($handle->getResult(), $handle->getResult());
     }
 
     public function testTokenAvailableBeforeResultResolves(): void
     {
-        // The handle is fully populated by the time the caller has it: token
-        // is observable while the result-promise is still pending. Workflow
-        // code can capture the token and pass it elsewhere before yielding.
         $deferred = new Deferred();
         $handle = new NexusOperationHandle(
             operationToken: 'observed-while-pending',

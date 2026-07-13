@@ -101,7 +101,7 @@ final class NexusLinkConverterTestCase extends TestCase
     {
         $uri = 'https:///namespaces/n/workflows/w/r/history?referenceType=EventReference&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/scheme/');
+        $this->expectExceptionMessage('Nexus link URI scheme must be "temporal", got "https" in ');
         NexusLinkConverter::toProtoLinks([new NexusLink($uri, self::TYPE)]);
     }
 
@@ -109,7 +109,7 @@ final class NexusLinkConverterTestCase extends TestCase
     {
         $uri = 'temporal:///workflows/w/r/history?referenceType=EventReference&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/path/');
+        $this->expectExceptionMessage('Nexus link URI path does not match /namespaces/{ns}/workflows/{wf}/{run}/history: ');
         NexusLinkConverter::toProtoLinks([new NexusLink($uri, self::TYPE)]);
     }
 
@@ -117,7 +117,7 @@ final class NexusLinkConverterTestCase extends TestCase
     {
         $uri = 'temporal:///namespaces/n/workflows/w/r/history?referenceType=EventReference&eventType=EVENT_TYPE_DOES_NOT_EXIST';
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/EventType/');
+        $this->expectExceptionMessage('unknown EventType "EVENT_TYPE_DOES_NOT_EXIST" in Nexus link URI ');
         NexusLinkConverter::toProtoLinks([new NexusLink($uri, self::TYPE)]);
     }
 
@@ -125,7 +125,7 @@ final class NexusLinkConverterTestCase extends TestCase
     {
         $uri = 'temporal:///namespaces/n/workflows/w/r/history?referenceType=NotARealType&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/referenceType/');
+        $this->expectExceptionMessage('unknown referenceType "NotARealType" in Nexus link URI ');
         NexusLinkConverter::toProtoLinks([new NexusLink($uri, self::TYPE)]);
     }
 
@@ -382,7 +382,7 @@ final class NexusLinkConverterTestCase extends TestCase
             ->setRunId('run');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/event_ref or request_id_ref/');
+        $this->expectExceptionMessage('WorkflowEvent must have either event_ref or request_id_ref set');
         NexusLinkConverter::workflowEventToNexusLink($event);
     }
 

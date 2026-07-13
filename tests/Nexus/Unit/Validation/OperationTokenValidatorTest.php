@@ -32,7 +32,7 @@ final class OperationTokenValidatorTest extends TestCase
     public function testDelegatesToPrintableAsciiValidator(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/Operation Token.+printable non-whitespace ASCII/');
+        $this->expectExceptionMessage('Operation Token must contain only printable non-whitespace ASCII (0x21–0x7E); got');
         OperationTokenValidator::assert("bad\ntoken");
     }
 }

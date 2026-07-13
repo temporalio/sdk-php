@@ -94,7 +94,7 @@ final class NexusServiceCollectionTestCase extends AbstractUnit
         $repo->add(self::buildPrototype(new DupAlphaImpl()));
 
         $this->expectException(\OutOfBoundsException::class);
-        $this->expectExceptionMessageMatches('/Entry with same identifier "Dup"/');
+        $this->expectExceptionMessage('Entry with same identifier "Dup" already has been registered');
         $repo->add(self::buildPrototype(new DupBetaImpl()));
     }
 

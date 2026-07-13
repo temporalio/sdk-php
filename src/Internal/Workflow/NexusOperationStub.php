@@ -62,7 +62,6 @@ final class NexusOperationStub implements NexusOperationStubInterface
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         array $nexusHeaders = [],
     ): PromiseInterface {
-        // Programming errors throw synchronously; runtime errors reject the promise.
         $endpoint = $this->options->endpoint;
         $service = $this->options->service;
         $this->assertOperationParams($endpoint, $service, $operation);
@@ -97,6 +96,20 @@ final class NexusOperationStub implements NexusOperationStubInterface
             $operationToken,
         );
 
+        return $this->handleFromStarted($startedPromise, $resultPromise, $returnType, $operationToken);
+    }
+
+    protected function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
+    {
+        return Workflow::getCurrentContext()->request($request, $cancellable);
+    }
+
+    private function handleFromStarted(
+        PromiseInterface $startedPromise,
+        PromiseInterface $resultPromise,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType,
+        string &$operationToken,
+    ): PromiseInterface {
         return $startedPromise->then(
             static function (ValuesInterface $values) use (
                 &$operationToken,
@@ -114,12 +127,13 @@ final class NexusOperationStub implements NexusOperationStubInterface
                     returnType: $returnType,
                 );
             },
+            static function (\Throwable $e) use ($resultPromise): never {
+                // Start failed: the handle is never built, so consume the result promise
+                // to keep its rejection from being left unhandled.
+                $resultPromise->then(null, static fn(): null => null);
+                throw $e;
+            },
         );
-    }
-
-    protected function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
-    {
-        return Workflow::getCurrentContext()->request($request, $cancellable);
     }
 
     private function assertOperationParams(string $endpoint, string $service, string $operation): void

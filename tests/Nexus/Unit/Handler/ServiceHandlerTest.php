@@ -204,7 +204,6 @@ final class ServiceHandlerTest extends TestCase
             new NexusOperationContext(),
         );
 
-        // Auth is before logging, so an unauthorized call never reaches the logger.
         self::assertSame(['sayHello1'], $logger->getOperations());
     }
 

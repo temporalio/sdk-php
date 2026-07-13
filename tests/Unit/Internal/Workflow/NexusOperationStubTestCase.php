@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Workflow;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -15,12 +16,63 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Workflow\NexusOperationStub;
 use Temporal\Workflow\NexusOperationOptions;
 
+use function React\Promise\set_rejection_handler;
+
 /**
  * @group unit
  * @group nexus
  */
+#[CoversClass(NexusOperationStub::class)]
 final class NexusOperationStubTestCase extends TestCase
 {
+    public function testStartHandshakeRejectionRejectsWithTheFailure(): void
+    {
+        $started = new Deferred();
+        $result = new Deferred();
+        $token = '';
+        $handlePromise = $this->invokeHandleFromStarted($started->promise(), $result->promise(), $token);
+
+        $captured = null;
+        $handlePromise->then(
+            null,
+            static function (\Throwable $e) use (&$captured): void {
+                $captured = $e;
+            },
+        );
+
+        $failure = $this->makeFailure('start handshake failed');
+        $started->reject($failure);
+        $result->reject($failure);
+
+        self::assertSame($failure, $captured);
+    }
+
+    public function testStartHandshakeRejectionDoesNotLeakTheResultRejection(): void
+    {
+        $recorded = [];
+        $previous = set_rejection_handler(static function (\Throwable $e) use (&$recorded): void {
+            $recorded[] = $e;
+        });
+
+        try {
+            $started = new Deferred();
+            $result = new Deferred();
+            $token = '';
+            $handlePromise = $this->invokeHandleFromStarted($started->promise(), $result->promise(), $token);
+            $handlePromise->then(null, static fn(): null => null);
+
+            $started->reject($this->makeFailure('start handshake failed'));
+            $result->reject($this->makeFailure('result never delivered'));
+
+            unset($handlePromise, $started, $result);
+            \gc_collect_cycles();
+
+            self::assertSame([], $recorded);
+        } finally {
+            set_rejection_handler($previous);
+        }
+    }
+
     public function testStartRejectsEmptyEndpoint(): void
     {
         $stub = $this->makeStub(NexusOperationOptions::new());
@@ -202,6 +254,32 @@ final class NexusOperationStubTestCase extends TestCase
         $stub = $this->makeStub($options);
 
         self::assertSame($options, $stub->getOptions());
+    }
+
+    private function makeFailure(string $message): NexusOperationFailure
+    {
+        return new NexusOperationFailure(
+            message: $message,
+            scheduledEventId: 0,
+            endpoint: 'ep',
+            service: 'svc',
+            operation: 'place-order',
+            operationToken: '',
+        );
+    }
+
+    private function invokeHandleFromStarted(
+        PromiseInterface $startedPromise,
+        PromiseInterface $resultPromise,
+        string &$operationToken,
+    ): PromiseInterface {
+        $stub = $this->makeStub(
+            NexusOperationOptions::new()->withEndpoint('ep')->withService('svc'),
+        );
+
+        $method = new \ReflectionMethod(NexusOperationStub::class, 'handleFromStarted');
+
+        return $method->invokeArgs($stub, [$startedPromise, $resultPromise, null, &$operationToken]);
     }
 
     private function makeStub(NexusOperationOptions $options): NexusOperationStub

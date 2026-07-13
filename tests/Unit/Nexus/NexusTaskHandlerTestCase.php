@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\Environment;
+use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use Temporal\Worker\Environment\EnvironmentInterface;
 
 #[Service]
@@ -212,6 +213,8 @@ final class GreetingCancelableOpHandler implements OperationHandlerInterface
 #[CoversClass(NexusTaskHandler::class)]
 final class NexusTaskHandlerTestCase extends AbstractUnit
 {
+    use ExceptionAssertions;
+
     private NexusTaskHandler $handler;
     private DataConverterInterface $dataConverter;
     private EnvironmentInterface $env;
@@ -265,18 +268,17 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('TestGreetingService', 'richCauseFailingOp', 'input');
 
-        try {
-            $this->handler->handleStartOperation($request, new NexusOperationContext());
-            self::fail('Expected OperationException');
-        } catch (OperationException $e) {
-            self::assertSame('outer-failure', $e->getMessage());
+        $e = self::assertThrown(
+            OperationException::class,
+            fn() => $this->handler->handleStartOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame('outer-failure', $e->getMessage());
 
-            $cause = $e->getPrevious();
-            self::assertInstanceOf(ApplicationFailure::class, $cause);
-            self::assertSame('CustomBusinessType', $cause->getType());
-            self::assertSame('inner-detail', $cause->getOriginalMessage());
-            self::assertSame('marker', $cause->getDetails()->getValue(0, 'string'));
-        }
+        $cause = $e->getPrevious();
+        self::assertInstanceOf(ApplicationFailure::class, $cause);
+        self::assertSame('CustomBusinessType', $cause->getType());
+        self::assertSame('inner-detail', $cause->getOriginalMessage());
+        self::assertSame('marker', $cause->getDetails()->getValue(0, 'string'));
     }
 
     public function testStartOperationWithUnknownService(): void
@@ -316,13 +318,12 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildCancelRequest('TestGreetingService', 'cancelableOp', '');
 
-        try {
-            $this->handler->handleCancelOperation($request, new NexusOperationContext());
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::BadRequest, $e->errorType);
-            self::assertSame(RetryBehavior::NonRetryable, $e->retryBehavior);
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            fn() => $this->handler->handleCancelOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame(ErrorType::BadRequest, $e->errorType);
+        self::assertSame(RetryBehavior::NonRetryable, $e->retryBehavior);
     }
 
     public function testCancelOperationPropagatesHeadersToContext(): void
@@ -334,7 +335,6 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
 
         $this->handler->handleCancelOperation($request, new NexusOperationContext());
 
-        // OperationContext lowercases header keys on construction.
         self::assertSame('trace-1', TestGreetingServiceImpl::$capturedCancelHeaders['x-nexus-trace-id'] ?? null);
         self::assertSame('Bearer xyz', TestGreetingServiceImpl::$capturedCancelHeaders['authorization'] ?? null);
     }
@@ -402,52 +402,48 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
     {
         $request = $this->buildStartRequest('NonExistentService', 'op', 'input');
 
-        try {
-            $this->handler->handleStartOperation($request, new NexusOperationContext());
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::NotFound, $e->errorType);
-            self::assertNotEmpty($e->getMessage());
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            fn() => $this->handler->handleStartOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame(ErrorType::NotFound, $e->errorType);
+        self::assertNotEmpty($e->getMessage());
     }
 
     public function testGrpcServiceClientExceptionMapsToHandlerError(): void
     {
         $request = $this->buildStartRequest('TestGreetingService', 'grpcFailingOp', 'input');
 
-        try {
-            $this->handler->handleStartOperation($request, new NexusOperationContext());
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::NotFound, $e->errorType);
-            self::assertInstanceOf(ServiceClientException::class, $e->getPrevious());
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            fn() => $this->handler->handleStartOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame(ErrorType::NotFound, $e->errorType);
+        self::assertInstanceOf(ServiceClientException::class, $e->getPrevious());
     }
 
     public function testNonRetryableApplicationFailureMapsToInternalNonRetryable(): void
     {
         $request = $this->buildStartRequest('TestGreetingService', 'appFailureOp', 'input');
 
-        try {
-            $this->handler->handleStartOperation($request, new NexusOperationContext());
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::Internal, $e->errorType);
-            self::assertSame(RetryBehavior::NonRetryable, $e->retryBehavior);
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            fn() => $this->handler->handleStartOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame(ErrorType::Internal, $e->errorType);
+        self::assertSame(RetryBehavior::NonRetryable, $e->retryBehavior);
     }
 
     public function testGenericThrowableNeverEscapesAsRawException(): void
     {
         $request = $this->buildStartRequest('TestGreetingService', 'genericFailingOp', 'input');
 
-        try {
-            $this->handler->handleStartOperation($request, new NexusOperationContext());
-            self::fail('Expected HandlerException');
-        } catch (HandlerException $e) {
-            self::assertSame(ErrorType::Internal, $e->errorType);
-            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
-        }
+        $e = self::assertThrown(
+            HandlerException::class,
+            fn() => $this->handler->handleStartOperation($request, new NexusOperationContext()),
+        );
+        self::assertSame(ErrorType::Internal, $e->errorType);
+        self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
     }
 
     public function testStartOperationWithMalformedTimeoutHeaderIsIgnored(): void

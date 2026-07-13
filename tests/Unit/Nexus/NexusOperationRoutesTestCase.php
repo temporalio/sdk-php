@@ -27,6 +27,7 @@ use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Temporal\Tests\Nexus\Support\ExceptionAssertions;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\Command\Client\CommandResponse;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
@@ -225,6 +226,7 @@ class EchoServiceImpl implements EchoServiceInterface
 final class NexusOperationRoutesTestCase extends AbstractUnit
 {
     use AwaitsNexusPromise;
+    use ExceptionAssertions;
 
     private InvokeNexusOperation $invokeRoute;
     private CancelNexusOperation $cancelRoute;
@@ -283,27 +285,23 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
     {
         $request = $this->makeInvokeRequest('UnknownService', 'op', 'input');
         $deferred = new Deferred();
-        try {
+        $e = self::assertThrown(NexusHandlerException::class, function () use ($request, $deferred): void {
             $this->invokeRoute->handle($request, [], $deferred);
             $this->awaitReply($deferred);
-            self::fail('Expected HandlerException');
-        } catch (NexusHandlerException $e) {
-            self::assertSame(NexusErrorType::NotFound, $e->errorType);
-            self::assertSame('NOT_FOUND', $e->errorType->value);
-        }
+        });
+        self::assertSame(NexusErrorType::NotFound, $e->errorType);
+        self::assertSame('NOT_FOUND', $e->errorType->value);
     }
 
     public function testHandlerErrorForUnknownOperation(): void
     {
         $request = $this->makeInvokeRequest('EchoService', 'nonExistent', 'input');
         $deferred = new Deferred();
-        try {
+        $e = self::assertThrown(NexusHandlerException::class, function () use ($request, $deferred): void {
             $this->invokeRoute->handle($request, [], $deferred);
             $this->awaitReply($deferred);
-            self::fail('Expected HandlerException');
-        } catch (NexusHandlerException $e) {
-            self::assertSame(NexusErrorType::NotFound, $e->errorType);
-        }
+        });
+        self::assertSame(NexusErrorType::NotFound, $e->errorType);
     }
 
     // ── Cancel operation ─────────────────────────────────────────
@@ -321,13 +319,11 @@ final class NexusOperationRoutesTestCase extends AbstractUnit
     {
         $request = $this->makeCancelRequest('UnknownService', 'op', 'token');
         $deferred = new Deferred();
-        try {
+        $e = self::assertThrown(NexusHandlerException::class, function () use ($request, $deferred): void {
             $this->cancelRoute->handle($request, [], $deferred);
             $this->awaitCancelResult($deferred);
-            self::fail('Expected HandlerException');
-        } catch (NexusHandlerException $e) {
-            self::assertSame(NexusErrorType::NotFound, $e->errorType);
-        }
+        });
+        self::assertSame(NexusErrorType::NotFound, $e->errorType);
     }
 
     public function testCancelHandlerThrowingIsConvertedToHandlerError(): void
