@@ -179,7 +179,10 @@ Namespace dependency directions — violations must be rejected:
 - `Client\*` → `Common\*`, `DataConverter\*`, `Exception\*`
 - `Interceptor\*` → `Common\*`, `Workflow\*`, `Activity\*`
 - `Nexus\*` → `Common\*`, `Exception\*`, `Workflow\*` (must not reach into `Internal\*` /
-  `Client\*`)
+  `Client\*`). Enforced by `tests/Arch/NexusDependencyTest.php`, which carries an explicit
+  exemption list for the bridge types that legitimately cross into the worker runtime: the
+  `Nexus\Handler\Internal\*` dispatch subtree plus `Nexus\Nexus`, `Nexus\Header`,
+  `Nexus\NexusOperationContext`, and `Nexus\WorkflowHandle`. Add to that list only with a reason.
 - `Worker\*` → `Internal\*` (worker bootstraps internal machinery)
 - FORBIDDEN: Public namespaces → `Internal\*`
 - FORBIDDEN: `Activity\*` → `Workflow\*` or vice versa (peer namespaces)
