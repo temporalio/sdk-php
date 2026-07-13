@@ -12,6 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Nexus\Exception;
 
 /**
+ * Nexus handler-error wire types. `Unknown` is a local fallback for an unrecognized incoming
+ * type (never emitted on the wire); every other case is a spec-defined value.
+ *
  * @see https://github.com/nexus-rpc/api/blob/main/SPEC.md
  */
 enum ErrorType: string
