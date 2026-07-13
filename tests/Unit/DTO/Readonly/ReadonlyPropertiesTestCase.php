@@ -18,10 +18,6 @@ class ReadonlyPropertiesTestCase extends AbstractDTOMarshalling
 {
     public function testMarshalling(): void
     {
-        if (PHP_VERSION_ID < 80104) {
-            $this->markTestSkipped();
-        }
-
         $dto = new ReadonlyPropertiesDTO(
             'promotedString',
             'secondPromotedString',

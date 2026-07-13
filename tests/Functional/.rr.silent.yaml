@@ -1,14 +1,14 @@
 version: "3"
 # Application configuration
 rpc:
-    listen: tcp://127.0.0.1:6001
+    listen: ${ROADRUNNER_ADDRESS:-tcp://127.0.0.1:6001}
 
 server:
     command: "php worker.php"
 
 # Workflow and activity mesh service
 temporal:
-    address: "127.0.0.1:7233"
+    address: ${TEMPORAL_ADDRESS:-127.0.0.1:7233}
     activities:
       num_workers: 1
 

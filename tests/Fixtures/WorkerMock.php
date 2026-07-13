@@ -15,6 +15,7 @@ use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Tests\TestCase;
+use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\WorkerFactory;
@@ -45,7 +46,7 @@ class WorkerMock implements HostConnectionInterface
         $mock->factory = WorkerFactory::create();
         $mock->registerWorkflowAndActivities();
 
-        CommandResetter::reset();
+        Request::resetLastId(9000);
 
         return $mock;
     }

@@ -41,6 +41,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowException;
@@ -306,7 +307,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     }
 
                     throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
-                } catch (TimeoutException $e) {
+                } catch (TimeoutException|CanceledException $e) {
                     throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
                 } catch (\Throwable $e) {
                     throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
@@ -329,7 +330,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             arguments: EncodedValues::fromValues($args, $this->converter),
             header: Header::empty(),
             waitPolicy: $nameOrOptions->waitPolicy,
-            updateId: $nameOrOptions->updateId ?? '',
+            updateId: $nameOrOptions->updateId ?? Uuid::v4(),
             firstExecutionRunId: $nameOrOptions->firstExecutionRunId ?? '',
             resultType: $nameOrOptions->resultType,
         ));
