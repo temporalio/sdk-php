@@ -53,7 +53,7 @@ final class ProtoToArrayConverter
             ),
             Duration::class => static fn(Duration $input): \DateInterval =>
                 \Temporal\Internal\Support\DateInterval::parse(
-                    (int) $input->getSeconds() * 1_000_000 + \intdiv((int) $input->getNanos(), 1_000),
+                    (int) $input->getSeconds() * 1_000_000 + \intdiv($input->getNanos(), 1_000),
                     \Temporal\Internal\Support\DateInterval::FORMAT_MICROSECONDS,
                 ),
             SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
