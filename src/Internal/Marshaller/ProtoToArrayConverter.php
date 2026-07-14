@@ -52,7 +52,10 @@ final class ProtoToArrayConverter
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             ),
             Duration::class => static fn(Duration $input): \DateInterval =>
-                \Temporal\Internal\Support\DateInterval::parse($input),
+                \Temporal\Internal\Support\DateInterval::parse(
+                    $input->getSeconds() * 1e6 + $input->getNanos() / 1e3,
+                    \Temporal\Internal\Support\DateInterval::FORMAT_MICROSECONDS,
+                ),
             SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
                 EncodedCollection::fromPayloadCollection(
                     $input->getIndexedFields(),
