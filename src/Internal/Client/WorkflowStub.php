@@ -330,7 +330,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             arguments: EncodedValues::fromValues($args, $this->converter),
             header: Header::empty(),
             waitPolicy: $nameOrOptions->waitPolicy,
-            updateId: $nameOrOptions->updateId ?? '',
+            updateId: $nameOrOptions->updateId ?? Uuid::v4(),
             firstExecutionRunId: $nameOrOptions->firstExecutionRunId ?? '',
             resultType: $nameOrOptions->resultType,
         ));
