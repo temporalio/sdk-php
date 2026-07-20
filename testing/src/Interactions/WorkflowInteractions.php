@@ -178,7 +178,7 @@ final class WorkflowInteractions
             return 0;
         }
 
-        return (int) ($duration->getSeconds() * 1000 + \intdiv($duration->getNanos(), 1_000_000));
+        return (int) $duration->getSeconds() * 1000 + \intdiv($duration->getNanos(), 1_000_000);
     }
 
     /**
