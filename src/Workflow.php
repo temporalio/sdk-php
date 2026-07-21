@@ -28,6 +28,7 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\NexusServiceProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -1011,6 +1012,52 @@ final class Workflow extends Facade
         ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface {
         return self::getCurrentContext()->newUntypedActivityStub($options);
+    }
+
+    /**
+     * Returns a typed proxy for a Nexus service interface.
+     * Method calls on the returned object will execute Nexus operations.
+     *
+     * @template T of object
+     *
+     * @param class-string<T> $class Nexus service interface annotated with #[Service]
+     *
+     * @return NexusServiceProxy<T>
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function newNexusServiceStub(
+        string $class,
+        Workflow\NexusOperationOptions $options,
+    ): object {
+        return self::getCurrentContext()->newNexusServiceStub($class, $options);
+    }
+
+    /**
+     * Returns an untyped Nexus operation stub.
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function newUntypedNexusOperationStub(
+        Workflow\NexusOperationOptions $options,
+    ): Workflow\NexusOperationStubInterface {
+        return self::getCurrentContext()->newUntypedNexusOperationStub($options);
+    }
+
+    /**
+     * Execute a Nexus operation directly without a typed stub.
+     *
+     * @param array<string, string> $nexusHeaders Raw-string headers carried on
+     *        the Nexus wire and surfaced to the handler via OperationContext.
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function executeNexusOperation(
+        string $operation,
+        array $args = [],
+        ?Workflow\NexusOperationOptions $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
+    ): PromiseInterface {
+        return self::getCurrentContext()->executeNexusOperation($operation, $args, $options, $returnType, $nexusHeaders);
     }
 
     /**

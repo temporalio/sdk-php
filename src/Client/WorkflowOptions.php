@@ -31,10 +31,14 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Internal\Client\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Nexus\Link as NexusLink;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Workflow\CompletionCallback;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -192,6 +196,17 @@ final class WorkflowOptions extends Options
      */
     #[Marshal(name: 'VersioningOverride')]
     public ?VersioningOverride $versioningOverride = null;
+
+    public ?string $requestId = null;
+
+    /** @var list<CompletionCallback> */
+    public array $completionCallbacks = [];
+
+    /** @internal */
+    public ?OnConflictOptions $onConflictOptions = null;
+
+    /** @var list<\Temporal\Api\Common\V1\Link> */
+    public array $links = [];
 
     /**
      * @throws \Exception
@@ -611,5 +626,110 @@ final class WorkflowOptions extends Options
         $self = clone $this;
         $self->priority = $priority;
         return $self;
+    }
+
+    /**
+     * Pin gRPC `request_id`. `null` = fresh UUID per call.
+     *
+     * @return $this
+     */
+    #[Pure]
+    public function withRequestId(?string $requestId): self
+    {
+        $self = clone $this;
+        $self->requestId = $requestId;
+        return $self;
+    }
+
+    /**
+     * Append a Nexus completion callback. Use {@see self::withCompletionCallbacks()}
+     * with an empty argument list to clear.
+     *
+     * @param non-empty-string $url
+     * @param array<string, string> $headers
+     * @return $this
+     */
+    #[Pure]
+    public function withNexusCompletionCallback(string $url, array $headers = []): self
+    {
+        $self = clone $this;
+        $self->completionCallbacks = [...$this->completionCallbacks, new CompletionCallback($url, $headers)];
+        return $self;
+    }
+
+    /**
+     * Replace the full list of completion callbacks.
+     *
+     * @return $this
+     */
+    #[Pure]
+    public function withCompletionCallbacks(CompletionCallback ...$callbacks): self
+    {
+        $self = clone $this;
+        $self->completionCallbacks = \array_values($callbacks);
+        return $self;
+    }
+
+    /**
+     * @internal
+     * @return $this
+     */
+    #[Pure]
+    public function withOnConflictOptionsInternal(?OnConflictOptions $options): self
+    {
+        $self = clone $this;
+        $self->onConflictOptions = $options;
+        return $self;
+    }
+
+    /**
+     * Replace the link list with proto Link[] derived from Nexus-level URIs.
+     *
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @param iterable<NexusLink> $nexusLinks
+     * @return $this
+     */
+    #[Pure]
+    public function withLinks(iterable $nexusLinks): self
+    {
+        $self = clone $this;
+        $self->links = NexusLinkConverter::toProtoLinks($nexusLinks);
+        return $self;
+    }
+
+    /**
+     * Snapshot of the DTO for `var_dump`/`print_r`/Xdebug pretty-printing.
+     *
+     * Renders {@see \DateInterval} fields as ISO 8601 spec strings (e.g.
+     * `PT60S`); the default dump expands them into nine zero components and
+     * buries the actual values.
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'workflowId' => $this->workflowId,
+            'taskQueue' => $this->taskQueue,
+            'eagerStart' => $this->eagerStart,
+            'workflowExecutionTimeout' => CarbonInterval::instance($this->workflowExecutionTimeout)->spec(),
+            'workflowRunTimeout' => CarbonInterval::instance($this->workflowRunTimeout)->spec(),
+            'workflowStartDelay' => CarbonInterval::instance($this->workflowStartDelay)->spec(),
+            'workflowTaskTimeout' => CarbonInterval::instance($this->workflowTaskTimeout)->spec(),
+            'workflowIdReusePolicy' => $this->workflowIdReusePolicy,
+            'workflowIdConflictPolicy' => $this->workflowIdConflictPolicy,
+            'retryOptions' => $this->retryOptions,
+            'cronSchedule' => $this->cronSchedule,
+            'memo' => $this->memo,
+            'searchAttributes' => $this->searchAttributes,
+            'typedSearchAttributes' => $this->typedSearchAttributes,
+            'staticDetails' => $this->staticDetails,
+            'staticSummary' => $this->staticSummary,
+            'priority' => $this->priority,
+            'versioningOverride' => $this->versioningOverride,
+            'requestId' => $this->requestId,
+            'completionCallbacks' => $this->completionCallbacks,
+            'onConflictOptions' => $this->onConflictOptions,
+            'links' => $this->links,
+        ];
     }
 }

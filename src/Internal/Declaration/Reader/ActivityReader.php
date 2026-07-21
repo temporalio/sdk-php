@@ -96,7 +96,7 @@ class ActivityReader extends Reader
             // Each group of methods means one level of hierarchy in the
             // inheritance graph.
             //
-            /** @var ClassNode $ctx */
+            /** @var \Traversable<ClassNode, \ReflectionMethod> $group */
             foreach ($group as $ctx => $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);

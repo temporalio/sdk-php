@@ -1,0 +1,321 @@
+<?php
+
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Temporal\Internal\Nexus;
+
+use Temporal\Api\Common\V1\Link;
+use Temporal\Api\Common\V1\Link\WorkflowEvent;
+use Temporal\Api\Common\V1\Link\WorkflowEvent\EventReference;
+use Temporal\Api\Common\V1\Link\WorkflowEvent\RequestIdReference;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Nexus\V1\Link as NexusProtoLink;
+use Temporal\Nexus\Exception\InvalidArgumentException;
+use Temporal\Nexus\Link as NexusLink;
+
+/**
+ * @internal
+ */
+final class NexusLinkConverter
+{
+    private const SCHEME = 'temporal';
+    private const PATH_REGEX = '#^/namespaces/([^/]+)/workflows/([^/]+)/([^/]+)/history$#';
+    public const TYPE_WORKFLOW_EVENT = 'temporal.api.common.v1.Link.WorkflowEvent';
+    private const REF_TYPE_EVENT = 'EventReference';
+    private const REF_TYPE_REQUEST_ID = 'RequestIdReference';
+    private const QUERY_REFERENCE_TYPE = 'referenceType';
+    private const QUERY_EVENT_ID       = 'eventID';
+    private const QUERY_EVENT_TYPE     = 'eventType';
+    private const QUERY_REQUEST_ID     = 'requestID';
+
+    /**
+     * @codeCoverageIgnore
+     */
+    private function __construct() {}
+
+    /**
+     * @param iterable<NexusLink> $links
+     * @return list<Link>
+     * @throws InvalidArgumentException on malformed WorkflowEvent URI.
+     */
+    public static function toProtoLinks(iterable $links): array
+    {
+        $out = [];
+        foreach ($links as $link) {
+            if ($link->type !== self::TYPE_WORKFLOW_EVENT) {
+                continue;
+            }
+            $out[] = self::convertOne($link);
+        }
+        return $out;
+    }
+
+    /**
+     * Bare wire form: only `url` + `type`, no parsed `WorkflowEvent`; non-WorkflowEvent types pass through.
+     *
+     * @param iterable<NexusLink> $links
+     * @return list<NexusProtoLink>
+     */
+    public static function toNexusProtoLinks(iterable $links): array
+    {
+        $out = [];
+        foreach ($links as $link) {
+            $proto = new NexusProtoLink();
+            $proto->setUrl($link->uri);
+            $proto->setType($link->type);
+            $out[] = $proto;
+        }
+        return $out;
+    }
+
+    /**
+     * Wire `eventType` is written in PascalCase (`WorkflowExecutionStarted`); decoder accepts both forms.
+     *
+     * @throws InvalidArgumentException when WorkflowEvent has neither
+     *         event_ref nor request_id_ref set, or carries an unknown
+     *         EventType enum value.
+     */
+    public static function workflowEventToNexusLink(WorkflowEvent $event): NexusLink
+    {
+        $path = \sprintf(
+            '/namespaces/%s/workflows/%s/%s/history',
+            \rawurlencode($event->getNamespace()),
+            \rawurlencode($event->getWorkflowId()),
+            \rawurlencode($event->getRunId()),
+        );
+
+        $query = self::buildEventQuery($event);
+        $uri = 'temporal://' . $path . '?' . self::encodeQuery($query);
+
+        return new NexusLink($uri, self::TYPE_WORKFLOW_EVENT);
+    }
+
+    private static function convertOne(NexusLink $link): Link
+    {
+        // Manual scheme/path/query split — parse_url rejects the `scheme:///path` (empty authority) form.
+        if (!\preg_match('~^([a-zA-Z][a-zA-Z0-9+.\-]*):(?://[^/?\#]*)?(/[^?\#]*)(?:\?([^\#]*))?(?:\#.*)?$~', $link->uri, $u)) {
+            throw new InvalidArgumentException(\sprintf(
+                'malformed Nexus link URI: "%s"',
+                $link->uri,
+            ));
+        }
+        $scheme = $u[1];
+        $path = $u[2];
+        $queryString = $u[3] ?? '';
+
+        if ($scheme !== self::SCHEME) {
+            throw new InvalidArgumentException(\sprintf(
+                'Nexus link URI scheme must be "temporal", got "%s" in "%s"',
+                $scheme,
+                $link->uri,
+            ));
+        }
+        if (!\preg_match(self::PATH_REGEX, $path, $m)) {
+            throw new InvalidArgumentException(\sprintf(
+                'Nexus link URI path does not match /namespaces/{ns}/workflows/{wf}/{run}/history: "%s"',
+                $path,
+            ));
+        }
+        $namespace = \rawurldecode($m[1]);
+        $workflowId = \rawurldecode($m[2]);
+        $runId = \rawurldecode($m[3]);
+
+        $query = [];
+        if ($queryString !== '') {
+            \parse_str($queryString, $query);
+        }
+
+        $event = (new WorkflowEvent())
+            ->setNamespace($namespace)
+            ->setWorkflowId($workflowId)
+            ->setRunId($runId);
+
+        $referenceType = (string) ($query[self::QUERY_REFERENCE_TYPE] ?? '');
+        $eventTypeName = (string) ($query[self::QUERY_EVENT_TYPE] ?? '');
+        $eventTypeValue = self::resolveEventType($eventTypeName);
+        if ($eventTypeValue === null) {
+            throw new InvalidArgumentException(\sprintf(
+                'unknown EventType "%s" in Nexus link URI "%s"',
+                $eventTypeName,
+                $link->uri,
+            ));
+        }
+
+        match ($referenceType) {
+            self::REF_TYPE_EVENT => $event->setEventRef(self::buildEventRef($query, $eventTypeValue, $link->uri)),
+            self::REF_TYPE_REQUEST_ID => $event->setRequestIdRef(self::buildRequestIdRef($query, $eventTypeValue)),
+            default => throw new InvalidArgumentException(\sprintf(
+                'unknown referenceType "%s" in Nexus link URI "%s"',
+                $referenceType,
+                $link->uri,
+            )),
+        };
+
+        $proto = new Link();
+        $proto->setWorkflowEvent($event);
+        return $proto;
+    }
+
+    /**
+     * Accepts both legacy `EVENT_TYPE_*` and modern PascalCase wire forms.
+     */
+    private static function resolveEventType(string $name): ?int
+    {
+        if ($name === '') {
+            return null;
+        }
+
+        if (\str_starts_with($name, 'EVENT_TYPE_')) {
+            return self::lookupEventTypeValue($name);
+        }
+
+        if (!\preg_match('/^[A-Z]/', $name)) {
+            return null;
+        }
+
+        return self::lookupEventTypeValue('EVENT_TYPE_' . self::pascalCaseToConstantCase($name));
+    }
+
+    private static function lookupEventTypeValue(string $screamingName): ?int
+    {
+        try {
+            return EventType::value($screamingName);
+        } catch (\UnexpectedValueException) {
+            return null;
+        }
+    }
+
+    /**
+     * "WorkflowExecutionStarted" → "WORKFLOW_EXECUTION_STARTED".
+     */
+    private static function pascalCaseToConstantCase(string $pascal): string
+    {
+        if ($pascal === '') {
+            return '';
+        }
+        $withUnderscores = \preg_replace('/(?<!^)([A-Z])/', '_$1', $pascal);
+        return \strtoupper($withUnderscores ?? $pascal);
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private static function buildEventRef(array $query, int $eventType, string $uri): EventReference
+    {
+        $eventReference = new EventReference();
+        $eventReference->setEventType($eventType);
+        if (isset($query[self::QUERY_EVENT_ID]) && $query[self::QUERY_EVENT_ID] !== '') {
+            if (!\preg_match('/^\\d+$/', (string) $query[self::QUERY_EVENT_ID])) {
+                throw new InvalidArgumentException(\sprintf(
+                    'eventID is not an integer in Nexus link URI "%s"',
+                    $uri,
+                ));
+            }
+            $eventReference->setEventId((int) $query[self::QUERY_EVENT_ID]);
+        }
+        return $eventReference;
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private static function buildRequestIdRef(array $query, int $eventType): RequestIdReference
+    {
+        $requestId = $query[self::QUERY_REQUEST_ID] ?? '';
+        if (!\is_string($requestId)) {
+            $requestId = '';
+        }
+        $requestIdReference = new RequestIdReference();
+        $requestIdReference->setRequestId($requestId);
+        $requestIdReference->setEventType($eventType);
+        return $requestIdReference;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function buildEventQuery(WorkflowEvent $event): array
+    {
+        if ($event->hasEventRef()) {
+            $eventRef = $event->getEventRef();
+            \assert($eventRef !== null);
+            $query = [self::QUERY_REFERENCE_TYPE => self::REF_TYPE_EVENT];
+            $eventId = (int) $eventRef->getEventId();
+            if ($eventId > 0) {
+                $query[self::QUERY_EVENT_ID] = (string) $eventId;
+            }
+            $query[self::QUERY_EVENT_TYPE] = self::encodeEventTypeName($eventRef->getEventType(), $event);
+            return $query;
+        }
+        if ($event->hasRequestIdRef()) {
+            $requestRef = $event->getRequestIdRef();
+            \assert($requestRef !== null);
+            $query = [self::QUERY_REFERENCE_TYPE => self::REF_TYPE_REQUEST_ID];
+            $requestId = $requestRef->getRequestId();
+            if ($requestId !== '') {
+                $query[self::QUERY_REQUEST_ID] = $requestId;
+            }
+            $query[self::QUERY_EVENT_TYPE] = self::encodeEventTypeName($requestRef->getEventType(), $event);
+            return $query;
+        }
+        throw new InvalidArgumentException(
+            'WorkflowEvent must have either event_ref or request_id_ref set',
+        );
+    }
+
+    /**
+     * @param array<string, string> $query
+     */
+    private static function encodeQuery(array $query): string
+    {
+        $parts = [];
+        foreach ($query as $key => $value) {
+            $parts[] = \rawurlencode($key) . '=' . \rawurlencode($value);
+        }
+        return \implode('&', $parts);
+    }
+
+    /**
+     * Convert protobuf int → PascalCase wire form (`WorkflowExecutionStarted`).
+     *
+     * @throws InvalidArgumentException when $value is not a known EventType.
+     */
+    private static function encodeEventTypeName(int $value, WorkflowEvent $event): string
+    {
+        try {
+            $screaming = EventType::name($value);
+        } catch (\UnexpectedValueException) {
+            $screaming = null;
+        }
+        if ($screaming === null) {
+            throw new InvalidArgumentException(\sprintf(
+                'unknown EventType enum value %d in WorkflowEvent (workflow_id="%s")',
+                $value,
+                $event->getWorkflowId(),
+            ));
+        }
+        if (!\str_starts_with($screaming, 'EVENT_TYPE_')) {
+            return $screaming;
+        }
+        return self::constantCaseToPascalCase(\substr($screaming, \strlen('EVENT_TYPE_')));
+    }
+
+    /**
+     * "WORKFLOW_EXECUTION_STARTED" → "WorkflowExecutionStarted".
+     */
+    private static function constantCaseToPascalCase(string $screaming): string
+    {
+        if ($screaming === '') {
+            return '';
+        }
+        $segments = \explode('_', \strtolower($screaming));
+        return \implode('', \array_map(\ucfirst(...), $segments));
+    }
+}
