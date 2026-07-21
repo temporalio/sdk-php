@@ -78,6 +78,28 @@
         </testsuite>
         <testsuite name="Functional">
             <directory suffix="TestCase.php">tests/Functional</directory>
+            <exclude>tests/Functional/TimerOnlyTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/ChildWorkflowTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/MockedActivityTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/DelayedSignalInjectionTestCase.php</exclude>
+            <exclude>tests/Functional/TimeSkippingSpikeTestCase.php</exclude>
+            <exclude>tests/Functional/WorkflowSideDelayedCallbackTestCase.php</exclude>
+            <exclude>tests/Functional/ClientSideDelayedCallbackTestCase.php</exclude>
+            <exclude>tests/Functional/NestedTimeSkipGuardTestCase.php</exclude>
+            <exclude>tests/Functional/ClientSideDelayedCallbackMatrixTestCase.php</exclude>
+            <exclude>tests/Functional/SchedulerWithMockedActivityTestCase.php</exclude>
+        </testsuite>
+        <testsuite name="Functional-TimeSkipping">
+            <file>tests/Functional/TimerOnlyTimeSkipTestCase.php</file>
+            <file>tests/Functional/ChildWorkflowTimeSkipTestCase.php</file>
+            <file>tests/Functional/MockedActivityTimeSkipTestCase.php</file>
+            <file>tests/Functional/DelayedSignalInjectionTestCase.php</file>
+            <file>tests/Functional/TimeSkippingSpikeTestCase.php</file>
+            <file>tests/Functional/WorkflowSideDelayedCallbackTestCase.php</file>
+            <file>tests/Functional/ClientSideDelayedCallbackTestCase.php</file>
+            <file>tests/Functional/NestedTimeSkipGuardTestCase.php</file>
+            <file>tests/Functional/ClientSideDelayedCallbackMatrixTestCase.php</file>
+            <file>tests/Functional/SchedulerWithMockedActivityTestCase.php</file>
         </testsuite>
     </testsuites>
     <extensions>

@@ -11,18 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Carbon\CarbonInterval;
 use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-#[Workflow\WorkflowInterface]
-class ChildWithLongTimerWorkflow
+#[WorkflowInterface]
+class LongTimerWorkflow
 {
-    #[WorkflowMethod(name: 'ChildWithLongTimerWorkflow')]
-    public function handler(): iterable
+    #[WorkflowMethod(name: 'LongTimerWorkflow')]
+    public function handler(int $seconds): iterable
     {
-        yield Workflow::timer(CarbonInterval::minutes(30));
+        yield Workflow::timer($seconds);
 
-        return 'child done';
+        return 'done';
     }
 }

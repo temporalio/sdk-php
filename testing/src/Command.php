@@ -27,8 +27,7 @@ final class Command
 
     public static function fromEnv(): self
     {
-        $address = \getenv('TEMPORAL_ADDRESS');
-        $self = new self((\is_string($address) && $address !== '') ? $address : '127.0.0.1:7233');
+        $self = new self(TemporalServer::address());
 
         $namespace = \getenv('TEMPORAL_NAMESPACE');
         $self->namespace = (\is_string($namespace) && $namespace !== '') ? $namespace : 'default';

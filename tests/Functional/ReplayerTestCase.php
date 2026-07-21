@@ -15,6 +15,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
 use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\WorkflowReplayer;
+use Temporal\Testing\TemporalServer;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
 use Temporal\Tests\Workflow\SignalWorkflow;
@@ -27,7 +28,7 @@ final class ReplayerTestCase extends TestCase
     protected function setUp(): void
     {
         $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('127.0.0.1:7233')
+            ServiceClient::create(TemporalServer::address())
         );
 
         parent::setUp();
