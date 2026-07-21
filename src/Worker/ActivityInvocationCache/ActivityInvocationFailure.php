@@ -1,34 +1,19 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Worker\ActivityInvocationCache;
 
-final class ActivityInvocationFailure
-{
-    /** @var class-string<\Throwable> */
-    public string $errorClass;
+use Temporal\Worker\InvocationFailure;
 
-    public string $errorMessage;
-
-    /**
-     * @param class-string<\Throwable> $exceptionClass
-     */
-    public function __construct(
-        string $exceptionClass,
-        string $exceptionMessage,
-    ) {
-        $this->errorClass = $exceptionClass;
-        $this->errorMessage = $exceptionMessage;
-    }
-
-    public static function fromThrowable(\Throwable $error): self
-    {
-        return new self($error::class, $error->getMessage());
-    }
-
-    public function toThrowable(): \Throwable
-    {
-        return new ($this->errorClass)($this->errorMessage);
-    }
-}
+/**
+ * @deprecated Use {@see \Temporal\Worker\InvocationFailure} instead.
+ */
+final class ActivityInvocationFailure extends InvocationFailure {}

@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Exception;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\Failure\ActivityFailure;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
@@ -28,23 +28,43 @@ class ActivityInvocationCacheTestCase extends AbstractFunctional
     {
         $this->cache->saveCompletion('MyActivity.myMethod', 'foo');
         $result = $this->cache->execute($this->makeRequest('InvokeActivity', 'MyActivity.myMethod', EncodedValues::empty()));
+
+        $value = null;
+        $rejected = null;
         $result->then(
-            fn($value) => $this->assertSame('foo', $value),
-            fn(Exception $exception) => $this->fail($exception->getMessage())
+            function ($resolved) use (&$value): void {
+                $value = $resolved;
+            },
+            function (\Throwable $exception) use (&$rejected): void {
+                $rejected = $exception;
+            },
         );
+
+        self::assertNull($rejected, 'Completion should resolve, not reject');
+        self::assertInstanceOf(EncodedValues::class, $value);
+        self::assertSame('foo', $value->getValue(0, 'string'));
     }
 
     public function testActivityFailureIsStoredInCache(): void
     {
         $this->cache->saveFailure('MyActivity.myMethod', new \LogicException('some error'));
         $result = $this->cache->execute($this->makeRequest('InvokeActivity', 'MyActivity.myMethod', EncodedValues::empty()));
+
+        $rejected = null;
+        $resolved = false;
         $result->then(
-            fn(Exception $exception) => $this->fail('Activity should fail'),
-            function (Exception $exception) {
-                $this->assertInstanceOf(ActivityFailure::class, $exception);
-                $this->assertSame('some error', $exception->getMessage());
-            }
+            function ($value) use (&$resolved): void {
+                $resolved = true;
+            },
+            function (\Throwable $exception) use (&$rejected): void {
+                $rejected = $exception;
+            },
         );
+
+        self::assertFalse($resolved, 'Activity should fail, not resolve');
+        self::assertInstanceOf(ApplicationFailure::class, $rejected);
+        self::assertSame('LogicException', $rejected->getType());
+        self::assertSame('some error', $rejected->getOriginalMessage());
     }
 
     public function testCacheCanHandleStoredResult(): void
