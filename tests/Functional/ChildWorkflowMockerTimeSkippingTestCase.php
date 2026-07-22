@@ -6,7 +6,7 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Testing\WorkflowMocker;
 use Temporal\Testing\WorkflowTestCase;
-use Temporal\Tests\Workflow\ChildWithLongTimerWorkflow;
+use Temporal\Tests\Workflow\LongTimerWorkflow;
 use Temporal\Tests\Workflow\ParentWithChildAndTimerWorkflow;
 
 final class ChildWorkflowMockerTimeSkippingTestCase extends WorkflowTestCase
@@ -18,7 +18,7 @@ final class ChildWorkflowMockerTimeSkippingTestCase extends WorkflowTestCase
 
     public function testParentWithStubbedChildSkipsThirtyMinuteTimerWithoutRealWaiting(): void
     {
-        $this->childWorkflowMocks()->expectCompletion('ChildWithLongTimerWorkflow', 'stubbed child');
+        $this->childWorkflowMocks()->expectCompletion('LongTimerWorkflow', 'stubbed child');
 
         $serverTimeBefore = $this->testingService->getCurrentTime();
         $wallClockBefore = \microtime(true);
@@ -40,14 +40,14 @@ final class ChildWorkflowMockerTimeSkippingTestCase extends WorkflowTestCase
         $serverTimeBefore = $this->testingService->getCurrentTime();
         $wallClockBefore = \microtime(true);
 
-        $child = $this->workflowClient->newWorkflowStub(ChildWithLongTimerWorkflow::class);
-        $run = $this->workflowClient->start($child);
+        $child = $this->workflowClient->newWorkflowStub(LongTimerWorkflow::class);
+        $run = $this->workflowClient->start($child, self::TIMER_SECONDS);
         $result = $run->getResult('string', self::MAX_WALL_CLOCK_SECONDS);
 
         $wallClockElapsed = \microtime(true) - $wallClockBefore;
         $serverTimeElapsed = $this->testingService->getCurrentTime()->getTimestamp() - $serverTimeBefore->getTimestamp();
 
-        self::assertSame('child done', $result);
+        self::assertSame('done', $result);
         self::assertGreaterThanOrEqual(self::TIMER_SECONDS, $serverTimeElapsed);
         self::assertLessThan(self::MAX_WALL_CLOCK_SECONDS, $wallClockElapsed);
     }
