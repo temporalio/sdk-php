@@ -25,9 +25,6 @@ final class TimerInput
     public function __construct(
         public readonly \DateInterval $interval,
 
-        /**
-         * @experimental This API is experimental and may change in the future.
-         */
         public readonly ?TimerOptions $timerOptions,
     ) {}
 
