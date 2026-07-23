@@ -54,6 +54,7 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
                 'fairness_weight' => 0.0,
             ],
             'VersioningOverride' => null,
+            'onConflictOptions' => null,
         ];
 
         $result = $this->marshal($dto);
