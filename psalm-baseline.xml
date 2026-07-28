@@ -160,9 +160,6 @@
       <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
     </ImpureMethodCall>
-    <PossiblyNullReference>
-      <code><![CDATA[mergeWith]]></code>
-    </PossiblyNullReference>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[SearchAttributeKey]]></code>
     </UnnecessaryVarAnnotation>
