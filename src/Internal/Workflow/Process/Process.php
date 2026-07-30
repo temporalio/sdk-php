@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\FeatureFlags;
@@ -78,13 +79,15 @@ class Process extends Scope implements ProcessInterface
                     Workflow::setCurrentContext($this->scopeContext);
                     $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
-                            Workflow::setCurrentContext($this->scopeContext->withInput(
+                            $context = $this->scopeContext->withInput(
                                 new Input(
                                     $this->scopeContext->getInfo(),
                                     $input->arguments,
                                     $input->header,
                                 ),
-                            ));
+                            );
+                            $context->setFiberMode(false);
+                            Workflow::setCurrentContext($context);
                             $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
@@ -130,39 +133,48 @@ class Process extends Scope implements ProcessInterface
         // Configure signal handler
         $workflowInstance->getSignalDispatcher()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
+                $fiberMode = $this->scopeContext->isFiberMode();
+                $previous = $fiberMode ? Facade::getCurrentContext() : null;
+
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);
 
-                $inboundPipeline->with(
-                    function (SignalInput $input) use ($handler): void {
-                        $this->createScope(
-                            true,
-                            LoopInterface::ON_SIGNAL,
-                            $this->context->withInput(
-                                new Input($input->info, $input->arguments, $input->header),
-                            ),
-                        )->onClose(
-                            function (?\Throwable $error): void {
-                                if ($error !== null) {
-                                    // Fail process when signal scope fails
-                                    $this->complete($error);
-                                }
-                            },
-                        )->startSignal(
-                            $handler,
-                            $input->arguments,
-                            $input->signalName,
-                        );
-                    },
-                    /** @see WorkflowInboundCallsInterceptor::handleSignal() */
-                    'handleSignal',
-                )(new SignalInput(
-                    $name,
-                    $this->scopeContext->getInfo(),
-                    $arguments,
-                    $this->scopeContext->getHeader(),
-                    $this->scopeContext->isReplaying(),
-                ));
+                try {
+                    $inboundPipeline->with(
+                        function (SignalInput $input) use ($handler): void {
+                            $this->createScope(
+                                true,
+                                LoopInterface::ON_SIGNAL,
+                                $this->context->withInput(
+                                    new Input($input->info, $input->arguments, $input->header),
+                                ),
+                            )->onClose(
+                                function (?\Throwable $error): void {
+                                    if ($error !== null) {
+                                        // Fail process when signal scope fails
+                                        $this->complete($error);
+                                    }
+                                },
+                            )->startSignal(
+                                $handler,
+                                $input->arguments,
+                                $input->signalName,
+                            );
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::handleSignal() */
+                        'handleSignal',
+                    )(new SignalInput(
+                        $name,
+                        $this->scopeContext->getInfo(),
+                        $arguments,
+                        $this->scopeContext->getHeader(),
+                        $this->scopeContext->isReplaying(),
+                    ));
+                } finally {
+                    if ($fiberMode) {
+                        Workflow::setCurrentContext($previous);
+                    }
+                }
             },
         );
 

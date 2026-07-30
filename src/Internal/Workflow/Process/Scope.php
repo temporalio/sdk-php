@@ -20,6 +20,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Exception\InvalidSuspendException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
@@ -304,6 +305,13 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        if (isset($this->coroutine)) {
+            try {
+                $this->coroutine->throw(new DestructMemorizedInstanceException());
+            } catch (\Throwable) {
+            }
+        }
+
         $this->scopeContext?->setFiberMode(false);
         $this->context?->destroy();
         $this->scopeContext?->destroy();
@@ -364,14 +372,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): CoroutineInterface
     {
-        return $this->createCoroutine(static function (ValuesInterface $values) use ($handler): mixed {
-            try {
-                return $handler($values);
-            } catch (InvalidArgumentException) {
-                // Skip deserialization errors
-                return null;
-            }
-        }, $values);
+        return $this->createCoroutine($handler, $values, skipInvalidArguments: true);
     }
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
@@ -462,9 +463,12 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
-    private function createCoroutine(callable $handler, ValuesInterface $values): CoroutineInterface
-    {
-        $fiberHandler = $this->createFiberHandler($handler, $this->scopeContext);
+    private function createCoroutine(
+        callable $handler,
+        ValuesInterface $values,
+        bool $skipInvalidArguments = false,
+    ): CoroutineInterface {
+        $fiberHandler = $this->createFiberHandler($handler, $this->scopeContext, $skipInvalidArguments);
 
         return DeferredGenerator::fromHandler($fiberHandler, $values)
             ->catch($this->onException(...));
@@ -474,10 +478,17 @@ class Scope implements CancellationScopeInterface, Destroyable
      * Wraps a user handler in a Fiber and exposes either the Fiber's return value
      * (sync completion) or a bridge Generator that forwards Fiber suspends as
      * Generator yields so {@see self::next()} can drive both uniformly.
+     *
+     * When $skipInvalidArguments is true (Signal/Update handlers), an argument
+     * deserialization error thrown before the first suspend is skipped, while an
+     * error raised after the handler already suspended propagates normally.
      */
-    private function createFiberHandler(callable $handler, ScopeContext $scopeContext): \Closure
-    {
-        return static function (ValuesInterface $values) use ($handler, $scopeContext): mixed {
+    private function createFiberHandler(
+        callable $handler,
+        ScopeContext $scopeContext,
+        bool $skipInvalidArguments,
+    ): \Closure {
+        return static function (ValuesInterface $values) use ($handler, $scopeContext, $skipInvalidArguments): mixed {
             $fiber = new \Fiber(static function () use ($handler, $values, $scopeContext): mixed {
                 $scopeContext->setFiberMode(true);
                 Workflow::setCurrentContext($scopeContext);
@@ -486,6 +497,12 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             try {
                 $suspendedValue = $fiber->start();
+            } catch (InvalidArgumentException $e) {
+                $scopeContext->setFiberMode(false);
+                if ($skipInvalidArguments) {
+                    return null;
+                }
+                throw $e;
             } catch (\Throwable $e) {
                 $scopeContext->setFiberMode(false);
                 throw $e;
@@ -500,6 +517,15 @@ class Scope implements CancellationScopeInterface, Destroyable
                 $value = $suspendedValue;
                 try {
                     while (!$fiber->isTerminated()) {
+                        if (!self::isLegalSuspendValue($value)) {
+                            $value = $fiber->throw(new InvalidSuspendException(
+                                'A workflow Fiber suspended with a value that is not part of the workflow ' .
+                                'suspension protocol. This usually means a non-workflow asynchronous API was ' .
+                                'called inside the workflow body. Use the Fibers workflow facade instead.',
+                            ));
+                            continue;
+                        }
+
                         try {
                             $sent = yield $value;
                             $value = $fiber->resume($sent);
@@ -516,6 +542,14 @@ class Scope implements CancellationScopeInterface, Destroyable
                 }
             })($fiber, $suspendedValue, $scopeContext);
         };
+    }
+
+    private static function isLegalSuspendValue(mixed $value): bool
+    {
+        return $value instanceof PromiseInterface
+            || $value instanceof Workflow\Mutex
+            || $value instanceof Deferred
+            || $value instanceof RequestInterface;
     }
 
     private function addOnCancel(callable $handler, bool $cancellable = true): int

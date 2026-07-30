@@ -32,6 +32,10 @@ final class FiberHelper
 
     public static function isInFiberMode(): bool
     {
+        if (\Fiber::getCurrent() === null) {
+            return false;
+        }
+
         $context = Facade::getCurrentContext();
 
         return $context instanceof ScopeContext && $context->isFiberMode();

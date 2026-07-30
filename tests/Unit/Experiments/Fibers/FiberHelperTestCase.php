@@ -42,12 +42,27 @@ final class FiberHelperTestCase extends TestCase
         self::assertFalse(FiberHelper::isInFiberMode());
     }
 
-    public function testIsInFiberModeReturnsTrueWhenScopeContextFlagTrue(): void
+    public function testIsInFiberModeReturnsTrueInsideFiberWhenScopeContextFlagTrue(): void
+    {
+        $context = $this->makeScopeContextStub(true);
+
+        $fiber = new \Fiber(static function () use ($context): bool {
+            Facade::setCurrentContext($context);
+            return FiberHelper::isInFiberMode();
+        });
+
+        $fiber->start();
+
+        self::assertTrue($fiber->isTerminated());
+        self::assertTrue($fiber->getReturn());
+    }
+
+    public function testIsInFiberModeReturnsFalseOutsideFiberEvenWhenScopeContextFlagTrue(): void
     {
         $context = $this->makeScopeContextStub(true);
         Facade::setCurrentContext($context);
 
-        self::assertTrue(FiberHelper::isInFiberMode());
+        self::assertFalse(FiberHelper::isInFiberMode());
     }
 
     public function testAwaitThrowsWhenNotInContext(): void
