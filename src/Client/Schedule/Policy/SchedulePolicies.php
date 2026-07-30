@@ -6,6 +6,7 @@ namespace Temporal\Client\Schedule\Policy;
 
 use Google\Protobuf\Duration;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Traits\CloneWith;
 
@@ -34,10 +35,12 @@ final class SchedulePolicies
      * If the Temporal server misses an action due to one or more components
      * being down, and comes back up, the action will be run if the scheduled
      * time is within this window from the current time.
-     * This value defaults to 60 seconds, and can't be less than 10 seconds.
+     * When unset, this value is omitted so the Temporal Server applies its
+     * default (currently one year). An explicitly set value can't be less than
+     * 10 seconds.
      */
-    #[Marshal(name: 'catchup_window', of: Duration::class)]
-    public readonly \DateInterval $catchupWindow;
+    #[Marshal(name: 'catchup_window', type: DateIntervalType::class, of: Duration::class, nullable: true)]
+    public readonly ?\DateInterval $catchupWindow;
 
     /**
      * If true, and a Workflow run fails or times out, pause the Schedule.
@@ -50,7 +53,7 @@ final class SchedulePolicies
     private function __construct()
     {
         $this->overlapPolicy = ScheduleOverlapPolicy::Unspecified;
-        $this->catchupWindow = new \DateInterval('PT60S');
+        $this->catchupWindow = null;
         $this->pauseOnFailure = false;
     }
 
@@ -75,7 +78,9 @@ final class SchedulePolicies
      * If the Temporal server misses an action due to one or more components
      * being down, and comes back up, the action will be run if the scheduled
      * time is within this window from the current time.
-     * This value defaults to 60 seconds, and can't be less than 10 seconds.
+     * When unset, this value is omitted so the Temporal Server applies its
+     * default (currently one year). An explicitly set value can't be less than
+     * 10 seconds.
      *
      * @param DateIntervalValue $interval
      */
