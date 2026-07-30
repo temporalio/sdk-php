@@ -47,6 +47,19 @@ class WorkflowTestCase extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @return list<Interceptor>
+     */
+    protected function clientInterceptors(): array
+    {
+        return [];
+    }
+
+    protected function interactions(WorkflowRunInterface $run): WorkflowInteractions
+    {
+        return WorkflowInteractions::of($this->workflowClient, $run);
+    }
+
     private function assertTimeSkippingBalanced(): void
     {
         $delta = $this->testingService->lockDelta();
@@ -67,18 +80,5 @@ class WorkflowTestCase extends TestCase
             . 'The server counter was healed for the next test.',
             $delta,
         ));
-    }
-
-    /**
-     * @return list<Interceptor>
-     */
-    protected function clientInterceptors(): array
-    {
-        return [];
-    }
-
-    protected function interactions(WorkflowRunInterface $run): WorkflowInteractions
-    {
-        return WorkflowInteractions::of($this->workflowClient, $run);
     }
 }

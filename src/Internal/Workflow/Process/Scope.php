@@ -305,6 +305,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
         if (isset($this->coroutine)) {
             try {
                 $this->coroutine->throw(new DestructMemorizedInstanceException());
@@ -466,6 +467,14 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
+    private static function isLegalSuspendValue(mixed $value): bool
+    {
+        return $value instanceof PromiseInterface
+            || $value instanceof Workflow\Mutex
+            || $value instanceof Deferred
+            || $value instanceof RequestInterface;
+    }
+
     private function createCoroutine(
         callable $handler,
         ValuesInterface $values,
@@ -545,14 +554,6 @@ class Scope implements CancellationScopeInterface, Destroyable
                 }
             })($fiber, $suspendedValue, $scopeContext);
         };
-    }
-
-    private static function isLegalSuspendValue(mixed $value): bool
-    {
-        return $value instanceof PromiseInterface
-            || $value instanceof Workflow\Mutex
-            || $value instanceof Deferred
-            || $value instanceof RequestInterface;
     }
 
     private function addOnCancel(callable $handler, bool $cancellable = true): int
