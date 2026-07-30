@@ -29,16 +29,15 @@ class FeatureWorkflow
     #[WorkflowMethod('Harness_Signal_Fibers_ChildWorkflow')]
     public function run()
     {
-        $wf = Workflow::newChildWorkflowStub(
-            ChildWorkflow::class,
+        $wf = Workflow::newUntypedChildWorkflowStub(
+            'Harness_Signal_Fibers_ChildWorkflow_Child',
             \Temporal\Workflow\ChildWorkflowOptions::new()
                 // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
                 ->withTaskQueue(Workflow::getInfo()->taskQueue)
         );
-        $handle = $wf->run();
-
-        $wf->mySignal('child-wf-arg');
-        return $handle;
+        $wf->start();
+        $wf->signal('my_signal', ['child-wf-arg']);
+        return $wf->getResult();
     }
 }
 

@@ -392,6 +392,9 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             if (!$cancellable) {
                 // non-cancellable request
+                if ($this->scopeContext->isFiberMode()) {
+                    $client->reject($request, $reason ?? new CanceledFailure(''));
+                }
                 return;
             }
 

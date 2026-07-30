@@ -32,14 +32,14 @@ class MainWorkflow
     #[WorkflowMethod('Harness_ChildWorkflow_Fibers_Signal')]
     public function run()
     {
-        $workflow = Workflow::newChildWorkflowStub(
-            ChildWorkflow::class,
+        $workflow = Workflow::newUntypedChildWorkflowStub(
+            'Harness_ChildWorkflow_Fibers_Signal_Child',
             // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
             \Temporal\Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         );
-        $handle = $workflow->run();
-        $workflow->signal('unblock');
-        return $handle;
+        $workflow->start();
+        $workflow->signal('signal', ['unblock']);
+        return $workflow->getResult();
     }
 }
 
