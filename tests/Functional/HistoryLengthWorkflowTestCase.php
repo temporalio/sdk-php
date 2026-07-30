@@ -7,6 +7,7 @@ namespace Temporal\Tests\Functional;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Testing\ActivityMocker;
+use Temporal\Testing\TemporalServer;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\HistoryLengthWorkflow;
 
@@ -18,7 +19,7 @@ final class HistoryLengthWorkflowTestCase extends TestCase
     protected function setUp(): void
     {
         $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('127.0.0.1:7233')
+            ServiceClient::create(TemporalServer::address())
         );
         $this->activityMocks = new ActivityMocker();
 

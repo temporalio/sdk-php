@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
-use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Environment;
 
@@ -12,8 +11,7 @@ final class TemporalStarter
 {
     public function __construct(
         private Environment $environment,
-    )
-    {
+    ) {
         \register_shutdown_function(fn() => $this->stop());
     }
 
@@ -22,6 +20,8 @@ final class TemporalStarter
         if ($this->environment->isTemporalRunning()) {
             return;
         }
+
+        $headless = \getenv('TEMPORAL_HEADLESS') === 'true';
 
         $this->environment->startTemporalServer(
             parameters: [
@@ -32,6 +32,7 @@ final class TemporalStarter
                 '--dynamic-config-value', 'frontend.activityAPIsEnabled=true',
                 '--dynamic-config-value', 'frontend.workerVersioningWorkflowAPIs=true',
                 '--dynamic-config-value', 'system.enableDeploymentVersions=true',
+                ...$headless ? ['--headless'] : [],
             ],
             searchAttributes: [
                 'foo' => ValueType::Text->value,

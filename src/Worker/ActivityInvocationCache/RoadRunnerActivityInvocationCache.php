@@ -1,9 +1,20 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Worker\ActivityInvocationCache;
 
+use Temporal\Worker\InvocationResult;
+use Temporal\Worker\InvocationFailure;
+use Temporal\Worker\InvocationMatched;
+use Temporal\Worker\InvocationResultQueue;
 use React\Promise\PromiseInterface;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\Environment;
@@ -11,6 +22,7 @@ use Spiral\RoadRunner\KeyValue\Factory;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -43,17 +55,42 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
 
     public function saveCompletion(string $activityMethodName, mixed $value): void
     {
-        $this->cache->set($activityMethodName, ActivityInvocationResult::fromValue($value, $this->dataConverter));
+        $this->cache->set($activityMethodName, InvocationResult::fromValue($value, $this->dataConverter));
     }
 
     public function saveFailure(string $activityMethodName, \Throwable $error): void
     {
-        $this->cache->set($activityMethodName, ActivityInvocationFailure::fromThrowable($error));
+        $this->cache->set($activityMethodName, InvocationFailure::fromThrowable($error, $this->dataConverter));
+    }
+
+    public function saveConsecutiveCompletions(string $activityMethodName, array $values): void
+    {
+        $items = [];
+        foreach ($values as $value) {
+            $items[] = InvocationResult::fromValue($value, $this->dataConverter);
+        }
+
+        $this->cache->set($activityMethodName, new InvocationResultQueue($items));
+    }
+
+    public function saveCompletionWhen(string $activityMethodName, array $args, mixed $value): void
+    {
+        $matched = $this->cache->get($activityMethodName);
+        if (!$matched instanceof InvocationMatched) {
+            $matched = new InvocationMatched();
+        }
+
+        $matched->addCase(
+            EncodedValues::fromValues($args, $this->dataConverter)->toPayloads(),
+            InvocationResult::fromValue($value, $this->dataConverter),
+        );
+
+        $this->cache->set($activityMethodName, $matched);
     }
 
     public function canHandle(ServerRequestInterface $request): bool
     {
-        if ($request->getName() !== 'InvokeActivity') {
+        if (!\in_array($request->getName(), ['InvokeActivity', 'InvokeLocalActivity'], true)) {
             return false;
         }
 
@@ -67,11 +104,28 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
         $activityMethodName = $request->getOptions()['name'];
         $value = $this->cache->get($activityMethodName);
 
-        if ($value instanceof ActivityInvocationFailure) {
-            return reject($value->toThrowable());
+        if ($value instanceof InvocationMatched) {
+            $matched = $value->match($request->getPayloads()->toPayloads());
+            if ($matched === null) {
+                return reject(new InvalidArgumentException(
+                    \sprintf('No matching expectation for activity "%s"', $activityMethodName),
+                ));
+            }
+            $value = $matched;
         }
 
-        if ($value instanceof ActivityInvocationResult) {
+        if ($value instanceof InvocationResultQueue) {
+            $item = $value->current();
+            $value->advance();
+            $this->cache->set($activityMethodName, $value);
+            $value = $item;
+        }
+
+        if ($value instanceof InvocationFailure) {
+            return reject($value->toThrowable($this->dataConverter));
+        }
+
+        if ($value instanceof InvocationResult) {
             return resolve($value->toEncodedValues($this->dataConverter));
         }
 

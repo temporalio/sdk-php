@@ -30,6 +30,8 @@ final class TaskQueueResolver
         \Temporal\Tests\Acceptance\Extra\Versioning\Deployment\DeploymentTest::class,
         \Temporal\Tests\Acceptance\Extra\Versioning\Fibers\Classic\ClassicTest::class,
         \Temporal\Tests\Acceptance\Extra\Versioning\Fibers\Deployment\DeploymentTest::class,
+        \Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused\ActivityPausedTest::class,
+        \Temporal\Tests\Acceptance\Extra\Activity\Fibers\ActivityPaused\ActivityPausedTest::class,
     ];
 
     /**

@@ -21,9 +21,22 @@ final class TestService
 {
     private TestServiceClient $testServiceClient;
 
+    private int $lockDelta = 0;
+
     public function __construct(TestServiceClient $testServiceClient)
     {
         $this->testServiceClient = $testServiceClient;
+    }
+
+    /**
+     * Net lock/unlock delta applied through this instance since it was created.
+     *
+     * `unlockTimeSkippingWithSleep` is balanced (it decrements and increments the server counter),
+     * so it does not change this value. A non-zero delta means a caller leaked a lock/unlock pair.
+     */
+    public function lockDelta(): int
+    {
+        return $this->lockDelta;
     }
 
     public static function create(string $host): self
@@ -45,6 +58,7 @@ final class TestService
     public function lockTimeSkipping(): void
     {
         $this->invoke('LockTimeSkipping', new LockTimeSkippingRequest());
+        ++$this->lockDelta;
     }
 
     /**
@@ -59,6 +73,7 @@ final class TestService
     public function unlockTimeSkipping(): void
     {
         $this->invoke('UnlockTimeSkipping', new UnlockTimeSkippingRequest());
+        --$this->lockDelta;
     }
 
     /**

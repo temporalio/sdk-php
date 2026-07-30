@@ -80,13 +80,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     Workflow::setCurrentContext($context);
 
                     $info = $context->getInfo();
-                    $tickInfo = $request->getTickInfo();
-                    /** @psalm-suppress InaccessibleProperty */
-                    $info->historyLength = $tickInfo->historyLength;
-                    /** @psalm-suppress InaccessibleProperty */
-                    $info->historySize = $tickInfo->historySize;
-                    /** @psalm-suppress InaccessibleProperty */
-                    $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
+                    $request->getTickInfo()->applyTo($info);
 
                     $result = $handler(new QueryInput($name, $request->getPayloads(), $info));
                     $resolver->resolve(EncodedValues::fromValues([$result]));

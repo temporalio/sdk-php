@@ -22,6 +22,12 @@ use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Feature\WorkerFactory;
 use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
+use Temporal\Testing\Transcript\TranscriptLine;
+use Temporal\Testing\Transcript\TranscriptSection;
+use Temporal\Testing\Transcript\TranscriptStore;
+use Temporal\Testing\Transcript\TranscriptWriter;
+use Temporal\Testing\Transcript\WorkflowHistoryDumper;
+use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
@@ -50,6 +56,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
             LoggerInterface::class => ClientLogger::class,
             ClientLogger::class => $logger,
         ];
+        $workflowClient = $container->get(WorkflowClientInterface::class);
 
         // Auto-inject plugin-configured client from #[Worker(plugins: [...])] attribute
         $workerAttr = WorkerFactory::findAttribute(static::class);
@@ -57,9 +64,8 @@ abstract class TestCase extends \Temporal\Tests\TestCase
             $pluginRegistry = new PluginRegistry($workerAttr->plugins);
             $clientPlugins = $pluginRegistry->getPlugins(ClientPluginInterface::class);
             if ($clientPlugins !== []) {
-                $existingClient = $container->get(WorkflowClientInterface::class);
                 $pluginClient = WorkflowClient::create(
-                    serviceClient: $existingClient->getServiceClient(),
+                    serviceClient: $workflowClient->getServiceClient(),
                     options: (new ClientOptions())->withNamespace($runtime->namespace),
                     pluginRegistry: new PluginRegistry($workerAttr->plugins),
                 );
@@ -69,14 +75,28 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
         return $container->runScope(
             new Scope(name: 'feature', bindings: $bindings),
-            function (Container $container): mixed {
-                $reflection = new \ReflectionMethod($this, $this->name());
-                $args = $container->resolveArguments($reflection);
-                $this->setDependencyInput($args);
+            function (Container $container) use ($workflowClient): mixed {
+                $args = [];
+                $caughtException = null;
+                $startedAt = \microtime(true);
+
+                $transcript = $container->has(TranscriptWriter::class)
+                    ? $container->get(TranscriptWriter::class)
+                    : null;
+                $dumper = new WorkflowHistoryDumper();
+                $transcript?->writeTestBoundary(TranscriptSection::TEST_START, [
+                    'class' => static::class,
+                    'method' => $this->name(),
+                ]);
 
                 try {
+                    $reflection = new \ReflectionMethod($this, $this->name());
+                    $args = $container->resolveArguments($reflection);
+                    $this->setDependencyInput($args);
+
                     return parent::runTest();
                 } catch (\Throwable $e) {
+                    $caughtException = $e;
                     if ($e instanceof TemporalException) {
                         echo \sprintf(
                             "\n=== En error occurred while testing %s: %s (%s) ===\n",
@@ -87,19 +107,11 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         echo "\n=== Stack trace ===\n";
                         echo $e->getTraceAsString();
                         echo "\n=== Workflow history ===\n";
-                        $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+                        $this->printWorkflowHistory($workflowClient, $args);
 
-                        $logRecords = $container->get(ClientLogger::class)->getRecords();
-                        if ($logRecords !== []) {
-                            echo "\n=== Client log records ===\n";
-                            foreach ($logRecords as $record) {
-                                echo \sprintf(
-                                    "[%s] %s%s\n",
-                                    $record->level,
-                                    $record->message,
-                                    \json_encode($record->context, JSON_UNESCAPED_UNICODE),
-                                );
-                            }
+                        $clientLogger = $container->get(ClientLogger::class);
+                        foreach ($clientLogger->getRecords() as $record) {
+                            $transcript?->writeLog($record->level, $record->message, $record->context);
                         }
 
                         echo "\n\n";
@@ -114,19 +126,87 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     throw $e;
                 } finally {
-                    // Cleanup: terminate injected workflow if any
+                    if ($transcript !== null) {
+                        $dumper->dump($transcript, $workflowClient, $args);
+                    }
                     foreach ($args as $arg) {
                         if ($arg instanceof WorkflowStubInterface) {
                             try {
                                 $arg->terminate('test-end');
                             } catch (\Throwable $e) {
-                                // ignore
+                                $transcript?->writeMeta('workflow_terminate_failed', [
+                                    'workflow_id' => $arg->getExecution()->getID(),
+                                    'class' => $e::class,
+                                    'message' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                    }
+                    if ($transcript !== null) {
+                        $status = match (true) {
+                            $caughtException === null => 'passed',
+                            $caughtException instanceof SkippedTest => 'skipped',
+                            default => 'failed',
+                        };
+                        $endAttributes = [
+                            'class' => static::class,
+                            'method' => $this->name(),
+                            'status' => $status,
+                            'duration_ms' => (int) ((\microtime(true) - $startedAt) * 1000),
+                        ];
+                        if ($caughtException !== null) {
+                            $endAttributes['exception_class'] = $caughtException::class;
+                        }
+                        $transcript->writeTestBoundary(TranscriptSection::TEST_END, $endAttributes);
+                        $transcript->flush();
+                        if ($caughtException !== null && !$caughtException instanceof SkippedTest) {
+                            $stderr = $container->has(StderrLogger::class)
+                                ? $container->get(StderrLogger::class)
+                                : null;
+                            $stderr?->error('transcript', ['path' => $transcript->getPath()]);
+                            $runId = TranscriptStore::currentRunIdFromEnvironment();
+                            $store = TranscriptStore::create(stderr: $stderr);
+                            $run = $runId === null ? $store->latestRun() : $store->findRun($runId);
+                            if ($run !== null && $run->files() !== []) {
+                                try {
+                                    $mergedPath = $run->merge();
+                                    $stderr?->info("view merged transcript: less {$mergedPath}");
+                                    if (self::shouldDumpTranscriptOnFail()) {
+                                        $content = @\file_get_contents($mergedPath);
+                                        if (\is_string($content) && $content !== '') {
+                                            $label = $runId !== null ? "transcript run {$runId}" : 'transcript';
+                                            $stderr?->info("{$label} dump:\n" . $content);
+                                        }
+                                    }
+                                } catch (\Throwable $mergeError) {
+                                    $stderr?->warning('transcript merge failed', [
+                                        'message' => $mergeError->getMessage(),
+                                    ]);
+                                }
                             }
                         }
                     }
                 }
             },
         );
+    }
+
+    private static function shouldDumpTranscriptOnFail(): bool
+    {
+        $flag = \getenv('TEMPORAL_TRANSCRIPT_DUMP_ON_FAIL');
+        return \is_string($flag) && !\in_array(\strtolower($flag), ['', '0', 'false', 'off', 'no'], true);
+    }
+
+    /**
+     * @return list<TranscriptLine>
+     */
+    protected function readCurrentTestTranscript(): array
+    {
+        $run = TranscriptStore::create()->currentRun();
+        if ($run === null) {
+            return [];
+        }
+        return $run->reader()->linesForTest(static::class, $this->name());
     }
 
     private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
@@ -140,10 +220,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 ? 0
                 : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
 
+            $start = null;
             foreach ($workflowClient->getWorkflowHistory($arg->getExecution()) as $event) {
                 $start ??= $fnTime($event->getEventTime());
                 echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
-                # Calculate delta time
                 $deltaMs = \round(1_000 * ($fnTime($event->getEventTime()) - $start));
                 echo \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
                 echo \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
@@ -162,12 +242,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     ?? $event->getWorkflowExecutionFailedEventAttributes()?->getFailure()
                     ?? $event->getChildWorkflowExecutionFailedEventAttributes()?->getFailure()
                     ?? $event->getNexusOperationCancelRequestFailedEventAttributes()?->getFailure();
-
                 if ($failure === null) {
                     continue;
                 }
 
-                # Render failure
                 echo "Failure:\n";
                 echo "    ========== BEGIN ===========\n";
                 $this->renderFailure($failure, 1);
@@ -185,7 +263,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         echo $fnPad('Source: ' . $failure->getSource()) . "\n";
         echo $fnPad('Info: ' . $failure->getFailureInfo()) . "\n";
         echo $fnPad('Message: ' . $failure->getMessage()) . "\n";
-        echo $fnPad("Stack trace:") . "\n";
+        echo $fnPad('Stack trace:') . "\n";
         echo $fnPad($failure->getStackTrace()) . "\n";
         $previous = $failure->getCause();
         if ($previous !== null) {

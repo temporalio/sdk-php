@@ -3,15 +3,16 @@
 declare(strict_types=1);
 
 use Temporal\Testing\Environment;
+use Temporal\Testing\SystemInfo;
 use Temporal\Tests\SearchAttributeTestInvoker;
 use Temporal\Worker\FeatureFlags;
 
 \chdir(__DIR__ . '/../..');
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$systemInfo = \Temporal\Testing\SystemInfo::detect();
+$systemInfo = SystemInfo::detect();
 
-$environment = Environment::create();
+$environment = Environment::create(systemInfo: $systemInfo);
 $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
 $environment->startRoadRunner(

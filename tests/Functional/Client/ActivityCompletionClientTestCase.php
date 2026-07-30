@@ -18,6 +18,7 @@ use Temporal\Exception\Client\ActivityNotExistsException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Tests\Activity\ExternalActivityFixturePaths;
 
 /**
  * @group client
@@ -35,10 +36,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(2);
-        $this->assertFileExists('runtime/activityId');
-        $data = json_decode(file_get_contents('runtime/activityId'));
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::idPath());
+        $data = json_decode(file_get_contents(ExternalActivityFixturePaths::idPath()));
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -57,10 +58,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/activityId');
-        $data = json_decode(file_get_contents('runtime/activityId'));
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::idPath());
+        $data = json_decode(file_get_contents(ExternalActivityFixturePaths::idPath()));
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -79,10 +80,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/activityId');
-        $data = json_decode(file_get_contents('runtime/activityId'));
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::idPath());
+        $data = json_decode(file_get_contents(ExternalActivityFixturePaths::idPath()));
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -105,10 +106,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/taskToken');
-        $taskToken = file_get_contents('runtime/taskToken');
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $taskToken = file_get_contents(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -127,11 +128,11 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/taskToken');
-        $taskToken = file_get_contents('runtime/taskToken');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $taskToken = file_get_contents(ExternalActivityFixturePaths::tokenPath());
 
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -154,10 +155,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/taskToken');
-        $taskToken = file_get_contents('runtime/taskToken');
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $taskToken = file_get_contents(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -185,10 +186,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(2);
-        $this->assertFileExists('runtime/taskToken');
-        $data = json_decode(file_get_contents('runtime/activityId'));
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $data = json_decode(file_get_contents(ExternalActivityFixturePaths::idPath()));
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -222,10 +223,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/taskToken');
-        $data = json_decode(file_get_contents('runtime/activityId'));
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $data = json_decode(file_get_contents(ExternalActivityFixturePaths::idPath()));
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
@@ -269,10 +270,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists('runtime/taskToken');
-        $taskToken = file_get_contents('runtime/taskToken');
-        unlink('runtime/taskToken');
-        unlink('runtime/activityId');
+        $this->assertFileExists(ExternalActivityFixturePaths::tokenPath());
+        $taskToken = file_get_contents(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::tokenPath());
+        unlink(ExternalActivityFixturePaths::idPath());
 
         $act = $client->newActivityCompletionClient();
 
