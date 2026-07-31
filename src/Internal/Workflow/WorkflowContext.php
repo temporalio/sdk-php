@@ -15,6 +15,7 @@ use Internal\Destroy\Destroyable;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
+use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -68,6 +69,7 @@ use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\HandlerState;
 use Temporal\Promise;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -634,15 +636,29 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $timer = $this->request($request);
                 \assert($timer instanceof CompletableResultInterface);
 
-                return $this->awaitRequest($timer, ...$input->conditions)
-                    ->then(function () use ($timer, $requestId): bool {
-                        $isCompleted = $timer->isComplete();
-                        if (!$isCompleted) {
-                            // If internal timer was not completed then cancel it
-                            $this->request(new Cancel($requestId));
-                        }
-                        return !$isCompleted;
-                    });
+                $cancelPendingTimer = function () use ($timer, $requestId): void {
+                    if (!$timer->isComplete()) {
+                        $this->request(new Cancel($requestId));
+                    }
+                };
+
+                $onTimeout = static function () use ($timer, $cancelPendingTimer): bool {
+                    $cancelPendingTimer();
+                    return !$timer->isComplete();
+                };
+
+                if (FeatureFlags::$settleAwaitOnFirstSettledCondition) {
+                    return $this->awaitRequest($timer, ...$input->conditions)
+                        ->then(
+                            $onTimeout,
+                            static function (\Throwable $failure) use ($cancelPendingTimer): never {
+                                $cancelPendingTimer();
+                                throw $failure;
+                            },
+                        );
+                }
+
+                return $this->awaitRequest($timer, ...$input->conditions)->then($onTimeout);
             },
             /** @see WorkflowOutboundCallsInterceptor::awaitWithTimeout() */
             'awaitWithTimeout',
@@ -774,15 +790,31 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             }
         }
 
+        if ($result === []) {
+            return reject(new LengthException('At least one condition is required to await.'));
+        }
+
         if (\count($result) === 1) {
             return $result[0];
         }
 
+        $onResolved = function (mixed $result) use ($conditionGroupId): mixed {
+            $this->resolveConditionGroup($conditionGroupId);
+            return $result;
+        };
+
+        if (FeatureFlags::$settleAwaitOnFirstSettledCondition) {
+            return Promise::race($result)->then(
+                $onResolved,
+                function (\Throwable $reason) use ($conditionGroupId): never {
+                    $this->rejectConditionGroup($conditionGroupId);
+                    throw $reason;
+                },
+            );
+        }
+
         return Promise::any($result)->then(
-            function (mixed $result) use ($conditionGroupId): mixed {
-                $this->resolveConditionGroup($conditionGroupId);
-                return $result;
-            },
+            $onResolved,
             function (\Throwable $reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
