@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
+use Temporal\Interceptor\WorkflowInbound\InitInput;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -40,6 +41,14 @@ use Temporal\Internal\Interceptor\Interceptor;
  */
 interface WorkflowInboundCallsInterceptor extends Interceptor
 {
+    /**
+     * Called when workflow instance is initialized, before {@see execute()}.
+     * Allows interceptors to perform per-workflow-execution setup.
+     *
+     * @param callable(InitInput): void $next
+     */
+    public function init(InitInput $input, callable $next): void;
+
     /**
      * @param callable(WorkflowInput): void $next
      */
