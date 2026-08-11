@@ -4,197 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC;
 
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
-use Temporal\Api\Workflowservice\V1\CreateScheduleResponse;
-use Temporal\Api\Workflowservice\V1\CreateWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\CreateWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
-use Temporal\Api\Workflowservice\V1\DeleteScheduleResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentVersionRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentVersionResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\DeprecateNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\DeprecateNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\DescribeBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\DescribeBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\DescribeDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DescribeDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\DescribeScheduleRequest;
-use Temporal\Api\Workflowservice\V1\DescribeScheduleResponse;
-use Temporal\Api\Workflowservice\V1\DescribeTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\DescribeTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentVersionRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentVersionResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
-use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationResponse;
-use Temporal\Api\Workflowservice\V1\FetchWorkerConfigRequest;
-use Temporal\Api\Workflowservice\V1\FetchWorkerConfigResponse;
-use Temporal\Api\Workflowservice\V1\GetClusterInfoRequest;
-use Temporal\Api\Workflowservice\V1\GetClusterInfoResponse;
-use Temporal\Api\Workflowservice\V1\GetCurrentDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\GetCurrentDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\GetDeploymentReachabilityRequest;
-use Temporal\Api\Workflowservice\V1\GetDeploymentReachabilityResponse;
-use Temporal\Api\Workflowservice\V1\GetSearchAttributesRequest;
-use Temporal\Api\Workflowservice\V1\GetSearchAttributesResponse;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerVersioningRulesRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerVersioningRulesResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryReverseRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryReverseResponse;
-use Temporal\Api\Workflowservice\V1\ListArchivedWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListArchivedWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListBatchOperationsRequest;
-use Temporal\Api\Workflowservice\V1\ListBatchOperationsResponse;
-use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListDeploymentsRequest;
-use Temporal\Api\Workflowservice\V1\ListDeploymentsResponse;
-use Temporal\Api\Workflowservice\V1\ListNamespacesRequest;
-use Temporal\Api\Workflowservice\V1\ListNamespacesResponse;
-use Temporal\Api\Workflowservice\V1\ListOpenWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListOpenWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
-use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesResponse;
-use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
-use Temporal\Api\Workflowservice\V1\ListSchedulesResponse;
-use Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsRequest;
-use Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkerDeploymentsRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkerDeploymentsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkersRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkersResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkflowRulesRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkflowRulesResponse;
-use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
-use Temporal\Api\Workflowservice\V1\PatchScheduleResponse;
-use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
-use Temporal\Api\Workflowservice\V1\PauseActivityResponse;
-use Temporal\Api\Workflowservice\V1\PollActivityTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollActivityTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\PollNexusTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollNexusTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest;
-use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateResponse;
-use Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
-use Temporal\Api\Workflowservice\V1\QueryWorkflowResponse;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdRequest;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdResponse;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatRequest;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatResponse;
-use Temporal\Api\Workflowservice\V1\RecordWorkerHeartbeatRequest;
-use Temporal\Api\Workflowservice\V1\RecordWorkerHeartbeatResponse;
-use Temporal\Api\Workflowservice\V1\RegisterNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\RegisterNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\ResetActivityRequest;
-use Temporal\Api\Workflowservice\V1\ResetActivityResponse;
-use Temporal\Api\Workflowservice\V1\ResetStickyTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\ResetStickyTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\RespondQueryTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondQueryTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\ScanWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ScanWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\SetCurrentDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\SetCurrentDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentCurrentVersionRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentCurrentVersionResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentManagerRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentManagerResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentRampingVersionRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentRampingVersionResponse;
-use Temporal\Api\Workflowservice\V1\ShutdownWorkerRequest;
-use Temporal\Api\Workflowservice\V1\ShutdownWorkerResponse;
-use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\StartBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\StartBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\StopBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\StopBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\TriggerWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\TriggerWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\UnpauseActivityRequest;
-use Temporal\Api\Workflowservice\V1\UnpauseActivityResponse;
-use Temporal\Api\Workflowservice\V1\UpdateActivityOptionsRequest;
-use Temporal\Api\Workflowservice\V1\UpdateActivityOptionsResponse;
-use Temporal\Api\Workflowservice\V1\UpdateNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\UpdateNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
-use Temporal\Api\Workflowservice\V1\UpdateScheduleResponse;
-use Temporal\Api\Workflowservice\V1\UpdateTaskQueueConfigRequest;
-use Temporal\Api\Workflowservice\V1\UpdateTaskQueueConfigResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerConfigRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerConfigResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerDeploymentVersionMetadataRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerDeploymentVersionMetadataResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerVersioningRulesRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerVersioningRulesResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionOptionsRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionOptionsResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionResponse;
-use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Api\Workflowservice\V1;
 use Temporal\Client\Common\ServerCapabilities;
-use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Exception\Client\ServiceClientException;
 
 class ServiceClient extends BaseClient implements ServiceClientInterface
 {
@@ -212,7 +24,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RegisterNamespace(RegisterNamespaceRequest $arg, ?ContextInterface $ctx = null): RegisterNamespaceResponse
+    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\RegisterNamespaceResponse
     {
         return $this->invoke("RegisterNamespace", $arg, $ctx);
     }
@@ -223,7 +35,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeNamespace(DescribeNamespaceRequest $arg, ?ContextInterface $ctx = null): DescribeNamespaceResponse
+    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DescribeNamespaceResponse
     {
         return $this->invoke("DescribeNamespace", $arg, $ctx);
     }
@@ -233,7 +45,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListNamespaces(ListNamespacesRequest $arg, ?ContextInterface $ctx = null): ListNamespacesResponse
+    public function ListNamespaces(V1\ListNamespacesRequest $arg, ?ContextInterface $ctx = null): V1\ListNamespacesResponse
     {
         return $this->invoke("ListNamespaces", $arg, $ctx);
     }
@@ -245,7 +57,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateNamespace(UpdateNamespaceRequest $arg, ?ContextInterface $ctx = null): UpdateNamespaceResponse
+    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\UpdateNamespaceResponse
     {
         return $this->invoke("UpdateNamespace", $arg, $ctx);
     }
@@ -264,7 +76,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeprecateNamespace(DeprecateNamespaceRequest $arg, ?ContextInterface $ctx = null): DeprecateNamespaceResponse
+    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DeprecateNamespaceResponse
     {
         return $this->invoke("DeprecateNamespace", $arg, $ctx);
     }
@@ -280,7 +92,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function StartWorkflowExecution(StartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): StartWorkflowExecutionResponse
+    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\StartWorkflowExecutionResponse
     {
         return $this->invoke("StartWorkflowExecution", $arg, $ctx);
     }
@@ -298,7 +110,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ExecuteMultiOperation(ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): ExecuteMultiOperationResponse
+    public function ExecuteMultiOperation(V1\ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): V1\ExecuteMultiOperationResponse
     {
         return $this->invoke("ExecuteMultiOperation", $arg, $ctx);
     }
@@ -310,7 +122,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistory(GetWorkflowExecutionHistoryRequest $arg, ?ContextInterface $ctx = null): GetWorkflowExecutionHistoryResponse
+    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryResponse
     {
         return $this->invoke("GetWorkflowExecutionHistory", $arg, $ctx);
     }
@@ -324,7 +136,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistoryReverse(GetWorkflowExecutionHistoryReverseRequest $arg, ?ContextInterface $ctx = null): GetWorkflowExecutionHistoryReverseResponse
+    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryReverseResponse
     {
         return $this->invoke("GetWorkflowExecutionHistoryReverse", $arg, $ctx);
     }
@@ -345,7 +157,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollWorkflowTaskQueue(PollWorkflowTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollWorkflowTaskQueueResponse
+    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollWorkflowTaskQueueResponse
     {
         return $this->invoke("PollWorkflowTaskQueue", $arg, $ctx);
     }
@@ -366,7 +178,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskCompleted(RespondWorkflowTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondWorkflowTaskCompletedResponse
+    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondWorkflowTaskCompletedResponse
     {
         return $this->invoke("RespondWorkflowTaskCompleted", $arg, $ctx);
     }
@@ -391,7 +203,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskFailed(RespondWorkflowTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondWorkflowTaskFailedResponse
+    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondWorkflowTaskFailedResponse
     {
         return $this->invoke("RespondWorkflowTaskFailed", $arg, $ctx);
     }
@@ -422,7 +234,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollActivityTaskQueue(PollActivityTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollActivityTaskQueueResponse
+    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollActivityTaskQueueResponse
     {
         return $this->invoke("PollActivityTaskQueue", $arg, $ctx);
     }
@@ -442,7 +254,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeat(RecordActivityTaskHeartbeatRequest $arg, ?ContextInterface $ctx = null): RecordActivityTaskHeartbeatResponse
+    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ?ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatResponse
     {
         return $this->invoke("RecordActivityTaskHeartbeat", $arg, $ctx);
     }
@@ -457,7 +269,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeatById(RecordActivityTaskHeartbeatByIdRequest $arg, ?ContextInterface $ctx = null): RecordActivityTaskHeartbeatByIdResponse
+    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ?ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatByIdResponse
     {
         return $this->invoke("RecordActivityTaskHeartbeatById", $arg, $ctx);
     }
@@ -476,7 +288,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompleted(RespondActivityTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCompletedResponse
+    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCompletedResponse
     {
         return $this->invoke("RespondActivityTaskCompleted", $arg, $ctx);
     }
@@ -491,7 +303,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompletedById(RespondActivityTaskCompletedByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCompletedByIdResponse
+    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCompletedByIdResponse
     {
         return $this->invoke("RespondActivityTaskCompletedById", $arg, $ctx);
     }
@@ -509,7 +321,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailed(RespondActivityTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskFailedResponse
+    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskFailedResponse
     {
         return $this->invoke("RespondActivityTaskFailed", $arg, $ctx);
     }
@@ -524,7 +336,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailedById(RespondActivityTaskFailedByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskFailedByIdResponse
+    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskFailedByIdResponse
     {
         return $this->invoke("RespondActivityTaskFailedById", $arg, $ctx);
     }
@@ -542,7 +354,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceled(RespondActivityTaskCanceledRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCanceledResponse
+    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCanceledResponse
     {
         return $this->invoke("RespondActivityTaskCanceled", $arg, $ctx);
     }
@@ -557,7 +369,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceledById(RespondActivityTaskCanceledByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCanceledByIdResponse
+    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCanceledByIdResponse
     {
         return $this->invoke("RespondActivityTaskCanceledById", $arg, $ctx);
     }
@@ -576,7 +388,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RequestCancelWorkflowExecution(RequestCancelWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): RequestCancelWorkflowExecutionResponse
+    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\RequestCancelWorkflowExecutionResponse
     {
         return $this->invoke("RequestCancelWorkflowExecution", $arg, $ctx);
     }
@@ -591,7 +403,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SignalWorkflowExecution(SignalWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): SignalWorkflowExecutionResponse
+    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\SignalWorkflowExecutionResponse
     {
         return $this->invoke("SignalWorkflowExecution", $arg, $ctx);
     }
@@ -615,7 +427,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SignalWithStartWorkflowExecution(SignalWithStartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): SignalWithStartWorkflowExecutionResponse
+    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\SignalWithStartWorkflowExecutionResponse
     {
         return $this->invoke("SignalWithStartWorkflowExecution", $arg, $ctx);
     }
@@ -630,7 +442,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetWorkflowExecution(ResetWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): ResetWorkflowExecutionResponse
+    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\ResetWorkflowExecutionResponse
     {
         return $this->invoke("ResetWorkflowExecution", $arg, $ctx);
     }
@@ -644,7 +456,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function TerminateWorkflowExecution(TerminateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): TerminateWorkflowExecutionResponse
+    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\TerminateWorkflowExecutionResponse
     {
         return $this->invoke("TerminateWorkflowExecution", $arg, $ctx);
     }
@@ -663,7 +475,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowExecution(DeleteWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): DeleteWorkflowExecutionResponse
+    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowExecutionResponse
     {
         return $this->invoke("DeleteWorkflowExecution", $arg, $ctx);
     }
@@ -677,7 +489,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListOpenWorkflowExecutions(ListOpenWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListOpenWorkflowExecutionsResponse
+    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListOpenWorkflowExecutionsResponse
     {
         return $this->invoke("ListOpenWorkflowExecutions", $arg, $ctx);
     }
@@ -691,7 +503,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListClosedWorkflowExecutions(ListClosedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListClosedWorkflowExecutionsResponse
+    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListClosedWorkflowExecutionsResponse
     {
         return $this->invoke("ListClosedWorkflowExecutions", $arg, $ctx);
     }
@@ -702,7 +514,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkflowExecutions(ListWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListWorkflowExecutionsResponse
+    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowExecutionsResponse
     {
         return $this->invoke("ListWorkflowExecutions", $arg, $ctx);
     }
@@ -713,7 +525,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListArchivedWorkflowExecutions(ListArchivedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListArchivedWorkflowExecutionsResponse
+    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListArchivedWorkflowExecutionsResponse
     {
         return $this->invoke("ListArchivedWorkflowExecutions", $arg, $ctx);
     }
@@ -730,7 +542,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ScanWorkflowExecutions(ScanWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ScanWorkflowExecutionsResponse
+    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ScanWorkflowExecutionsResponse
     {
         return $this->invoke("ScanWorkflowExecutions", $arg, $ctx);
     }
@@ -741,7 +553,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CountWorkflowExecutions(CountWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): CountWorkflowExecutionsResponse
+    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\CountWorkflowExecutionsResponse
     {
         return $this->invoke("CountWorkflowExecutions", $arg, $ctx);
     }
@@ -756,7 +568,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetSearchAttributes(GetSearchAttributesRequest $arg, ?ContextInterface $ctx = null): GetSearchAttributesResponse
+    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\GetSearchAttributesResponse
     {
         return $this->invoke("GetSearchAttributes", $arg, $ctx);
     }
@@ -764,7 +576,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
     /**
      * RespondQueryTaskCompleted is called by workers to complete queries which were
      * delivered on
-     * the `query` (not `queries`) field of a `PollWorkflowTaskQueueResponse`.
+     * the `query` (not `queries`) field of a `V1\PollWorkflowTaskQueueResponse`.
      *
      * Completing the query will unblock the corresponding client call to
      * `QueryWorkflow` and return
@@ -775,7 +587,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondQueryTaskCompleted(RespondQueryTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondQueryTaskCompletedResponse
+    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondQueryTaskCompletedResponse
     {
         return $this->invoke("RespondQueryTaskCompleted", $arg, $ctx);
     }
@@ -800,7 +612,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetStickyTaskQueue(ResetStickyTaskQueueRequest $arg, ?ContextInterface $ctx = null): ResetStickyTaskQueueResponse
+    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\ResetStickyTaskQueueResponse
     {
         return $this->invoke("ResetStickyTaskQueue", $arg, $ctx);
     }
@@ -822,7 +634,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ShutdownWorker(ShutdownWorkerRequest $arg, ?ContextInterface $ctx = null): ShutdownWorkerResponse
+    public function ShutdownWorker(V1\ShutdownWorkerRequest $arg, ?ContextInterface $ctx = null): V1\ShutdownWorkerResponse
     {
         return $this->invoke("ShutdownWorker", $arg, $ctx);
     }
@@ -832,7 +644,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function QueryWorkflow(QueryWorkflowRequest $arg, ?ContextInterface $ctx = null): QueryWorkflowResponse
+    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ?ContextInterface $ctx = null): V1\QueryWorkflowResponse
     {
         return $this->invoke("QueryWorkflow", $arg, $ctx);
     }
@@ -843,7 +655,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowExecution(DescribeWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): DescribeWorkflowExecutionResponse
+    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowExecutionResponse
     {
         return $this->invoke("DescribeWorkflowExecution", $arg, $ctx);
     }
@@ -857,7 +669,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeTaskQueue(DescribeTaskQueueRequest $arg, ?ContextInterface $ctx = null): DescribeTaskQueueResponse
+    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\DescribeTaskQueueResponse
     {
         return $this->invoke("DescribeTaskQueue", $arg, $ctx);
     }
@@ -867,7 +679,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetClusterInfo(GetClusterInfoRequest $arg, ?ContextInterface $ctx = null): GetClusterInfoResponse
+    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ?ContextInterface $ctx = null): V1\GetClusterInfoResponse
     {
         return $this->invoke("GetClusterInfo", $arg, $ctx);
     }
@@ -877,7 +689,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetSystemInfo(GetSystemInfoRequest $arg, ?ContextInterface $ctx = null): GetSystemInfoResponse
+    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ?ContextInterface $ctx = null): V1\GetSystemInfoResponse
     {
         return $this->invoke("GetSystemInfo", $arg, $ctx);
     }
@@ -888,7 +700,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListTaskQueuePartitions(ListTaskQueuePartitionsRequest $arg, ?ContextInterface $ctx = null): ListTaskQueuePartitionsResponse
+    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ?ContextInterface $ctx = null): V1\ListTaskQueuePartitionsResponse
     {
         return $this->invoke("ListTaskQueuePartitions", $arg, $ctx);
     }
@@ -898,7 +710,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CreateSchedule(CreateScheduleRequest $arg, ?ContextInterface $ctx = null): CreateScheduleResponse
+    public function CreateSchedule(V1\CreateScheduleRequest $arg, ?ContextInterface $ctx = null): V1\CreateScheduleResponse
     {
         return $this->invoke("CreateSchedule", $arg, $ctx);
     }
@@ -908,7 +720,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeSchedule(DescribeScheduleRequest $arg, ?ContextInterface $ctx = null): DescribeScheduleResponse
+    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeScheduleResponse
     {
         return $this->invoke("DescribeSchedule", $arg, $ctx);
     }
@@ -918,7 +730,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateSchedule(UpdateScheduleRequest $arg, ?ContextInterface $ctx = null): UpdateScheduleResponse
+    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ?ContextInterface $ctx = null): V1\UpdateScheduleResponse
     {
         return $this->invoke("UpdateSchedule", $arg, $ctx);
     }
@@ -928,7 +740,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PatchSchedule(PatchScheduleRequest $arg, ?ContextInterface $ctx = null): PatchScheduleResponse
+    public function PatchSchedule(V1\PatchScheduleRequest $arg, ?ContextInterface $ctx = null): V1\PatchScheduleResponse
     {
         return $this->invoke("PatchSchedule", $arg, $ctx);
     }
@@ -938,7 +750,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListScheduleMatchingTimes(ListScheduleMatchingTimesRequest $arg, ?ContextInterface $ctx = null): ListScheduleMatchingTimesResponse
+    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ?ContextInterface $ctx = null): V1\ListScheduleMatchingTimesResponse
     {
         return $this->invoke("ListScheduleMatchingTimes", $arg, $ctx);
     }
@@ -948,7 +760,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteSchedule(DeleteScheduleRequest $arg, ?ContextInterface $ctx = null): DeleteScheduleResponse
+    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteScheduleResponse
     {
         return $this->invoke("DeleteSchedule", $arg, $ctx);
     }
@@ -958,7 +770,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListSchedules(ListSchedulesRequest $arg, ?ContextInterface $ctx = null): ListSchedulesResponse
+    public function ListSchedules(V1\ListSchedulesRequest $arg, ?ContextInterface $ctx = null): V1\ListSchedulesResponse
     {
         return $this->invoke("ListSchedules", $arg, $ctx);
     }
@@ -990,7 +802,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerBuildIdCompatibility(UpdateWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerBuildIdCompatibilityResponse
+    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerBuildIdCompatibilityResponse
     {
         return $this->invoke("UpdateWorkerBuildIdCompatibility", $arg, $ctx);
     }
@@ -1001,7 +813,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerBuildIdCompatibility(GetWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): GetWorkerBuildIdCompatibilityResponse
+    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerBuildIdCompatibilityResponse
     {
         return $this->invoke("GetWorkerBuildIdCompatibility", $arg, $ctx);
     }
@@ -1048,7 +860,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerVersioningRules(UpdateWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerVersioningRulesResponse
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerVersioningRulesResponse
     {
         return $this->invoke("UpdateWorkerVersioningRules", $arg, $ctx);
     }
@@ -1060,7 +872,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerVersioningRules(GetWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): GetWorkerVersioningRulesResponse
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerVersioningRulesResponse
     {
         return $this->invoke("GetWorkerVersioningRules", $arg, $ctx);
     }
@@ -1090,7 +902,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerTaskReachability(GetWorkerTaskReachabilityRequest $arg, ?ContextInterface $ctx = null): GetWorkerTaskReachabilityResponse
+    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerTaskReachabilityResponse
     {
         return $this->invoke("GetWorkerTaskReachability", $arg, $ctx);
     }
@@ -1101,7 +913,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeDeployment(DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): DescribeDeploymentResponse
+    public function DescribeDeployment(V1\DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeDeploymentResponse
     {
         return $this->invoke("DescribeDeployment", $arg, $ctx);
     }
@@ -1111,7 +923,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkerDeploymentVersion(DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerDeploymentVersionResponse
+    public function DescribeWorkerDeploymentVersion(V1\DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentVersionResponse
     {
         return $this->invoke("DescribeWorkerDeploymentVersion", $arg, $ctx);
     }
@@ -1124,7 +936,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListDeployments(ListDeploymentsRequest $arg, ?ContextInterface $ctx = null): ListDeploymentsResponse
+    public function ListDeployments(V1\ListDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListDeploymentsResponse
     {
         return $this->invoke("ListDeployments", $arg, $ctx);
     }
@@ -1146,7 +958,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetDeploymentReachability(GetDeploymentReachabilityRequest $arg, ?ContextInterface $ctx = null): GetDeploymentReachabilityResponse
+    public function GetDeploymentReachability(V1\GetDeploymentReachabilityRequest $arg, ?ContextInterface $ctx = null): V1\GetDeploymentReachabilityResponse
     {
         return $this->invoke("GetDeploymentReachability", $arg, $ctx);
     }
@@ -1158,7 +970,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetCurrentDeployment(GetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): GetCurrentDeploymentResponse
+    public function GetCurrentDeployment(V1\GetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\GetCurrentDeploymentResponse
     {
         return $this->invoke("GetCurrentDeployment", $arg, $ctx);
     }
@@ -1171,7 +983,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SetCurrentDeployment(SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): SetCurrentDeploymentResponse
+    public function SetCurrentDeployment(V1\SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\SetCurrentDeploymentResponse
     {
         return $this->invoke("SetCurrentDeployment", $arg, $ctx);
     }
@@ -1183,7 +995,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentCurrentVersion(SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentCurrentVersionResponse
+    public function SetWorkerDeploymentCurrentVersion(V1\SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentCurrentVersionResponse
     {
         return $this->invoke("SetWorkerDeploymentCurrentVersion", $arg, $ctx);
     }
@@ -1193,7 +1005,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkerDeployment(DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerDeploymentResponse
+    public function DescribeWorkerDeployment(V1\DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentResponse
     {
         return $this->invoke("DescribeWorkerDeployment", $arg, $ctx);
     }
@@ -1204,7 +1016,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkerDeployment(DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): DeleteWorkerDeploymentResponse
+    public function DeleteWorkerDeployment(V1\DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentResponse
     {
         return $this->invoke("DeleteWorkerDeployment", $arg, $ctx);
     }
@@ -1221,7 +1033,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkerDeploymentVersion(DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): DeleteWorkerDeploymentVersionResponse
+    public function DeleteWorkerDeploymentVersion(V1\DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentVersionResponse
     {
         return $this->invoke("DeleteWorkerDeploymentVersion", $arg, $ctx);
     }
@@ -1233,7 +1045,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentRampingVersion(SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentRampingVersionResponse
+    public function SetWorkerDeploymentRampingVersion(V1\SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentRampingVersionResponse
     {
         return $this->invoke("SetWorkerDeploymentRampingVersion", $arg, $ctx);
     }
@@ -1243,7 +1055,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkerDeployments(ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): ListWorkerDeploymentsResponse
+    public function ListWorkerDeployments(V1\ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkerDeploymentsResponse
     {
         return $this->invoke("ListWorkerDeployments", $arg, $ctx);
     }
@@ -1253,7 +1065,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerDeploymentVersionMetadata(UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerDeploymentVersionMetadataResponse
+    public function UpdateWorkerDeploymentVersionMetadata(V1\UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionMetadataResponse
     {
         return $this->invoke("UpdateWorkerDeploymentVersionMetadata", $arg, $ctx);
     }
@@ -1263,7 +1075,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentManager(SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentManagerResponse
+    public function SetWorkerDeploymentManager(V1\SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentManagerResponse
     {
         return $this->invoke("SetWorkerDeploymentManager", $arg, $ctx);
     }
@@ -1273,7 +1085,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecution(UpdateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): UpdateWorkflowExecutionResponse
+    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionResponse
     {
         return $this->invoke("UpdateWorkflowExecution", $arg, $ctx);
     }
@@ -1290,7 +1102,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollWorkflowExecutionUpdate(PollWorkflowExecutionUpdateRequest $arg, ?ContextInterface $ctx = null): PollWorkflowExecutionUpdateResponse
+    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ?ContextInterface $ctx = null): V1\PollWorkflowExecutionUpdateResponse
     {
         return $this->invoke("PollWorkflowExecutionUpdate", $arg, $ctx);
     }
@@ -1300,7 +1112,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function StartBatchOperation(StartBatchOperationRequest $arg, ?ContextInterface $ctx = null): StartBatchOperationResponse
+    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\StartBatchOperationResponse
     {
         return $this->invoke("StartBatchOperation", $arg, $ctx);
     }
@@ -1310,7 +1122,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function StopBatchOperation(StopBatchOperationRequest $arg, ?ContextInterface $ctx = null): StopBatchOperationResponse
+    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\StopBatchOperationResponse
     {
         return $this->invoke("StopBatchOperation", $arg, $ctx);
     }
@@ -1320,7 +1132,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeBatchOperation(DescribeBatchOperationRequest $arg, ?ContextInterface $ctx = null): DescribeBatchOperationResponse
+    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\DescribeBatchOperationResponse
     {
         return $this->invoke("DescribeBatchOperation", $arg, $ctx);
     }
@@ -1330,7 +1142,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListBatchOperations(ListBatchOperationsRequest $arg, ?ContextInterface $ctx = null): ListBatchOperationsResponse
+    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ?ContextInterface $ctx = null): V1\ListBatchOperationsResponse
     {
         return $this->invoke("ListBatchOperations", $arg, $ctx);
     }
@@ -1342,7 +1154,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollNexusTaskQueue(PollNexusTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollNexusTaskQueueResponse
+    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollNexusTaskQueueResponse
     {
         return $this->invoke("PollNexusTaskQueue", $arg, $ctx);
     }
@@ -1355,7 +1167,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskCompleted(RespondNexusTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondNexusTaskCompletedResponse
+    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskCompletedResponse
     {
         return $this->invoke("RespondNexusTaskCompleted", $arg, $ctx);
     }
@@ -1368,7 +1180,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskFailed(RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondNexusTaskFailedResponse
+    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse
     {
         return $this->invoke("RespondNexusTaskFailed", $arg, $ctx);
     }
@@ -1381,7 +1193,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateActivityOptions(UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): UpdateActivityOptionsResponse
+    public function UpdateActivityOptions(V1\UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsResponse
     {
         return $this->invoke("UpdateActivityOptions", $arg, $ctx);
     }
@@ -1392,7 +1204,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecutionOptions(UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): UpdateWorkflowExecutionOptionsResponse
+    public function UpdateWorkflowExecutionOptions(V1\UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionOptionsResponse
     {
         return $this->invoke("UpdateWorkflowExecutionOptions", $arg, $ctx);
     }
@@ -1422,7 +1234,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PauseActivity(PauseActivityRequest $arg, ?ContextInterface $ctx = null): PauseActivityResponse
+    public function PauseActivity(V1\PauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityResponse
     {
         return $this->invoke("PauseActivity", $arg, $ctx);
     }
@@ -1449,7 +1261,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UnpauseActivity(UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): UnpauseActivityResponse
+    public function UnpauseActivity(V1\UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityResponse
     {
         return $this->invoke("UnpauseActivity", $arg, $ctx);
     }
@@ -1480,7 +1292,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetActivity(ResetActivityRequest $arg, ?ContextInterface $ctx = null): ResetActivityResponse
+    public function ResetActivity(V1\ResetActivityRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityResponse
     {
         return $this->invoke("ResetActivity", $arg, $ctx);
     }
@@ -1496,7 +1308,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CreateWorkflowRule(CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): CreateWorkflowRuleResponse
+    public function CreateWorkflowRule(V1\CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkflowRuleResponse
     {
         return $this->invoke("CreateWorkflowRule", $arg, $ctx);
     }
@@ -1507,7 +1319,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowRule(DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): DescribeWorkflowRuleResponse
+    public function DescribeWorkflowRule(V1\DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowRuleResponse
     {
         return $this->invoke("DescribeWorkflowRule", $arg, $ctx);
     }
@@ -1517,7 +1329,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowRule(DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): DeleteWorkflowRuleResponse
+    public function DeleteWorkflowRule(V1\DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowRuleResponse
     {
         return $this->invoke("DeleteWorkflowRule", $arg, $ctx);
     }
@@ -1527,7 +1339,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkflowRules(ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): ListWorkflowRulesResponse
+    public function ListWorkflowRules(V1\ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowRulesResponse
     {
         return $this->invoke("ListWorkflowRules", $arg, $ctx);
     }
@@ -1540,7 +1352,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function TriggerWorkflowRule(TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): TriggerWorkflowRuleResponse
+    public function TriggerWorkflowRule(V1\TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\TriggerWorkflowRuleResponse
     {
         return $this->invoke("TriggerWorkflowRule", $arg, $ctx);
     }
@@ -1550,7 +1362,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RecordWorkerHeartbeat(RecordWorkerHeartbeatRequest $arg, ?ContextInterface $ctx = null): RecordWorkerHeartbeatResponse
+    public function RecordWorkerHeartbeat(V1\RecordWorkerHeartbeatRequest $arg, ?ContextInterface $ctx = null): V1\RecordWorkerHeartbeatResponse
     {
         return $this->invoke("RecordWorkerHeartbeat", $arg, $ctx);
     }
@@ -1561,7 +1373,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkers(ListWorkersRequest $arg, ?ContextInterface $ctx = null): ListWorkersResponse
+    public function ListWorkers(V1\ListWorkersRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkersResponse
     {
         return $this->invoke("ListWorkers", $arg, $ctx);
     }
@@ -1576,7 +1388,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateTaskQueueConfig(UpdateTaskQueueConfigRequest $arg, ?ContextInterface $ctx = null): UpdateTaskQueueConfigResponse
+    public function UpdateTaskQueueConfig(V1\UpdateTaskQueueConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateTaskQueueConfigResponse
     {
         return $this->invoke("UpdateTaskQueueConfig", $arg, $ctx);
     }
@@ -1586,7 +1398,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function FetchWorkerConfig(FetchWorkerConfigRequest $arg, ?ContextInterface $ctx = null): FetchWorkerConfigResponse
+    public function FetchWorkerConfig(V1\FetchWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\FetchWorkerConfigResponse
     {
         return $this->invoke("FetchWorkerConfig", $arg, $ctx);
     }
@@ -1598,7 +1410,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerConfig(UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerConfigResponse
+    public function UpdateWorkerConfig(V1\UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerConfigResponse
     {
         return $this->invoke("UpdateWorkerConfig", $arg, $ctx);
     }
@@ -1608,7 +1420,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorker(DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerResponse
+    public function DescribeWorker(V1\DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerResponse
     {
         return $this->invoke("DescribeWorker", $arg, $ctx);
     }
@@ -1621,7 +1433,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
         }
 
         try {
-            $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
+            $systemInfo = $this->getSystemInfo(new V1\GetSystemInfoRequest());
             $capabilities = $systemInfo->getCapabilities();
 
             if ($capabilities === null) {
@@ -1665,6 +1477,6 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
     {
-        return new WorkflowServiceClient($address, $options);
+        return new V1\WorkflowServiceClient($address, $options);
     }
 }
