@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
-use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Client\Common\ServerCapabilities;
 
 class ServiceClient extends BaseClient implements ServiceClientInterface
 {
@@ -107,6 +107,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      *
      * Upon failure, it returns `MultiOperationExecutionFailure` where the status code
      * equals the status code of the *first* operation that failed to be started.
+     *
+     * NOTE: Experimental API.
      *
      * @throws ServiceClientException
      */
@@ -576,7 +578,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
     /**
      * RespondQueryTaskCompleted is called by workers to complete queries which were
      * delivered on
-     * the `query` (not `queries`) field of a `V1\PollWorkflowTaskQueueResponse`.
+     * the `query` (not `queries`) field of a `PollWorkflowTaskQueueResponse`.
      *
      * Completing the query will unblock the corresponding client call to
      * `QueryWorkflow` and return
@@ -909,6 +911,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Describes a worker deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
@@ -920,6 +924,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Describes a worker deployment version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -932,6 +938,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * Lists worker deployments in the namespace. Optionally can filter based on
      * deployment series
      * name.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `ListWorkerDeployments`.
      *
      * @throws ServiceClientException
@@ -953,6 +961,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * cached value. In such a case, the `last_update_time` will inform you about the
      * actual
      * reachability calculation time.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `DrainageInfo` returned by
      * `DescribeWorkerDeploymentVersion`.
      *
@@ -965,6 +975,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Returns the current deployment (and its info) for a given deployment series.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced by `current_version` returned by
      * `DescribeWorkerDeployment`.
      *
@@ -979,6 +991,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * Sets a deployment as the current deployment for its deployment series. Can
      * optionally update
      * the metadata of the deployment as well.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced by `SetWorkerDeploymentCurrentVersion`.
      *
      * @throws ServiceClientException
@@ -992,6 +1006,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * Set/unset the Current Version of a Worker Deployment. Automatically unsets the
      * Ramping
      * Version if it is the Version being set as Current.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1002,6 +1018,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Describes a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1013,6 +1031,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
     /**
      * Deletes records of (an old) Deployment. A deployment can only be deleted if
      * it has no Version in it.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1030,6 +1050,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * - It is not draining (see WorkerDeploymentVersionInfo.drainage_info). This
      * condition
      * can be skipped by passing `skip-drainage=true`.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1042,6 +1064,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
      * Set/unset the Ramping Version of a Worker Deployment and its ramp percentage.
      * Can be used for
      * gradual ramp to unversioned workers too.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1052,6 +1076,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Lists all Worker Deployments that are tracked in the Namespace.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1062,6 +1088,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Updates the user-given metadata attached to a Worker Deployment Version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
@@ -1072,6 +1100,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
 
     /**
      * Set/unset the ManagerIdentity of a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */

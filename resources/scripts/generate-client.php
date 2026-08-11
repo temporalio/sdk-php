@@ -115,7 +115,7 @@ if ($connection->getCapabilities() !== null) {
 }
 
 try {
-    $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
+    $systemInfo = $this->getSystemInfo(new V1\GetSystemInfoRequest());
     $capabilities = $systemInfo->getCapabilities();
 
     if ($capabilities === null) {
@@ -172,7 +172,7 @@ $clients = [
     [
         'label' => 'workflow',
         'serviceClass' => WorkflowServiceClient::class,
-        'apiNamespacePrefix' => '\\Temporal\\Api\\Workflowservice\\V1\\',
+        'apiNamespace' => 'Temporal\\Api\\Workflowservice\\V1',
         'interfaceName' => 'ServiceClientInterface',
         'implementationName' => 'ServiceClient',
         'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/ServiceClientInterface.php',
@@ -182,7 +182,6 @@ $clients = [
                 'Temporal\Client\Common\ServerCapabilities',
             ],
             'implementation' => [
-                'Temporal\Api\Workflowservice\V1\GetSystemInfoRequest',
                 'Temporal\Client\Common\ServerCapabilities',
             ],
         ],
@@ -196,7 +195,7 @@ $clients = [
     [
         'label' => 'operator',
         'serviceClass' => OperatorServiceClient::class,
-        'apiNamespacePrefix' => '\\Temporal\\Api\\Operatorservice\\V1\\',
+        'apiNamespace' => 'Temporal\\Api\\Operatorservice\\V1',
         'interfaceName' => 'OperatorClientInterface',
         'implementationName' => 'OperatorClient',
         'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/OperatorClientInterface.php',
@@ -220,14 +219,7 @@ foreach ($clients as $client) {
     $methods = $buildRpcMap($serviceReflection);
     echo "[OK]\n";
 
-    // Collect all RPC request/response class FQCNs for use-imports
-    $rpcClasses = [];
-    foreach ($methods as $options) {
-        $rpcClasses[] = $options['request'];
-        $rpcClasses[] = $options['response'];
-    }
-    $rpcClasses = \array_unique($rpcClasses);
-    \sort($rpcClasses);
+    $apiAliasStrip = '\\' . \substr($client['apiNamespace'], 0, (int) \strrpos($client['apiNamespace'], '\\')) . '\\';
 
     // Common uses for all generated files
     $commonUses = ['Temporal\Exception\Client\ServiceClientException'];
@@ -258,12 +250,12 @@ foreach ($clients as $client) {
     $file->setNamespace('Temporal\\Client\\GRPC');
     $file->setDeclares([DeclareStatement::fromArray(['strict_types' => 1])]);
     $file->setClass($interface);
-    $file->setUses([...$rpcClasses, ...$commonUses, ...($client['extraUses']['interface'] ?? [])]);
+    $file->setUses([$client['apiNamespace'], ...$commonUses, ...($client['extraUses']['interface'] ?? [])]);
 
     \file_put_contents(
         $client['interfaceFile'],
         \str_replace(
-            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
+            [$apiAliasStrip, '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
             ['', '', ''],
             $file->generate(),
         ),
@@ -298,12 +290,12 @@ foreach ($clients as $client) {
     $file->setNamespace('Temporal\\Client\\GRPC');
     $file->setDeclares([DeclareStatement::fromArray(['strict_types' => 1])]);
     $file->setClass($implementation);
-    $file->setUses([...$rpcClasses, ...$commonUses, ...($client['extraUses']['implementation'] ?? []), $client['serviceClass']]);
+    $file->setUses([$client['apiNamespace'], ...$commonUses, ...($client['extraUses']['implementation'] ?? [])]);
 
     \file_put_contents(
         $client['implementationFile'],
         \str_replace(
-            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
+            [$apiAliasStrip, '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
             ['', '', ''],
             $file->generate(),
         ),

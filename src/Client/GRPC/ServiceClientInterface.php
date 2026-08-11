@@ -4,194 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC;
 
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
-use Temporal\Api\Workflowservice\V1\CreateScheduleResponse;
-use Temporal\Api\Workflowservice\V1\CreateWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\CreateWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
-use Temporal\Api\Workflowservice\V1\DeleteScheduleResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentVersionRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkerDeploymentVersionResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\DeleteWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\DeprecateNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\DeprecateNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\DescribeBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\DescribeBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\DescribeDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DescribeDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\DescribeScheduleRequest;
-use Temporal\Api\Workflowservice\V1\DescribeScheduleResponse;
-use Temporal\Api\Workflowservice\V1\DescribeTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\DescribeTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentVersionRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerDeploymentVersionResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkerResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
-use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationResponse;
-use Temporal\Api\Workflowservice\V1\FetchWorkerConfigRequest;
-use Temporal\Api\Workflowservice\V1\FetchWorkerConfigResponse;
-use Temporal\Api\Workflowservice\V1\GetClusterInfoRequest;
-use Temporal\Api\Workflowservice\V1\GetClusterInfoResponse;
-use Temporal\Api\Workflowservice\V1\GetCurrentDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\GetCurrentDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\GetDeploymentReachabilityRequest;
-use Temporal\Api\Workflowservice\V1\GetDeploymentReachabilityResponse;
-use Temporal\Api\Workflowservice\V1\GetSearchAttributesRequest;
-use Temporal\Api\Workflowservice\V1\GetSearchAttributesResponse;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkerVersioningRulesRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkerVersioningRulesResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryReverseRequest;
-use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryReverseResponse;
-use Temporal\Api\Workflowservice\V1\ListArchivedWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListArchivedWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListBatchOperationsRequest;
-use Temporal\Api\Workflowservice\V1\ListBatchOperationsResponse;
-use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListDeploymentsRequest;
-use Temporal\Api\Workflowservice\V1\ListDeploymentsResponse;
-use Temporal\Api\Workflowservice\V1\ListNamespacesRequest;
-use Temporal\Api\Workflowservice\V1\ListNamespacesResponse;
-use Temporal\Api\Workflowservice\V1\ListOpenWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListOpenWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
-use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesResponse;
-use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
-use Temporal\Api\Workflowservice\V1\ListSchedulesResponse;
-use Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsRequest;
-use Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkerDeploymentsRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkerDeploymentsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkersRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkersResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\ListWorkflowRulesRequest;
-use Temporal\Api\Workflowservice\V1\ListWorkflowRulesResponse;
-use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
-use Temporal\Api\Workflowservice\V1\PatchScheduleResponse;
-use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
-use Temporal\Api\Workflowservice\V1\PauseActivityResponse;
-use Temporal\Api\Workflowservice\V1\PollActivityTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollActivityTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\PollNexusTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollNexusTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest;
-use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateResponse;
-use Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
-use Temporal\Api\Workflowservice\V1\QueryWorkflowResponse;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdRequest;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdResponse;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatRequest;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatResponse;
-use Temporal\Api\Workflowservice\V1\RecordWorkerHeartbeatRequest;
-use Temporal\Api\Workflowservice\V1\RecordWorkerHeartbeatResponse;
-use Temporal\Api\Workflowservice\V1\RegisterNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\RegisterNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\ResetActivityRequest;
-use Temporal\Api\Workflowservice\V1\ResetActivityResponse;
-use Temporal\Api\Workflowservice\V1\ResetStickyTaskQueueRequest;
-use Temporal\Api\Workflowservice\V1\ResetStickyTaskQueueResponse;
-use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdResponse;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondNexusTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\RespondQueryTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondQueryTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskCompletedRequest;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskCompletedResponse;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondWorkflowTaskFailedResponse;
-use Temporal\Api\Workflowservice\V1\ScanWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\ScanWorkflowExecutionsResponse;
-use Temporal\Api\Workflowservice\V1\SetCurrentDeploymentRequest;
-use Temporal\Api\Workflowservice\V1\SetCurrentDeploymentResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentCurrentVersionRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentCurrentVersionResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentManagerRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentManagerResponse;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentRampingVersionRequest;
-use Temporal\Api\Workflowservice\V1\SetWorkerDeploymentRampingVersionResponse;
-use Temporal\Api\Workflowservice\V1\ShutdownWorkerRequest;
-use Temporal\Api\Workflowservice\V1\ShutdownWorkerResponse;
-use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\StartBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\StartBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\StopBatchOperationRequest;
-use Temporal\Api\Workflowservice\V1\StopBatchOperationResponse;
-use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionResponse;
-use Temporal\Api\Workflowservice\V1\TriggerWorkflowRuleRequest;
-use Temporal\Api\Workflowservice\V1\TriggerWorkflowRuleResponse;
-use Temporal\Api\Workflowservice\V1\UnpauseActivityRequest;
-use Temporal\Api\Workflowservice\V1\UnpauseActivityResponse;
-use Temporal\Api\Workflowservice\V1\UpdateActivityOptionsRequest;
-use Temporal\Api\Workflowservice\V1\UpdateActivityOptionsResponse;
-use Temporal\Api\Workflowservice\V1\UpdateNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\UpdateNamespaceResponse;
-use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
-use Temporal\Api\Workflowservice\V1\UpdateScheduleResponse;
-use Temporal\Api\Workflowservice\V1\UpdateTaskQueueConfigRequest;
-use Temporal\Api\Workflowservice\V1\UpdateTaskQueueConfigResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerConfigRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerConfigResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerDeploymentVersionMetadataRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerDeploymentVersionMetadataResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerVersioningRulesRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkerVersioningRulesResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionOptionsRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionOptionsResponse;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionResponse;
+use Temporal\Api\Workflowservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Client\Common\ServerCapabilities;
 
@@ -213,7 +26,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RegisterNamespace(RegisterNamespaceRequest $arg, ?ContextInterface $ctx = null): RegisterNamespaceResponse;
+    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\RegisterNamespaceResponse;
 
     /**
      * DescribeNamespace returns the information and configuration for a registered
@@ -221,14 +34,14 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeNamespace(DescribeNamespaceRequest $arg, ?ContextInterface $ctx = null): DescribeNamespaceResponse;
+    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DescribeNamespaceResponse;
 
     /**
      * ListNamespaces returns the information and configuration for all namespaces.
      *
      * @throws ServiceClientException
      */
-    public function ListNamespaces(ListNamespacesRequest $arg, ?ContextInterface $ctx = null): ListNamespacesResponse;
+    public function ListNamespaces(V1\ListNamespacesRequest $arg, ?ContextInterface $ctx = null): V1\ListNamespacesResponse;
 
     /**
      * UpdateNamespace is used to update the information and configuration of a
@@ -237,7 +50,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateNamespace(UpdateNamespaceRequest $arg, ?ContextInterface $ctx = null): UpdateNamespaceResponse;
+    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\UpdateNamespaceResponse;
 
     /**
      * DeprecateNamespace is used to update the state of a registered namespace to
@@ -253,7 +66,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeprecateNamespace(DeprecateNamespaceRequest $arg, ?ContextInterface $ctx = null): DeprecateNamespaceResponse;
+    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DeprecateNamespaceResponse;
 
     /**
      * StartWorkflowExecution starts a new workflow execution.
@@ -266,7 +79,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function StartWorkflowExecution(StartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): StartWorkflowExecutionResponse;
+    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\StartWorkflowExecutionResponse;
 
     /**
      * ExecuteMultiOperation executes multiple operations within a single workflow.
@@ -279,9 +92,11 @@ interface ServiceClientInterface extends GrpcClientInterface
      * Upon failure, it returns `MultiOperationExecutionFailure` where the status code
      * equals the status code of the *first* operation that failed to be started.
      *
+     * NOTE: Experimental API.
+     *
      * @throws ServiceClientException
      */
-    public function ExecuteMultiOperation(ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): ExecuteMultiOperationResponse;
+    public function ExecuteMultiOperation(V1\ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): V1\ExecuteMultiOperationResponse;
 
     /**
      * GetWorkflowExecutionHistory returns the history of specified workflow execution.
@@ -290,7 +105,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistory(GetWorkflowExecutionHistoryRequest $arg, ?ContextInterface $ctx = null): GetWorkflowExecutionHistoryResponse;
+    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryResponse;
 
     /**
      * GetWorkflowExecutionHistoryReverse returns the history of specified workflow
@@ -301,7 +116,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistoryReverse(GetWorkflowExecutionHistoryReverseRequest $arg, ?ContextInterface $ctx = null): GetWorkflowExecutionHistoryReverseResponse;
+    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryReverseResponse;
 
     /**
      * PollWorkflowTaskQueue is called by workers to make progress on workflows.
@@ -319,7 +134,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollWorkflowTaskQueue(PollWorkflowTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollWorkflowTaskQueueResponse;
+    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollWorkflowTaskQueueResponse;
 
     /**
      * RespondWorkflowTaskCompleted is called by workers to successfully complete
@@ -337,7 +152,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskCompleted(RespondWorkflowTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondWorkflowTaskCompletedResponse;
+    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondWorkflowTaskCompletedResponse;
 
     /**
      * RespondWorkflowTaskFailed is called by workers to indicate the processing of a
@@ -359,7 +174,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskFailed(RespondWorkflowTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondWorkflowTaskFailedResponse;
+    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondWorkflowTaskFailedResponse;
 
     /**
      * PollActivityTaskQueue is called by workers to process activity tasks from a
@@ -387,7 +202,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollActivityTaskQueue(PollActivityTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollActivityTaskQueueResponse;
+    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollActivityTaskQueueResponse;
 
     /**
      * RecordActivityTaskHeartbeat is optionally called by workers while they execute
@@ -404,7 +219,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeat(RecordActivityTaskHeartbeatRequest $arg, ?ContextInterface $ctx = null): RecordActivityTaskHeartbeatResponse;
+    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ?ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatResponse;
 
     /**
      * See `RecordActivityTaskHeartbeat`. This version allows clients to record
@@ -416,7 +231,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeatById(RecordActivityTaskHeartbeatByIdRequest $arg, ?ContextInterface $ctx = null): RecordActivityTaskHeartbeatByIdResponse;
+    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ?ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatByIdResponse;
 
     /**
      * RespondActivityTaskCompleted is called by workers when they successfully
@@ -432,7 +247,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompleted(RespondActivityTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCompletedResponse;
+    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCompletedResponse;
 
     /**
      * See `RecordActivityTaskCompleted`. This version allows clients to record
@@ -444,7 +259,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompletedById(RespondActivityTaskCompletedByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCompletedByIdResponse;
+    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCompletedByIdResponse;
 
     /**
      * RespondActivityTaskFailed is called by workers when processing an activity task
@@ -459,7 +274,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailed(RespondActivityTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskFailedResponse;
+    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskFailedResponse;
 
     /**
      * See `RecordActivityTaskFailed`. This version allows clients to record failures
@@ -471,7 +286,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailedById(RespondActivityTaskFailedByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskFailedByIdResponse;
+    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskFailedByIdResponse;
 
     /**
      * RespondActivityTaskFailed is called by workers when processing an activity task
@@ -486,7 +301,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceled(RespondActivityTaskCanceledRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCanceledResponse;
+    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCanceledResponse;
 
     /**
      * See `RecordActivityTaskCanceled`. This version allows clients to record failures
@@ -498,7 +313,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceledById(RespondActivityTaskCanceledByIdRequest $arg, ?ContextInterface $ctx = null): RespondActivityTaskCanceledByIdResponse;
+    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCanceledByIdResponse;
 
     /**
      * RequestCancelWorkflowExecution is called by workers when they want to request
@@ -514,7 +329,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RequestCancelWorkflowExecution(RequestCancelWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): RequestCancelWorkflowExecutionResponse;
+    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\RequestCancelWorkflowExecutionResponse;
 
     /**
      * SignalWorkflowExecution is used to send a signal to a running workflow
@@ -526,7 +341,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SignalWorkflowExecution(SignalWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): SignalWorkflowExecutionResponse;
+    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\SignalWorkflowExecutionResponse;
 
     /**
      * SignalWithStartWorkflowExecution is used to ensure a signal is sent to a
@@ -547,7 +362,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function SignalWithStartWorkflowExecution(SignalWithStartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): SignalWithStartWorkflowExecutionResponse;
+    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\SignalWithStartWorkflowExecutionResponse;
 
     /**
      * ResetWorkflowExecution will reset an existing workflow execution to a specified
@@ -559,7 +374,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetWorkflowExecution(ResetWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): ResetWorkflowExecutionResponse;
+    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\ResetWorkflowExecutionResponse;
 
     /**
      * TerminateWorkflowExecution terminates an existing workflow execution by
@@ -570,7 +385,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function TerminateWorkflowExecution(TerminateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): TerminateWorkflowExecutionResponse;
+    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\TerminateWorkflowExecutionResponse;
 
     /**
      * DeleteWorkflowExecution asynchronously deletes a specific Workflow Execution
@@ -586,7 +401,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowExecution(DeleteWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): DeleteWorkflowExecutionResponse;
+    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowExecutionResponse;
 
     /**
      * ListOpenWorkflowExecutions is a visibility API to list the open executions in a
@@ -597,7 +412,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListOpenWorkflowExecutions(ListOpenWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListOpenWorkflowExecutionsResponse;
+    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListOpenWorkflowExecutionsResponse;
 
     /**
      * ListClosedWorkflowExecutions is a visibility API to list the closed executions
@@ -608,7 +423,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListClosedWorkflowExecutions(ListClosedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListClosedWorkflowExecutionsResponse;
+    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListClosedWorkflowExecutionsResponse;
 
     /**
      * ListWorkflowExecutions is a visibility API to list workflow executions in a
@@ -616,7 +431,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkflowExecutions(ListWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListWorkflowExecutionsResponse;
+    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowExecutionsResponse;
 
     /**
      * ListArchivedWorkflowExecutions is a visibility API to list archived workflow
@@ -624,7 +439,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListArchivedWorkflowExecutions(ListArchivedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ListArchivedWorkflowExecutionsResponse;
+    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListArchivedWorkflowExecutionsResponse;
 
     /**
      * ScanWorkflowExecutions _was_ a visibility API to list large amount of workflow
@@ -638,7 +453,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ScanWorkflowExecutions(ScanWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): ScanWorkflowExecutionsResponse;
+    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ScanWorkflowExecutionsResponse;
 
     /**
      * CountWorkflowExecutions is a visibility API to count of workflow executions in a
@@ -646,7 +461,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CountWorkflowExecutions(CountWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): CountWorkflowExecutionsResponse;
+    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\CountWorkflowExecutionsResponse;
 
     /**
      * GetSearchAttributes is a visibility API to get all legal keys that could be used
@@ -658,7 +473,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetSearchAttributes(GetSearchAttributesRequest $arg, ?ContextInterface $ctx = null): GetSearchAttributesResponse;
+    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\GetSearchAttributesResponse;
 
     /**
      * RespondQueryTaskCompleted is called by workers to complete queries which were
@@ -674,7 +489,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondQueryTaskCompleted(RespondQueryTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondQueryTaskCompletedResponse;
+    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondQueryTaskCompletedResponse;
 
     /**
      * ResetStickyTaskQueue resets the sticky task queue related information in the
@@ -696,7 +511,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetStickyTaskQueue(ResetStickyTaskQueueRequest $arg, ?ContextInterface $ctx = null): ResetStickyTaskQueueResponse;
+    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\ResetStickyTaskQueueResponse;
 
     /**
      * ShutdownWorker is used to indicate that the given sticky task
@@ -715,14 +530,14 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ShutdownWorker(ShutdownWorkerRequest $arg, ?ContextInterface $ctx = null): ShutdownWorkerResponse;
+    public function ShutdownWorker(V1\ShutdownWorkerRequest $arg, ?ContextInterface $ctx = null): V1\ShutdownWorkerResponse;
 
     /**
      * QueryWorkflow requests a query be executed for a specified workflow execution.
      *
      * @throws ServiceClientException
      */
-    public function QueryWorkflow(QueryWorkflowRequest $arg, ?ContextInterface $ctx = null): QueryWorkflowResponse;
+    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ?ContextInterface $ctx = null): V1\QueryWorkflowResponse;
 
     /**
      * DescribeWorkflowExecution returns information about the specified workflow
@@ -730,7 +545,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowExecution(DescribeWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): DescribeWorkflowExecutionResponse;
+    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowExecutionResponse;
 
     /**
      * DescribeTaskQueue returns the following information about the target task queue,
@@ -741,21 +556,21 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeTaskQueue(DescribeTaskQueueRequest $arg, ?ContextInterface $ctx = null): DescribeTaskQueueResponse;
+    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\DescribeTaskQueueResponse;
 
     /**
      * GetClusterInfo returns information about temporal cluster
      *
      * @throws ServiceClientException
      */
-    public function GetClusterInfo(GetClusterInfoRequest $arg, ?ContextInterface $ctx = null): GetClusterInfoResponse;
+    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ?ContextInterface $ctx = null): V1\GetClusterInfoResponse;
 
     /**
      * GetSystemInfo returns information about the system.
      *
      * @throws ServiceClientException
      */
-    public function GetSystemInfo(GetSystemInfoRequest $arg, ?ContextInterface $ctx = null): GetSystemInfoResponse;
+    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ?ContextInterface $ctx = null): V1\GetSystemInfoResponse;
 
     /**
      * (-- api-linter: core::0127::http-annotation=disabled
@@ -763,56 +578,56 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListTaskQueuePartitions(ListTaskQueuePartitionsRequest $arg, ?ContextInterface $ctx = null): ListTaskQueuePartitionsResponse;
+    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ?ContextInterface $ctx = null): V1\ListTaskQueuePartitionsResponse;
 
     /**
      * Creates a new schedule.
      *
      * @throws ServiceClientException
      */
-    public function CreateSchedule(CreateScheduleRequest $arg, ?ContextInterface $ctx = null): CreateScheduleResponse;
+    public function CreateSchedule(V1\CreateScheduleRequest $arg, ?ContextInterface $ctx = null): V1\CreateScheduleResponse;
 
     /**
      * Returns the schedule description and current state of an existing schedule.
      *
      * @throws ServiceClientException
      */
-    public function DescribeSchedule(DescribeScheduleRequest $arg, ?ContextInterface $ctx = null): DescribeScheduleResponse;
+    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeScheduleResponse;
 
     /**
      * Changes the configuration or state of an existing schedule.
      *
      * @throws ServiceClientException
      */
-    public function UpdateSchedule(UpdateScheduleRequest $arg, ?ContextInterface $ctx = null): UpdateScheduleResponse;
+    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ?ContextInterface $ctx = null): V1\UpdateScheduleResponse;
 
     /**
      * Makes a specific change to a schedule or triggers an immediate action.
      *
      * @throws ServiceClientException
      */
-    public function PatchSchedule(PatchScheduleRequest $arg, ?ContextInterface $ctx = null): PatchScheduleResponse;
+    public function PatchSchedule(V1\PatchScheduleRequest $arg, ?ContextInterface $ctx = null): V1\PatchScheduleResponse;
 
     /**
      * Lists matching times within a range.
      *
      * @throws ServiceClientException
      */
-    public function ListScheduleMatchingTimes(ListScheduleMatchingTimesRequest $arg, ?ContextInterface $ctx = null): ListScheduleMatchingTimesResponse;
+    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ?ContextInterface $ctx = null): V1\ListScheduleMatchingTimesResponse;
 
     /**
      * Deletes a schedule, removing it from the system.
      *
      * @throws ServiceClientException
      */
-    public function DeleteSchedule(DeleteScheduleRequest $arg, ?ContextInterface $ctx = null): DeleteScheduleResponse;
+    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteScheduleResponse;
 
     /**
      * List all schedules in a namespace.
      *
      * @throws ServiceClientException
      */
-    public function ListSchedules(ListSchedulesRequest $arg, ?ContextInterface $ctx = null): ListSchedulesResponse;
+    public function ListSchedules(V1\ListSchedulesRequest $arg, ?ContextInterface $ctx = null): V1\ListSchedulesResponse;
 
     /**
      * Deprecated. Use `UpdateWorkerVersioningRules`.
@@ -841,7 +656,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerBuildIdCompatibility(UpdateWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerBuildIdCompatibilityResponse;
+    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerBuildIdCompatibilityResponse;
 
     /**
      * Deprecated. Use `GetWorkerVersioningRules`.
@@ -849,7 +664,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerBuildIdCompatibility(GetWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): GetWorkerBuildIdCompatibilityResponse;
+    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerBuildIdCompatibilityResponse;
 
     /**
      * Use this API to manage Worker Versioning Rules for a given Task Queue. There are
@@ -893,7 +708,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerVersioningRules(UpdateWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerVersioningRulesResponse;
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerVersioningRulesResponse;
 
     /**
      * Fetches the Build ID assignment and redirect rules for a Task Queue.
@@ -902,7 +717,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerVersioningRules(GetWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): GetWorkerVersioningRulesResponse;
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerVersioningRulesResponse;
 
     /**
      * Deprecated. Use `DescribeTaskQueue`.
@@ -929,32 +744,38 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetWorkerTaskReachability(GetWorkerTaskReachabilityRequest $arg, ?ContextInterface $ctx = null): GetWorkerTaskReachabilityResponse;
+    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ?ContextInterface $ctx = null): V1\GetWorkerTaskReachabilityResponse;
 
     /**
      * Describes a worker deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
-    public function DescribeDeployment(DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): DescribeDeploymentResponse;
+    public function DescribeDeployment(V1\DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeDeploymentResponse;
 
     /**
      * Describes a worker deployment version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkerDeploymentVersion(DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerDeploymentVersionResponse;
+    public function DescribeWorkerDeploymentVersion(V1\DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentVersionResponse;
 
     /**
      * Lists worker deployments in the namespace. Optionally can filter based on
      * deployment series
      * name.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `ListWorkerDeployments`.
      *
      * @throws ServiceClientException
      */
-    public function ListDeployments(ListDeploymentsRequest $arg, ?ContextInterface $ctx = null): ListDeploymentsResponse;
+    public function ListDeployments(V1\ListDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListDeploymentsResponse;
 
     /**
      * Returns the reachability level of a worker deployment to help users decide when
@@ -968,55 +789,67 @@ interface ServiceClientInterface extends GrpcClientInterface
      * cached value. In such a case, the `last_update_time` will inform you about the
      * actual
      * reachability calculation time.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced with `DrainageInfo` returned by
      * `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
-    public function GetDeploymentReachability(GetDeploymentReachabilityRequest $arg, ?ContextInterface $ctx = null): GetDeploymentReachabilityResponse;
+    public function GetDeploymentReachability(V1\GetDeploymentReachabilityRequest $arg, ?ContextInterface $ctx = null): V1\GetDeploymentReachabilityResponse;
 
     /**
      * Returns the current deployment (and its info) for a given deployment series.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced by `current_version` returned by
      * `DescribeWorkerDeployment`.
      *
      * @throws ServiceClientException
      */
-    public function GetCurrentDeployment(GetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): GetCurrentDeploymentResponse;
+    public function GetCurrentDeployment(V1\GetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\GetCurrentDeploymentResponse;
 
     /**
      * Sets a deployment as the current deployment for its deployment series. Can
      * optionally update
      * the metadata of the deployment as well.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      * Deprecated. Replaced by `SetWorkerDeploymentCurrentVersion`.
      *
      * @throws ServiceClientException
      */
-    public function SetCurrentDeployment(SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): SetCurrentDeploymentResponse;
+    public function SetCurrentDeployment(V1\SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\SetCurrentDeploymentResponse;
 
     /**
      * Set/unset the Current Version of a Worker Deployment. Automatically unsets the
      * Ramping
      * Version if it is the Version being set as Current.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentCurrentVersion(SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentCurrentVersionResponse;
+    public function SetWorkerDeploymentCurrentVersion(V1\SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentCurrentVersionResponse;
 
     /**
      * Describes a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkerDeployment(DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerDeploymentResponse;
+    public function DescribeWorkerDeployment(V1\DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentResponse;
 
     /**
      * Deletes records of (an old) Deployment. A deployment can only be deleted if
      * it has no Version in it.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkerDeployment(DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): DeleteWorkerDeploymentResponse;
+    public function DeleteWorkerDeployment(V1\DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentResponse;
 
     /**
      * Used for manual deletion of Versions. User can delete a Version only when all
@@ -1027,47 +860,57 @@ interface ServiceClientInterface extends GrpcClientInterface
      * - It is not draining (see WorkerDeploymentVersionInfo.drainage_info). This
      * condition
      * can be skipped by passing `skip-drainage=true`.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkerDeploymentVersion(DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): DeleteWorkerDeploymentVersionResponse;
+    public function DeleteWorkerDeploymentVersion(V1\DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentVersionResponse;
 
     /**
      * Set/unset the Ramping Version of a Worker Deployment and its ramp percentage.
      * Can be used for
      * gradual ramp to unversioned workers too.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentRampingVersion(SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentRampingVersionResponse;
+    public function SetWorkerDeploymentRampingVersion(V1\SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentRampingVersionResponse;
 
     /**
      * Lists all Worker Deployments that are tracked in the Namespace.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function ListWorkerDeployments(ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): ListWorkerDeploymentsResponse;
+    public function ListWorkerDeployments(V1\ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkerDeploymentsResponse;
 
     /**
      * Updates the user-given metadata attached to a Worker Deployment Version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerDeploymentVersionMetadata(UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerDeploymentVersionMetadataResponse;
+    public function UpdateWorkerDeploymentVersionMetadata(V1\UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionMetadataResponse;
 
     /**
      * Set/unset the ManagerIdentity of a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
      *
      * @throws ServiceClientException
      */
-    public function SetWorkerDeploymentManager(SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): SetWorkerDeploymentManagerResponse;
+    public function SetWorkerDeploymentManager(V1\SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentManagerResponse;
 
     /**
      * Invokes the specified Update function on user Workflow code.
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecution(UpdateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): UpdateWorkflowExecutionResponse;
+    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionResponse;
 
     /**
      * Polls a Workflow Execution for the outcome of a Workflow Update
@@ -1081,35 +924,35 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollWorkflowExecutionUpdate(PollWorkflowExecutionUpdateRequest $arg, ?ContextInterface $ctx = null): PollWorkflowExecutionUpdateResponse;
+    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ?ContextInterface $ctx = null): V1\PollWorkflowExecutionUpdateResponse;
 
     /**
      * StartBatchOperation starts a new batch operation
      *
      * @throws ServiceClientException
      */
-    public function StartBatchOperation(StartBatchOperationRequest $arg, ?ContextInterface $ctx = null): StartBatchOperationResponse;
+    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\StartBatchOperationResponse;
 
     /**
      * StopBatchOperation stops a batch operation
      *
      * @throws ServiceClientException
      */
-    public function StopBatchOperation(StopBatchOperationRequest $arg, ?ContextInterface $ctx = null): StopBatchOperationResponse;
+    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\StopBatchOperationResponse;
 
     /**
      * DescribeBatchOperation returns the information about a batch operation
      *
      * @throws ServiceClientException
      */
-    public function DescribeBatchOperation(DescribeBatchOperationRequest $arg, ?ContextInterface $ctx = null): DescribeBatchOperationResponse;
+    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ?ContextInterface $ctx = null): V1\DescribeBatchOperationResponse;
 
     /**
      * ListBatchOperations returns a list of batch operations
      *
      * @throws ServiceClientException
      */
-    public function ListBatchOperations(ListBatchOperationsRequest $arg, ?ContextInterface $ctx = null): ListBatchOperationsResponse;
+    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ?ContextInterface $ctx = null): V1\ListBatchOperationsResponse;
 
     /**
      * PollNexusTaskQueue is a long poll call used by workers to receive Nexus tasks.
@@ -1118,7 +961,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PollNexusTaskQueue(PollNexusTaskQueueRequest $arg, ?ContextInterface $ctx = null): PollNexusTaskQueueResponse;
+    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ?ContextInterface $ctx = null): V1\PollNexusTaskQueueResponse;
 
     /**
      * RespondNexusTaskCompleted is called by workers to respond to Nexus tasks
@@ -1128,7 +971,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskCompleted(RespondNexusTaskCompletedRequest $arg, ?ContextInterface $ctx = null): RespondNexusTaskCompletedResponse;
+    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskCompletedResponse;
 
     /**
      * RespondNexusTaskFailed is called by workers to fail Nexus tasks received via
@@ -1138,7 +981,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskFailed(RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): RespondNexusTaskFailedResponse;
+    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse;
 
     /**
      * UpdateActivityOptions is called by the client to update the options of an
@@ -1148,7 +991,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateActivityOptions(UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): UpdateActivityOptionsResponse;
+    public function UpdateActivityOptions(V1\UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsResponse;
 
     /**
      * UpdateWorkflowExecutionOptions partially updates the WorkflowExecutionOptions of
@@ -1156,7 +999,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecutionOptions(UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): UpdateWorkflowExecutionOptionsResponse;
+    public function UpdateWorkflowExecutionOptions(V1\UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionOptionsResponse;
 
     /**
      * PauseActivity pauses the execution of an activity specified by its ID or type.
@@ -1183,7 +1026,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function PauseActivity(PauseActivityRequest $arg, ?ContextInterface $ctx = null): PauseActivityResponse;
+    public function PauseActivity(V1\PauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityResponse;
 
     /**
      * UnpauseActivity unpauses the execution of an activity specified by its ID or
@@ -1207,7 +1050,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UnpauseActivity(UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): UnpauseActivityResponse;
+    public function UnpauseActivity(V1\UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityResponse;
 
     /**
      * ResetActivity resets the execution of an activity specified by its ID or type.
@@ -1235,7 +1078,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ResetActivity(ResetActivityRequest $arg, ?ContextInterface $ctx = null): ResetActivityResponse;
+    public function ResetActivity(V1\ResetActivityRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityResponse;
 
     /**
      * Create a new workflow rule. The rules are used to control the workflow
@@ -1248,7 +1091,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CreateWorkflowRule(CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): CreateWorkflowRuleResponse;
+    public function CreateWorkflowRule(V1\CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkflowRuleResponse;
 
     /**
      * DescribeWorkflowRule return the rule specification for existing rule id.
@@ -1256,21 +1099,21 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowRule(DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): DescribeWorkflowRuleResponse;
+    public function DescribeWorkflowRule(V1\DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowRuleResponse;
 
     /**
      * Delete rule by rule id
      *
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowRule(DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): DeleteWorkflowRuleResponse;
+    public function DeleteWorkflowRule(V1\DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowRuleResponse;
 
     /**
      * Return all namespace workflow rules
      *
      * @throws ServiceClientException
      */
-    public function ListWorkflowRules(ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): ListWorkflowRulesResponse;
+    public function ListWorkflowRules(V1\ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowRulesResponse;
 
     /**
      * TriggerWorkflowRule allows to:
@@ -1280,14 +1123,14 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function TriggerWorkflowRule(TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): TriggerWorkflowRuleResponse;
+    public function TriggerWorkflowRule(V1\TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\TriggerWorkflowRuleResponse;
 
     /**
      * WorkerHeartbeat receive heartbeat request from the worker.
      *
      * @throws ServiceClientException
      */
-    public function RecordWorkerHeartbeat(RecordWorkerHeartbeatRequest $arg, ?ContextInterface $ctx = null): RecordWorkerHeartbeatResponse;
+    public function RecordWorkerHeartbeat(V1\RecordWorkerHeartbeatRequest $arg, ?ContextInterface $ctx = null): V1\RecordWorkerHeartbeatResponse;
 
     /**
      * ListWorkers is a visibility API to list worker status information in a specific
@@ -1295,7 +1138,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListWorkers(ListWorkersRequest $arg, ?ContextInterface $ctx = null): ListWorkersResponse;
+    public function ListWorkers(V1\ListWorkersRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkersResponse;
 
     /**
      * Updates task queue configuration.
@@ -1307,14 +1150,14 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateTaskQueueConfig(UpdateTaskQueueConfigRequest $arg, ?ContextInterface $ctx = null): UpdateTaskQueueConfigResponse;
+    public function UpdateTaskQueueConfig(V1\UpdateTaskQueueConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateTaskQueueConfigResponse;
 
     /**
      * FetchWorkerConfig returns the worker configuration for a specific worker.
      *
      * @throws ServiceClientException
      */
-    public function FetchWorkerConfig(FetchWorkerConfigRequest $arg, ?ContextInterface $ctx = null): FetchWorkerConfigResponse;
+    public function FetchWorkerConfig(V1\FetchWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\FetchWorkerConfigResponse;
 
     /**
      * UpdateWorkerConfig updates the worker configuration of one or more workers.
@@ -1323,12 +1166,12 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateWorkerConfig(UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): UpdateWorkerConfigResponse;
+    public function UpdateWorkerConfig(V1\UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerConfigResponse;
 
     /**
      * DescribeWorker returns information about the specified worker.
      *
      * @throws ServiceClientException
      */
-    public function DescribeWorker(DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): DescribeWorkerResponse;
+    public function DescribeWorker(V1\DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerResponse;
 }
