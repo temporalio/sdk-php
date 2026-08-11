@@ -3,37 +3,37 @@
 declare(strict_types=1);
 
 use Temporal\Testing\Environment;
+use Temporal\Testing\SystemInfo;
 use Temporal\Tests\SearchAttributeTestInvoker;
 use Temporal\Worker\FeatureFlags;
 
-\chdir(__DIR__ . '/../..');
-require_once __DIR__ . '/../../vendor/autoload.php';
+$rootDir = \dirname(__DIR__, 2);
+$configDir = $rootDir . '/tests/Functional';
+$configFile = $configDir . '/.rr.silent.yaml';
 
-$systemInfo = \Temporal\Testing\SystemInfo::detect();
+\chdir($rootDir);
+require_once $rootDir . '/vendor/autoload.php';
 
-$environment = Environment::create();
-$environment->startTemporalServer();
+$systemInfo = SystemInfo::detect();
+
+$environment = Environment::create(systemInfo: $systemInfo);
+$environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
-$command = $environment->command;
 $environment->startRoadRunner(
     rrCommand: [
-        $systemInfo->rrExecutable,
+        $rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
         'serve',
-        '-c', '.rr.silent.yaml',
-        '-w', 'tests/Functional',
-        '-o',
-        'temporal.namespace=' . $command->namespace,
-        '-o',
-        'temporal.address=' . $command->address,
+        '-c', $configFile,
+        '-w', $configDir,
         '-o',
         'server.command=' . \implode(',', [
             PHP_BINARY,
-            ...$command->getPhpBinaryArguments(),
+            ...$environment->command->getPhpBinaryArguments(),
             'worker.php',
-            ...$command->getCommandLineArguments(),
+            ...$environment->command->getCommandLineArguments(),
         ]),
     ],
-    configFile: 'tests/Functional/.rr.silent.yaml',
+    configFile: $configFile,
 );
 
 \register_shutdown_function(static fn() => $environment->stop());

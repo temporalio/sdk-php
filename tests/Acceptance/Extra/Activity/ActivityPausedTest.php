@@ -7,8 +7,6 @@ namespace Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
 use Temporal\Api\Common\V1\WorkflowExecution;
-use Temporal\Api\Enums\V1\PendingActivityState;
-use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowStubInterface;
@@ -23,46 +21,35 @@ class ActivityPausedTest extends TestCase
 {
     #[Test]
     public function simplePause(
-        #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '200 seconds')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Activity_ActivityPaused', executionTimeout: '10 seconds')] WorkflowStubInterface $stub,
         ServiceClientInterface $serviceClient,
     ): void {
-        $request = (new DescribeWorkflowExecutionRequest())
-            ->setNamespace('default')
-            ->setExecution(
-                (new WorkflowExecution())
-                    ->setWorkflowId($stub->getExecution()->getID())
-                    ->setRunId($stub->getExecution()->getRunID()),
-            );
-
-        $deadline = \microtime(true) + 30;
-        $activityId = null;
+        $deadline = \microtime(true) + 5;
+        $started = false;
         while (\microtime(true) < $deadline) {
-            $description = $serviceClient->DescribeWorkflowExecution($request);
-            foreach ($description->getPendingActivities() as $pendingActivity) {
-                if (
-                    $pendingActivity->getActivityType()?->getName() !== 'Extra_Activity_ActivityPaused.sleep'
-                    || $pendingActivity->getState() !== PendingActivityState::PENDING_ACTIVITY_STATE_STARTED
-                ) {
-                    continue;
+            foreach ($stub->describe()->pendingActivities as $pending) {
+                if ($pending->lastStartedTime !== null) {
+                    $started = true;
+                    break 2;
                 }
-
-                $activityId = $pendingActivity->getActivityId();
-                break 2;
             }
-
-            \usleep(100_000);
+            \usleep(50_000);
         }
 
-        self::assertNotNull($activityId, 'Started activity not found for workflow execution');
+        self::assertTrue($started, 'Activity did not reach STARTED state in pending_activities');
 
         $serviceClient->PauseActivity(
             (new PauseActivityRequest())
                 ->setReason('test')
                 ->setNamespace('default')
-                ->setId($activityId)
-                ->setExecution($request->getExecution()),
+                ->setType('Extra_Activity_ActivityPaused.sleep')
+                ->setExecution(
+                    (new WorkflowExecution())
+                        ->setWorkflowId($stub->getExecution()->getID())
+                        ->setRunId($stub->getExecution()->getRunID()),
+                ),
         );
-        $result = $stub->getResult(timeout: 200);
+        $result = $stub->getResult(timeout: 10);
 
         self::assertSame(ActivityPausedException::class, $result);
     }
@@ -77,15 +64,15 @@ class TestWorkflow
     {
         $stub = Workflow::newUntypedActivityStub(
             Activity\ActivityOptions::new()
-                ->withScheduleToCloseTimeout('101 seconds')
-                ->withHeartbeatTimeout('5 seconds'),
+                ->withScheduleToCloseTimeout('10 seconds')
+                ->withHeartbeatTimeout('1 second'),
         );
 
         /** @see TestActivity::sleep() */
-        $run = $stub->execute('Extra_Activity_ActivityPaused.sleep', args: [100]);
+        $run = $stub->execute('Extra_Activity_ActivityPaused.sleep', args: [10]);
 
         $timerFired = ! yield Workflow::awaitWithTimeout(
-            '20 seconds',
+            '10 seconds',
             $run,
         );
 

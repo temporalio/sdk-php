@@ -21,6 +21,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ActivityPausedException;
+use Temporal\Exception\Client\ActivityResetException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
@@ -127,20 +128,22 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
                 ],
             );
 
-            \is_object($response) and $response = (array) $response;
+            $cancelled = (bool) ($response['canceled'] ?? false);
+            $paused = (bool) ($response['paused'] ?? false);
+            $reset = (bool) ($response['reset'] ?? false);
 
-            $cancelled = $this->readHeartbeatFlag($response, 'canceled', 'cancel_requested', 'cancelRequested');
-            $paused = $this->readHeartbeatFlag($response, 'paused', 'activity_paused', 'activityPaused');
-
-            if ($cancelled || $paused) {
+            if ($cancelled || $paused || $reset) {
                 $this->cancellationDetails ??= new ActivityCancellationDetails(
                     cancelRequested: $cancelled,
                     paused: $paused,
+                    reset: $reset,
                 );
 
-                throw $cancelled
-                    ? ActivityCanceledException::fromActivityInfo($this->info)
-                    : ActivityPausedException::fromActivityInfo($this->info);
+                throw match (true) {
+                    $cancelled => ActivityCanceledException::fromActivityInfo($this->info),
+                    $paused => ActivityPausedException::fromActivityInfo($this->info),
+                    $reset => ActivityResetException::fromActivityInfo($this->info),
+                };
             }
         } catch (ServiceClientException $e) {
             throw ActivityCompletionException::fromActivityInfo($this->info, $e);
@@ -172,20 +175,5 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         $clone = clone $this;
         $clone->instance = \WeakReference::create($instance);
         return $clone;
-    }
-
-    private function readHeartbeatFlag(mixed $response, string ...$keys): bool
-    {
-        if (!\is_array($response)) {
-            return false;
-        }
-
-        foreach ($keys as $key) {
-            if (\array_key_exists($key, $response)) {
-                return (bool) $response[$key];
-            }
-        }
-
-        return false;
     }
 }

@@ -9,6 +9,7 @@ use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Testing\TemporalServer;
 use Temporal\Testing\TestService;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
@@ -25,7 +26,7 @@ class GrpcClientInterceptor extends TestCase
      */
     protected function setUp(): void
     {
-        $temporalAddress = getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
+        $temporalAddress = TemporalServer::address();
         $this->workflowClient = new WorkflowClient(
             ServiceClient::create($temporalAddress)
                 ->withInterceptorPipeline(

@@ -158,7 +158,8 @@ final class WorkflowStarter
                     ->setWaitPolicy(
                         (new \Temporal\Api\Update\V1\WaitPolicy())
                             ->setLifecycleStage($input->updateInput->waitPolicy->lifecycleStage->value),
-                    );
+                    )
+                    ->setFirstExecutionRunId($input->updateInput->firstExecutionRunId);
 
                 // Configure Meta
                 $meta = new \Temporal\Api\Update\V1\Meta();
@@ -268,8 +269,8 @@ final class WorkflowStarter
                     Header::empty(),
                     $update->waitPolicy,
                     $update->updateId ?? Uuid::v4(),
-                    '',
-                    null, // todo?
+                    $update->firstExecutionRunId ?? '',
+                    $update->resultType,
                 ),
             ),
         );

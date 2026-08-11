@@ -23,49 +23,47 @@
         <testsuite name="Acceptance-Fast">
             <directory suffix="Test.php">tests/Acceptance/Extra</directory>
             <directory suffix="Test.php">tests/Acceptance/Harness</directory>
-            <exclude>tests/Acceptance/Harness/Update/SelfTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Versioning/DeploymentTest.php</exclude>
             <exclude>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</exclude>
-            <exclude>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Stability/ResetWorkerTest.php</exclude>
-            <exclude>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Update/WorkerRestartTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Versioning/DeploymentTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Schedule/BasicTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Workflow/BuiltInPrefixedHandlersTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Schedule/TriggerTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Workflow/InitMethodTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Signal/PreventCloseTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Update/UntypedStubTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Update/TimeoutTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</exclude>
             <exclude>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/SideEffectTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/WorkflowInfoTest.php</exclude>
             <exclude>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</exclude>
         </testsuite>
         <testsuite name="Acceptance-Slow">
-            <file>tests/Acceptance/Harness/Update/SelfTest.php</file>
             <file>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</file>
-            <file>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</file>
-            <file>tests/Acceptance/Extra/Versioning/DeploymentTest.php</file>
             <file>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</file>
-            <file>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</file>
             <file>tests/Acceptance/Extra/Stability/ResetWorkerTest.php</file>
-            <file>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</file>
             <file>tests/Acceptance/Harness/Update/WorkerRestartTest.php</file>
+            <file>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</file>
+            <file>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</file>
+            <file>tests/Acceptance/Extra/Versioning/DeploymentTest.php</file>
             <file>tests/Acceptance/Harness/Schedule/BasicTest.php</file>
             <file>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</file>
-            <file>tests/Acceptance/Extra/Workflow/BuiltInPrefixedHandlersTest.php</file>
             <file>tests/Acceptance/Harness/Schedule/TriggerTest.php</file>
             <file>tests/Acceptance/Extra/Workflow/InitMethodTest.php</file>
             <file>tests/Acceptance/Harness/Signal/PreventCloseTest.php</file>
             <file>tests/Acceptance/Extra/Update/UntypedStubTest.php</file>
             <file>tests/Acceptance/Extra/Update/TimeoutTest.php</file>
-            <file>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</file>
             <file>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</file>
             <file>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/SideEffectTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/WorkflowInfoTest.php</file>
             <file>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</file>
         </testsuite>
         <testsuite name="Acceptance">
@@ -80,6 +78,28 @@
         </testsuite>
         <testsuite name="Functional">
             <directory suffix="TestCase.php">tests/Functional</directory>
+            <exclude>tests/Functional/TimerOnlyTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/ChildWorkflowTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/MockedActivityTimeSkipTestCase.php</exclude>
+            <exclude>tests/Functional/DelayedSignalInjectionTestCase.php</exclude>
+            <exclude>tests/Functional/TimeSkippingSpikeTestCase.php</exclude>
+            <exclude>tests/Functional/WorkflowSideDelayedCallbackTestCase.php</exclude>
+            <exclude>tests/Functional/ClientSideDelayedCallbackTestCase.php</exclude>
+            <exclude>tests/Functional/NestedTimeSkipGuardTestCase.php</exclude>
+            <exclude>tests/Functional/ClientSideDelayedCallbackMatrixTestCase.php</exclude>
+            <exclude>tests/Functional/SchedulerWithMockedActivityTestCase.php</exclude>
+        </testsuite>
+        <testsuite name="Functional-TimeSkipping">
+            <file>tests/Functional/TimerOnlyTimeSkipTestCase.php</file>
+            <file>tests/Functional/ChildWorkflowTimeSkipTestCase.php</file>
+            <file>tests/Functional/MockedActivityTimeSkipTestCase.php</file>
+            <file>tests/Functional/DelayedSignalInjectionTestCase.php</file>
+            <file>tests/Functional/TimeSkippingSpikeTestCase.php</file>
+            <file>tests/Functional/WorkflowSideDelayedCallbackTestCase.php</file>
+            <file>tests/Functional/ClientSideDelayedCallbackTestCase.php</file>
+            <file>tests/Functional/NestedTimeSkipGuardTestCase.php</file>
+            <file>tests/Functional/ClientSideDelayedCallbackMatrixTestCase.php</file>
+            <file>tests/Functional/SchedulerWithMockedActivityTestCase.php</file>
         </testsuite>
     </testsuites>
     <extensions>

@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Common\IdReusePolicy;
+use Temporal\Common\MethodRetry;
+use Temporal\Common\RetryOptions;
 use Temporal\Workflow\ChildWorkflowCancellationType;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ParentClosePolicy;
@@ -106,5 +108,33 @@ class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
             ChildWorkflowCancellationType::WaitCancellationCompleted
         ));
         $this->assertSame(ChildWorkflowCancellationType::TryCancel->value, $dto->cancellationType);
+    }
+
+    public function testMergeWithMethodRetryFillsDefaultRetryOptions(): void
+    {
+        $dto = ChildWorkflowOptions::new()
+            ->withRetryOptions(RetryOptions::new())
+            ->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryCreatesRetryOptionsWhenNull(): void
+    {
+        $dto = ChildWorkflowOptions::new()->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertNotNull($dto->retryOptions);
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryKeepsUserDefinedFields(): void
+    {
+        $methodRetry = new MethodRetry(maximumAttempts: 5, maximumInterval: 30);
+        $dto = ChildWorkflowOptions::new()
+            ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
+            ->mergeWith($methodRetry);
+
+        $this->assertSame(1, $dto->retryOptions->maximumAttempts);
+        $this->assertSame($methodRetry->maximumInterval, $dto->retryOptions->maximumInterval);
     }
 }

@@ -4,41 +4,23 @@ declare(strict_types=1);
 
 namespace Temporal\Testing;
 
-use Temporal\Client\GRPC\StatusCode;
-use Temporal\Exception\Client\ServiceClientException;
-
 trait WithoutTimeSkipping
 {
-    private ?TestService $testService = null;
-    private bool $managesTimeSkipping = false;
+    private TestService $testService;
 
     protected function setUp(): void
     {
-        $this->managesTimeSkipping = false;
-        $this->testService = TestService::create(
-            \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',
-        );
-
-        try {
-            $this->testService->lockTimeSkipping();
-            $this->managesTimeSkipping = true;
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() !== StatusCode::UNIMPLEMENTED) {
-                throw $e;
-            }
-
-            $this->testService = null;
-        }
-
         parent::setUp();
+        $this->testService = TestService::create(TemporalServer::address());
+        $this->testService->lockTimeSkipping();
     }
 
     protected function tearDown(): void
     {
-        if ($this->managesTimeSkipping && $this->testService !== null) {
+        try {
             $this->testService->unlockTimeSkipping();
+        } finally {
+            parent::tearDown();
         }
-
-        parent::tearDown();
     }
 }

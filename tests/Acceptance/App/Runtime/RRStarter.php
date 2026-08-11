@@ -6,10 +6,12 @@ namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
+use Temporal\Testing\Transcript\TranscriptStore;
 
 final class RRStarter
 {
     private Environment $environment;
+
     public function __construct(
         private State $runtime,
         ?Environment $environment = null,
@@ -18,14 +20,13 @@ final class RRStarter
         \register_shutdown_function(fn() => $this->stop());
     }
 
-    /**
-     * @param list<class-string> $allowedTestClasses
-     */
-    public function start(array $allowedTestClasses = []): void
+    public function start(): void
     {
         if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
+
+        $allowedTestClasses = $this->runtime->allowedTestClasses;
 
         $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;
@@ -62,8 +63,15 @@ final class RRStarter
             $rrCommand[] = "tls.cert={$run->tlsCert}";
         }
 
+        $envs = [];
+        $runId = \getenv('TEMPORAL_TRANSCRIPT_RUN_ID');
+        if (\is_string($runId) && $runId !== '') {
+            $envs['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
+        }
+
         $this->environment->startRoadRunner(
             rrCommand: $rrCommand,
+            envs: $envs,
             configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
         );
     }

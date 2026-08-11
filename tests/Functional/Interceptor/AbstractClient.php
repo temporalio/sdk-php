@@ -13,6 +13,7 @@ namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Testing\TemporalServer;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Functional\AbstractFunctional;
 use Temporal\Tests\Interceptor\InterceptorCallsCounter;
@@ -29,7 +30,7 @@ abstract class AbstractClient extends AbstractFunctional
     protected function createClient(?string $connection = null): WorkflowClient
     {
         return new WorkflowClient(
-            ServiceClient::create($connection ?? (\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233')),
+            ServiceClient::create($connection ?? TemporalServer::address()),
             interceptorProvider: new PipelineProvider([InterceptorCallsCounter::class]),
         );
     }

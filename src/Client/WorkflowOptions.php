@@ -162,16 +162,12 @@ final class WorkflowOptions extends Options
 
     /**
      * General fixed details for this workflow execution that will appear in UI/CLI.
-     *
-     * @experimental This feature is not stable and may change in the future.
      */
     #[Marshal(name: 'StaticDetails')]
     public string $staticDetails = '';
 
     /**
      * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
-     *
-     * @experimental This feature is not stable and may change in the future.
      */
     #[Marshal(name: 'StaticSummary')]
     public string $staticSummary = '';
@@ -215,8 +211,8 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
 
-        if ($retry !== null && $self->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $self->retryOptions->mergeWith($retry);
+        if ($retry !== null) {
+            $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($retry);
         }
 
         if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {
@@ -504,7 +500,6 @@ final class WorkflowOptions extends Options
      *
      * @return $this
      * @since SDK 2.14.0
-     * @experimental This API might change in the future.
      */
     #[Pure]
     public function withStaticSummary(string $summary): self
@@ -522,7 +517,6 @@ final class WorkflowOptions extends Options
      *
      * @return $this
      * @since SDK 2.14.0
-     * @experimental This API might change in the future.
      */
     #[Pure]
     public function withStaticDetails(string $details): self

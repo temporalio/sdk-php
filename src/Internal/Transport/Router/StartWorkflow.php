@@ -70,13 +70,7 @@ final class StartWorkflow extends Route
         $input->header = $request->getHeader();
 
         $info = $input->info;
-        $tickInfo = $request->getTickInfo();
-        /** @psalm-suppress InaccessibleProperty */
-        $info->historyLength = $tickInfo->historyLength;
-        /** @psalm-suppress InaccessibleProperty */
-        $info->historySize = $tickInfo->historySize;
-        /** @psalm-suppress InaccessibleProperty */
-        $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
+        $request->getTickInfo()->applyTo($info);
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
@@ -114,9 +108,8 @@ final class StartWorkflow extends Route
 
         try {
             $sa = (new SearchAttributes());
-            $json = \json_encode($param);
             $sa->mergeFromJsonString(
-                $json === false ? '{}' : $json,
+                \json_encode($param),
                 true,
             );
 
@@ -141,9 +134,8 @@ final class StartWorkflow extends Route
 
         try {
             $memo = (new Memo());
-            $json = \json_encode($param);
             $memo->mergeFromJsonString(
-                $json === false ? '{}' : $json,
+                \json_encode($param),
                 true,
             );
 
