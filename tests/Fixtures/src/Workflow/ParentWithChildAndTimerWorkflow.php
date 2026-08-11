@@ -23,8 +23,8 @@ class ParentWithChildAndTimerWorkflow
     public function handler(): iterable
     {
         $child = yield Workflow::executeChildWorkflow(
-            'ChildWithLongTimerWorkflow',
-            [],
+            'LongTimerWorkflow',
+            [1800],
             ChildWorkflowOptions::new(),
         );
 

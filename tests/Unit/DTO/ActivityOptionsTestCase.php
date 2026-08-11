@@ -14,6 +14,7 @@ namespace Temporal\Tests\Unit\DTO;
 use Carbon\CarbonInterval;
 use Temporal\Activity\ActivityCancellationType;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 
@@ -123,5 +124,48 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $this->assertNotSame($dto, $dto->withRetryOptions(
             RetryOptions::new()
         ));
+    }
+
+    public function testMergeWithMethodRetryFillsDefaultRetryOptions(): void
+    {
+        $dto = ActivityOptions::new()
+            ->withRetryOptions(RetryOptions::new())
+            ->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryCreatesRetryOptionsWhenNull(): void
+    {
+        $dto = ActivityOptions::new()->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertNotNull($dto->retryOptions);
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryKeepsUserDefinedFields(): void
+    {
+        $methodRetry = new MethodRetry(maximumAttempts: 5, maximumInterval: 30);
+        $dto = ActivityOptions::new()
+            ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
+            ->mergeWith($methodRetry);
+
+        $this->assertSame(1, $dto->retryOptions->maximumAttempts);
+        $this->assertSame($methodRetry->maximumInterval, $dto->retryOptions->maximumInterval);
+    }
+
+    public function testMergeWithNullRetryDoesNotChangeRetryOptions(): void
+    {
+        $retry = RetryOptions::new()->withMaximumAttempts(7);
+        $dto = ActivityOptions::new()->withRetryOptions($retry)->mergeWith(null);
+
+        $this->assertSame(7, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithDoesNotMutateState(): void
+    {
+        $dto = new ActivityOptions();
+
+        $this->assertNotSame($dto, $dto->mergeWith(new MethodRetry(maximumAttempts: 5)));
     }
 }

@@ -16,6 +16,7 @@ use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Testing\TemporalServer;
 use Temporal\Tests\Functional\AbstractFunctional;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -28,10 +29,10 @@ abstract class AbstractClient extends AbstractFunctional
      * @param string $connection
      * @return WorkflowClient
      */
-    protected function createClient(string $connection = '127.0.0.1:7233'): WorkflowClient
+    protected function createClient(?string $connection = null): WorkflowClient
     {
         return new WorkflowClient(
-            ServiceClient::create($connection)
+            ServiceClient::create($connection ?? TemporalServer::address())
         );
     }
 
