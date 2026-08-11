@@ -279,6 +279,21 @@ class WorkerOptions
     public int $maxConcurrentEagerActivityExecutionSize = 0;
 
     /**
+     * Optional: Maximum number of activity slots that may be reserved for eager
+     * execution when completing a single workflow task.
+     *
+     * The default of null uses the underlying SDK default of 3. A configured
+     * value must be positive; to disable eager activity execution use
+     * {@see self::$disableEagerActivities} instead.
+     *
+     * @see self::$disableEagerActivities for a description of eager activity execution.
+     *
+     * @since RoadRunner 2025.1.16
+     */
+    #[Marshal(name: 'MaxEagerActivityReservationsPerWorkflowTask')]
+    public ?int $maxEagerActivityReservationsPerWorkflowTask = null;
+
+    /**
      * Optional: Disable allowing workflow and activity functions that are
      * registered with custom names from being able to be called with their
      * function references.
@@ -784,6 +799,33 @@ class WorkerOptions
 
         $self = clone $this;
         $self->maxConcurrentEagerActivityExecutionSize = $size;
+        return $self;
+    }
+
+    /**
+     * Optional: Maximum number of activity slots that may be reserved for eager
+     * execution when completing a single workflow task.
+     *
+     * The default of null uses the underlying SDK default of 3. A configured
+     * value must be positive; to disable eager activity execution use
+     * {@see self::withDisableEagerActivities()} instead.
+     *
+     * @see self::$disableEagerActivities for a description of eager activity execution.
+     *
+     * @since RoadRunner 2025.1.16
+     */
+    #[Pure]
+    public function withMaxEagerActivityReservationsPerWorkflowTask(int $value): self
+    {
+        if ($value <= 0) {
+            throw new \InvalidArgumentException(
+                'MaxEagerActivityReservationsPerWorkflowTask must be positive; '
+                . 'use withDisableEagerActivities() to disable eager activity execution.',
+            );
+        }
+
+        $self = clone $this;
+        $self->maxEagerActivityReservationsPerWorkflowTask = $value;
         return $self;
     }
 
