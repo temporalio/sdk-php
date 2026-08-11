@@ -37,6 +37,11 @@ $buildMethodDocBlock = static function (
     string $arg,
     string $return,
 ): string {
+    $experimentalNotices = [
+        'Experimental. This API might significantly change or be removed in a future release.',
+        'NOTE: Experimental API.',
+    ];
+
     $block = [];
 
     $original = $serviceReflection->getMethod($method)->getDocComment();
@@ -50,7 +55,15 @@ $buildMethodDocBlock = static function (
             break;
         }
 
+        if (\in_array($line, $experimentalNotices, true)) {
+            continue;
+        }
+
         $block[] = $line;
+    }
+
+    while ($block !== [] && $block[\array_key_last($block)] === '') {
+        \array_pop($block);
     }
 
     $block[] = '';
