@@ -89,4 +89,17 @@ final class FeatureFlags
      * @link https://github.com/temporalio/sdk-php/issues/399
      */
     public static bool $settleAwaitOnFirstSettledCondition = false;
+
+    /**
+     * Move the failure message and stack trace into the `encoded_attributes` payload, so that they
+     * pass through the Data Converter and can be encrypted along with the rest of the payloads.
+     * The plain fields are replaced with `Encoded failure` and an empty stack trace.
+     *
+     * Encoded attributes are always decoded back, no matter the value of this flag.
+     *
+     * @experimental
+     * @since SDK 2.18.0
+     * @link https://github.com/temporalio/sdk-php/issues/454
+     */
+    public static bool $encodeFailureAttributes = false;
 }

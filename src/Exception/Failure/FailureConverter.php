@@ -22,24 +22,32 @@ use Temporal\Api\Failure\V1\Failure;
 use Temporal\Api\Failure\V1\ServerFailureInfo;
 use Temporal\Api\Failure\V1\TerminatedFailureInfo;
 use Temporal\Api\Failure\V1\TimeoutFailureInfo;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\SerializationContext;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker\FeatureFlags;
 
 final class FailureConverter
 {
+    private const ENCODED_FAILURE_MESSAGE = 'Encoded failure';
+
     public static function mapFailureToException(
         Failure $failure,
         DataConverterInterface $converter,
         ?SerializationContext $context = null,
     ): TemporalFailure {
-        $e = self::createFailureException($failure, $converter);
+        $decoded = self::decodeAttributes($failure, $converter, $context);
+
+        $e = self::createFailureException($decoded, $converter);
         $e->setFailure($failure);
 
-        if ($failure->getStackTrace() !== '') {
-            $e->setOriginalStackTrace($failure->getStackTrace());
+        if ($decoded->getStackTrace() !== '') {
+            $e->setOriginalStackTrace($decoded->getStackTrace());
         }
 
         if ($context !== null) {
@@ -170,7 +178,71 @@ final class FailureConverter
                 $failure->setApplicationFailureInfo($info);
         }
 
+        if (FeatureFlags::$encodeFailureAttributes) {
+            self::encodeAttributes(
+                $failure,
+                $converter,
+                $context ?? ($e instanceof TemporalFailure ? $e->getSerializationContext() : null),
+            );
+        }
+
         return $failure;
+    }
+
+    private static function encodeAttributes(
+        Failure $failure,
+        DataConverterInterface $converter,
+        ?SerializationContext $context,
+    ): void {
+        $values = EncodedValues::fromValues([[
+            'message' => $failure->getMessage(),
+            'stack_trace' => $failure->getStackTrace(),
+        ]], $converter);
+        $values->setSerializationContext($context);
+
+        $encoded = null;
+        /** @psalm-suppress TooManyTemplateParams */
+        foreach ($values->toPayloads()->getPayloads() as $payload) {
+            $encoded = $payload;
+            break;
+        }
+
+        \assert($encoded instanceof Payload);
+
+        $failure
+            ->setEncodedAttributes($encoded)
+            ->setMessage(self::ENCODED_FAILURE_MESSAGE)
+            ->setStackTrace('');
+    }
+
+    private static function decodeAttributes(
+        Failure $failure,
+        DataConverterInterface $converter,
+        ?SerializationContext $context,
+    ): Failure {
+        $payload = $failure->getEncodedAttributes();
+        if ($payload === null) {
+            return $failure;
+        }
+
+        $values = EncodedValues::fromPayloads(new Payloads(['payloads' => [$payload]]), $converter);
+        $values->setSerializationContext($context);
+
+        try {
+            $attributes = $values->getValue(0, Type::TYPE_ARRAY);
+        } catch (\Throwable) {
+            return $failure;
+        }
+
+        if (!\is_array($attributes)) {
+            return $failure;
+        }
+
+        $decoded = clone $failure;
+        isset($attributes['message']) and $decoded->setMessage((string) $attributes['message']);
+        isset($attributes['stack_trace']) and $decoded->setStackTrace((string) $attributes['stack_trace']);
+
+        return $decoded;
     }
 
     private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure
