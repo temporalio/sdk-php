@@ -106,7 +106,6 @@
   <file src="src/Client/ScheduleClient.php">
     <DeprecatedProperty>
       <code><![CDATA[$options->namespace]]></code>
-      <code><![CDATA[$options->namespace]]></code>
     </DeprecatedProperty>
   </file>
   <file src="src/Client/WorkflowClient.php">
@@ -153,12 +152,14 @@
   <file src="src/Client/WorkflowOptions.php">
     <ImpureMethodCall>
       <code><![CDATA[$this->typedSearchAttributes]]></code>
+      <code><![CDATA[fromValues]]></code>
       <code><![CDATA[setFields]]></code>
       <code><![CDATA[setIndexedFields]]></code>
       <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[setSerializationContext]]></code>
       <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
-      <code><![CDATA[toPayload]]></code>
+      <code><![CDATA[toPayloadArray]]></code>
     </ImpureMethodCall>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[SearchAttributeKey]]></code>
@@ -566,18 +567,6 @@
     <PossiblyNullArgument>
       <code><![CDATA[$dto->action]]></code>
     </PossiblyNullArgument>
-    <RedundantCondition>
-      <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->memo?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->searchAttributes?->setDataConverter($this->converter)]]></code>
-    </RedundantCondition>
-    <TypeDoesNotContainNull>
-      <code><![CDATA[$action->header]]></code>
-      <code><![CDATA[$action->input]]></code>
-      <code><![CDATA[$action->memo]]></code>
-      <code><![CDATA[$action->searchAttributes]]></code>
-    </TypeDoesNotContainNull>
     <UndefinedInterfaceMethod>
       <code><![CDATA[setDataConverter]]></code>
     </UndefinedInterfaceMethod>
@@ -971,16 +960,16 @@
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
-                $request = new SignalExternalWorkflow(
-                    $this->getOptions()->namespace,
-                    $execution->getID(),
-                    null,
-                    $name,
-                    EncodedValues::fromValues($args),
-                    true,
+                return $this->request(
+                    new SignalExternalWorkflow(
+                        $this->resolveNamespace(),
+                        $execution->getID(),
+                        null,
+                        $name,
+                        EncodedValues::fromValues($args),
+                        true,
+                    ),
                 );
-
-                return $this->request($request);
             },
         )]]></code>
       <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
@@ -1049,6 +1038,7 @@
       <code><![CDATA[$scope]]></code>
     </PropertyNotSetInConstructor>
     <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$ctx->childWorkflowSequence = &$context->childWorkflowSequence]]></code>
       <code><![CDATA[$ctx->currentDetails = &$context->currentDetails]]></code>
       <code><![CDATA[$ctx->trace = &$context->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
@@ -1096,6 +1086,7 @@
     </NullableReturnStatement>
     <UnsupportedPropertyReferenceUsage>
       <code><![CDATA[$clone->awaits = &$this->awaits]]></code>
+      <code><![CDATA[$clone->childWorkflowSequence = &$this->childWorkflowSequence]]></code>
       <code><![CDATA[$clone->trace = &$this->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
   </file>

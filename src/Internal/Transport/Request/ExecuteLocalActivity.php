@@ -29,13 +29,21 @@ final class ExecuteLocalActivity extends Request
      */
     private string $activityName;
 
+    private ?string $taskQueue;
+
     /**
      * @param non-empty-string $name Activity name
      * @param RequestOptions $options
      */
-    public function __construct(string $name, ValuesInterface $args, array $options, HeaderInterface $header)
-    {
+    public function __construct(
+        string $name,
+        ValuesInterface $args,
+        array $options,
+        HeaderInterface $header,
+        ?string $taskQueue = null,
+    ) {
         $this->activityName = $name;
+        $this->taskQueue = $taskQueue;
         parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args, header: $header);
     }
 
@@ -45,5 +53,10 @@ final class ExecuteLocalActivity extends Request
     public function getActivityName(): string
     {
         return $this->activityName;
+    }
+
+    public function getTaskQueue(): ?string
+    {
+        return $this->taskQueue;
     }
 }

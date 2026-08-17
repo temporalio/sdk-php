@@ -24,13 +24,17 @@ use Temporal\Api\Failure\V1\TerminatedFailureInfo;
 use Temporal\Api\Failure\V1\TimeoutFailureInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
-    public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
-    {
+    public static function mapFailureToException(
+        Failure $failure,
+        DataConverterInterface $converter,
+        ?SerializationContext $context = null,
+    ): TemporalFailure {
         $e = self::createFailureException($failure, $converter);
         $e->setFailure($failure);
 
@@ -38,14 +42,25 @@ final class FailureConverter
             $e->setOriginalStackTrace($failure->getStackTrace());
         }
 
+        if ($context !== null) {
+            $e->setSerializationContext($context);
+        }
+
         return $e;
     }
 
-    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $converter): Failure
-    {
+    public static function mapExceptionToFailure(
+        \Throwable $e,
+        DataConverterInterface $converter,
+        ?SerializationContext $context = null,
+    ): Failure {
         $failure = new Failure();
 
         if ($e instanceof TemporalFailure) {
+            if ($context !== null && $e->getSerializationContext() === null) {
+                $e->setSerializationContext($context);
+            }
+
             $e->setDataConverter($converter);
 
             if ($e->getFailure() !== null) {
@@ -62,7 +77,7 @@ final class FailureConverter
         $failure->setSource('PHP_SDK')->setStackTrace(self::generateStackTraceString($e));
 
         if ($e->getPrevious() !== null) {
-            $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $converter));
+            $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $converter, $context));
         }
 
         switch (true) {

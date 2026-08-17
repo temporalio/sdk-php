@@ -36,6 +36,7 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\MultyOperation\OperationStatus;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
@@ -76,7 +77,8 @@ final class WorkflowStarter
         array $args = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $arguments = EncodedValues::fromValues($args, $this->converter);
+        $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
+        $arguments = EncodedValues::fromValues($args, $this->converter)->withSerializationContext($context);
 
         return $this->interceptors->with(
             fn(StartInput $input): WorkflowExecution => $this->executeRequest(
@@ -102,8 +104,9 @@ final class WorkflowStarter
         array $startArgs = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $arguments = EncodedValues::fromValues($startArgs, $this->converter);
-        $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
+        $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
+        $arguments = EncodedValues::fromValues($startArgs, $this->converter)->withSerializationContext($context);
+        $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter)->withSerializationContext($context);
 
         return $this->interceptors->with(
             function (SignalWithStartInput $input): WorkflowExecution {
@@ -141,8 +144,9 @@ final class WorkflowStarter
         array $updateArgs = [],
         array $startArgs = [],
     ): UpdateWithStartOutput {
-        $arguments = EncodedValues::fromValues($startArgs, $this->converter);
-        $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter);
+        $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
+        $arguments = EncodedValues::fromValues($startArgs, $this->converter)->withSerializationContext($context);
+        $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter)->withSerializationContext($context);
 
         return $this->interceptors->with(
             function (UpdateWithStartInput $input): UpdateWithStartOutput {
@@ -170,7 +174,6 @@ final class WorkflowStarter
                 // Configure update Input
                 $i = new \Temporal\Api\Update\V1\Input();
                 $i->setName($input->updateInput->updateName);
-                $input->updateInput->arguments->setDataConverter($this->converter);
                 $input->updateInput->arguments->isEmpty() or $i->setArgs($input->updateInput->arguments->toPayloads());
                 $input->updateInput->header->isEmpty() or $i->setHeader($input->updateInput->header->toHeader());
                 $r->setInput($i);
@@ -236,6 +239,7 @@ final class WorkflowStarter
                             updateName: $input->updateInput->updateName,
                             workflowType: $input->workflowStartInput->workflowType,
                             workflowExecution: $execution,
+                            namespace: $this->clientOptions->namespace,
                         );
                 } catch (\RuntimeException $e) {
                     return new UpdateWithStartOutput($execution, $e);
@@ -366,7 +370,8 @@ final class WorkflowStarter
         $options->retryOptions === null or $req->setRetryPolicy($options->retryOptions->toWorkflowRetryPolicy());
 
         // Memo
-        $memo = $options->toMemo($this->converter);
+        $context = new WorkflowSerializationContext($this->clientOptions->namespace, $input->workflowId);
+        $memo = $options->toMemo($this->converter, $context);
         $memo === null or $req->setMemo($memo);
 
         // Search Attributes

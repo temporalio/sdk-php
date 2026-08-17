@@ -16,6 +16,7 @@ use React\Promise\Deferred;
 use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
@@ -82,9 +83,19 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $info = $context->getInfo();
                     $request->getTickInfo()->applyTo($info);
 
-                    $result = $handler(new QueryInput($name, $request->getPayloads(), $info));
-                    $resolver->resolve(EncodedValues::fromValues([$result]));
+                    $arguments = $request->getPayloads();
+                    $context->applySerializationContext($arguments);
+
+                    $result = $handler(new QueryInput($name, $arguments, $info));
+
+                    $resultValues = EncodedValues::fromValues([$result]);
+                    $context->applySerializationContext($resultValues);
+                    $resolver->resolve($resultValues);
                 } catch (\Throwable $e) {
+                    if ($e instanceof TemporalFailure) {
+                        $e->setSerializationContext($context->getSerializationContext());
+                    }
+
                     $resolver->reject($e);
                 }
             },
@@ -125,6 +136,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                             )
                             ->setCurrentDetails((string) $context->getCurrentDetails()),
                     ]);
+                    $context->applySerializationContext($result);
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
@@ -141,6 +153,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             static function () use ($resolver, $context): void {
                 try {
                     $result = EncodedValues::fromValues([$context->getStackTrace()]);
+                    $context->applySerializationContext($result);
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
@@ -159,6 +172,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $result = EncodedValues::fromValues([
                         $context->getEnhancedStackTrace(),
                     ]);
+                    $context->applySerializationContext($result);
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {
