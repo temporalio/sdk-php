@@ -99,8 +99,22 @@ jobs:
         run: vendor/bin/validate-prefer-lowest
         continue-on-error: true
 
-      - name: Download binaries
+      - name: Cache runtime binaries
+        id: cache-binaries
         if: inputs.download-binaries == true
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./rr
+            ./rr.exe
+            ./temporal
+            ./temporal.exe
+            ./temporal-test-server
+            ./temporal-test-server.exe
+          key: ${{ runner.os }}-binaries-${{ hashFiles('dload.xml') }}
+
+      - name: Download binaries
+        if: inputs.download-binaries == true && steps.cache-binaries.outputs.cache-hit != 'true'
         run: composer get:binaries
 
       - name: Run tests
