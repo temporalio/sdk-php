@@ -55,7 +55,6 @@ jobs:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
         php:
-          - 8.1
           - 8.2
           - 8.3
           - 8.4
@@ -67,7 +66,7 @@ jobs:
           # Add Windows
           - os: windows-latest
             extensions-suffix: ', protobuf'
-            php: 8.1
+            php: 8.2
             dependencies: highest
     steps:
       - name: Set Git To Use LF
@@ -94,7 +93,7 @@ jobs:
 
       - name: Validate lowest dependencies
         id: validate
-        if: matrix.dependencies == 'lowest' && matrix.php == '8.1'
+        if: matrix.dependencies == 'lowest' && matrix.php == '8.2'
         env:
           COMPOSER_POOL_OPTIMIZER: 0
         run: vendor/bin/validate-prefer-lowest
