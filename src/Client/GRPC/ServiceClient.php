@@ -6,8 +6,9 @@ namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Client\Common\ServerCapabilities;
 
-class ServiceClient extends BaseClient
+class ServiceClient extends BaseClient implements ServiceClientInterface
 {
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
@@ -106,8 +107,6 @@ class ServiceClient extends BaseClient
      *
      * Upon failure, it returns `MultiOperationExecutionFailure` where the status code
      * equals the status code of the *first* operation that failed to be started.
-     *
-     * NOTE: Experimental API.
      *
      * @throws ServiceClientException
      */
@@ -532,8 +531,10 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * ScanWorkflowExecutions is a visibility API to list large amount of workflow
+     * ScanWorkflowExecutions _was_ a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
+     * It has since been deprecated in favor of `ListWorkflowExecutions` and rewritten
+     * to use `ListWorkflowExecutions` internally.
      *
      * Deprecated: Replaced with `ListWorkflowExecutions`.
      * (-- api-linter: core::0127::http-annotation=disabled
@@ -1070,6 +1071,16 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * Set/unset the ManagerIdentity of a Worker Deployment.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentManager(V1\SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentManagerResponse
+    {
+        return $this->invoke("SetWorkerDeploymentManager", $arg, $ctx);
+    }
+
+    /**
      * Invokes the specified Update function on user Workflow code.
      *
      * @throws ServiceClientException
@@ -1402,5 +1413,70 @@ class ServiceClient extends BaseClient
     public function UpdateWorkerConfig(V1\UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerConfigResponse
     {
         return $this->invoke("UpdateWorkerConfig", $arg, $ctx);
+    }
+
+    /**
+     * DescribeWorker returns information about the specified worker.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorker(V1\DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerResponse
+    {
+        return $this->invoke("DescribeWorker", $arg, $ctx);
+    }
+
+    public function getServerCapabilities(): ?ServerCapabilities
+    {
+        $connection = $this->getInternalConnection();
+        if ($connection->getCapabilities() !== null) {
+            return $connection->getCapabilities();
+        }
+
+        try {
+            $systemInfo = $this->getSystemInfo(new V1\GetSystemInfoRequest());
+            $capabilities = $systemInfo->getCapabilities();
+
+            if ($capabilities === null) {
+                return null;
+            }
+
+            $serverCapabilities = new ServerCapabilities(
+                signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
+                internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
+                activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
+                supportsSchedules: $capabilities->getSupportsSchedules(),
+                encodedFailureAttributes: $capabilities->getEncodedFailureAttributes(),
+                buildIdBasedVersioning: $capabilities->getBuildIdBasedVersioning(),
+                upsertMemo: $capabilities->getUpsertMemo(),
+                eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
+                sdkMetadata: $capabilities->getSdkMetadata(),
+                countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
+                nexus: $capabilities->getNexus(),
+            );
+            $connection->setCapabilities($serverCapabilities);
+
+            return $serverCapabilities;
+        } catch (ServiceClientException $e) {
+            if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
+                return null;
+            }
+
+            throw $e;
+        }
+    }
+
+    public function setServerCapabilities(ServerCapabilities $capabilities): void
+    {
+        \trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
+            \E_USER_DEPRECATED,
+        );
+
+        $this->getInternalConnection()->setCapabilities($capabilities);
+    }
+
+    protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
+    {
+        return new V1\WorkflowServiceClient($address, $options);
     }
 }
