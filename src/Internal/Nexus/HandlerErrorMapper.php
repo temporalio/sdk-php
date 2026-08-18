@@ -50,6 +50,8 @@ final class HandlerErrorMapper
             if ($previous instanceof ServiceClientException) {
                 return self::fromGrpcCode($previous);
             }
+
+            return HandlerException::fromCause(ErrorType::BadRequest, $e);
         }
 
         if ($e instanceof ServiceClientException) {

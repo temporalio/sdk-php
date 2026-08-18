@@ -18,6 +18,7 @@ use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Nexus\Validation\PrintableAsciiValidator;
+use Temporal\Nexus\Validation\ReservedPrefixValidator;
 use Temporal\Nexus\Validation\ServiceNameValidator;
 
 /**
@@ -85,6 +86,7 @@ final class NexusOperationOptions extends Options
     public function withEndpoint(string $endpoint): self
     {
         PrintableAsciiValidator::assert($endpoint, 'Nexus Endpoint');
+        ReservedPrefixValidator::assert($endpoint, 'Nexus Endpoint');
         $self = clone $this;
         $self->endpoint = $endpoint;
         return $self;

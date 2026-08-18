@@ -121,18 +121,26 @@ final class HandlerErrorMapperTestCase extends AbstractUnit
         self::assertSame($cause, $mapped->getPrevious());
     }
 
-    public function testWorkflowExceptionWithoutGrpcCauseIsNotMapped(): void
+    public function testWorkflowExceptionWithoutGrpcCauseIsMappedToBadRequest(): void
     {
         $cause = new WorkflowException(null, new WorkflowExecution('wf-id', 'run-id'));
 
-        self::assertNull(HandlerErrorMapper::mapToHandlerException($cause));
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
+        self::assertSame(RetryBehavior::Unspecified, $mapped->retryBehavior);
+        self::assertSame($cause, $mapped->getPrevious());
     }
 
-    public function testWorkflowFailedExceptionIsNotMapped(): void
+    public function testWorkflowFailedExceptionIsMappedToBadRequest(): void
     {
         $cause = new WorkflowFailedException(new WorkflowExecution('wf-id', 'run-id'), 'WorkflowType', 1, 0);
 
-        self::assertNull(HandlerErrorMapper::mapToHandlerException($cause));
+        $mapped = HandlerErrorMapper::mapToHandlerException($cause);
+
+        self::assertInstanceOf(HandlerException::class, $mapped);
+        self::assertSame(ErrorType::BadRequest, $mapped->errorType);
     }
 
     public function testWorkflowServiceExceptionUnwrapsTransientGrpcCause(): void

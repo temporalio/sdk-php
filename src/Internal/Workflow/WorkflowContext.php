@@ -77,7 +77,6 @@ use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
 use Temporal\Workflow\NexusOperationOptions;
-use Temporal\Workflow\NexusOperationStubInterface;
 use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -500,7 +499,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function newUntypedNexusOperationStub(
         NexusOperationOptions $options,
-    ): NexusOperationStubInterface {
+    ): NexusOperationStub {
         return new NexusOperationStub(
             $this->services->marshaller,
             $options,
@@ -513,7 +512,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         array $args = [],
         ?NexusOperationOptions $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-        array $nexusHeaders = [],
     ): PromiseInterface {
         $options ??= NexusOperationOptions::new();
 
@@ -530,7 +528,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             $args,
             $options,
             $returnType,
-            $nexusHeaders,
+            [],
         ));
     }
 

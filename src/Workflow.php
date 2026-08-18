@@ -1046,8 +1046,6 @@ final class Workflow extends Facade
     /**
      * Execute a Nexus operation directly without a typed stub.
      *
-     * @param array<string, string> $nexusHeaders Raw-string headers carried on
-     *        the Nexus wire and surfaced to the handler via OperationContext.
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function executeNexusOperation(
@@ -1055,9 +1053,8 @@ final class Workflow extends Facade
         array $args = [],
         ?Workflow\NexusOperationOptions $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-        array $nexusHeaders = [],
     ): PromiseInterface {
-        return self::getCurrentContext()->executeNexusOperation($operation, $args, $options, $returnType, $nexusHeaders);
+        return self::getCurrentContext()->executeNexusOperation($operation, $args, $options, $returnType);
     }
 
     /**

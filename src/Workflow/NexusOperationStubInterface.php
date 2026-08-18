@@ -26,13 +26,11 @@ interface NexusOperationStubInterface
      * Sugar over {@see self::start()}->getResult().
      *
      * @param non-empty-string $operation
-     * @param array<string, string> $nexusHeaders Raw-string headers carried on the Nexus wire.
      */
     public function execute(
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-        array $nexusHeaders = [],
     ): PromiseInterface;
 
     /**
@@ -41,13 +39,11 @@ interface NexusOperationStubInterface
      * operationToken (string for async, null for sync) and result-promise are populated.
      *
      * @param non-empty-string $operation
-     * @param array<string, string> $nexusHeaders
      * @return PromiseInterface<NexusOperationHandle>
      */
     public function start(
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-        array $nexusHeaders = [],
     ): PromiseInterface;
 }

@@ -14,12 +14,14 @@ namespace Temporal\Tests\Nexus\Unit\Validation;
 use Temporal\Nexus\Exception\InvalidArgumentException;
 use Temporal\Nexus\Validation\OperationNameValidator;
 use Temporal\Nexus\Validation\PrintableAsciiValidator;
+use Temporal\Nexus\Validation\ReservedPrefixValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(OperationNameValidator::class)]
 #[UsesClass(PrintableAsciiValidator::class)]
+#[UsesClass(ReservedPrefixValidator::class)]
 final class OperationNameValidatorTest extends TestCase
 {
     public function testRejectsEmpty(): void
@@ -34,5 +36,12 @@ final class OperationNameValidatorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Operation Name must contain only printable non-whitespace ASCII (0x21–0x7E); got');
         OperationNameValidator::assert("bad\nname");
+    }
+
+    public function testRejectsReservedTemporalPrefix(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Operation Name "__temporal_internal" must not start with "__temporal_"');
+        OperationNameValidator::assert('__temporal_internal');
     }
 }

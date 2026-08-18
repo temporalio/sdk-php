@@ -29,5 +29,6 @@ final class OperationNameValidator
     public static function assert(string $name): void
     {
         PrintableAsciiValidator::assert($name, 'Operation Name');
+        ReservedPrefixValidator::assert($name, 'Operation Name');
     }
 }

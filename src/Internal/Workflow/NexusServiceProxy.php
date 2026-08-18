@@ -18,7 +18,6 @@ use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\NexusOperationOptions;
-use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * @template-covariant T of object
@@ -38,7 +37,7 @@ final class NexusServiceProxy extends Proxy
         private readonly string $class,
         NexusServicePrototype $prototype,
         private readonly NexusOperationOptions $options,
-        private readonly WorkflowContextInterface $ctx,
+        private readonly WorkflowContext $ctx,
         private readonly Pipeline $callsInterceptor,
     ) {
         $byMethod = [];

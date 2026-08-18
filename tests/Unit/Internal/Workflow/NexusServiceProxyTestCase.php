@@ -14,10 +14,10 @@ use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\NexusOperationPrototype;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Workflow\NexusOperationStub;
 use Temporal\Internal\Workflow\NexusServiceProxy;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\NexusOperationOptions;
-use Temporal\Workflow\NexusOperationStubInterface;
-use Temporal\Workflow\WorkflowContextInterface;
 
 use function React\Promise\resolve;
 
@@ -100,7 +100,7 @@ final class NexusServiceProxyTestCase extends TestCase
     }
 
     private function makeProxy(
-        WorkflowContextInterface $ctx,
+        WorkflowContext $ctx,
         WorkflowOutboundCallsInterceptor ...$interceptors,
     ): NexusServiceProxy {
         $reflection = new \ReflectionClass(NexusProxyTestService::class);
@@ -122,18 +122,21 @@ final class NexusServiceProxyTestCase extends TestCase
         );
     }
 
-    private function makeContext(?NexusOperationOptions &$captured): WorkflowContextInterface
+    private function makeContext(?NexusOperationOptions &$captured): WorkflowContext
     {
-        $ctx = $this->createMock(WorkflowContextInterface::class);
+        $ctx = $this->createMock(WorkflowContext::class);
         $ctx->method('newUntypedNexusOperationStub')
             ->willReturnCallback(static function (NexusOperationOptions $options) use (&$captured) {
                 $captured = $options;
-                $stub = new class implements NexusOperationStubInterface {
-                    public NexusOperationOptions $options;
+
+                return new class($options) extends NexusOperationStub {
+                    public function __construct(
+                        private readonly NexusOperationOptions $capturedOptions,
+                    ) {}
 
                     public function getOptions(): NexusOperationOptions
                     {
-                        return $this->options;
+                        return $this->capturedOptions;
                     }
 
                     public function execute(
@@ -154,8 +157,6 @@ final class NexusServiceProxyTestCase extends TestCase
                         return resolve(null);
                     }
                 };
-                $stub->options = $options;
-                return $stub;
             });
 
         return $ctx;

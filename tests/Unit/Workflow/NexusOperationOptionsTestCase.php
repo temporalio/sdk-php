@@ -157,4 +157,20 @@ final class NexusOperationOptionsTestCase extends AbstractDTOMarshalling
         );
         self::assertSame(NexusOperationCancellationType::Abandon, $updated->cancellationType);
     }
+
+    public function testWithEndpointRejectsReservedTemporalPrefix(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Nexus Endpoint "__temporal_endpoint" must not start with "__temporal_"');
+
+        NexusOperationOptions::new()->withEndpoint('__temporal_endpoint');
+    }
+
+    public function testWithServiceRejectsReservedTemporalPrefix(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Service Name "__temporal_service" must not start with "__temporal_"');
+
+        NexusOperationOptions::new()->withService('__temporal_service');
+    }
 }

@@ -29,7 +29,7 @@ use Temporal\Workflow\NexusOperationHandle;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\NexusOperationStubInterface;
 
-final class NexusOperationStub implements NexusOperationStubInterface
+class NexusOperationStub implements NexusOperationStubInterface
 {
     /**
      * @param MarshallerInterface<array> $marshaller

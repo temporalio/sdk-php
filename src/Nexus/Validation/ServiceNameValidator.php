@@ -31,5 +31,6 @@ final class ServiceNameValidator
     public static function assert(string $name): void
     {
         PrintableAsciiValidator::assert($name, 'Service Name');
+        ReservedPrefixValidator::assert($name, 'Service Name');
     }
 }
