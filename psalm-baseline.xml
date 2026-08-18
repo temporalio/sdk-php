@@ -1336,6 +1336,10 @@
   <file src="src/Workflow/NexusOperationOptions.php">
     <ImpureMethodCall>
       <code><![CDATA[assert]]></code>
+      <code><![CDATA[assert]]></code>
+      <code><![CDATA[assert]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
       <code><![CDATA[parse]]></code>
     </ImpureMethodCall>
   </file>
