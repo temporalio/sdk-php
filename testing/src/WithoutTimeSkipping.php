@@ -10,16 +10,17 @@ trait WithoutTimeSkipping
 
     protected function setUp(): void
     {
-        $this->testService = TestService::create(
-            \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',
-        );
-        $this->testService->lockTimeSkipping();
         parent::setUp();
+        $this->testService = TestService::create(TemporalServer::address());
+        $this->testService->lockTimeSkipping();
     }
 
     protected function tearDown(): void
     {
-        $this->testService->unlockTimeSkipping();
-        parent::tearDown();
+        try {
+            $this->testService->unlockTimeSkipping();
+        } finally {
+            parent::tearDown();
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace Temporal\Tests\Fixtures;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
+use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -28,6 +29,7 @@ final class PipelineProvider implements \Temporal\Interceptor\PipelineProvider
     private array $classes = [
         WorkflowInboundCallsInterceptor::class => [],
         WorkflowOutboundRequestInterceptor::class => [],
+        WorkflowOutboundCallsInterceptor::class => [],
         ActivityInboundInterceptor::class => [],
         WorkflowClientCallsInterceptor::class => [],
     ];

@@ -15,6 +15,7 @@ use Carbon\CarbonInterval;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
+use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
@@ -268,5 +269,33 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertNotSame($dto, $newDto);
         $this->assertSame([], $dto->links);
         $this->assertCount(1, $newDto->links);
+    }
+
+    public function testMergeWithMethodRetryFillsDefaultRetryOptions(): void
+    {
+        $dto = WorkflowOptions::new()
+            ->withRetryOptions(RetryOptions::new())
+            ->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryCreatesRetryOptionsWhenNull(): void
+    {
+        $dto = WorkflowOptions::new()->mergeWith(new MethodRetry(maximumAttempts: 5));
+
+        $this->assertNotNull($dto->retryOptions);
+        $this->assertSame(5, $dto->retryOptions->maximumAttempts);
+    }
+
+    public function testMergeWithMethodRetryKeepsUserDefinedFields(): void
+    {
+        $methodRetry = new MethodRetry(maximumAttempts: 5, maximumInterval: 30);
+        $dto = WorkflowOptions::new()
+            ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
+            ->mergeWith($methodRetry);
+
+        $this->assertSame(1, $dto->retryOptions->maximumAttempts);
+        $this->assertSame($methodRetry->maximumInterval, $dto->retryOptions->maximumInterval);
     }
 }

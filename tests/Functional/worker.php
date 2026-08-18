@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Temporal\Testing\MockChildWorkflowInterceptor;
+use Temporal\Testing\MockSearchAttributeInterceptor;
+use Temporal\Testing\MockSideEffectInterceptor;
 use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Interceptor\HeaderChanger;
@@ -38,6 +41,9 @@ $factory = WorkerFactory::create();
 $interceptors = [
     InterceptorCallsCounter::class,
     HeaderChanger::class,
+    MockChildWorkflowInterceptor::class,
+    MockSideEffectInterceptor::class,
+    MockSearchAttributeInterceptor::class,
 ];
 
 $workers = [

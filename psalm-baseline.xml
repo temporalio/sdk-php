@@ -152,9 +152,6 @@
       <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
     </ImpureMethodCall>
-    <PossiblyNullReference>
-      <code><![CDATA[mergeWith]]></code>
-    </PossiblyNullReference>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[SearchAttributeKey]]></code>
     </UnnecessaryVarAnnotation>
@@ -1109,17 +1106,6 @@
       <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
     </TooManyArguments>
   </file>
-  <file src="src/Worker/ActivityInvocationCache/ActivityInvocationResult.php">
-    <MissingReturnType>
-      <code><![CDATA[toValue]]></code>
-    </MissingReturnType>
-    <PossiblyNullArgument>
-      <code><![CDATA[$dataConverter]]></code>
-    </PossiblyNullArgument>
-    <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$data['payloads']]]></code>
-    </PossiblyUndefinedStringArrayOffset>
-  </file>
   <file src="src/Worker/ActivityInvocationCache/InMemoryActivityInvocationCache.php">
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
@@ -1132,6 +1118,20 @@
     </ArgumentTypeCoercion>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Worker/ChildWorkflowInvocationCache/RoadRunnerChildWorkflowInvocationCache.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$cacheName]]></code>
+      <code><![CDATA[$host]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Worker/InvocationResult.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$dataConverter]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$data['payloads']]]></code>
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="src/Worker/LoopInterface.php">

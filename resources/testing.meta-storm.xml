@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meta-storm xmlns="meta-storm">
+    <definitions>
+        <classMethod
+            class="\Temporal\Testing\WorkflowMocker"
+            method="expectCompletion"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Testing\WorkflowMocker"
+            method="expectFailure"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Testing\WorkflowMocker"
+            method="expectCompletionWhen"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Testing\Interactions\WorkflowInteractions"
+            method="childWorkflow"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
+        </classMethod>
+    </definitions>
+</meta-storm>

@@ -9,4 +9,4 @@ jobs:
   cs-fix:
     permissions:
       contents: write
-    uses: spiral/gh-actions/.github/workflows/cs-fix.yml@master
+    uses: spiral/gh-actions/.github/workflows/cs-fix.yml@e966c298913edde0d254c9afdbb07a7f4f3d3acc

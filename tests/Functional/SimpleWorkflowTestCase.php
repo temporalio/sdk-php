@@ -9,6 +9,7 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
+use Temporal\Testing\TemporalServer;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
 use Temporal\Tests\TestCase;
@@ -130,7 +131,7 @@ final class SimpleWorkflowTestCase extends TestCase
     protected function setUp(): void
     {
         $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('127.0.0.1:7233'),
+            ServiceClient::create(TemporalServer::address()),
         );
         $this->activityMocks = new ActivityMocker();
 

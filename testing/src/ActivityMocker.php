@@ -36,4 +36,22 @@ final class ActivityMocker
     {
         $this->cache->saveFailure($activityMethodName, $error);
     }
+
+    /**
+     * @param non-empty-string $activityMethodName
+     * @param list<mixed> $values
+     */
+    public function expectConsecutiveCompletions(string $activityMethodName, array $values): void
+    {
+        $this->cache->saveConsecutiveCompletions($activityMethodName, $values);
+    }
+
+    /**
+     * @param non-empty-string $activityMethodName
+     * @param list<mixed> $args
+     */
+    public function expectCompletionWhen(string $activityMethodName, array $args, mixed $value): void
+    {
+        $this->cache->saveCompletionWhen($activityMethodName, $args, $value);
+    }
 }

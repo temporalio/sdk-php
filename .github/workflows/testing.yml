@@ -29,6 +29,16 @@ jobs:
       test-command: composer test:func
       download-binaries: true
 
+  functional-timeskip:
+    permissions:
+      contents: read
+    name: Functional Testing (Time Skipping)
+    uses: ./.github/workflows/run-test-suite.yml
+    with:
+      fail-fast: false
+      test-command: composer test:func-timeskip
+      download-binaries: true
+
   acceptance-slow:
     permissions:
       contents: read

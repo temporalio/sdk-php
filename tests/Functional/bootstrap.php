@@ -7,8 +7,12 @@ use Temporal\Testing\SystemInfo;
 use Temporal\Tests\SearchAttributeTestInvoker;
 use Temporal\Worker\FeatureFlags;
 
-\chdir(__DIR__ . '/../..');
-require_once __DIR__ . '/../../vendor/autoload.php';
+$rootDir = \dirname(__DIR__, 2);
+$configDir = $rootDir . '/tests/Functional';
+$configFile = $configDir . '/.rr.silent.yaml';
+
+\chdir($rootDir);
+require_once $rootDir . '/vendor/autoload.php';
 
 $systemInfo = SystemInfo::detect();
 
@@ -17,10 +21,10 @@ $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
 $environment->startRoadRunner(
     rrCommand: [
-        $systemInfo->rrExecutable,
+        $rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
         'serve',
-        '-c', '.rr.silent.yaml',
-        '-w', 'tests/Functional',
+        '-c', $configFile,
+        '-w', $configDir,
         '-o',
         'server.command=' . \implode(',', [
             PHP_BINARY,
@@ -29,7 +33,7 @@ $environment->startRoadRunner(
             ...$environment->command->getCommandLineArguments(),
         ]),
     ],
-    configFile: 'tests/Functional/.rr.silent.yaml',
+    configFile: $configFile,
 );
 
 \register_shutdown_function(static fn() => $environment->stop());
