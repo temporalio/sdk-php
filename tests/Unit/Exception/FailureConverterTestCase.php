@@ -274,32 +274,23 @@ final class FailureConverterTestCase extends AbstractUnit
 
         $info = $failure->getApplicationFailureInfo();
         self::assertSame(
-            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed',
+            'OperationError',
             $info->getType(),
-            'RR distinguishes business errors by this exact prefix',
+            'Go and Java handlers put this exact type on the wire',
         );
         self::assertTrue($info->getNonRetryable(), 'Operation errors are terminal states');
         self::assertSame('user rejected the request', $failure->getMessage());
     }
 
-    public function testNexusOperationExceptionCanceledProducesTaggedApplicationFailure(): void
+    public function testNexusOperationExceptionCanceledProducesCanceledFailure(): void
     {
         $e = NexusOperationException::canceled('user canceled');
 
         $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
 
-        $info = $failure->getApplicationFailureInfo();
-        self::assertSame(
-            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'canceled',
-            $info->getType(),
-        );
-    }
-
-    public function testNexusOperationErrorPrefixMatchesWireContract(): void
-    {
-        // Keep the prefix stable — changing it breaks wire compat with
-        // roadrunner-temporal/aggregatedpool/nexus.go (see nexusOperationErrorTypePrefix).
-        self::assertSame('nexus.OperationError.', FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX);
+        self::assertTrue($failure->hasCanceledFailureInfo(), 'Canceled operations must use CanceledFailureInfo');
+        self::assertFalse($failure->hasApplicationFailureInfo());
+        self::assertSame('user canceled', $failure->getMessage());
     }
 
     // ── Nexus: inverse mapping (wire → typed exception) ────────────────
@@ -494,7 +485,7 @@ final class FailureConverterTestCase extends AbstractUnit
         $cause = new Failure();
         $cause->setMessage('handler said no');
         $causeInfo = new \Temporal\Api\Failure\V1\ApplicationFailureInfo();
-        $causeInfo->setType(FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed');
+        $causeInfo->setType('OperationError');
         $causeInfo->setNonRetryable(true);
         $cause->setApplicationFailureInfo($causeInfo);
 
@@ -512,9 +503,6 @@ final class FailureConverterTestCase extends AbstractUnit
 
         self::assertInstanceOf(NexusOperationFailure::class, $exception);
         self::assertInstanceOf(ApplicationFailure::class, $exception->getPrevious());
-        self::assertSame(
-            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed',
-            $exception->getPrevious()->getType(),
-        );
+        self::assertSame('OperationError', $exception->getPrevious()->getType());
     }
 }

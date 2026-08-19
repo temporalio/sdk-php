@@ -10,6 +10,7 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\NexusHandlerFailure;
 use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Nexus\Attribute\Operation;
@@ -48,6 +49,26 @@ class SyncFailureTest extends TestCase
 
         $stub = $client->newUntypedWorkflowStub(
             'Extra_Nexus_SyncFailure_AppFailureCaller',
+            WorkflowOptions::new()
+                ->withTaskQueue(__NAMESPACE__)
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
+        );
+
+        $client->start($stub, $endpoint->name);
+
+        self::assertSame('ok', $stub->getResult('string'));
+    }
+
+    #[Test]
+    public function callerCatchesCanceledFailureWhenHandlerCancelsTheOperation(
+        State $state,
+        WorkflowClientInterface $client,
+        NexusEndpoints $endpoints,
+    ): void {
+        $endpoint = $endpoints->register($state->namespace, __NAMESPACE__, 'nexus-sync-cancel-app');
+
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Nexus_SyncFailure_CanceledCaller',
             WorkflowOptions::new()
                 ->withTaskQueue(__NAMESPACE__)
                 ->withWorkflowExecutionTimeout(CarbonInterval::seconds(15)),
@@ -158,6 +179,12 @@ class SyncFailureAppService
     {
         throw OperationException::failed('business-error');
     }
+
+    #[Operation]
+    public function cancelAlways(string $input): string
+    {
+        throw OperationException::canceled('operation canceled by the handler');
+    }
 }
 
 #[WorkflowInterface]
@@ -180,12 +207,40 @@ class AppFailureCallerWorkflow
             if (!$cause instanceof ApplicationFailure) {
                 return 'wrong-cause-type:' . \get_debug_type($cause);
             }
-            if (!\str_starts_with($cause->getType(), 'nexus.OperationError.')) {
-                return "missing-type-marker:{$cause->getType()}";
+            if ($cause->getType() !== 'OperationError') {
+                return "wrong-type:{$cause->getType()}";
             }
             if (!\str_contains($cause->getOriginalMessage(), 'business-error')) {
                 return "missing-message:{$cause->getOriginalMessage()}";
             }
+            return 'ok';
+        }
+
+        return 'unexpected:no-exception';
+    }
+}
+
+#[WorkflowInterface]
+class CanceledCallerWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_SyncFailure_CanceledCaller')]
+    public function run(string $endpoint)
+    {
+        $stub = Workflow::newNexusServiceStub(
+            SyncFailureAppService::class,
+            NexusOperationOptions::new()
+                ->withEndpoint($endpoint)
+                ->withScheduleToCloseTimeout(CarbonInterval::seconds(10)),
+        );
+
+        try {
+            yield $stub->cancelAlways('ignored');
+        } catch (NexusOperationFailure $e) {
+            $cause = $e->getPrevious();
+            if (!$cause instanceof CanceledFailure) {
+                return 'wrong-cause-type:' . \get_debug_type($cause);
+            }
+
             return 'ok';
         }
 

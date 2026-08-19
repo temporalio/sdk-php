@@ -13,6 +13,7 @@ namespace Temporal\Exception\Failure;
 
 use Temporal\Nexus\Exception\HandlerException as NexusHandlerException;
 use Temporal\Nexus\Exception\OperationException as NexusOperationException;
+use Temporal\Nexus\OperationState;
 use Temporal\Nexus\Internal\Failure\NexusFailureConverter;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
@@ -34,7 +35,7 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
-    public const NEXUS_OPERATION_ERROR_TYPE_PREFIX = 'nexus.OperationError.';
+    public const NEXUS_OPERATION_ERROR_TYPE = 'OperationError';
 
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
@@ -171,10 +172,13 @@ final class FailureConverter
                 $failure->setNexusHandlerFailureInfo($info);
                 break;
 
+            case $e instanceof NexusOperationException && $e->state === OperationState::Canceled:
+                $failure->setCanceledFailureInfo(new CanceledFailureInfo());
+                break;
+
             case $e instanceof NexusOperationException:
-                // Encode state in tagged ApplicationFailureInfo (no dedicated proto yet).
                 $info = new ApplicationFailureInfo();
-                $info->setType(self::NEXUS_OPERATION_ERROR_TYPE_PREFIX . $e->state->value);
+                $info->setType(self::NEXUS_OPERATION_ERROR_TYPE);
                 $info->setNonRetryable(true);
 
                 $failure->setApplicationFailureInfo($info);
