@@ -304,6 +304,10 @@ final class Workflow extends Facade
      *      $this->continued = true;
      *  }
      * ```
+     *
+     * To wait for the first *fulfilled* condition and ignore rejected promise
+     * conditions, combine them explicitly:
+     * `yield Workflow::await(\Temporal\Promise::any([$a, $b]))`.
      */
     public static function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
