@@ -219,7 +219,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function await(): mixed
     {
-        return Awaiter::await($this);
+        return Awaiter::await($this, interruptOnCancel: false);
     }
 
     public function then(
@@ -379,7 +379,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                 return;
             }
 
-            $client->send(new Cancel($request->getID()));
+            $client->request(new Cancel($request->getID()), $this->scopeContext);
         }, $cancellable);
 
         $cleanup = function () use ($cancelID): void {
