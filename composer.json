@@ -32,7 +32,7 @@
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
-        "roadrunner-php/roadrunner-api-dto": "^1.14.0",
+        "roadrunner-php/roadrunner-api-dto": "^1.15.0",
         "roadrunner-php/version-checker": "^1.0.2",
         "spiral/attributes": "^3.1.8",
         "spiral/roadrunner": "^2025.1.5",

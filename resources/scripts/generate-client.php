@@ -10,6 +10,7 @@
 use Grpc\BaseStub;
 use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
+use Temporal\Api\Cloud\Cloudservice\V1\CloudServiceClient;
 use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\GRPC\GrpcClientInterface;
@@ -181,6 +182,45 @@ PHP);
     return $method;
 };
 
+$versionParam = Generator\ParameterGenerator::fromArray(['type' => 'string', 'name' => 'version']);
+
+$buildWithApiVersionInterfaceMethod = static function () use ($versionParam): MethodGenerator {
+    $method = new MethodGenerator('withApiVersion', [$versionParam]);
+    $method->setReturnType('static');
+    $method->setDocBlock(<<<'TEXT'
+        Pin the Cloud Operations API version.
+
+        Sets the `temporal-cloud-api-version` header for every call made by the returned client.
+
+        @link https://docs.temporal.io/ops
+        TEXT);
+
+    return $method;
+};
+
+$buildWithApiVersionImplementationMethod = static function () use ($versionParam): MethodGenerator {
+    $method = new MethodGenerator('withApiVersion', [$versionParam]);
+    $method->setReturnType('static');
+    $method->setDocBlock(<<<'TEXT'
+        Pin the Cloud Operations API version.
+
+        Sets the `temporal-cloud-api-version` header for every call made by the returned client.
+
+        @link https://docs.temporal.io/ops
+        TEXT);
+    $method->setBody(<<<'PHP'
+        $context = $this->getContext();
+
+        return $this->withContext(
+            $context->withMetadata(
+                $context->getMetadata() + ['temporal-cloud-api-version' => [$version]],
+            ),
+        );
+        PHP);
+
+    return $method;
+};
+
 $clients = [
     [
         'label' => 'workflow',
@@ -220,6 +260,24 @@ $clients = [
         'extraInterfaceMethods' => static fn(): array => [],
         'extraImplementationMethods' => static fn(): array => [
             $buildCreateServiceClientMethod(OperatorServiceClient::class),
+        ],
+    ],
+    [
+        'label' => 'cloud',
+        'serviceClass' => CloudServiceClient::class,
+        'apiNamespace' => 'Temporal\\Api\\Cloud\\Cloudservice\\V1',
+        'interfaceName' => 'CloudClientInterface',
+        'implementationName' => 'CloudClient',
+        'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/CloudClientInterface.php',
+        'implementationFile' => __DIR__ . '/../../src/Client/GRPC/CloudClient.php',
+        'extraUses' => [
+            'interface' => [],
+            'implementation' => [],
+        ],
+        'extraInterfaceMethods' => static fn(): array => [$buildWithApiVersionInterfaceMethod()],
+        'extraImplementationMethods' => static fn(): array => [
+            $buildWithApiVersionImplementationMethod(),
+            $buildCreateServiceClientMethod(CloudServiceClient::class),
         ],
     ],
 ];
