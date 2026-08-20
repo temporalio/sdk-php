@@ -620,7 +620,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         $this->services->loop->once($this->layer, $tick);
 
-        if ($this->services->queue->count() === 0 && !Awaiter::isManaged()) {
+        if ($this->services->queue->count() === 0) {
             $this->services->loop->tick();
         }
     }
