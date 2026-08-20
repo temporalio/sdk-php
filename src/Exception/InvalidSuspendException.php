@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Exception;
 
 /**
- * Thrown into a workflow Fiber when it suspends with a value that is not part of the
- * workflow suspension protocol (a Promise, Mutex, Deferred or outbound Request).
+ * Thrown when workflow execution is suspended outside of the workflow suspension protocol.
  *
- * The usual cause is calling a non-workflow asynchronous API (e.g. a service client that
- * uses {@see \Fiber::suspend()} for its own scheduler) from inside a workflow body.
+ * The usual causes are a non-workflow asynchronous API that runs its own scheduler on
+ * {@see \Fiber::suspend()}, a suspending Temporal call made from a promise callback or a
+ * query handler, and a workflow handler that returns a Generator or a Promise.
  */
 class InvalidSuspendException extends TemporalException {}
