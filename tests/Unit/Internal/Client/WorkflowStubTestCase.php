@@ -15,6 +15,8 @@ use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\History\V1\WorkflowExecutionCompletedEventAttributes;
 use Temporal\Api\History\V1\WorkflowExecutionContinuedAsNewEventAttributes;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
+use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionResponse;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\Context;
@@ -221,5 +223,33 @@ final class WorkflowStubTestCase extends TestCase
                         ->setWorkflowExecutionCompletedEventAttributes(new WorkflowExecutionCompletedEventAttributes()),
                 ]),
             );
+    }
+
+    public function testCancelSendsReason(): void
+    {
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('RequestCancelWorkflowExecution')
+            ->with(static::callback(
+                static fn(RequestCancelWorkflowExecutionRequest $request): bool
+                    => $request->getReason() === 'operator asked',
+            ))
+            ->willReturn(new RequestCancelWorkflowExecutionResponse());
+
+        $this->workflowStub->cancel('operator asked');
+    }
+
+    public function testCancelWithoutReasonSendsEmptyReason(): void
+    {
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('RequestCancelWorkflowExecution')
+            ->with(static::callback(
+                static fn(RequestCancelWorkflowExecutionRequest $request): bool
+                    => $request->getReason() === '',
+            ))
+            ->willReturn(new RequestCancelWorkflowExecutionResponse());
+
+        $this->workflowStub->cancel();
     }
 }

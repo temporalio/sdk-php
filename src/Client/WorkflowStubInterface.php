@@ -122,7 +122,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * main workflow method. Note that workflow can take long time to get
      * canceled or even completely ignore the cancellation request.
      */
-    public function cancel(): void;
+    public function cancel(?string $reason = null): void;
 
     /**
      * Terminates a workflow execution.

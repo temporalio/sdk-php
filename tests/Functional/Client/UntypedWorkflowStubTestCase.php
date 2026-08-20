@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowFailedException;
@@ -190,6 +192,29 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
         }
+    }
+
+    public function testCancelledWithReason(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $client->start($simple, -1);
+
+        $simple->cancel('operator asked');
+        try {
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+        }
+
+        $this->assertHistoryContains(
+            $client,
+            $simple->getExecution(),
+            static fn(HistoryEvent $event): bool => $event->getEventType()
+                    === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CANCEL_REQUESTED
+                && $event->getWorkflowExecutionCancelRequestedEventAttributes()->getCause() === 'operator asked',
+        );
     }
 
     public function testTerminated(): void

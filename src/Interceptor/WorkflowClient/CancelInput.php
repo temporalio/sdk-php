@@ -24,13 +24,16 @@ class CancelInput
      */
     public function __construct(
         public readonly WorkflowExecution $workflowExecution,
+        public readonly ?string $reason = null,
     ) {}
 
     public function with(
         ?WorkflowExecution $workflowExecution = null,
+        ?string $reason = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
+            $reason ?? $this->reason,
         );
     }
 }
