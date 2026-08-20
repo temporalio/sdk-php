@@ -72,6 +72,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     private bool $ownsContext = true;
     private bool $skipInvalidArguments = false;
     private ?\Throwable $cancelReason = null;
+    private ?int $suspensionCancelID = null;
 
     public function __construct(
         ServiceContainer $services,
@@ -185,7 +186,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $savedContext = Facade::getCurrentContext();
 
         try {
-            foreach ($this->onCancel as $i => $handler) {
+            foreach ($this->orderedCancelHandlers() as $i => $handler) {
                 $this->makeCurrent();
                 unset($this->onCancel[$i]);
                 $handler($reason);
@@ -438,6 +439,18 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->nextPromise($suspended->promise, $suspended->interruptOnCancel);
     }
 
+    private function orderedCancelHandlers(): array
+    {
+        $handlers = $this->onCancel;
+        $suspensionID = $this->suspensionCancelID;
+
+        if ($suspensionID === null || !isset($handlers[$suspensionID])) {
+            return $handlers;
+        }
+
+        return [$suspensionID => $handlers[$suspensionID]] + $handlers;
+    }
+
     private function addOnCancel(callable $handler, bool $cancellable = true): int
     {
         $id = ++$this->cancelID;
@@ -483,11 +496,15 @@ class Scope implements CancellationScopeInterface, Destroyable
                     fn() => $this->handleError($reason ?? new CanceledFailure('')),
                 );
             });
+            $this->suspensionCancelID = $cancelID;
         }
 
         $cleanup = function () use (&$cancelID): void {
             if ($cancelID !== null) {
                 unset($this->onCancel[$cancelID]);
+                if ($this->suspensionCancelID === $cancelID) {
+                    $this->suspensionCancelID = null;
+                }
                 $cancelID = null;
             }
         };
