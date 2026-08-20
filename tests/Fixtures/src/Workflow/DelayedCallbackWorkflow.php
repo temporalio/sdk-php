@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Promise;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -26,17 +25,17 @@ class DelayedCallbackWorkflow
      * @param list<array{0: int, 1: string}> $schedule pairs of [delaySeconds, tag]
      */
     #[WorkflowMethod(name: 'DelayedCallbackWorkflow')]
-    public function handler(array $schedule): iterable
+    public function handler(array $schedule): array
     {
         $scopes = [];
         foreach ($schedule as [$delaySeconds, $tag]) {
-            $scopes[] = Workflow::async(function () use ($delaySeconds, $tag): \Generator {
-                yield Workflow::timer($delaySeconds);
+            $scopes[] = Workflow::async(function () use ($delaySeconds, $tag): void {
+                Workflow::timer($delaySeconds);
                 $this->fired[$tag] = Workflow::now()->getTimestamp();
             });
         }
 
-        yield Promise::all($scopes);
+        Workflow::all($scopes);
 
         return $this->fired;
     }

@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow\Process;
 
 use React\Promise\PromiseInterface;
 use Temporal\Exception\InvalidSuspendException;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow;
 
 /**
@@ -53,11 +54,15 @@ final class Awaiter
         $fiber = \Fiber::getCurrent();
 
         if ($fiber === null || self::$managedFibers === null || !isset(self::$managedFibers[$fiber])) {
-            Workflow::getCurrentContext();
+            $context = Workflow::getCurrentContext();
+
+            if ($context instanceof WorkflowContext) {
+                $context->assertWritable();
+            }
 
             throw new InvalidSuspendException(
                 'Temporal workflow APIs that suspend execution can only be called inside a managed workflow Fiber. '
-                . 'This one was called from a promise callback, a query handler, or another unmanaged context.',
+                . 'This one was called from a promise callback or another unmanaged context.',
             );
         }
     }

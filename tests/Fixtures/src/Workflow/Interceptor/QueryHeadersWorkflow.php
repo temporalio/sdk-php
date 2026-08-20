@@ -22,7 +22,7 @@ class QueryHeadersWorkflow
     #[WorkflowMethod(name: 'InterceptorQueryHeadersWorkflow')]
     public function handler(): mixed
     {
-        yield Workflow::await(fn() => $this->signalled);
+        Workflow::await(fn() => $this->signalled);
     }
 
     #[Workflow\SignalMethod]

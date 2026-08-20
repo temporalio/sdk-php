@@ -22,17 +22,17 @@ class SimpleWorkflow
 {
     #[WorkflowMethod(name: 'SimpleWorkflow')]
     public function handler(
-        string $input
-    ): iterable {
+        string $input,
+    ): string {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)
                 ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(2)
-                )
+                    RetryOptions::new()->withMaximumAttempts(2),
+                ),
         );
 
-        return yield $simple->echo($input);
+        return $simple->echo($input);
     }
 }

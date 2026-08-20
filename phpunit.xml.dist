@@ -43,14 +43,6 @@
             <exclude>tests/Acceptance/Extra/Workflow/SideEffectTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Workflow/WorkflowInfoTest.php</exclude>
             <exclude>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Activity/Fibers/ActivityPausedTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Stability/Fibers/ResetWorkerTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Update/Fibers/TimeoutTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Update/Fibers/UntypedStubTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Versioning/Fibers/DeploymentTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Workflow/Fibers/BuiltInPrefixedHandlersTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Workflow/Fibers/DateTimeZoneWorkflowTest.php</exclude>
-            <exclude>tests/Acceptance/Extra/Workflow/Fibers/InitMethodTest.php</exclude>
         </testsuite>
         <testsuite name="Acceptance-Slow">
             <file>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</file>
@@ -73,14 +65,6 @@
             <file>tests/Acceptance/Extra/Workflow/SideEffectTest.php</file>
             <file>tests/Acceptance/Extra/Workflow/WorkflowInfoTest.php</file>
             <file>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</file>
-            <file>tests/Acceptance/Extra/Activity/Fibers/ActivityPausedTest.php</file>
-            <file>tests/Acceptance/Extra/Stability/Fibers/ResetWorkerTest.php</file>
-            <file>tests/Acceptance/Extra/Update/Fibers/TimeoutTest.php</file>
-            <file>tests/Acceptance/Extra/Update/Fibers/UntypedStubTest.php</file>
-            <file>tests/Acceptance/Extra/Versioning/Fibers/DeploymentTest.php</file>
-            <file>tests/Acceptance/Extra/Workflow/Fibers/BuiltInPrefixedHandlersTest.php</file>
-            <file>tests/Acceptance/Extra/Workflow/Fibers/DateTimeZoneWorkflowTest.php</file>
-            <file>tests/Acceptance/Extra/Workflow/Fibers/InitMethodTest.php</file>
         </testsuite>
         <testsuite name="Acceptance">
             <directory suffix="Test.php">tests/Acceptance/Extra</directory>

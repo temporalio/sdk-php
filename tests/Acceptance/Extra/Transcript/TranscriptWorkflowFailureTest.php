@@ -51,9 +51,8 @@ final class TranscriptWorkflowFailureTest extends TestCase
 class FailingWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Transcript_TranscriptWorkflowFailure_run')]
-    public function run(): \Generator
+    public function run(): never
     {
-        yield;
         throw new ApplicationFailure('workflow-boom', 'TestWorkflowFailure', false);
     }
 }

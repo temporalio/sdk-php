@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
@@ -49,13 +48,15 @@ final class ExternalWorkflowProxy extends Proxy
         $this->stub = $stub;
     }
 
-    public function __call(string $method, array $args): PromiseInterface
+    public function __call(string $method, array $args): mixed
     {
         foreach ($this->workflow->getSignalHandlers() as $name => $definition) {
             if ($method === $definition->method->getName()) {
                 $args = Reflection::orderArguments($definition->method, $args);
 
-                return $this->stub->signal($name, $args);
+                $this->stub->signal($name, $args);
+
+                return null;
             }
         }
 

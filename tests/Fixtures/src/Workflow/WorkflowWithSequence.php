@@ -24,14 +24,13 @@ class WorkflowWithSequence
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
-        $a = $simple->echo('a');
-        $b = $simple->echo('b');
+        $a = Workflow::async(static fn() => $simple->echo('a'));
+        $b = Workflow::async(static fn() => $simple->echo('b'));
 
-        yield $a;
-        yield $b;
+        Workflow::all([$a, $b]);
 
         return 'OK';
     }

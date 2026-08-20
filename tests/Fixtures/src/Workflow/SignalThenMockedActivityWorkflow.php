@@ -30,16 +30,16 @@ class SignalThenMockedActivityWorkflow
     private bool $go = false;
 
     #[WorkflowMethod(name: 'SignalThenMockedActivityWorkflow')]
-    public function handler(): iterable
+    public function handler(): string
     {
-        yield Workflow::await(fn(): bool => $this->go);
+        Workflow::await(fn(): bool => $this->go);
 
         $activity = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(30),
         );
 
-        return yield $activity->echo('ping');
+        return $activity->echo('ping');
     }
 
     #[SignalMethod(name: 'go')]

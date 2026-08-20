@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Temporal\Exception\CompensationException;
-use Temporal\Promise;
 use Temporal\Workflow;
 
 final class Saga
@@ -55,19 +54,21 @@ final class Saga
     }
 
     /**
-     * Run compensation strategy. Make sure to yield on tis method.
+     * Start the compensation strategy in a detached scope.
+     *
+     * Call {@see CancellationScopeInterface::await()} to wait for completion.
      */
     public function compensate(): CancellationScopeInterface
     {
         return Workflow::asyncDetached(
-            function () {
+            function (): void {
                 if ($this->parallelCompensation) {
                     $scopes = [];
                     foreach ($this->compensate as $handler) {
                         $scopes[] = Workflow::asyncDetached($handler);
                     }
 
-                    yield Promise::all($scopes);
+                    Workflow::all($scopes);
                     return;
                 }
 
@@ -76,7 +77,7 @@ final class Saga
                 for ($i = \count($this->compensate) - 1; $i >= 0; $i--) {
                     $handler = $this->compensate[$i];
                     try {
-                        yield Workflow::asyncDetached($handler);
+                        Workflow::asyncDetached($handler)->await();
                     } catch (\Throwable $e) {
                         if ($sagaException === null) {
                             $sagaException = new CompensationException($e->getMessage(), (int) $e->getCode(), $e);

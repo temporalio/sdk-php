@@ -20,9 +20,9 @@ use Temporal\Workflow\WorkflowMethod;
 class ParentWaitsChildTimerWorkflow
 {
     #[WorkflowMethod(name: 'ParentWaitsChildTimerWorkflow')]
-    public function handler(int $seconds): iterable
+    public function handler(int $seconds): string
     {
-        return yield Workflow::executeChildWorkflow(
+        return Workflow::executeChildWorkflow(
             'LongTimerWorkflow',
             [$seconds],
             ChildWorkflowOptions::new()->withTaskQueue('default'),

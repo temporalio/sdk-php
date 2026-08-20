@@ -21,7 +21,7 @@ use Temporal\Workflow\WorkflowMethod;
 class Php82TypesWorkflow
 {
     #[WorkflowMethod(name: 'Php82TypesWorkflow')]
-    public function handler(): iterable
+    public function handler(): array
     {
         $simple = Workflow::newActivityStub(
             Php82TypesActivity::class,
@@ -33,9 +33,9 @@ class Php82TypesWorkflow
         );
 
         return [
-            yield $simple->returnNull(null),
-            yield $simple->returnTrue(true),
-            yield $simple->returnFalse(false),
+            $simple->returnNull(null),
+            $simple->returnTrue(true),
+            $simple->returnFalse(false),
         ];
     }
 }

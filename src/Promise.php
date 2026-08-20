@@ -166,7 +166,11 @@ final class Promise
             static function (callable $resolve, callable $reject) use ($promises, $map, $cancellationQueue): void {
                 resolve($promises)
                     ->then(static function (iterable $array) use ($map, $cancellationQueue, $resolve, $reject): void {
-                        if (!\is_array($array) || !$array) {
+                        if (!\is_array($array)) {
+                            $array = \iterator_to_array($array);
+                        }
+
+                        if (!$array) {
                             $resolve([]);
                             return;
                         }
@@ -191,7 +195,8 @@ final class Promise
                                     $reject,
                                 );
                         }
-                    }, $reject);
+                    }, $reject)
+                    ->then(null, $reject);
             },
             $cancellationQueue,
         );
@@ -225,7 +230,7 @@ final class Promise
                             $reject,
                         ): void {
                             if (!\is_array($array)) {
-                                $array = [];
+                                $array = \iterator_to_array($array);
                             }
 
                             $total = \count($array);
@@ -256,7 +261,8 @@ final class Promise
                                 ->then($resolve, $reject);
                         },
                         $reject,
-                    );
+                    )
+                    ->then(null, $reject);
             },
             $cancellationQueue,
         );

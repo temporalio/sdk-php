@@ -201,7 +201,6 @@ final class DateIntervalTestCase extends TestCase
         // Arrange
         $reflection = new \ReflectionClass(DateInterval::class);
         $method = $reflection->getMethod('isIso8601DurationFormat');
-        $method->setAccessible(true);
 
         // Act
         $result = $method->invoke(null, $interval);

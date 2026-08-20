@@ -19,6 +19,7 @@ use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
@@ -39,7 +40,14 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         return $this->execution;
     }
 
-    public function signal(string $name, array $args = []): PromiseInterface
+    public function signal(string $name, array $args = []): void
+    {
+        Awaiter::assertManaged();
+
+        Awaiter::await($this->signalAsync($name, $args), interruptOnCancel: false);
+    }
+
+    public function signalAsync(string $name, array $args = []): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(SignalExternalWorkflowInput $input): PromiseInterface => $this
@@ -64,7 +72,14 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         ));
     }
 
-    public function cancel(): PromiseInterface
+    public function cancel(): void
+    {
+        Awaiter::assertManaged();
+
+        Awaiter::await($this->cancelAsync(), interruptOnCancel: false);
+    }
+
+    public function cancelAsync(): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(CancelExternalWorkflowInput $input): PromiseInterface => $this

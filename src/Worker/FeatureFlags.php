@@ -68,16 +68,17 @@ final class FeatureFlags
     /**
      * Make scope cancellation sticky: a nested scope, an await or an onCancel handler registered
      * after the surrounding scope was already cancelled is notified immediately instead of being
-     * missed. Set to TRUE to enable this behavior.
+     * missed. TRUE by default.
      *
-     * When FALSE (default), the previous behavior is kept: cancel handlers registered after the
-     * cancellation are never invoked.
+     * Set to FALSE to restore the previous behavior, where cancel handlers registered after the
+     * cancellation are never invoked. Note that a workflow awaiting on a promise while its scope
+     * is being cancelled may then hang forever.
      *
      * @experimental
      * @since SDK 2.18.0
      * @link https://github.com/temporalio/sdk-php/issues/769
      */
-    public static bool $propagateCancellationToNewScopes = false;
+    public static bool $propagateCancellationToNewScopes = true;
 
     /**
      * Unblock multi-condition {@see Workflow::await()} / {@see Workflow::awaitWithTimeout()} on the

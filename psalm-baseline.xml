@@ -255,11 +255,6 @@
       <code><![CDATA[getID]]></code>
     </PossiblyNullReference>
   </file>
-  <file src="src/Exception/Client/ServiceClientException.php">
-    <ImplementedReturnTypeMismatch>
-      <code><![CDATA[RepeatedField]]></code>
-    </ImplementedReturnTypeMismatch>
-  </file>
   <file src="src/Exception/Client/WorkflowException.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static(null, $execution, $workflowType, $previous)]]></code>
@@ -603,7 +598,6 @@
       <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
     </ArgumentTypeCoercion>
     <DeprecatedMethod>
-      <code><![CDATA[getBinaryChecksum]]></code>
       <code><![CDATA[getMostRecentWorkerVersionStamp]]></code>
     </DeprecatedMethod>
     <DocblockTypeContradiction>
@@ -921,10 +915,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
-    <PossiblyFalseArgument>
-      <code><![CDATA[\json_encode($param)]]></code>
-      <code><![CDATA[\json_encode($param)]]></code>
-    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -952,12 +942,6 @@
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$name]]></code>
     </ArgumentTypeCoercion>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[EncodedValues::decodePromise($this->request($request), $returnType)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[PromiseInterface]]></code>
-    </MoreSpecificReturnType>
   </file>
   <file src="src/Internal/Workflow/ChildWorkflowProxy.php">
     <MoreSpecificImplementedParamType>
@@ -968,42 +952,11 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->workflow]]></code>
     </ArgumentTypeCoercion>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->execution->promise()->then(
-            function (WorkflowExecution $execution) use ($name, $args) {
-                $request = new SignalExternalWorkflow(
-                    $this->getOptions()->namespace,
-                    $execution->getID(),
-                    null,
-                    $name,
-                    EncodedValues::fromValues($args),
-                    true,
-                );
-
-                return $this->request($request);
-            },
-        )]]></code>
-      <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
-      <code><![CDATA[EncodedValues::decodePromise($started)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[PromiseInterface]]></code>
-      <code><![CDATA[PromiseInterface]]></code>
-      <code><![CDATA[PromiseInterface]]></code>
-    </MoreSpecificReturnType>
-    <PossiblyNullArgument>
-      <code><![CDATA[$this->result]]></code>
-    </PossiblyNullArgument>
   </file>
   <file src="src/Internal/Workflow/Input.php">
     <PropertyTypeCoercion>
       <code><![CDATA[$header ?? Header::empty()]]></code>
     </PropertyTypeCoercion>
-  </file>
-  <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
-    <UnevaluatedCode>
-      <code><![CDATA[yield;]]></code>
-    </UnevaluatedCode>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
     <PropertyNotSetInConstructor>
@@ -1022,7 +975,6 @@
     <RedundantCondition>
       <code><![CDATA[$this->context?->destroy()]]></code>
       <code><![CDATA[$this->scopeContext?->destroy()]]></code>
-      <code><![CDATA[$this->scopeContext?->setFiberMode(false)]]></code>
     </RedundantCondition>
     <TypeDoesNotContainNull>
       <code><![CDATA[$this->context]]></code>
@@ -1184,12 +1136,6 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$frame->serializeToString()]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[string]]></code>
-    </MoreSpecificReturnType>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
@@ -1492,15 +1438,6 @@
       <code><![CDATA[$fields]]></code>
       <code><![CDATA[$meta]]></code>
     </TooManyTemplateParams>
-  </file>
-  <file src="testing/src/Transcript/WorkflowHistoryDumper.php">
-    <InvalidOperand>
-      <code><![CDATA[$eventTime->getSeconds() + \round($eventTime->getNanos() / 1_000_000_000, 6)]]></code>
-      <code><![CDATA[($sec - $startSec) * 1000]]></code>
-    </InvalidOperand>
-    <PossiblyInvalidOperand>
-      <code><![CDATA[$eventTime->getSeconds()]]></code>
-    </PossiblyInvalidOperand>
   </file>
   <file src="testing/src/WorkerMock.php">
     <DeprecatedMethod>

@@ -151,7 +151,7 @@ class TestWorkflow
     public function handle()
     {
         $this->updateStarted or throw new \RuntimeException('Not started with update');
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return $this->awaits;
     }
 
@@ -164,7 +164,7 @@ class TestWorkflow
     {
         $this->updateStarted = true;
         $this->awaits[$name] ??= null;
-        yield Workflow::await(fn() => $this->awaits[$name] !== null);
+        Workflow::await(fn() => $this->awaits[$name] !== null);
         return $this->awaits[$name];
     }
 

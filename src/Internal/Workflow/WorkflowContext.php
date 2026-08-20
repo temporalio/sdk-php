@@ -170,6 +170,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->input->input;
     }
 
+    public function assertWritable(): void
+    {
+        if ($this->readonly) {
+            throw new \RuntimeException('Workflow is not initialized.');
+        }
+    }
+
     public function setReadonly(bool $value = true): static
     {
         $this->readonly = $value;
@@ -371,7 +378,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->callsInterceptor->with(
             fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
                 ->newUntypedChildWorkflowStub($input->type, $input->options)
-                ->execute($input->args, $input->returnType),
+                ->executeAsync($input->args, $input->returnType),
             /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow() */
             'executeChildWorkflow',
         )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
@@ -428,14 +435,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType, true),
+                    ->executeAsync($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))
             : $this->callsInterceptor->with(
                 fn(ExecuteActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType),
+                    ->executeAsync($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
                 'executeActivity',
             )(new ExecuteActivityInput($type, $args, $options, $returnType));
@@ -491,7 +498,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         bool $cancellable = true,
         bool $waitResponse = true,
     ): PromiseInterface {
-        $this->readonly and throw new \RuntimeException('Workflow is not initialized.');
+        $this->assertWritable();
         $this->recordTrace();
 
         // Intercept workflow outbound calls

@@ -39,24 +39,24 @@ class CancelSignaledChildWorkflow
         // start execution
         $scope = Workflow::async(
             function () use ($simple, $waitSignaled) {
-                $call = $simple->handler();
+                $call = Workflow::async(static fn() => $simple->handler());
                 $this->status[] = 'child started';
 
-                yield $simple->add(8);
+                $simple->add(8);
                 $this->status[] = 'child signaled';
                 $waitSignaled->resolve(null);
 
-                return yield $call;
-            }
+                return $call->await();
+            },
         );
 
         // only cancel scope when signal dispatched
-        yield $waitSignaled;
+        Workflow::await($waitSignaled->promise());
         $scope->cancel();
         $this->status[] = 'scope canceled';
 
         try {
-            return yield $scope;
+            return $scope->await();
         } catch (\Throwable $e) {
             $this->status[] = 'process done';
 

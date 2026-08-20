@@ -18,10 +18,10 @@ use Temporal\Workflow\WorkflowMethod;
 class AwaitHeadersWorkflow
 {
     #[WorkflowMethod(name: 'InterceptorAwaitHeaderWorkflow')]
-    public function handler(): iterable
+    public function handler(): array
     {
-        yield Workflow::await(Workflow::timer(1));
-        yield Workflow::awaitWithTimeout(1, static fn() => false);
+        Workflow::timer(1);
+        Workflow::awaitWithTimeout(1, static fn() => false);
 
         return [
             \iterator_to_array(Workflow::getCurrentContext()->getHeader()),

@@ -21,11 +21,11 @@ class ContinuaWithTaskQueueWorkflow
 {
     #[WorkflowMethod(name: 'ContinuaWithTaskQueueWorkflow')]
     public function handler(
-        int $generation
+        int $generation,
     ) {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         if ($generation > 5) {
@@ -34,11 +34,11 @@ class ContinuaWithTaskQueueWorkflow
         }
 
         if ($generation !== 1) {
-            assert(!empty(Workflow::getInfo()->continuedExecutionRunId));
+            \assert(!empty(Workflow::getInfo()->continuedExecutionRunId));
         }
 
         for ($i = 0; $i < $generation; $i++) {
-            yield $simple->echo((string)$generation);
+            $simple->echo((string) $generation);
         }
 
         return Workflow::newContinueAsNewStub(self::class)->handler(++$generation);

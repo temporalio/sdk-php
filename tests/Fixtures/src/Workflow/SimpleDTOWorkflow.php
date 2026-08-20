@@ -24,15 +24,15 @@ class SimpleDTOWorkflow
     #[WorkflowMethod(name: 'SimpleDTOWorkflow')]
     #[Workflow\ReturnType(Message::class)]
     public function handler(
-        User $user
+        User $user,
     ) {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
-                ->withStartToCloseTimeout(5)
+                ->withStartToCloseTimeout(5),
         );
 
-        $value = yield $simple->greet($user);
+        $value = $simple->greet($user);
 
         if (!$value instanceof Message) {
             return "FAIL";

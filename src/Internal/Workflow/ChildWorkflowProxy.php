@@ -11,11 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
-use Temporal\Internal\Transport\CompletableResultInterface;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -49,10 +48,11 @@ final class ChildWorkflowProxy extends Proxy
 
     /**
      * @param non-empty-string $method
-     * @return CompletableResultInterface
      */
-    public function __call(string $method, array $args): PromiseInterface
+    public function __call(string $method, array $args): mixed
     {
+        Awaiter::assertManaged();
+
         // If the proxy does not contain information about the running workflow,
         // then we try to create a new stub from the workflow method and start
         // the workflow.
@@ -90,7 +90,9 @@ final class ChildWorkflowProxy extends Proxy
             if ($definition->method->getName() === $method) {
                 $args = Reflection::orderArguments($definition->method, $args);
 
-                return $this->stub->signal($name, $args);
+                $this->stub->signal($name, $args);
+
+                return null;
             }
         }
 

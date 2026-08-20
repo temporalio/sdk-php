@@ -55,7 +55,7 @@ class SearchAttributesTest extends TestCase
             'testKeywordList' => ['baz'],
             'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
                 ->format(\DateTimeInterface::RFC3339),
-        ], (array)$result);
+        ], (array) $result);
     }
 
     #[Test]
@@ -185,7 +185,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_SearchAttributes")]
     public function handle()
     {
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => $this->exit,
         );
 

@@ -29,7 +29,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     private WorkflowContext $parent;
     private Scope $scope;
     private ?UpdateContext $updateContext = null;
-    private bool $fiberMode = false;
 
     /**
      * Creates scope specific context.
@@ -103,14 +102,9 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $this->updateContext;
     }
 
-    public function setFiberMode(bool $mode): void
+    public function releaseScope(): void
     {
-        $this->fiberMode = $mode;
-    }
-
-    public function isFiberMode(): bool
-    {
-        return $this->fiberMode;
+        unset($this->scope, $this->onRequest);
     }
 
     public function resolveConditions(): void
@@ -132,7 +126,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function destroy(): void
     {
         parent::destroy();
-        unset($this->scope, $this->parent, $this->onRequest);
+        $this->releaseScope();
+        unset($this->parent);
     }
 
     protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface

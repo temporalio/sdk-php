@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Activity\ActivityOptions;
-use Temporal\Tests\Activity\SampleActivityInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -26,7 +24,7 @@ class UpsertSearchAttributesWorkflow
             [
                 'attr1' => 'attr1-value',
                 'attr2' => true,
-            ]
+            ],
         );
 
         return 'done';

@@ -21,9 +21,10 @@ use Temporal\Workflow\WorkflowMethod;
 class HeadersWorkflow
 {
     #[WorkflowMethod(name: 'InterceptorHeaderWorkflow')]
-    public function handler(): iterable {
+    public function handler(): array
+    {
         // Run activity
-        $activityResult = yield Workflow::newActivityStub(
+        $activityResult = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)

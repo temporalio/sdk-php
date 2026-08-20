@@ -26,14 +26,14 @@ class RuntimeSignalWorkflow
 
         $counter = 0;
 
-        Workflow::registerSignal('add', function ($value) use (&$counter, $wait1, $wait2) {
+        Workflow::registerSignal('add', static function ($value) use (&$counter, $wait1, $wait2): void {
             $counter += $value;
             $wait1->resolve($value);
             $wait2->resolve($value);
         });
 
-        yield $wait1;
-        yield $wait2;
+        Workflow::await($wait1->promise());
+        Workflow::await($wait2->promise());
 
         return $counter;
     }

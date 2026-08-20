@@ -14,7 +14,6 @@ namespace Temporal\Tests\Workflow;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\Promise;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -29,7 +28,7 @@ class UpdateWorkflow
     #[WorkflowMethod(name: "Update.greet")]
     public function greet()
     {
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return $this->greetings;
     }
 
@@ -58,24 +57,19 @@ class UpdateWorkflow
     #[Workflow\UpdateMethod]
     public function randomizeName(int $count = 1): mixed
     {
-        $promises = [];
         for ($i = 0; $i < $count; $i++) {
-            $promises[] = Workflow::sideEffect(
+            $this->greetings[] = Workflow::sideEffect(
                 static fn(): string => \sprintf('Hello, %s!', ['Antony', 'Alexey', 'John'][\random_int(0, 2)]),
-            )->then(
-                function (string $greeting) {
-                    $this->greetings[] = $greeting;
-                }
             );
         }
-        yield Promise::all($promises);
+
         return $this->greetings;
     }
 
     #[Workflow\UpdateMethod]
     public function addNameViaActivity(string $name): mixed
     {
-        $name = yield Workflow::newActivityStub(
+        $name = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout('10 seconds'),
         )->lower($name);
@@ -106,7 +100,7 @@ class UpdateWorkflow
     #[Workflow\ReturnType('object')]
     public function returnAsObject(mixed $mixed): object
     {
-        return (object)(array)$mixed;
+        return (object) (array) $mixed;
     }
 
     #[Workflow\SignalMethod]

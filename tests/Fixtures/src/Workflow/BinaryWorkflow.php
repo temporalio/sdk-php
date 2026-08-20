@@ -21,10 +21,10 @@ class BinaryWorkflow
 {
     #[WorkflowMethod(name: 'BinaryWorkflow')]
     public function handler(
-        Bytes $input
-    ): iterable {
+        Bytes $input,
+    ): string {
         $opts = ActivityOptions::new()->withStartToCloseTimeout(5);
 
-        return yield Workflow::executeActivity('SimpleActivity.md5', [$input], $opts);
+        return Workflow::executeActivity('SimpleActivity.md5', [$input], $opts);
     }
 }

@@ -30,16 +30,16 @@ class SignalTest extends TestCase
 class MainWorkflow
 {
     #[WorkflowMethod('Harness_ChildWorkflow_Signal')]
-    public function run()
+    public function run(): string
     {
         $workflow = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
             // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
             Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         );
-        $handle = $workflow->run();
-        yield $workflow->signal('unblock');
-        return yield $handle;
+        $handle = Workflow::async(static fn(): string => $workflow->run());
+        $workflow->signal('unblock');
+        return $handle->await();
     }
 }
 
@@ -52,9 +52,9 @@ class ChildWorkflow
     private ?string $message = null;
 
     #[WorkflowMethod('Harness_ChildWorkflow_Signal_Child')]
-    public function run()
+    public function run(): string
     {
-        yield Workflow::await(fn(): bool => $this->message !== null);
+        Workflow::await(fn(): bool => $this->message !== null);
         return $this->message;
     }
 
