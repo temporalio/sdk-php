@@ -21,6 +21,7 @@ class WorkflowTestCase extends TestCase
     protected TestService $testingService;
     protected ActivityMocker $activityMocks;
     protected WorkflowMocker $workflowMocks;
+    protected SearchAttributeMocker $searchAttributeMocks;
     protected DelayedCallbackScheduler $delayedCallbacks;
 
     protected function setUp(): void
@@ -29,6 +30,7 @@ class WorkflowTestCase extends TestCase
         $this->testingService = TestService::create($temporalAddress);
         $this->activityMocks = new ActivityMocker();
         $this->workflowMocks = new WorkflowMocker();
+        $this->searchAttributeMocks = new SearchAttributeMocker();
         $this->workflowClient = new WorkflowClient(
             ServiceClient::create($temporalAddress),
             interceptorProvider: new SimplePipelineProvider($this->clientInterceptors()),
@@ -42,6 +44,7 @@ class WorkflowTestCase extends TestCase
     {
         $this->activityMocks->clear();
         $this->workflowMocks->clear();
+        $this->searchAttributeMocks->clear();
         $this->assertTimeSkippingBalanced();
 
         parent::tearDown();
