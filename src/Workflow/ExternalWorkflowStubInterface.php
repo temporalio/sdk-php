@@ -22,5 +22,8 @@ interface ExternalWorkflowStubInterface
      */
     public function signal(string $name, array $args = []): PromiseInterface;
 
-    public function cancel(): PromiseInterface;
+    /**
+     * @param string|null $reason Optional human-readable reason for the cancellation request.
+     */
+    public function cancel(?string $reason = null): PromiseInterface;
 }

@@ -121,8 +121,10 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Cancellation cancels {@see CancellationScopeInterface} that wraps the
      * main workflow method. Note that workflow can take long time to get
      * canceled or even completely ignore the cancellation request.
+     *
+     * @param string|null $reason Optional human-readable reason for the cancellation request.
      */
-    public function cancel(): void;
+    public function cancel(?string $reason = null): void;
 
     /**
      * Terminates a workflow execution.

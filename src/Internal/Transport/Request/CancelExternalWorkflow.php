@@ -24,11 +24,13 @@ class CancelExternalWorkflow extends Request
         private string $namespace,
         private string $workflowId,
         private ?string $runId,
+        private ?string $reason = null,
     ) {
         $options = [
             'namespace' => $namespace,
             'workflowID' => $workflowId,
             'runID' => $runId,
+            'reason' => $reason,
         ];
 
         parent::__construct(self::NAME, $options, null);
@@ -47,5 +49,10 @@ class CancelExternalWorkflow extends Request
     public function getRunId(): ?string
     {
         return $this->runId;
+    }
+
+    public function getReason(): ?string
+    {
+        return $this->reason;
     }
 }

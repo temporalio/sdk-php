@@ -24,17 +24,20 @@ final class CancelExternalWorkflowInput
         public readonly string $namespace,
         public readonly string $workflowId,
         public readonly ?string $runId,
+        public readonly ?string $reason = null,
     ) {}
 
     public function with(
         ?string $namespace = null,
         ?string $workflowId = null,
         ?string $runId = null,
+        ?string $reason = null,
     ): self {
         return new self(
             $namespace ?? $this->namespace,
             $workflowId ?? $this->workflowId,
             $runId ?? $this->runId,
+            $reason ?? $this->reason,
         );
     }
 }

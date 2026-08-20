@@ -363,7 +363,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         );
     }
 
-    public function cancel(): void
+    public function cancel(?string $reason = null): void
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -377,6 +377,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $request->setIdentity($clientOptions->identity);
                 $request->setNamespace($clientOptions->namespace);
                 $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+                if ($input->reason !== null) {
+                    $request->setReason($input->reason);
+                }
 
                 $serviceClient->RequestCancelWorkflowExecution($request);
             },
@@ -384,6 +387,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             'cancel',
         )(new CancelInput(
             $this->getExecution(),
+            $reason,
         ));
     }
 

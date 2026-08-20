@@ -64,14 +64,24 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         ));
     }
 
-    public function cancel(): PromiseInterface
+    public function cancel(?string $reason = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(CancelExternalWorkflowInput $input): PromiseInterface => $this
-                ->request(new CancelExternalWorkflow($input->namespace, $input->workflowId, $input->runId)),
+                ->request(new CancelExternalWorkflow(
+                    $input->namespace,
+                    $input->workflowId,
+                    $input->runId,
+                    $input->reason,
+                )),
             /** @see WorkflowOutboundCallsInterceptor::cancelExternalWorkflow() */
             'cancelExternalWorkflow',
-        )(new CancelExternalWorkflowInput('', $this->execution->getID(), $this->execution->getRunID()));
+        )(new CancelExternalWorkflowInput(
+            '',
+            $this->execution->getID(),
+            $this->execution->getRunID(),
+            $reason,
+        ));
     }
 
     private function request(RequestInterface $request): PromiseInterface
