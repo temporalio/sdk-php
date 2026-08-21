@@ -12,8 +12,9 @@ interface CloudClientInterface extends GrpcClientInterface
     /**
      * Pin the Cloud Operations API version.
      *
-     * Sets the `temporal-cloud-api-version` header for every call made by the returned
+     * Sets the `temporal-cloud-api-version` header on every call made by the returned
      * client.
+     * A version already present on the call context is not overridden.
      *
      * @link https://docs.temporal.io/ops
      */

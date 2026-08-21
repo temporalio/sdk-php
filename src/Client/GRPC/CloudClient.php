@@ -9,6 +9,8 @@ use Temporal\Exception\Client\ServiceClientException;
 
 class CloudClient extends BaseClient implements CloudClientInterface
 {
+    private string $apiVersion = '';
+
     /**
      * Get information about the current authenticated user or service account
      * principal
@@ -894,24 +896,34 @@ class CloudClient extends BaseClient implements CloudClientInterface
     /**
      * Pin the Cloud Operations API version.
      *
-     * Sets the `temporal-cloud-api-version` header for every call made by the returned
+     * Sets the `temporal-cloud-api-version` header on every call made by the returned
      * client.
+     * A version already present on the call context is not overridden.
      *
      * @link https://docs.temporal.io/ops
      */
     public function withApiVersion(string $version): static
     {
-        $context = $this->getContext();
+        $clone = clone $this;
+        $clone->apiVersion = $version;
 
-        return $this->withContext(
-            $context->withMetadata(
-                $context->getMetadata() + ['temporal-cloud-api-version' => [$version]],
-            ),
-        );
+        return $clone;
     }
 
     protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
     {
         return new V1\CloudServiceClient($address, $options);
+    }
+
+    protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null): mixed
+    {
+        if ($this->apiVersion !== '') {
+            $ctx ??= $this->getContext();
+            $ctx = $ctx->withMetadata(
+                $ctx->getMetadata() + ['temporal-cloud-api-version' => [$this->apiVersion]],
+            );
+        }
+
+        return parent::invoke($method, $arg, $ctx);
     }
 }

@@ -12,6 +12,7 @@ use Temporal\Api\Cloud\Cloudservice\V1\GetUsersResponse;
 use Temporal\Client\GRPC\CloudClient;
 use Temporal\Client\GRPC\CloudClientInterface;
 use Temporal\Client\GRPC\Connection\ConnectionState;
+use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\GrpcClientInterface;
 use Temporal\Interceptor\GrpcClientInterceptor;
@@ -55,6 +56,16 @@ final class CloudClientTestCase extends TestCase
     }
 
     #[Test]
+    public function apiVersionIsInjectedIntoPerCallContext(): void
+    {
+        [$captured, $client] = $this->createInterceptedClient();
+
+        $client->withApiVersion('2024-05-13-00')->GetUsers(new GetUsersRequest(), Context::default()->withTimeout(5));
+
+        self::assertSame(['2024-05-13-00'], $captured->ctx->getMetadata()['temporal-cloud-api-version'] ?? null);
+    }
+
+    #[Test]
     public function apiVersionDoesNotOverrideExplicitContextHeader(): void
     {
         [$captured, $client] = $this->createInterceptedClient();
@@ -63,6 +74,17 @@ final class CloudClientTestCase extends TestCase
             ->withContext($client->getContext()->withMetadata(['temporal-cloud-api-version' => ['explicit']]))
             ->withApiVersion('2024-05-13-00')
             ->GetUsers(new GetUsersRequest());
+
+        self::assertSame(['explicit'], $captured->ctx->getMetadata()['temporal-cloud-api-version'] ?? null);
+    }
+
+    #[Test]
+    public function apiVersionDoesNotOverrideExplicitPerCallHeader(): void
+    {
+        [$captured, $client] = $this->createInterceptedClient();
+
+        $ctx = Context::default()->withMetadata(['temporal-cloud-api-version' => ['explicit']]);
+        $client->withApiVersion('2024-05-13-00')->GetUsers(new GetUsersRequest(), $ctx);
 
         self::assertSame(['explicit'], $captured->ctx->getMetadata()['temporal-cloud-api-version'] ?? null);
     }
@@ -81,12 +103,13 @@ final class CloudClientTestCase extends TestCase
     #[Test]
     public function withApiVersionReturnsNewImmutableInstance(): void
     {
-        [, $client] = $this->createInterceptedClient();
+        [$captured, $client] = $this->createInterceptedClient();
 
         $client2 = $client->withApiVersion('2024-05-13-00');
+        $client->GetUsers(new GetUsersRequest());
 
         self::assertNotSame($client, $client2);
-        self::assertArrayNotHasKey('temporal-cloud-api-version', $client->getContext()->getMetadata());
+        self::assertArrayNotHasKey('temporal-cloud-api-version', $captured->ctx->getMetadata());
     }
 
     #[Test]

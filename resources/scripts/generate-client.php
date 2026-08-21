@@ -184,38 +184,64 @@ PHP);
 
 $versionParam = Generator\ParameterGenerator::fromArray(['type' => 'string', 'name' => 'version']);
 
-$buildWithApiVersionInterfaceMethod = static function () use ($versionParam): MethodGenerator {
+$apiVersionDocBlock = <<<'TEXT'
+    Pin the Cloud Operations API version.
+
+    Sets the `temporal-cloud-api-version` header on every call made by the returned client.
+    A version already present on the call context is not overridden.
+
+    @link https://docs.temporal.io/ops
+    TEXT;
+
+$buildApiVersionProperty = static function (): Generator\PropertyGenerator {
+    $property = new Generator\PropertyGenerator('apiVersion', '', Generator\PropertyGenerator::FLAG_PRIVATE);
+    $property->setType(Generator\TypeGenerator::fromTypeString('string'));
+
+    return $property;
+};
+
+$buildWithApiVersionInterfaceMethod = static function () use ($versionParam, $apiVersionDocBlock): MethodGenerator {
     $method = new MethodGenerator('withApiVersion', [$versionParam]);
     $method->setReturnType('static');
-    $method->setDocBlock(<<<'TEXT'
-        Pin the Cloud Operations API version.
-
-        Sets the `temporal-cloud-api-version` header for every call made by the returned client.
-
-        @link https://docs.temporal.io/ops
-        TEXT);
+    $method->setDocBlock($apiVersionDocBlock);
 
     return $method;
 };
 
-$buildWithApiVersionImplementationMethod = static function () use ($versionParam): MethodGenerator {
+$buildWithApiVersionImplementationMethod = static function () use ($versionParam, $apiVersionDocBlock): MethodGenerator {
     $method = new MethodGenerator('withApiVersion', [$versionParam]);
     $method->setReturnType('static');
-    $method->setDocBlock(<<<'TEXT'
-        Pin the Cloud Operations API version.
-
-        Sets the `temporal-cloud-api-version` header for every call made by the returned client.
-
-        @link https://docs.temporal.io/ops
-        TEXT);
+    $method->setDocBlock($apiVersionDocBlock);
     $method->setBody(<<<'PHP'
-        $context = $this->getContext();
+        $clone = clone $this;
+        $clone->apiVersion = $version;
 
-        return $this->withContext(
-            $context->withMetadata(
-                $context->getMetadata() + ['temporal-cloud-api-version' => [$version]],
-            ),
-        );
+        return $clone;
+        PHP);
+
+    return $method;
+};
+
+$buildCloudInvokeMethod = static function () use ($ctxParam): MethodGenerator {
+    $method = new MethodGenerator(
+        'invoke',
+        [
+            Generator\ParameterGenerator::fromArray(['type' => 'string', 'name' => 'method']),
+            Generator\ParameterGenerator::fromArray(['type' => 'object', 'name' => 'arg']),
+            $ctxParam,
+        ],
+        MethodGenerator::FLAG_PROTECTED,
+    );
+    $method->setReturnType('mixed');
+    $method->setBody(<<<'PHP'
+        if ($this->apiVersion !== '') {
+            $ctx ??= $this->getContext();
+            $ctx = $ctx->withMetadata(
+                $ctx->getMetadata() + ['temporal-cloud-api-version' => [$this->apiVersion]],
+            );
+        }
+
+        return parent::invoke($method, $arg, $ctx);
         PHP);
 
     return $method;
@@ -274,9 +300,11 @@ $clients = [
             'interface' => [],
             'implementation' => [],
         ],
+        'extraProperties' => static fn(): array => [$buildApiVersionProperty()],
         'extraInterfaceMethods' => static fn(): array => [$buildWithApiVersionInterfaceMethod()],
         'extraImplementationMethods' => static fn(): array => [
             $buildWithApiVersionImplementationMethod(),
+            $buildCloudInvokeMethod(),
             $buildCreateServiceClientMethod(CloudServiceClient::class),
         ],
     ],
@@ -338,6 +366,10 @@ foreach ($clients as $client) {
     $implementation = new Generator\ClassGenerator($client['implementationName']);
     $implementation->setExtendedClass('BaseClient');
     $implementation->setImplementedInterfaces([$client['interfaceName']]);
+
+    foreach (($client['extraProperties'] ?? static fn(): array => [])() as $property) {
+        $implementation->addPropertyFromGenerator($property);
+    }
 
     foreach ($methods as $name => $options) {
         $method = new MethodGenerator($name);
