@@ -55,7 +55,6 @@ jobs:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
         php:
-          - 8.1
           - 8.2
           - 8.3
           - 8.4
@@ -67,7 +66,7 @@ jobs:
           # Add Windows
           - os: windows-latest
             extensions-suffix: ', protobuf'
-            php: 8.1
+            php: 8.2
             dependencies: highest
     steps:
       - name: Set Git To Use LF
@@ -94,14 +93,28 @@ jobs:
 
       - name: Validate lowest dependencies
         id: validate
-        if: matrix.dependencies == 'lowest' && matrix.php == '8.1'
+        if: matrix.dependencies == 'lowest' && matrix.php == '8.2'
         env:
           COMPOSER_POOL_OPTIMIZER: 0
         run: vendor/bin/validate-prefer-lowest
         continue-on-error: true
 
-      - name: Download binaries
+      - name: Cache runtime binaries
+        id: cache-binaries
         if: inputs.download-binaries == true
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./rr
+            ./rr.exe
+            ./temporal
+            ./temporal.exe
+            ./temporal-test-server
+            ./temporal-test-server.exe
+          key: ${{ runner.os }}-binaries-${{ hashFiles('dload.xml') }}
+
+      - name: Download binaries
+        if: inputs.download-binaries == true && steps.cache-binaries.outputs.cache-hit != 'true'
         run: composer get:binaries
 
       - name: Run tests
