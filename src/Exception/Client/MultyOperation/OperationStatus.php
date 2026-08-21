@@ -17,7 +17,7 @@ final class OperationStatus
     use UnpackDetailsTrait;
 
     /**
-     * @param \ArrayAccess<int, Any>&RepeatedField $details
+     * @param RepeatedField<Any> $details
      */
     private function __construct(
         private readonly \Traversable $details,
@@ -35,7 +35,7 @@ final class OperationStatus
     }
 
     /**
-     * @return \ArrayAccess<int, Any>&RepeatedField
+     * @return RepeatedField<Any>
      */
     private function getDetails(): \Traversable
     {

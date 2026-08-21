@@ -1,0 +1,42 @@
+<?php
+
+namespace Google\Protobuf;
+
+/**
+ * @template T
+ * @implements \ArrayAccess<int, T>
+ * @implements \IteratorAggregate<int, T>
+ */
+class RepeatedField implements \ArrayAccess, \IteratorAggregate, \Countable
+{
+    /**
+     * @param int $offset
+     * @return bool
+     */
+    public function offsetExists($offset): bool {}
+
+    /**
+     * @param int $offset
+     * @return T
+     */
+    public function offsetGet($offset) {}
+
+    /**
+     * @param int|null $offset
+     * @param T $value
+     */
+    public function offsetSet($offset, $value): void {}
+
+    /**
+     * @param int $offset
+     */
+    public function offsetUnset($offset): void {}
+
+    /**
+     * @return \Traversable<int, T>
+     */
+    public function getIterator(): \Traversable {}
+
+    public function count(): int {}
+}
+

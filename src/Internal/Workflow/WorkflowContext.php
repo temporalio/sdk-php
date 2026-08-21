@@ -36,6 +36,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
@@ -77,6 +78,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
+use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -471,6 +473,65 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             $this,
             $this->callsInterceptor,
         );
+    }
+
+    /**
+     * @template T of object
+     * @param class-string<T> $class
+     * @return NexusServiceProxy<T>
+     */
+    public function newNexusServiceStub(
+        string $class,
+        NexusOperationOptions $options,
+    ): object {
+        $prototype = $this->services->nexusServicesReader->fromClass($class);
+
+        if ($options->service === '') {
+            $options = $options->withService($prototype->getID());
+        }
+
+        return new NexusServiceProxy(
+            $class,
+            $prototype,
+            $options,
+            $this,
+            $this->callsInterceptor,
+        );
+    }
+
+    public function newUntypedNexusOperationStub(
+        NexusOperationOptions $options,
+    ): NexusOperationStub {
+        return new NexusOperationStub(
+            $this->services->marshaller,
+            $options,
+            $this->getHeader(),
+        );
+    }
+
+    public function executeNexusOperation(
+        string $operation,
+        array $args = [],
+        ?NexusOperationOptions $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): PromiseInterface {
+        $options ??= NexusOperationOptions::new();
+
+        return $this->callsInterceptor->with(
+            fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
+                ->newUntypedNexusOperationStub($input->effectiveOptions())
+                ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
+            /** @see WorkflowOutboundCallsInterceptor::executeNexusOperation() */
+            'executeNexusOperation',
+        )(new ExecuteNexusOperationInput(
+            $options->endpoint,
+            $options->service,
+            $operation,
+            $args,
+            $options,
+            $returnType,
+            [],
+        ));
     }
 
     public function timer($interval, ?TimerOptions $options = null): PromiseInterface

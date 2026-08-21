@@ -31,7 +31,6 @@ trait UnpackDetailsTrait
         // ensures that message descriptor was added to the pool
         Message::initOnce();
 
-        /** @var Any $detail */
         foreach ($details as $detail) {
             if ($detail->is($class)) {
                 return $detail->unpack();
@@ -42,7 +41,7 @@ trait UnpackDetailsTrait
     }
 
     /**
-     * @return \ArrayAccess<int, Any>&RepeatedField
+     * @return RepeatedField<Any>
      */
     abstract private function getDetails(): iterable;
 }

@@ -44,7 +44,7 @@ class ServiceClientException extends \RuntimeException
     }
 
     /**
-     * @return RepeatedField
+     * @return RepeatedField<\Google\Protobuf\Any>
      */
     public function getDetails(): \ArrayAccess&\Countable&\IteratorAggregate
     {

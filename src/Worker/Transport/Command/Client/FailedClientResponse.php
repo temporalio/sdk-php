@@ -17,7 +17,7 @@ final class FailedClientResponse implements FailureResponseInterface
 {
     public function __construct(
         private readonly int|string $id,
-        private readonly ?\Throwable $failure = null,
+        private readonly \Throwable $failure,
     ) {}
 
     public function getID(): string|int

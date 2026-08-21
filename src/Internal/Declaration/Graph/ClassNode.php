@@ -58,7 +58,7 @@ final class ClassNode implements NodeInterface
      * Get a method with all the declared classes.
      *
      * @param non-empty-string $name
-     * @return \Traversable<int, \Traversable<class-string, \ReflectionMethod>>
+     * @return \Traversable<int, \Traversable<ClassNode, \ReflectionMethod>>
      * @throws \ReflectionException
      */
     public function getMethods(string $name, bool $reverse = true): \Traversable
@@ -190,7 +190,7 @@ final class ClassNode implements NodeInterface
 
     /**
      * @param iterable<ClassNode> $classes
-     * @return list<array{class-string, \ReflectionMethod}>
+     * @return list<array{ClassNode, \ReflectionMethod}>
      * @throws \ReflectionException
      */
     private function boxMethods(iterable $classes, string $name): array
@@ -207,8 +207,8 @@ final class ClassNode implements NodeInterface
     }
 
     /**
-     * @param array<array{class-string, \ReflectionMethod}> $boxed
-     * @return \Traversable<class-string, \ReflectionMethod>
+     * @param array<array{ClassNode, \ReflectionMethod}> $boxed
+     * @return \Traversable<ClassNode, \ReflectionMethod>
      */
     private function unboxMethods(array $boxed): \Traversable
     {

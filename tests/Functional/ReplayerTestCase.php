@@ -25,20 +25,6 @@ final class ReplayerTestCase extends TestCase
 {
     private WorkflowClient $workflowClient;
 
-    protected function setUp(): void
-    {
-        $this->workflowClient = new WorkflowClient(
-            ServiceClient::create(TemporalServer::address())
-        );
-
-        parent::setUp();
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-    }
-
     public function testReplayWorkflowFromServer(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(WorkflowWithSequence::class);
@@ -254,7 +240,7 @@ final class ReplayerTestCase extends TestCase
         $history = $this->workflowClient->getWorkflowHistory(
             execution: $run->getExecution(),
             historyEventFilterType: HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
-            skipArchival: true
+            skipArchival: true,
         )->getHistory();
 
         $this->assertCount(1, \iterator_to_array($history->getEvents(), false));
@@ -328,10 +314,21 @@ final class ReplayerTestCase extends TestCase
         (new WorkflowReplayer())->replayHistory($history);
     }
 
+    protected function setUp(): void
+    {
+        $this->workflowClient = new WorkflowClient(
+            ServiceClient::create(TemporalServer::address()),
+        );
+
+        parent::setUp();
+    }
+
     private function createAwaitsUpdateUntypedStub(WorkflowClient $client): WorkflowStubInterface
     {
-        return $client->newWorkflowStub(AwaitsUpdateWorkflow::class, WorkflowOptions::new()
-            ->withWorkflowRunTimeout('10 seconds')
+        return $client->newWorkflowStub(
+            AwaitsUpdateWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowRunTimeout('10 seconds'),
         )->__getUntypedStub();
     }
 }

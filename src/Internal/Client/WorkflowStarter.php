@@ -11,7 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Api\Common\V1\Callback;
+use Temporal\Api\Common\V1\Callback\Nexus as NexusCallback;
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Workflow\V1\OnConflictOptions as OnConflictOptionsProto;
 use Temporal\Api\Deployment\V1\WorkerDeploymentVersion;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
@@ -49,6 +52,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow\CompletionCallback;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -276,6 +280,31 @@ final class WorkflowStarter
         );
     }
 
+    private static function completionCallbackToProto(CompletionCallback $callback): Callback
+    {
+        $nexus = new NexusCallback();
+        $nexus->setUrl($callback->url);
+        if ($callback->headers !== []) {
+            $nexus->setHeader($callback->headers);
+        }
+
+        $proto = new Callback();
+        $proto->setNexus($nexus);
+        if ($callback->links !== []) {
+            $proto->setLinks($callback->links);
+        }
+        return $proto;
+    }
+
+    private static function onConflictOptionsToProto(OnConflictOptions $options): OnConflictOptionsProto
+    {
+        $proto = new OnConflictOptionsProto();
+        $proto->setAttachRequestId($options->attachRequestId);
+        $proto->setAttachCompletionCallbacks($options->attachCompletionCallbacks);
+        $proto->setAttachLinks($options->attachLinks);
+        return $proto;
+    }
+
     /**
      * @param StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request
      *        use {@see configureExecutionRequest()} to prepare request
@@ -324,7 +353,7 @@ final class WorkflowStarter
     ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
         $options = $input->options;
 
-        $req->setRequestId(Uuid::v4())
+        $req->setRequestId($options->requestId ?? Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
@@ -395,6 +424,21 @@ final class WorkflowStarter
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);
+
+            // SignalWithStart's proto has no completion_callbacks / on_conflict_options field — start path only.
+            if ($options->completionCallbacks !== []) {
+                $req->setCompletionCallbacks(
+                    \array_map(self::completionCallbackToProto(...), $options->completionCallbacks),
+                );
+            }
+
+            if ($options->onConflictOptions !== null) {
+                $req->setOnConflictOptions(self::onConflictOptionsToProto($options->onConflictOptions));
+            }
+
+            if ($options->links !== []) {
+                $req->setLinks($options->links);
+            }
         }
 
         if (!$input->arguments->isEmpty()) {

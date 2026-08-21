@@ -20,12 +20,18 @@ use Temporal\Exception\Client\ServiceClientException;
 final class TestService
 {
     private TestServiceClient $testServiceClient;
-
     private int $lockDelta = 0;
 
     public function __construct(TestServiceClient $testServiceClient)
     {
         $this->testServiceClient = $testServiceClient;
+    }
+
+    public static function create(string $host): self
+    {
+        return new self(
+            new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()]),
+        );
     }
 
     /**
@@ -37,13 +43,6 @@ final class TestService
     public function lockDelta(): int
     {
         return $this->lockDelta;
-    }
-
-    public static function create(string $host): self
-    {
-        return new self(
-            new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()]),
-        );
     }
 
     /**
