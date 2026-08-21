@@ -30,6 +30,8 @@ use Traversable;
  */
 class EncodedValues implements ValuesInterface
 {
+    use DataConverterAwareTrait;
+
     /**
      * @var TPayloadsCollection|null
      */
@@ -39,8 +41,6 @@ class EncodedValues implements ValuesInterface
      * @var array<TKey, TValue>|null
      */
     protected ?array $values = null;
-
-    private ?DataConverterInterface $converter = null;
 
     /**
      * Can not be constructed directly.
@@ -133,11 +133,12 @@ class EncodedValues implements ValuesInterface
             return null;
         }
 
-        $count > $index or throw new \OutOfBoundsException("Index {$index} is out of bounds.");
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+        if ($count <= $index) {
+            throw new \OutOfBoundsException("Index {$index} is out of bounds.");
+        }
 
         \assert($this->payloads !== null);
-        return $this->converter->fromPayload(
+        return $this->converter()->fromPayload(
             $this->payloads[$index],
             $type,
         );
@@ -151,18 +152,13 @@ class EncodedValues implements ValuesInterface
             return $result;
         }
 
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+        $converter = $this->converter();
 
         foreach ($this->payloads as $key => $payload) {
-            $result[$key] = $this->converter->fromPayload($payload, null);
+            $result[$key] = $converter->fromPayload($payload, null);
         }
 
         return $result;
-    }
-
-    public function setDataConverter(DataConverterInterface $converter): void
-    {
-        $this->converter = $converter;
     }
 
     /**
@@ -212,19 +208,12 @@ class EncodedValues implements ValuesInterface
         }
 
         if ($this->values !== null) {
+            $converter = $this->converter();
             foreach ($this->values as $key => $value) {
-                $data[$key] = $this->valueToPayload($value);
+                $data[$key] = $converter->toPayload($value);
             }
         }
 
         return $data;
-    }
-
-    private function valueToPayload(mixed $value): Payload
-    {
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
-        }
-        return $this->converter->toPayload($value);
     }
 }

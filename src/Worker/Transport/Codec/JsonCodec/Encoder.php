@@ -32,6 +32,13 @@ class Encoder
 
     public function encode(CommandInterface $cmd): array
     {
+        $payloads = match (true) {
+            $cmd instanceof RequestInterface,
+            $cmd instanceof SuccessResponseInterface => $cmd->getPayloads(),
+            default => null,
+        };
+        $context = $payloads?->getSerializationContext();
+
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
@@ -54,7 +61,7 @@ class Encoder
                 ];
 
                 if ($cmd->getFailure() !== null) {
-                    $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
+                    $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter, $context);
                     $data['failure'] = \base64_encode($failure->serializeToString());
                 }
 

@@ -26,6 +26,8 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedCollection;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -543,20 +545,17 @@ final class WorkflowOptions extends Options
     /**
      * @internal
      */
-    public function toMemo(DataConverterInterface $converter): ?Memo
+    public function toMemo(DataConverterInterface $converter, ?SerializationContext $context = null): ?Memo
     {
         if ($this->memo === null || $this->memo === []) {
             return null;
         }
 
-        $fields = [];
-
-        foreach ($this->memo as $key => $value) {
-            $fields[$key] = $converter->toPayload($value);
-        }
+        $collection = EncodedCollection::fromValues($this->memo, $converter);
+        $collection->setSerializationContext($context);
 
         $memo = new Memo();
-        $memo->setFields($fields);
+        $memo->setFields($collection->toPayloadArray());
 
         return $memo;
     }
