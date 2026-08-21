@@ -492,9 +492,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                 }
 
                 $settled = true;
-                $this->defer(
-                    fn() => $this->handleError($reason ?? new CanceledFailure('')),
-                );
+                $this->handleError($reason ?? new CanceledFailure(''));
             });
             $this->suspensionCancelID = $cancelID;
         }
