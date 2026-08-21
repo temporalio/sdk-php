@@ -255,6 +255,11 @@
       <code><![CDATA[getID]]></code>
     </PossiblyNullReference>
   </file>
+  <file src="src/Exception/Client/ServiceClientException.php">
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[RepeatedField]]></code>
+    </ImplementedReturnTypeMismatch>
+  </file>
   <file src="src/Exception/Client/WorkflowException.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static(null, $execution, $workflowType, $previous)]]></code>
@@ -598,6 +603,7 @@
       <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
     </ArgumentTypeCoercion>
     <DeprecatedMethod>
+      <code><![CDATA[getBinaryChecksum]]></code>
       <code><![CDATA[getMostRecentWorkerVersionStamp]]></code>
     </DeprecatedMethod>
     <DocblockTypeContradiction>
@@ -915,6 +921,10 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($param)]]></code>
+      <code><![CDATA[\json_encode($param)]]></code>
+    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -978,7 +988,6 @@
     </RedundantCondition>
     <TypeDoesNotContainNull>
       <code><![CDATA[$this->context]]></code>
-      <code><![CDATA[$this->scopeContext]]></code>
       <code><![CDATA[$this->scopeContext]]></code>
     </TypeDoesNotContainNull>
     <UnusedClosureParam>
@@ -1136,6 +1145,12 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$frame->serializeToString()]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[string]]></code>
+    </MoreSpecificReturnType>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
@@ -1438,6 +1453,15 @@
       <code><![CDATA[$fields]]></code>
       <code><![CDATA[$meta]]></code>
     </TooManyTemplateParams>
+  </file>
+  <file src="testing/src/Transcript/WorkflowHistoryDumper.php">
+    <InvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds() + \round($eventTime->getNanos() / 1_000_000_000, 6)]]></code>
+      <code><![CDATA[($sec - $startSec) * 1000]]></code>
+    </InvalidOperand>
+    <PossiblyInvalidOperand>
+      <code><![CDATA[$eventTime->getSeconds()]]></code>
+    </PossiblyInvalidOperand>
   </file>
   <file src="testing/src/WorkerMock.php">
     <DeprecatedMethod>
