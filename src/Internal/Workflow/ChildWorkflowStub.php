@@ -138,7 +138,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $this->assertStarted();
         Awaiter::assertManaged();
 
-        return Awaiter::await($this->getResultAsync($returnType), interruptOnCancel: false);
+        return Awaiter::await($this->getResultAsync($returnType));
     }
 
     public function getResultAsync($returnType = null): PromiseInterface
@@ -158,7 +158,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     {
         Awaiter::assertManaged();
 
-        return Awaiter::await($this->executeAsync($args, $returnType), interruptOnCancel: false);
+        return Awaiter::await($this->executeAsync($args, $returnType));
     }
 
     public function executeAsync(array $args = [], $returnType = null): PromiseInterface
