@@ -25,6 +25,7 @@ interface ChildWorkflowStubInterface
     public function getExecution(): WorkflowExecution;
 
     /**
+     * @internal
      * @return PromiseInterface<WorkflowExecution>
      * @throws \LogicException
      */
@@ -52,6 +53,7 @@ interface ChildWorkflowStubInterface
 
     /**
      * @param mixed ...$args
+     * @internal
      * @return PromiseInterface<WorkflowExecution>
      */
     public function startAsync(...$args): PromiseInterface;
@@ -63,6 +65,7 @@ interface ChildWorkflowStubInterface
 
     /**
      * @param TType $returnType
+     * @internal
      * @return PromiseInterface<mixed>
      */
     public function getResultAsync($returnType = null): PromiseInterface;
@@ -76,6 +79,7 @@ interface ChildWorkflowStubInterface
 
     /**
      * @param non-empty-string $name
+     * @internal
      * @return PromiseInterface<mixed>
      *
      * @throws \LogicException
