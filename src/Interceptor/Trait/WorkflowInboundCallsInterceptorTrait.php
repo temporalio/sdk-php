@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\Trait;
 
+use Temporal\Interceptor\WorkflowInbound\InitInput;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -24,6 +25,16 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
  */
 trait WorkflowInboundCallsInterceptorTrait
 {
+    /**
+     * Default implementation of the `init` method.
+     *
+     * @see WorkflowInboundCallsInterceptor::init()
+     */
+    public function init(InitInput $input, callable $next): void
+    {
+        $next($input);
+    }
+
     /**
      * Default implementation of the `execute` method.
      *
