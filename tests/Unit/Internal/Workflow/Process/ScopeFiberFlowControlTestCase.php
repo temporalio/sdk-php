@@ -11,6 +11,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\ExceptionInterceptor;
+use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\InvalidSuspendException;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -330,6 +331,105 @@ final class ScopeFiberFlowControlTestCase extends TestCase
             self::assertNotInstanceOf(InvalidSuspendException::class, $error);
             self::assertSame('Workflow is not initialized.', $error->getMessage());
         }
+    }
+
+    public function testDestroyUnwindsThreeLevelsDeepestFirst(): void
+    {
+        $torndown = [];
+        $gcWasEnabled = \gc_enabled();
+        \gc_disable();
+
+        try {
+            $this->startRoot(static function () use (&$torndown): void {
+                Workflow::async(static function () use (&$torndown): void {
+                    Workflow::async(static function () use (&$torndown): void {
+                        try {
+                            Workflow::await(static fn(): bool => false);
+                        } finally {
+                            $torndown[] = 'grandchild';
+                        }
+                    });
+
+                    try {
+                        Workflow::await(static fn(): bool => false);
+                    } finally {
+                        $torndown[] = 'child';
+                    }
+                });
+
+                try {
+                    Workflow::await(static fn(): bool => false);
+                } finally {
+                    $torndown[] = 'root';
+                }
+            });
+
+            self::assertSame([], $torndown);
+
+            $this->root->destroy();
+
+            self::assertSame(['grandchild', 'child', 'root'], $torndown);
+        } finally {
+            $gcWasEnabled and \gc_enable();
+        }
+    }
+
+    public function testDestroyDeliversACatchableFailureToWorkflowCode(): void
+    {
+        $caught = null;
+        $gcWasEnabled = \gc_enabled();
+        \gc_disable();
+
+        try {
+            $this->startRoot(static function () use (&$caught): void {
+                try {
+                    Workflow::await(static fn(): bool => false);
+                } catch (\Throwable $error) {
+                    $caught = $error;
+                }
+            });
+
+            $this->root->destroy();
+
+            self::assertInstanceOf(DestructMemorizedInstanceException::class, $caught);
+        } finally {
+            $gcWasEnabled and \gc_enable();
+        }
+    }
+
+    public function testAwaitPredicateIsAllowedToSuspendTheEnclosingFiber(): void
+    {
+        $gate = new Deferred();
+        $log = [];
+        $flag = false;
+
+        $this->startRoot(static function () use ($gate, &$log, &$flag): string {
+            $log[] = 'before await';
+
+            Workflow::await(static function () use ($gate, &$flag, &$log): bool {
+                $log[] = 'predicate entered';
+                Workflow::await($gate->promise());
+                $log[] = 'predicate resumed';
+
+                return $flag;
+            });
+
+            $log[] = 'after await';
+
+            return 'done';
+        });
+        $this->flush();
+
+        self::assertSame(['before await', 'predicate entered'], $log);
+
+        $flag = true;
+        $gate->resolve(null);
+        $this->flush();
+
+        self::assertSame(
+            ['before await', 'predicate entered', 'predicate resumed', 'after await'],
+            $log,
+        );
     }
 
     protected function setUp(): void
