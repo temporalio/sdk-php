@@ -112,18 +112,18 @@ class MainWorkflow
     #[WorkflowMethod('Extra_Workflow_SideEffect')]
     public function run()
     {
-        yield Workflow::timer('1 seconds');
+        Workflow::timer('1 seconds');
 
         /**
          * @var \DateTimeImmutable $currentDate
          */
-        $currentDate = yield Workflow::sideEffect(
+        $currentDate = Workflow::sideEffect(
             static fn(): \DateTimeImmutable => new \DateTimeImmutable(),
             SideEffectOptions::new()
                 ->withSummary('Side Effect Summary'),
         );
 
-        return yield [
+        return [
             'current' => [
                 'timestamp' => $currentDate->getTimestamp(),
                 'timezone.offset' => $currentDate->getTimeZone()->getOffset($currentDate),
@@ -140,13 +140,13 @@ class MainWorkflow
 class MultiSummaryWorkflow
 {
     #[WorkflowMethod('Extra_Workflow_SideEffect_Multi')]
-    public function run()
+    public function run(): void
     {
-        yield Workflow::sideEffect(
+        Workflow::sideEffect(
             static fn(): int => 1,
             SideEffectOptions::new()->withSummary('first summary'),
         );
-        yield Workflow::sideEffect(
+        Workflow::sideEffect(
             static fn(): int => 2,
             SideEffectOptions::new()->withSummary('second summary'),
         );
@@ -157,8 +157,8 @@ class MultiSummaryWorkflow
 class NoOptionsWorkflow
 {
     #[WorkflowMethod('Extra_Workflow_SideEffect_NoOptions')]
-    public function run()
+    public function run(): void
     {
-        yield Workflow::sideEffect(static fn(): int => 42);
+        Workflow::sideEffect(static fn(): int => 42);
     }
 }

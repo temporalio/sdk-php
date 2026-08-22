@@ -118,11 +118,11 @@ class TestWorkflow
 
     #[WorkflowMethod('Extra_Stability_ResetWorker')]
     #[ReturnType(Type::TYPE_STRING)]
-    public function expire(int $seconds = 10): \Generator
+    public function expire(int $seconds = 10): string
     {
-        $isTimer = ! yield Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
+        $isTimer = !Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
 
-        return yield $isTimer ? 'Timer' : 'Signal';
+        return $isTimer ? 'Timer' : 'Signal';
     }
 
     #[Workflow\QueryMethod('die')]
@@ -133,9 +133,9 @@ class TestWorkflow
     }
 
     #[Workflow\SignalMethod('exit')]
-    public function signal()
+    public function signal(): void
     {
-        yield Workflow::uuid7();
+        Workflow::uuid7();
         $this->exit = true;
     }
 }

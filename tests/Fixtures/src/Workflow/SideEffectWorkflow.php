@@ -20,19 +20,19 @@ use Temporal\Tests\Activity\SimpleActivity;
 class SideEffectWorkflow
 {
     #[WorkflowMethod(name: 'SideEffectWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): string
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
-        $result = yield Workflow::sideEffect(
+        $result = Workflow::sideEffect(
             static function () use ($input): string {
                 return $input . '-42';
             },
         );
 
-        return yield $simple->lower($result);
+        return $simple->lower($result);
     }
 }

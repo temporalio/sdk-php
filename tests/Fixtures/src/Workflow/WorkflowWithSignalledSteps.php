@@ -26,21 +26,21 @@ class WorkflowWithSignalledSteps
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         $value = 0;
-        Workflow::registerQuery('value', function () use (&$value) {
+        Workflow::registerQuery('value', static function () use (&$value) {
             return $value;
         });
 
-        yield $this->promiseSignal('begin');
+        Workflow::await($this->promiseSignal('begin'));
         $value++;
 
-        yield $this->promiseSignal('next1');
+        Workflow::await($this->promiseSignal('next1'));
         $value++;
 
-        yield $this->promiseSignal('next2');
+        Workflow::await($this->promiseSignal('next2'));
         $value++;
 
         return $value;
@@ -50,7 +50,7 @@ class WorkflowWithSignalledSteps
     private function promiseSignal(string $name): PromiseInterface
     {
         $signal = new Deferred();
-        Workflow::registerSignal($name, function ($value) use ($signal) {
+        Workflow::registerSignal($name, static function ($value) use ($signal): void {
             $signal->resolve($value);
         });
 

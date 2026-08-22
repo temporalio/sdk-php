@@ -40,7 +40,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(
                             SearchAttributeKey::forDatetime('testDatetime'),
                             new \DateTimeImmutable('2019-01-01T00:00:00Z'),
-                        )
+                        ),
                 ),
         );
 
@@ -61,7 +61,7 @@ class TypedSearchAttributesTest extends TestCase
             'testKeywordList' => ['baz'],
             'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
                 ->format(\DateTimeInterface::RFC3339),
-        ], (array)$result);
+        ], (array) $result);
     }
 
     #[Test]
@@ -84,7 +84,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(
                             SearchAttributeKey::forDatetime('testDatetime'),
                             new \DateTimeImmutable('2019-01-01T00:00:00Z'),
-                        )
+                        ),
                 ),
         );
 
@@ -151,7 +151,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(
                             SearchAttributeKey::forDatetime('testDatetime'),
                             new \DateTimeImmutable('2019-01-01T00:00:00Z'),
-                        )
+                        ),
                 ),
         );
 
@@ -199,7 +199,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_TypedSearchAttributes")]
     public function handle()
     {
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => $this->exit,
         );
 

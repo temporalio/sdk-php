@@ -93,9 +93,9 @@ class TestWorkflow
     private bool $exit = false;
 
     #[WorkflowMethod(name: "Extra_Workflow_BuiltInPrefixedHandlers")]
-    public function handle()
+    public function handle(): void
     {
-        yield $this->onExit();
+        $this->onExit();
     }
 
     #[Workflow\UpdateMethod('register_query_with_prefix')]
@@ -137,9 +137,9 @@ class TestWorkflow
         $this->exit = true;
     }
 
-    private function onExit(): \Generator
+    private function onExit(): void
     {
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => $this->exit,
         );
     }

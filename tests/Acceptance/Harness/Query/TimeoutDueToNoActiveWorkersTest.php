@@ -57,9 +57,9 @@ class FeatureWorkflow
     private bool $beDone = false;
 
     #[WorkflowMethod('Harness_Query_TimeoutDueToNoActiveWorkers')]
-    public function run()
+    public function run(): void
     {
-        yield Workflow::await(fn(): bool => $this->beDone);
+        Workflow::await(fn(): bool => $this->beDone);
     }
 
     #[QueryMethod('simple_query')]

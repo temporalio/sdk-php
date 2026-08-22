@@ -33,28 +33,28 @@ class CancelledWithCompensationWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         // waits for 2 seconds
-        $slow = $simple->slow('DOING SLOW ACTIVITY');
+        $slow = Workflow::async(static fn() => $simple->slow('DOING SLOW ACTIVITY'));
 
         try {
-            $this->status[] = 'yield';
-            $result = yield $slow;
+            $this->status[] = 'await';
+            $result = $slow->await();
         } catch (CanceledFailure $e) {
             $this->status[] = 'rollback';
 
             try {
                 // must fail again
-                $result = yield $slow;
+                $result = $slow->await();
             } catch (CanceledFailure $e) {
                 $this->status[] = 'captured retry';
             }
 
             try {
                 // fail since on cancelled context
-                $result = yield $simple->echo('echo must fail');
+                $result = $simple->echo('echo must fail');
             } catch (CanceledFailure $e) {
                 $this->status[] = 'captured promise on cancelled';
             }
@@ -63,9 +63,9 @@ class CancelledWithCompensationWorkflow
                 function () use ($simple) {
                     $this->status[] = 'START rollback';
 
-                    $second = yield $simple->echo('rollback');
+                    $second = $simple->echo('rollback');
 
-                    $this->status[] = sprintf("RESULT (%s)", $second);
+                    $this->status[] = \sprintf("RESULT (%s)", $second);
 
                     if ($second !== 'ROLLBACK') {
                         $this->status[] = 'FAIL rollback';
@@ -74,11 +74,11 @@ class CancelledWithCompensationWorkflow
                     $this->status[] = 'DONE rollback';
 
                     return 'OK';
-                }
+                },
             );
 
             $this->status[] = 'WAIT ROLLBACK';
-            $result = yield $scope;
+            $result = $scope->await();
             $this->status[] = 'COMPLETE rollback';
         }
 

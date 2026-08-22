@@ -58,9 +58,9 @@ class EmptyTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_DataConverter_Empty')]
-    public function run()
+    public function run(): void
     {
-        yield Workflow::newActivityStub(
+        Workflow::newActivityStub(
             EmptyActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(10),
         )->nullActivity(null);

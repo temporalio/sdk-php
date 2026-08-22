@@ -58,10 +58,10 @@ class RetryOnErrorTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_Activity_CancelTryCancel')]
-    public function run()
+    public function run(): void
     {
         # Allow 4 retries with basically no backoff
-        yield Workflow::newActivityStub(
+        Workflow::newActivityStub(
             FeatureActivity::class,
             ActivityOptions::new()
                 ->withScheduleToCloseTimeout('1 minute')

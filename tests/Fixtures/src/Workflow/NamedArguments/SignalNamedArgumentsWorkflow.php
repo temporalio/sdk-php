@@ -24,9 +24,9 @@ class SignalNamedArgumentsWorkflow
     private array $array = [];
 
     #[WorkflowMethod]
-    public function handler(): \Generator|array
+    public function handler(): array
     {
-        yield Workflow::await(fn() => $this->int !== 0);
+        Workflow::await(fn() => $this->int !== 0);
 
         return [
             'int' => $this->int,

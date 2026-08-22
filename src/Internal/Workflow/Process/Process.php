@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\FeatureFlags;
@@ -77,13 +78,14 @@ class Process extends Scope implements ProcessInterface
                     Workflow::setCurrentContext($this->scopeContext);
                     $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
-                            Workflow::setCurrentContext($this->scopeContext->withInput(
+                            $context = $this->scopeContext->withInput(
                                 new Input(
                                     $this->scopeContext->getInfo(),
                                     $input->arguments,
                                     $input->header,
                                 ),
-                            ));
+                            );
+                            Workflow::setCurrentContext($context);
                             $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
@@ -129,39 +131,45 @@ class Process extends Scope implements ProcessInterface
         // Configure signal handler
         $workflowInstance->getSignalDispatcher()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
+                $previous = Facade::getCurrentContext();
+
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);
 
-                $inboundPipeline->with(
-                    function (SignalInput $input) use ($handler): void {
-                        $this->createScope(
-                            true,
-                            LoopInterface::ON_SIGNAL,
-                            $this->context->withInput(
-                                new Input($input->info, $input->arguments, $input->header),
-                            ),
-                        )->onClose(
-                            function (?\Throwable $error): void {
-                                if ($error !== null) {
-                                    // Fail process when signal scope fails
-                                    $this->complete($error);
-                                }
-                            },
-                        )->startSignal(
-                            $handler,
-                            $input->arguments,
-                            $input->signalName,
-                        );
-                    },
-                    /** @see WorkflowInboundCallsInterceptor::handleSignal() */
-                    'handleSignal',
-                )(new SignalInput(
-                    $name,
-                    $this->scopeContext->getInfo(),
-                    $arguments,
-                    $this->scopeContext->getHeader(),
-                    $this->scopeContext->isReplaying(),
-                ));
+                try {
+                    $inboundPipeline->with(
+                        function (SignalInput $input) use ($handler): void {
+                            $this->createScope(
+                                true,
+                                LoopInterface::ON_SIGNAL,
+                                $this->context->withInput(
+                                    new Input($input->info, $input->arguments, $input->header),
+                                ),
+                            )->onClose(
+                                function (?\Throwable $error): void {
+                                    if ($error !== null) {
+                                        // Fail process when signal scope fails
+                                        $this->complete($error);
+                                    }
+                                },
+                            )->startSignal(
+                                $handler,
+                                $input->arguments,
+                                $input->signalName,
+                            );
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::handleSignal() */
+                        'handleSignal',
+                    )(new SignalInput(
+                        $name,
+                        $this->scopeContext->getInfo(),
+                        $arguments,
+                        $this->scopeContext->getHeader(),
+                        $this->scopeContext->isReplaying(),
+                    ));
+                } finally {
+                    Workflow::setCurrentContext($previous);
+                }
             },
         );
 
@@ -240,7 +248,8 @@ class Process extends Scope implements ProcessInterface
                 ));
         } catch (\Throwable $e) {
             isset($this->context) or $this->setContext($context);
-            $context->setReadonly(false);
+            $this->context->setReadonly(false);
+            $this->scopeContext->setReadonly(false);
             $this->complete($e);
         } finally {
             Workflow::setCurrentContext(null);
@@ -341,7 +350,7 @@ class Process extends Scope implements ProcessInterface
                 'This may have interrupted work that the update handler was doing, and the client ' .
                 'that sent the update will receive a \'workflow execution already completed\' RPCError ' .
                 'instead of the update result. You can wait for all update and signal handlers ' .
-                'to complete by using `yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                'to complete by using `Workflow::await(fn() => Workflow::allHandlersFinished());`. ' .
                 'Alternatively, if both you and the clients sending the update are okay with interrupting ' .
                 'running handlers when the workflow finishes, and causing clients to receive errors, ' .
                 'then you can disable this warning via the update handler attribute: ' .
@@ -360,7 +369,7 @@ class Process extends Scope implements ProcessInterface
             $message = "Workflow `$workflowName` $happened while signal handlers are still running. " .
                 'This may have interrupted work that the signal handler was doing. ' .
                 'You can wait for all update and signal handlers to complete by using ' .
-                '`yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                '`Workflow::await(fn() => Workflow::allHandlersFinished());`. ' .
                 'Alternatively, if both you and the clients sending the signal are okay ' .
                 'with interrupting running handlers when the workflow finishes, ' .
                 'and causing clients to receive errors, then you can disable this warning via the signal ' .

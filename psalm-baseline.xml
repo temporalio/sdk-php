@@ -952,12 +952,6 @@
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$name]]></code>
     </ArgumentTypeCoercion>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[EncodedValues::decodePromise($this->request($request), $returnType)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[PromiseInterface]]></code>
-    </MoreSpecificReturnType>
   </file>
   <file src="src/Internal/Workflow/ChildWorkflowProxy.php">
     <MoreSpecificImplementedParamType>
@@ -968,42 +962,11 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->workflow]]></code>
     </ArgumentTypeCoercion>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->execution->promise()->then(
-            function (WorkflowExecution $execution) use ($name, $args) {
-                $request = new SignalExternalWorkflow(
-                    $this->getOptions()->namespace,
-                    $execution->getID(),
-                    null,
-                    $name,
-                    EncodedValues::fromValues($args),
-                    true,
-                );
-
-                return $this->request($request);
-            },
-        )]]></code>
-      <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
-      <code><![CDATA[EncodedValues::decodePromise($started)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[PromiseInterface]]></code>
-      <code><![CDATA[PromiseInterface]]></code>
-      <code><![CDATA[PromiseInterface]]></code>
-    </MoreSpecificReturnType>
-    <PossiblyNullArgument>
-      <code><![CDATA[$this->result]]></code>
-    </PossiblyNullArgument>
   </file>
   <file src="src/Internal/Workflow/Input.php">
     <PropertyTypeCoercion>
       <code><![CDATA[$header ?? Header::empty()]]></code>
     </PropertyTypeCoercion>
-  </file>
-  <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
-    <UnevaluatedCode>
-      <code><![CDATA[yield;]]></code>
-    </UnevaluatedCode>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
     <PropertyNotSetInConstructor>

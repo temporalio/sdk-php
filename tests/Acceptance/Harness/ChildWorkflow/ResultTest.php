@@ -25,9 +25,9 @@ class ResultTest extends TestCase
 class MainWorkflow
 {
     #[WorkflowMethod('Harness_ChildWorkflow_Result')]
-    public function run()
+    public function run(): string
     {
-        return yield Workflow::newChildWorkflowStub(ChildWorkflow::class)
+        return Workflow::newChildWorkflowStub(ChildWorkflow::class)
             ->run('Test');
     }
 }

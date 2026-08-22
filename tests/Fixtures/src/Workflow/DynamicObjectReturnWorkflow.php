@@ -15,41 +15,41 @@ use Temporal\Activity\ActivityOptions;
 class DynamicObjectReturnWorkflow
 {
     #[WorkflowMethod]
-    public function start(): iterable
+    public function start(): string
     {
         $opts = ActivityOptions::new()->withStartToCloseTimeout(5);
 
         $cp = 0;
-        $result = yield Workflow::executeActivity(
+        $result = Workflow::executeActivity(
             'DynamicObjectReturnActivity.doSomething',
             ['a'],
             $opts,
-            A::class
+            A::class,
         );
         if ($result instanceof A) {
             ++$cp;
         }
 
-        $result = yield Workflow::executeActivity(
+        $result = Workflow::executeActivity(
             'DynamicObjectReturnActivity.doSomething',
             ['b'],
             $opts,
-            new \ReflectionClass(B::class)
+            new \ReflectionClass(B::class),
         );
         if ($result instanceof B) {
             ++$cp;
         }
 
-        $result = yield Workflow::executeActivity('DynamicObjectReturnActivity.doSomething', ['a'], $opts);
+        $result = Workflow::executeActivity('DynamicObjectReturnActivity.doSomething', ['a'], $opts);
         if ($result instanceof \stdClass) {
             ++$cp;
         }
 
-        $result = yield Workflow::executeActivity(
+        $result = Workflow::executeActivity(
             'DynamicObjectReturnActivity.doSomething',
             ['b'],
             $opts,
-            Type::fromReflectionClass(new \ReflectionClass(B::class))
+            Type::fromReflectionClass(new \ReflectionClass(B::class)),
         );
         if ($result instanceof B) {
             ++$cp;

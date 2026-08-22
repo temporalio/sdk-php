@@ -337,7 +337,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * interruption of in-progress handlers by workflow exit:
      *
      * ```php
-     *  yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     *  Workflow::await(static fn() => Workflow::allHandlersFinished());
      * ```
      *
      * @return bool True if all handlers have finished executing.

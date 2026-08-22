@@ -27,6 +27,7 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Plugin\CompositePipelineProvider;
 use Temporal\Plugin\PluginInterface;
@@ -279,6 +280,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     {
         $this->emit(LoopInterface::ON_SIGNAL);
         $this->emit(LoopInterface::ON_CALLBACK);
+
+        if (Awaiter::isManaged()) {
+            $this->emit(LoopInterface::ON_TICK);
+            return;
+        }
+
         $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
         $this->emit(LoopInterface::ON_FINALLY);

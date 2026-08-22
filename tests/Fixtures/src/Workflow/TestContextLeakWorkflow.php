@@ -11,16 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use DateTimeImmutable;
-use DateTimeInterface;
-use Generator;
-use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowMethod;
-
-use function React\Promise\resolve;
 
 #[Workflow\WorkflowInterface]
 class TestContextLeakWorkflow
@@ -30,7 +24,7 @@ class TestContextLeakWorkflow
     private CustomTimer $timer;
 
     #[WorkflowMethod(name: 'TestContextLeakWorkflow')]
-    public function handler(): iterable
+    public function handler(): bool
     {
         $this->workflowId = Workflow::getInfo()->execution->getID();
         $this->runId = Workflow::getInfo()->execution->getRunID();
@@ -39,7 +33,7 @@ class TestContextLeakWorkflow
 
         $this->timer = new CustomTimer(Workflow::getInfo()->execution);
 
-        $timer = yield $this->timer->sleepUntil(new DateTimeImmutable('@' . (Workflow::now()->getTimestamp() + 5)));
+        $timer = $this->timer->sleepUntil(new \DateTimeImmutable('@' . (Workflow::now()->getTimestamp() + 5)));
 
         $this->checkContext();
 
@@ -54,8 +48,8 @@ class TestContextLeakWorkflow
         $this->checkContext();
     }
 
-    #[Workflow\QueryMethod()]
-    public function wakeup(): DateTimeInterface
+    #[Workflow\QueryMethod]
+    public function wakeup(): \DateTimeInterface
     {
         $this->checkContext();
         return $this->timer->getWakeUpTime();
@@ -72,39 +66,37 @@ class TestContextLeakWorkflow
 
 class CustomTimer
 {
-    private DateTimeInterface $wakeUpTime;
+    private \DateTimeInterface $wakeUpTime;
     private bool $isWakeUpTimeUpdated = false;
     private bool $isCancelled = false;
 
     public function __construct(
         private WorkflowExecution $execution,
-    ) {
-    }
+    ) {}
 
     /**
-     * Returns a promise that resolves to
+     * @return bool
      *  - `true` if the timer sleeps until `$wakeUpTime`.
      *  - `false` if the timer was interrupted by a cancellation, or if `$wakeUpTime` is in the past.
-     * @return Generator<int, PromiseInterface<bool>, bool, PromiseInterface<bool>>
      */
-    public function sleepUntil(DateTimeInterface $wakeUpTime): Generator
+    public function sleepUntil(\DateTimeInterface $wakeUpTime): bool
     {
         $this->wakeUpTime = $wakeUpTime;
 
         while (true) {
             $this->checkContext();
             if ($this->isCancelled) {
-                return resolve(false);
+                return false;
             }
 
             $this->isWakeUpTimeUpdated = false;
             $sleepInterval = $this->wakeUpTime->getTimestamp() - Workflow::now()->getTimestamp();
 
             if ($sleepInterval <= 0) {
-                return resolve(false);
+                return false;
             }
 
-            if (!yield Workflow::awaitWithTimeout(
+            if (!Workflow::awaitWithTimeout(
                 $sleepInterval,
                 function () {
                     $this->checkContext();
@@ -112,18 +104,18 @@ class CustomTimer
                 },
             )) {
                 $this->checkContext();
-                return resolve(true);
+                return true;
             }
         }
     }
 
-    public function updateWakeUpTime(DateTimeInterface $wakeUpTime): void
+    public function updateWakeUpTime(\DateTimeInterface $wakeUpTime): void
     {
         $this->wakeUpTime = $wakeUpTime;
         $this->isWakeUpTimeUpdated = true;
     }
 
-    public function getWakeUpTime(): DateTimeInterface
+    public function getWakeUpTime(): \DateTimeInterface
     {
         return $this->wakeUpTime;
     }

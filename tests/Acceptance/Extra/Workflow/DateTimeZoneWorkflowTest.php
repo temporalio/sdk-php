@@ -31,14 +31,14 @@ class MainWorkflow
     #[WorkflowMethod('Extra_Workflow_DateTimeZoneWorkflow')]
     public function run()
     {
-        yield Workflow::timer('1 seconds');
+        Workflow::timer('1 seconds');
 
         /**
          * @var \DateTimeImmutable $currentDate
          */
-        $currentDate = yield Workflow::sideEffect(static fn(): \DateTimeImmutable => new \DateTimeImmutable());
+        $currentDate = Workflow::sideEffect(static fn(): \DateTimeImmutable => new \DateTimeImmutable());
 
-        return yield [
+        return [
             'current' => [
                 'timestamp' => $currentDate->getTimestamp(),
                 'timezone.offset' => $currentDate->getTimeZone()->getOffset($currentDate),

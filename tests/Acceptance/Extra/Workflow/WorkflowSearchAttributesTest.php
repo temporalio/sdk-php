@@ -67,12 +67,12 @@ class WorkflowSearchAttributesTest extends TestCase
 class TestWorkflow
 {
     #[WorkflowMethod(name: "Extra_Workflow_WorkflowSearchAttributes")]
-    public function handle(?array $searchAttributes): \Generator
+    public function handle(?array $searchAttributes): ?array
     {
-        return yield Workflow::newChildWorkflowStub(
+        return Workflow::newChildWorkflowStub(
             TestWorkflowChild::class,
             Workflow\ChildWorkflowOptions::new()
-                ->withSearchAttributes($searchAttributes)
+                ->withSearchAttributes($searchAttributes),
         )->handle();
     }
 }

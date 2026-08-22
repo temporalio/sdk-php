@@ -86,6 +86,20 @@ class CancelPropagationTest extends TestCase
         );
     }
 
+    #[Test]
+    public function detachedScopeCanStillBeCancelledExplicitly(
+        #[Stub('Extra_Workflow_CancelDetachedExplicitly')] WorkflowStubInterface $stub,
+    ): void {
+        $this->assertSame(
+            [
+                'detached cleanup',
+                'detached cancellation observed',
+                'detached cancelled: true',
+            ],
+            $stub->getResult(timeout: 10),
+        );
+    }
+
     /**
      * Faithful replica of the reproduction attached to issue #769:
      * a nested scope and an await registered after the scope was cancelled.
@@ -119,22 +133,22 @@ class TestWorkflow
     public function handle()
     {
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
             $this->log[] = 'root cancelled';
         }
 
         try {
-            yield (function () {
-                yield Workflow::timer(1);
-            })();
+            Workflow::async(static function (): void {
+                Workflow::timer(1);
+            })->await();
             $this->log[] = 'nested timer completed';
         } catch (CanceledFailure) {
             $this->log[] = 'nested inherited cancel';
         }
 
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
             $this->log[] = 'await returned';
         } catch (CanceledFailure) {
             $this->log[] = 'await failed fast';
@@ -153,20 +167,20 @@ class CleanupOnceWorkflow
     public function handle()
     {
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
             $this->log[] = 'root cancelled';
         }
 
         try {
-            yield (function () {
+            Workflow::async(function (): void {
                 try {
-                    yield Workflow::timer(1);
+                    Workflow::timer(1);
                     $this->log[] = 'child timer done';
                 } finally {
                     $this->log[] = 'child cleanup';
                 }
-            })();
+            })->await();
         } catch (CanceledFailure) {
             $this->log[] = 'child caught';
         }
@@ -184,13 +198,13 @@ class CancelOnCancelHookWorkflow
     public function start()
     {
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
             $this->log[] = 'root cancelled';
         }
 
-        Workflow::async(function () {
-            yield Workflow::timer(1);
+        Workflow::async(static function (): void {
+            Workflow::timer(1);
         })->onCancel(function (): void {
             $this->log[] = 'oncancel fired';
         });
@@ -208,19 +222,48 @@ class DetachedSurvivesCancelWorkflow
     public function start()
     {
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
             $this->log[] = 'root cancelled';
         }
 
-        $detached = Workflow::asyncDetached(function () {
-            yield Workflow::timer(1);
+        $detached = Workflow::asyncDetached(static function (): string {
+            Workflow::timer(1);
             return 'detached completed';
         });
 
         $this->log[] = 'detached cancelled: ' . ($detached->isCancelled() ? 'true' : 'false');
-        $this->log[] = yield $detached;
+        $this->log[] = $detached->await();
 
+        return $this->log;
+    }
+}
+
+#[WorkflowInterface]
+class ExplicitDetachedCancelWorkflow
+{
+    private array $log = [];
+
+    #[WorkflowMethod(name: 'Extra_Workflow_CancelDetachedExplicitly')]
+    public function start(): array
+    {
+        $detached = Workflow::asyncDetached(function (): void {
+            try {
+                Workflow::await(static fn(): bool => false);
+            } finally {
+                $this->log[] = 'detached cleanup';
+            }
+        });
+
+        $detached->cancel();
+
+        try {
+            $detached->await();
+        } catch (CanceledFailure) {
+            $this->log[] = 'detached cancellation observed';
+        }
+
+        $this->log[] = 'detached cancelled: ' . ($detached->isCancelled() ? 'true' : 'false');
         return $this->log;
     }
 }
@@ -234,14 +277,14 @@ class Issue769Workflow
     public function start()
     {
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
         }
 
         $this->record('start');
 
         try {
-            yield $this->doSomething();
+            Workflow::async($this->doSomething(...))->await();
         } catch (CanceledFailure) {
         }
 
@@ -249,7 +292,7 @@ class Issue769Workflow
 
         $awaitThrew = false;
         try {
-            yield Workflow::await(static fn(): bool => false);
+            Workflow::await(static fn(): bool => false);
         } catch (CanceledFailure) {
             $awaitThrew = true;
         }
@@ -258,10 +301,10 @@ class Issue769Workflow
         return $this->log;
     }
 
-    private function doSomething(): \Generator
+    private function doSomething(): void
     {
         $this->record('timer in nested scope');
-        yield Workflow::timer(1);
+        Workflow::timer(1);
     }
 
     private function record(string $location): void

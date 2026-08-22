@@ -17,6 +17,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -56,6 +57,20 @@ final class ActivityStub implements ActivityStubInterface
     }
 
     public function execute(
+        string $name,
+        array $args = [],
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        bool $isLocalActivity = false,
+    ): mixed {
+        Awaiter::assertManaged();
+
+        return Awaiter::await(
+            $this->executeAsync($name, $args, $returnType, $isLocalActivity),
+            interruptOnCancel: false,
+        );
+    }
+
+    public function executeAsync(
         string $name,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,

@@ -34,27 +34,27 @@ class CancelledSingleScopeWorkflow
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
-                ->withStartToCloseTimeout(5)
+                ->withStartToCloseTimeout(5),
         );
 
         $this->status[] = 'start';
         try {
-            yield Workflow::async(
-                function () use ($simple) {
+            Workflow::async(
+                function () use ($simple): void {
                     try {
                         $this->status[] = 'in scope';
-                        yield $simple->slow('1');
+                        $simple->slow('1');
                     } catch (CanceledFailure $e) {
                         // after process is complete, do not use for business logic
                         $this->status[] = 'captured in scope';
                         throw $e;
                     }
-                }
+                },
             )->onCancel(
-                function () {
+                function (): void {
                     $this->status[] = 'on cancel';
-                }
-            );
+                },
+            )->await();
         } catch (CanceledFailure $e) {
             $this->status[] = 'captured in process';
         }

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
-use Temporal\Promise;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
@@ -25,19 +24,19 @@ class ParallelScopesWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
-        $a = Workflow::async(function () use ($simple, $input) {
-            return yield $simple->echo($input);
+        $a = Workflow::async(static function () use ($simple, $input) {
+            return $simple->echo($input);
         });
 
-        $b = Workflow::async(function () use ($simple, $input) {
-            return yield $simple->lower($input);
+        $b = Workflow::async(static function () use ($simple, $input) {
+            return $simple->lower($input);
         });
 
-        [$ra, $rb] = yield Promise::all([$a, $b]);
+        [$ra, $rb] = Workflow::all([$a, $b]);
 
-        return sprintf('%s|%s|%s', $ra, $input, $rb);
+        return \sprintf('%s|%s|%s', $ra, $input, $rb);
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Temporal\Tests\Workflow\NamedArguments;
 
 use Temporal\Workflow;
@@ -15,22 +17,22 @@ class ChildSignalNamedArgumentsWorkflow
         bool $bool = false,
         ?string $nullableString = null,
         array $array = [],
-    ): \Generator|array {
+    ): array {
         // one param
         $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
 
-        $run = $childStub->handler();
+        $run = Workflow::async(static fn() => $childStub->handler());
 
         $childStub->setValues(
             int: $int,
         );
 
-        $oneParamRes = yield $run;
+        $oneParamRes = $run->await();
 
         // params in different order
         $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
 
-        $run = $childStub->handler();
+        $run = Workflow::async(static fn() => $childStub->handler());
 
         $childStub->setValues(
             string: $string,
@@ -40,31 +42,31 @@ class ChildSignalNamedArgumentsWorkflow
             array: $array,
         );
 
-        $paramsInDifferentOrderRes = yield $run;
+        $paramsInDifferentOrderRes = $run->await();
 
         // missing params
         $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
 
-        $run = $childStub->handler();
+        $run = Workflow::async(static fn() => $childStub->handler());
 
         $childStub->setValues(
             int: $int,
             nullableString: $nullableString,
         );
 
-        $missingParamsRes = yield $run;
+        $missingParamsRes = $run->await();
 
         // missing param and different order
         $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
 
-        $run = $childStub->handler();
+        $run = Workflow::async(static fn() => $childStub->handler());
 
         $childStub->setValues(
             nullableString: $nullableString,
             int: $int,
         );
 
-        $missingParamAndDifferentOrderRes = yield $run;
+        $missingParamAndDifferentOrderRes = $run->await();
 
         return [
             'oneParamRes' => $oneParamRes,
