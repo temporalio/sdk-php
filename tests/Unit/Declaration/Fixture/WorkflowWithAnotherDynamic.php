@@ -14,11 +14,9 @@ namespace Temporal\Tests\Unit\Declaration\Fixture;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/** @WorkflowInterface */
 #[WorkflowInterface]
 class WorkflowWithAnotherDynamic
 {
-    /** @WorkflowMethod(dynamic=true) */
     #[WorkflowMethod(dynamic: true)]
     public function handler(): void
     {
