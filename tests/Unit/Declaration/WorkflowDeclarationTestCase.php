@@ -54,26 +54,21 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         $this->assertNull($prototype->getHandler());
     }
 
-    /**
-     * @param WorkflowReader $reader
-     * @throws \ReflectionException
-     */
+    /** @throws \ReflectionException */
     #[TestDox("Reading a dynamic (catch-all) workflow sets the dynamic flag")]
-    #[DataProvider('workflowReaderDataProvider')]
-    public function testDynamicWorkflow(WorkflowReader $reader): void
+    public function testDynamicWorkflow(): void
     {
+        $reader = new WorkflowReader(new AttributeReader());
+
         $this->assertTrue($reader->fromClass(WorkflowWithDynamic::class)->isDynamic());
         $this->assertFalse($reader->fromClass(SimpleWorkflow::class)->isDynamic());
     }
 
-    /**
-     * @param WorkflowReader $reader
-     * @throws \ReflectionException
-     */
+    /** @throws \ReflectionException */
     #[TestDox("At most one dynamic workflow may be registered per worker")]
-    #[DataProvider('workflowReaderDataProvider')]
-    public function testMultipleDynamicWorkflowsAreRejected(WorkflowReader $reader): void
+    public function testMultipleDynamicWorkflowsAreRejected(): void
     {
+        $reader = new WorkflowReader(new AttributeReader());
         $collection = new WorkflowCollection();
         $collection->add($reader->fromClass(WorkflowWithDynamic::class));
 
