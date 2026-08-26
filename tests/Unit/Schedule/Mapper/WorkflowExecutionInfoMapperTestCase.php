@@ -221,7 +221,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertEmpty($spec->getTimezoneName());
 
         // Test Policies
-        $this->assertEquals(60, $policies->getCatchupWindow()->getSeconds());
+        $this->assertNull($policies->getCatchupWindow());
         $this->assertFalse($policies->getPauseOnFailure());
         $this->assertEquals(ScheduleOverlapPolicy::SCHEDULE_OVERLAP_POLICY_UNSPECIFIED, $policies->getOverlapPolicy());
 

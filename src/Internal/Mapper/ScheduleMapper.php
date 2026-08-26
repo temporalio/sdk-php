@@ -41,7 +41,7 @@ final class ScheduleMapper
         $array = $this->marshaller->marshal($dto);
         $array['policies']['overlap_policy'] = $dto->policies->overlapPolicy->value;
 
-        $array['policies'] = new SchedulePolicies($array['policies'] ?? []);
+        $array['policies'] = new SchedulePolicies(self::cleanArray($array['policies'] ?? []));
         $array['spec'] = $this->prepareSpec($array['spec'] ?? []);
         $array['state'] = new ScheduleState($array['state'] ?? []);
         isset($array['action']) and $array['action'] = $this->prepareAction($dto->action, $array['action']);

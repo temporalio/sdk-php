@@ -16,6 +16,7 @@ use Temporal\Client\Schedule\ScheduleOptions;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClientInterface;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -65,6 +66,12 @@ class BasicTest extends TestCase
             $action = $description->schedule->action;
             self::assertInstanceOf(StartWorkflowAction::class, $action);
             self::assertSame($workflowId, $action->workflowId);
+            $catchupWindow = $description->schedule->policies->catchupWindow;
+            self::assertNotNull($catchupWindow);
+            self::assertSame(
+                365 * 24 * 60 * 60,
+                (int) DateInterval::parse($catchupWindow)->totalSeconds,
+            );
 
             // Confirm simple list
             $found = false;

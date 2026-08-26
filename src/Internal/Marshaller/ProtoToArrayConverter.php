@@ -51,14 +51,11 @@ final class ProtoToArrayConverter
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             ),
-            Duration::class => static function (Duration $input): \DateInterval {
-                $now = new \DateTimeImmutable('@0');
-                return $now->diff(
-                    $now->modify(
-                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000),
-                    ),
-                );
-            },
+            Duration::class => static fn(Duration $input): \DateInterval =>
+                \Temporal\Internal\Support\DateInterval::parse(
+                    (int) $input->getSeconds() * 1_000_000 + \intdiv($input->getNanos(), 1_000),
+                    \Temporal\Internal\Support\DateInterval::FORMAT_MICROSECONDS,
+                ),
             SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
                 EncodedCollection::fromPayloadCollection(
                     $input->getIndexedFields(),
