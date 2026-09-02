@@ -70,6 +70,9 @@ final class WorkflowExecutionInfo
          * 1. A workflow without parent workflow is its own root workflow.
          * 2. A workflow that has a parent workflow has the same root workflow as its parent workflow.
          *
+         * The root workflow's namespace is not retained and may differ from this workflow's namespace
+         * for cross-namespace child workflows. Track it separately if needed.
+         *
          * Note: workflows continued as new or reseted may or may not have parents, check examples below.
          *
          * Examples:

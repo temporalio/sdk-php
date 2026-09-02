@@ -113,6 +113,9 @@ final class WorkflowInfo
     public ?string $parentNamespace = null;
 
     /**
+     * Root workflow execution. Its namespace is not retained and may differ from this workflow's
+     * namespace for cross-namespace child workflows. Track it separately if needed.
+     *
      * @since SDK 2.16.0
      */
     #[Marshal(name: 'RootWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
