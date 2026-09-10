@@ -90,6 +90,10 @@ class InvokeActivity extends Route
             $payloads->setSerializationContext($serializationContext);
         }
 
+        if ($heartbeatDetails instanceof EncodedValues) {
+            $heartbeatDetails->setSerializationContext($serializationContext);
+        }
+
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
