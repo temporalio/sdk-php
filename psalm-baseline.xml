@@ -685,15 +685,6 @@
     <InvalidFalsableReturnType>
       <code><![CDATA[\DateTimeImmutable]]></code>
     </InvalidFalsableReturnType>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$mapper]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[\Closure(Message): mixed]]></code>
-    </MoreSpecificReturnType>
-    <NullableReturnStatement>
-      <code><![CDATA[$mapper]]></code>
-    </NullableReturnStatement>
     <PossiblyNullArgument>
       <code><![CDATA[$metadata->getDetails()]]></code>
       <code><![CDATA[$metadata->getSummary()]]></code>

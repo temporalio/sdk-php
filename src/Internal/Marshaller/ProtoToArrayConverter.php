@@ -38,13 +38,10 @@ final class ProtoToArrayConverter
         }
 
         $mapper = $this->getMapper($message);
-        return $mapper($message);
+        return $mapper === null ? $message : $mapper($message);
     }
 
-    /**
-     * @return \Closure(Message): mixed
-     */
-    private function getMapper(Message $message): \Closure
+    private function getMapper(Message $message): ?\Closure
     {
         $mapper = match ($message::class) {
             Timestamp::class => static fn(Timestamp $input): \DateTimeImmutable => \DateTimeImmutable::createFromFormat(
