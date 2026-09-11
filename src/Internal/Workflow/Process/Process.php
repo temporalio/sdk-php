@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\FeatureFlags;
@@ -130,38 +131,38 @@ class Process extends Scope implements ProcessInterface
         $workflowInstance->getSignalDispatcher()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 // Define Context for interceptors Pipeline
-                Workflow::setCurrentContext($this->scopeContext);
-
-                $inboundPipeline->with(
-                    function (SignalInput $input) use ($handler): void {
-                        $this->createScope(
-                            true,
-                            LoopInterface::ON_SIGNAL,
-                            $this->context->withInput(
-                                new Input($input->info, $input->arguments, $input->header),
-                            ),
-                        )->onClose(
-                            function (?\Throwable $error): void {
-                                if ($error !== null) {
-                                    // Fail process when signal scope fails
-                                    $this->complete($error);
-                                }
-                            },
-                        )->startSignal(
-                            $handler,
-                            $input->arguments,
-                            $input->signalName,
-                        );
-                    },
-                    /** @see WorkflowInboundCallsInterceptor::handleSignal() */
-                    'handleSignal',
-                )(new SignalInput(
-                    $name,
-                    $this->scopeContext->getInfo(),
-                    $arguments,
-                    $this->scopeContext->getHeader(),
-                    $this->scopeContext->isReplaying(),
-                ));
+                Facade::usingContext($this->scopeContext, function () use ($inboundPipeline, $handler, $name, $arguments): void {
+                    $inboundPipeline->with(
+                        function (SignalInput $input) use ($handler): void {
+                            $this->createScope(
+                                true,
+                                LoopInterface::ON_SIGNAL,
+                                $this->context->withInput(
+                                    new Input($input->info, $input->arguments, $input->header),
+                                ),
+                            )->onClose(
+                                function (?\Throwable $error): void {
+                                    if ($error !== null) {
+                                        // Fail process when signal scope fails
+                                        $this->complete($error);
+                                    }
+                                },
+                            )->startSignal(
+                                $handler,
+                                $input->arguments,
+                                $input->signalName,
+                            );
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::handleSignal() */
+                        'handleSignal',
+                    )(new SignalInput(
+                        $name,
+                        $this->scopeContext->getInfo(),
+                        $arguments,
+                        $this->scopeContext->getHeader(),
+                        $this->scopeContext->isReplaying(),
+                    ));
+                });
             },
         );
 
