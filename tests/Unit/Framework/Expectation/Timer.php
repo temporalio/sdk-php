@@ -19,14 +19,21 @@ final class Timer implements ExpectationInterface
 {
     private int $seconds;
 
-    public function __construct(int $seconds)
+    /**
+     * @param null|string $summary Timer summary to check. NULL means no check.
+     */
+    public function __construct(int $seconds, private readonly ?string $summary = null)
     {
         $this->seconds = $seconds;
     }
 
     public function matches(CommandInterface $command): bool
     {
-        return $command instanceof NewTimer && $command->getOptions()['ms'] / 1000 === $this->seconds;
+        if (!$command instanceof NewTimer || $command->getOptions()['ms'] / 1000 !== $this->seconds) {
+            return false;
+        }
+
+        return $this->summary === null || ($command->getOptions()['summary'] ?? null) === $this->summary;
     }
 
     public function run(CommandInterface $command): CommandInterface
@@ -36,6 +43,10 @@ final class Timer implements ExpectationInterface
 
     public function fail(): void
     {
-        throw new ExpectationFailedException("Expected timer for $this->seconds seconds.");
+        throw new ExpectationFailedException(
+            $this->summary === null
+                ? "Expected timer for $this->seconds seconds."
+                : "Expected timer for $this->seconds seconds with summary `$this->summary`.",
+        );
     }
 }

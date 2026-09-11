@@ -174,9 +174,9 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $this->server->expect(new ActivityCall($class, $method, $returnValues));
     }
 
-    public function expectTimer(int $seconds): void
+    public function expectTimer(int $seconds, ?string $summary = null): void
     {
-        $this->server->expect(new Timer($seconds));
+        $this->server->expect(new Timer($seconds, $summary));
     }
 
     public function assertWorkflowReturns($value): void
