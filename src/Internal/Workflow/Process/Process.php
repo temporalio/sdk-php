@@ -58,9 +58,12 @@ class Process extends Scope implements ProcessInterface
                         function (QueryInput $input) use ($handler): mixed {
                             $context = $this->scopeContext
                                 ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
-                            $context->setReadonly(true);
                             Workflow::setCurrentContext($context);
-                            return $handler($input->arguments);
+
+                            return $context->runReadOnly(
+                                static fn(): mixed => $handler($input->arguments),
+                                'a query handler',
+                            );
                         },
                         /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                         'handleQuery',
@@ -77,14 +80,18 @@ class Process extends Scope implements ProcessInterface
                     Workflow::setCurrentContext($this->scopeContext);
                     $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
-                            Workflow::setCurrentContext($this->scopeContext->withInput(
+                            $context = $this->scopeContext->withInput(
                                 new Input(
                                     $this->scopeContext->getInfo(),
                                     $input->arguments,
                                     $input->header,
                                 ),
-                            ));
-                            $handler($input->arguments);
+                            );
+                            Workflow::setCurrentContext($context);
+                            $context->runReadOnly(
+                                static fn(): mixed => $handler($input->arguments),
+                                'an update validator',
+                            );
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
                         'validateUpdate',

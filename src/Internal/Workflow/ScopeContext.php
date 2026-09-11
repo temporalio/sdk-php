@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\IllegalStateException;
 use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -55,6 +56,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $ctx->onRequest = $onRequest;
         $ctx->updateContext = $updateContext;
         $ctx->readonly = $context->readonly;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $ctx->guardReason = &$context->guardReason;
         $ctx->continueAsNew = $context->continueAsNew;
         $ctx->trace = &$context->trace;
         $ctx->currentDetails = &$context->currentDetails;
@@ -62,13 +65,30 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $ctx;
     }
 
+    /**
+     * A scope's copy of the initialization flag may predate the workflow becoming writable.
+     */
+    #[\Override]
+    public function assertWritable(): void
+    {
+        $this->guardReason === null or throw new IllegalStateException(
+            "Workflow calls that send commands are not allowed inside $this->guardReason.",
+        );
+
+        $this->parent->assertWritable();
+    }
+
     public function async(callable $handler): CancellationScopeInterface
     {
+        $this->assertWritable();
+
         return $this->scope->startScope($handler, false);
     }
 
     public function asyncDetached(callable $handler): CancellationScopeInterface
     {
+        $this->assertWritable();
+
         return $this->scope->startScope($handler, true);
     }
 
@@ -78,6 +98,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         bool $cancellable = true,
         bool $waitResponse = true,
     ): PromiseInterface {
+        $this->assertWritable();
+
         $cancellable && $this->scope->isCancelled() && throw new CanceledFailure(
             'Attempt to send request to cancelled scope',
         );

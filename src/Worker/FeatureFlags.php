@@ -89,4 +89,15 @@ final class FeatureFlags
      * @link https://github.com/temporalio/sdk-php/issues/399
      */
     public static bool $settleAwaitOnFirstSettledCondition = false;
+
+    /**
+     * Reject a call that sends a command from a callback that only observes the workflow: a query
+     * handler, an update validator, an await condition or a {@see Workflow::sideEffect()} callback.
+     * Such a command does not belong to the workflow's own sequence and breaks replay.
+     *
+     * Set to FALSE to keep the previous behavior, where the command is created.
+     *
+     * @since SDK 2.18.0
+     */
+    public static bool $readOnlyWorkflowCallbacks = true;
 }
