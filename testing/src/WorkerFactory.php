@@ -107,6 +107,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
                         $options->enableLoggingInReplay,
                         $taskQueue,
                     ),
+                    $options->getPayloadLimits(),
                 ),
                 $this->rpc,
             ),

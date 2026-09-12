@@ -14,14 +14,17 @@ namespace Temporal\Client\GRPC;
 use Carbon\CarbonInterval;
 use Grpc\BaseStub;
 use Grpc\UnaryCall;
+use Psr\Log\LoggerInterface;
 use Temporal\Client\Common\BackoffThrottler;
 use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
+use Temporal\Common\PayloadLimitOptions;
 use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
+use Temporal\Internal\Client\PayloadSizeChecker;
 use Temporal\Internal\Interceptor\Pipeline;
 
 abstract class BaseClient implements GrpcClientInterface
@@ -38,6 +41,12 @@ abstract class BaseClient implements GrpcClientInterface
     private Connection $connection;
     private ContextInterface $context;
     private \Stringable|string $apiKey = '';
+    private ?PayloadSizeChecker $payloadSizeChecker = null;
+
+    /**
+     * Whether the payload limits were configured explicitly, so a Client does not override them.
+     */
+    private bool $payloadLimitsConfigured = false;
 
     /**
      * @param BaseStub|\Closure(): BaseStub $serviceClient Service Client or its factory
@@ -164,6 +173,31 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
+     * Warn via the given logger when an outgoing request carries payloads larger than the limits.
+     *
+     * @experimental This API is experimental and may change in the future.
+     */
+    final public function withPayloadLimits(PayloadLimitOptions $options, LoggerInterface $logger): static
+    {
+        $clone = clone $this;
+        $clone->payloadSizeChecker = $options->isEnabled()
+            ? new PayloadSizeChecker($options, $logger)
+            : null;
+        $clone->payloadLimitsConfigured = true;
+        return $clone;
+    }
+
+    /**
+     * Apply the limits a Client is configured with, unless this instance already carries its own.
+     *
+     * @internal
+     */
+    final public function withDefaultPayloadLimits(PayloadLimitOptions $options, LoggerInterface $logger): static
+    {
+        return $this->payloadLimitsConfigured ? $this : $this->withPayloadLimits($options, $logger);
+    }
+
+    /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
      */
     final public function withInterceptorPipeline(?Pipeline $pipeline): static
@@ -207,6 +241,9 @@ abstract class BaseClient implements GrpcClientInterface
                 'Authorization' => ["Bearer $key"],
             ] + $ctx->getMetadata());
         }
+
+        // Measured before the pipeline, like the Go SDK does in its outermost client interceptor
+        $this->payloadSizeChecker?->check($method, $arg);
 
         return $this->invokePipeline !== null
             ? ($this->invokePipeline)($method, $arg, $ctx)

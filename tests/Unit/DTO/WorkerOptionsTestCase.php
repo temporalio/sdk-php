@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO;
 
+use Temporal\Common\PayloadLimitOptions;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
 use Temporal\Worker\WorkerDeploymentOptions;
@@ -332,6 +333,15 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
         self::assertNotSame($dto, $result);
         self::assertSame(0, $dto->maxConcurrentEagerActivityExecutionSize);
         self::assertSame(10, $result->maxConcurrentEagerActivityExecutionSize);
+    }
+
+    public function testPayloadLimitsAreNotSentToTheWorker(): void
+    {
+        $dto = (new WorkerOptions())->withPayloadLimits(PayloadLimitOptions::disabled());
+
+        // The limits configure the PHP side only
+        self::assertArrayNotHasKey('PayloadLimits', $this->marshal($dto));
+        self::assertArrayNotHasKey('payloadLimits', $this->marshal($dto));
     }
 
     public function testDisableRegistrationAliasing(): void
