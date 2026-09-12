@@ -304,8 +304,12 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
-        $this->context?->destroy();
-        $this->scopeContext?->destroy();
+        // A Destroyable workflow instance may use the Workflow facade from its destroy().
+        Facade::usingContext($this->scopeContext, function (): void {
+            $this->context?->destroy();
+            $this->scopeContext?->destroy();
+        });
+
         unset(
             $this->coroutine,
             $this->context,
