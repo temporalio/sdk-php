@@ -185,12 +185,6 @@
       <code><![CDATA[$priorityKey]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Common/RetryOptions.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
-      <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
-    </PossiblyNullArgument>
-  </file>
   <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
     <ImpureMethodCall>
       <code><![CDATA[valueSet]]></code>
