@@ -14,6 +14,7 @@ namespace Temporal\Client;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Enums\V1\QueryRejectCondition;
+use Temporal\Common\PayloadLimitOptions;
 use Temporal\Internal\Assert;
 
 /**
@@ -37,11 +38,43 @@ class ClientOptions
     public int $queryRejectionCondition = QueryRejectCondition::QUERY_REJECT_CONDITION_NONE;
 
     /**
+     * Payload size limits at which the client logs a warning about the requests it sends.
+     *
+     * NULL means the default limits, see {@see PayloadLimitOptions::new()}. The warnings are on
+     * by default and go to STDERR unless a logger is passed to the {@see \Temporal\Client\WorkflowClient};
+     * pass {@see PayloadLimitOptions::disabled()} to turn them off.
+     *
+     * @experimental This API is experimental and may change in the future.
+     */
+    public ?PayloadLimitOptions $payloadLimits = null;
+
+    /**
      * ClientOptions constructor.
      */
     public function __construct()
     {
         $this->identity = \sprintf('%d@%s', (string) \getmypid(), (string) \gethostname());
+    }
+
+    /**
+     * Payload size limits at which the client logs a warning about the requests it sends.
+     *
+     * The limits of the Worker are configured separately, see
+     * {@see \Temporal\Worker\WorkerOptions::withPayloadLimits()}.
+     *
+     * @param null|PayloadLimitOptions $options NULL restores the default limits,
+     *        {@see PayloadLimitOptions::disabled()} turns the warnings off.
+     *
+     * @experimental This API is experimental and may change in the future.
+     */
+    #[Pure]
+    public function withPayloadLimits(?PayloadLimitOptions $options): self
+    {
+        $self = clone $this;
+
+        $self->payloadLimits = $options;
+
+        return $self;
     }
 
     /**

@@ -13,7 +13,13 @@ final class StderrLogger implements LoggerInterface
 
     public function log($level, \Stringable|string $message, array $context = []): void
     {
-        \fwrite(\STDERR, \sprintf(
+        // The STDERR constant is defined by the CLI SAPI only
+        $stream = \defined('STDERR') ? \STDERR : \fopen('php://stderr', 'wb');
+        if ($stream === false) {
+            return;
+        }
+
+        \fwrite($stream, \sprintf(
             "[%s] %s: %s%s\n",
             (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             $level,

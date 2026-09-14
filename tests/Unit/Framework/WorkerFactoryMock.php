@@ -107,6 +107,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
                     $options->enableLoggingInReplay,
                     $taskQueue,
                 ),
+                $options->getPayloadLimits(),
             ),
         );
         $this->queues->add($worker);
