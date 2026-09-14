@@ -44,6 +44,7 @@ final class WorkflowPrototype extends Prototype
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
     private bool $hasInitializer = false;
+    private bool $dynamic = false;
     private VersioningBehavior $versioningBehavior;
 
     /**
@@ -70,6 +71,20 @@ final class WorkflowPrototype extends Prototype
     public function setHasInitializer(bool $hasInitializer): void
     {
         $this->hasInitializer = $hasInitializer;
+    }
+
+    /**
+     * Whether this is the dynamic (catch-all) workflow, invoked when no
+     * statically registered workflow matches the requested type name.
+     */
+    public function isDynamic(): bool
+    {
+        return $this->dynamic;
+    }
+
+    public function setDynamic(bool $dynamic): void
+    {
+        $this->dynamic = $dynamic;
     }
 
     public function getCronSchedule(): ?CronSchedule
