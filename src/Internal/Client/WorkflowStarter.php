@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Workflow\V1\OnConflictOptions as OnConflictOptionsProto;
 use Temporal\Api\Deployment\V1\WorkerDeploymentVersion;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
@@ -32,6 +33,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\DataConverter\DataConverterInterface;
@@ -47,6 +49,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Internal\Client\OnConflictOptions;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
@@ -276,6 +279,15 @@ final class WorkflowStarter
         );
     }
 
+    private static function onConflictOptionsToProto(OnConflictOptions $options): OnConflictOptionsProto
+    {
+        $proto = new OnConflictOptionsProto();
+        $proto->setAttachRequestId($options->attachRequestId);
+        $proto->setAttachCompletionCallbacks($options->attachCompletionCallbacks);
+        $proto->setAttachLinks($options->attachLinks);
+        return $proto;
+    }
+
     /**
      * @param StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request
      *        use {@see configureExecutionRequest()} to prepare request
@@ -295,6 +307,10 @@ final class WorkflowStarter
 
             \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
             $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
+
+            if ($request->getWorkflowIdConflictPolicy() === WorkflowIdConflictPolicy::UseExisting->value) {
+                return $execution;
+            }
 
             throw new WorkflowExecutionAlreadyStartedException(
                 $execution,
@@ -395,6 +411,10 @@ final class WorkflowStarter
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);
+
+            if ($options->onConflictOptions !== null) {
+                $req->setOnConflictOptions(self::onConflictOptionsToProto($options->onConflictOptions));
+            }
         }
 
         if (!$input->arguments->isEmpty()) {
