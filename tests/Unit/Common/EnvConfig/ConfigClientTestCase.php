@@ -19,7 +19,7 @@ use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
 
 #[CoversClass(ConfigClient::class)]
 #[CoversClass(ConfigProfile::class)]
-final class ConfigClientTest extends TestCase
+final class ConfigClientTestCase extends TestCase
 {
     private array $env;
 

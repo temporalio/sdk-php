@@ -239,12 +239,6 @@
       <code><![CDATA[$parts[1]]]></code>
     </PossiblyUndefinedArrayOffset>
   </file>
-  <file src="src/DataConverter/EncodedCollection.php">
-    <InvalidArgument>
-      <code><![CDATA[$name]]></code>
-      <code><![CDATA[$value]]></code>
-    </InvalidArgument>
-  </file>
   <file src="src/DataConverter/JsonConverter.php">
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
@@ -726,9 +720,6 @@
     </InvalidOperand>
   </file>
   <file src="src/Internal/Marshaller/Type/ObjectType.php">
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>
-    </InvalidPropertyAssignmentValue>
     <InvalidReturnStatement>
       <code><![CDATA[$this->reflection->getName() === \stdClass::class
             ? (object) $data
