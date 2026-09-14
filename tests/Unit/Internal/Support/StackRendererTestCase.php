@@ -18,7 +18,7 @@ use Temporal\Internal\Support\StackRenderer;
 
 #[RunTestsInSeparateProcesses]
 #[CoversClass(StackRenderer::class)]
-final class StackRendererTest extends TestCase
+final class StackRendererTestCase extends TestCase
 {
     public static function provideStackTraceWithDifferentPathTypes(): \Generator
     {

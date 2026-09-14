@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Unit\DataConverter;
+namespace Temporal\Tests\Unit\DataConverter;
 
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverter;
@@ -22,11 +22,15 @@ use Temporal\Tests\Unit\AbstractUnit;
  * @group unit
  * @group data-converter
  */
-class RawValueConverterTest extends AbstractUnit
+class RawValueConverterTestCase extends AbstractUnit
 {
     public function testRawPayloadEncoding(): void
     {
-        $innerPayload = new Payload(['data' => 1]);
+        // A raw value is passed through verbatim, metadata included.
+        $innerPayload = new Payload([
+            'data' => 1,
+            'metadata' => [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_RAW_VALUE],
+        ]);
         $message = new RawValue($innerPayload);
 
         $payload = DataConverter::createDefault()->toPayload($message);
