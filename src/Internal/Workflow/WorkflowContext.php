@@ -104,10 +104,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected array $trace = [];
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
-
-    /** @var non-empty-string|null What makes the whole activation read-only, shared by every context. */
-    protected ?string $guardReason = null;
-
+    protected bool $inReadOnlyCallback = false;
     protected ?string $currentDetails = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
@@ -184,38 +181,39 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function isReadonly(): bool
     {
-        return $this->readonly || $this->guardReason !== null;
+        return $this->readonly || $this->inReadOnlyCallback;
     }
 
     public function assertWritable(): void
     {
-        $this->guardReason === null or throw new IllegalStateException(
-            "Workflow calls that send commands are not allowed inside $this->guardReason.",
-        );
+        if ($this->inReadOnlyCallback) {
+            throw new IllegalStateException(
+                'Workflow calls that send commands are not allowed inside read-only callbacks.',
+            );
+        }
 
-        $this->readonly and throw new \RuntimeException('Workflow is not initialized.');
+        if ($this->readonly) {
+            throw new \RuntimeException('Workflow is not initialized.');
+        }
     }
 
     /**
-     * Runs a user callback with the whole activation marked read-only.
-     *
      * @template T
      * @param callable(): T $callback
-     * @param non-empty-string $what
      * @return T
      */
-    public function runReadOnly(callable $callback, string $what): mixed
+    public function runReadOnly(callable $callback): mixed
     {
-        if ($this->guardReason !== null || !FeatureFlags::$readOnlyWorkflowCallbacks) {
+        if ($this->inReadOnlyCallback || !FeatureFlags::$readOnlyWorkflowCallbacks) {
             return $callback();
         }
 
-        $this->guardReason = $what;
+        $this->inReadOnlyCallback = true;
 
         try {
             return $callback();
         } finally {
-            $this->guardReason = null;
+            $this->inReadOnlyCallback = false;
         }
     }
 
@@ -224,7 +222,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $clone = clone $this;
         $clone->awaits = &$this->awaits;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
-        $clone->guardReason = &$this->guardReason;
+        $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
         $clone->trace = &$this->trace;
         $clone->input = $input;
         return $clone;
@@ -315,7 +313,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                         /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
                         'sideEffect',
                     )(new SideEffectInput($closure, $options)),
-                    'a side effect callback',
                 );
             }
         } catch (\Throwable $e) {
@@ -720,7 +717,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
-                if ($this->runReadOnly($condition, 'an await condition')) {
+                if ($this->runReadOnly($condition)) {
                     unset($this->awaits[$awaitsGroupId][$i]);
                     $deferred->resolve(null);
                     $this->resolveConditionGroup($awaitsGroupId);
@@ -826,7 +823,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             if ($condition instanceof \Closure) {
                 $callableResult = $this->runReadOnly(
                     static fn(): mixed => $condition($conditionGroupId),
-                    'an await condition',
                 );
                 if ($callableResult === true) {
                     $this->resolveConditionGroup($conditionGroupId);
@@ -897,6 +893,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected function recordTrace(): void
     {
-        $this->isReadonly() or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+        if ($this->isReadonly()) {
+            return;
+        }
+
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }

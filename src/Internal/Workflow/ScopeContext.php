@@ -57,7 +57,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $ctx->updateContext = $updateContext;
         $ctx->readonly = $context->readonly;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
-        $ctx->guardReason = &$context->guardReason;
+        $ctx->inReadOnlyCallback = &$context->inReadOnlyCallback;
         $ctx->continueAsNew = $context->continueAsNew;
         $ctx->trace = &$context->trace;
         $ctx->currentDetails = &$context->currentDetails;
@@ -65,15 +65,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $ctx;
     }
 
-    /**
-     * A scope's copy of the initialization flag may predate the workflow becoming writable.
-     */
     #[\Override]
     public function assertWritable(): void
     {
-        $this->guardReason === null or throw new IllegalStateException(
-            "Workflow calls that send commands are not allowed inside $this->guardReason.",
-        );
+        if ($this->inReadOnlyCallback) {
+            throw new IllegalStateException(
+                'Workflow calls that send commands are not allowed inside read-only callbacks.',
+            );
+        }
 
         $this->parent->assertWritable();
     }

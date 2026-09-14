@@ -9,6 +9,8 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Interceptor\Header;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
@@ -55,7 +57,7 @@ final class ReadOnlyCallbackTestCase extends TestCase
 
         self::assertSame($queued, $this->factory->getQueue()->count(), 'A query handler created a command.');
         self::assertInstanceOf(IllegalStateException::class, $error);
-        self::assertStringContainsString('a query handler', $error->getMessage());
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $error->getMessage());
     }
 
     public function testAQueryHandlerDoesNotOverwriteTheWorkflowTrace(): void
@@ -101,7 +103,7 @@ final class ReadOnlyCallbackTestCase extends TestCase
 
         self::assertSame($queued, $this->factory->getQueue()->count(), 'An update validator created a command.');
         self::assertInstanceOf(IllegalStateException::class, $error);
-        self::assertStringContainsString('an update validator', $error->getMessage());
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $error->getMessage());
     }
 
     public function testTheGuardIsDisabledByItsFeatureFlag(): void
@@ -126,7 +128,7 @@ final class ReadOnlyCallbackTestCase extends TestCase
 
         self::assertSame(0, $this->factory->getQueue()->count(), 'An await condition created a command.');
         self::assertInstanceOf(IllegalStateException::class, $workflow->error);
-        self::assertStringContainsString('an await condition', $workflow->error->getMessage());
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $workflow->error->getMessage());
     }
 
     public function testASideEffectCallbackCannotCreateACommand(): void
@@ -135,7 +137,42 @@ final class ReadOnlyCallbackTestCase extends TestCase
         $this->start($workflow);
 
         self::assertInstanceOf(IllegalStateException::class, $workflow->error);
-        self::assertStringContainsString('a side effect callback', $workflow->error->getMessage());
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $workflow->error->getMessage());
+    }
+
+    public function testAnInboundInterceptorCannotCreateACommandAroundAQueryHandler(): void
+    {
+        $interceptor = new CommandSendingInboundInterceptor();
+        [$process, $instance] = $this->start(new HarmlessHandlersWorkflow(), [$interceptor]);
+
+        $handler = $instance->getQueryDispatcher()->findQueryHandler('harmless');
+        self::assertNotNull($handler);
+
+        $handler(new QueryInput('harmless', EncodedValues::empty(), $process->getContext()->getInfo()));
+
+        self::assertInstanceOf(IllegalStateException::class, $interceptor->error);
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $interceptor->error->getMessage());
+    }
+
+    public function testAnInboundInterceptorCannotCreateACommandAroundAnUpdateValidator(): void
+    {
+        $interceptor = new CommandSendingInboundInterceptor();
+        [$process, $instance] = $this->start(new HarmlessHandlersWorkflow(), [$interceptor]);
+
+        $validator = $instance->getUpdateDispatcher()->findValidateUpdateHandler('harmless');
+        self::assertNotNull($validator);
+
+        $validator(new UpdateInput(
+            'harmless',
+            'update-id',
+            $process->getContext()->getInfo(),
+            EncodedValues::empty(),
+            Header::empty(),
+            false,
+        ));
+
+        self::assertInstanceOf(IllegalStateException::class, $interceptor->error);
+        self::assertSame('Workflow calls that send commands are not allowed inside read-only callbacks.', $interceptor->error->getMessage());
     }
 
     protected function tearDown(): void
@@ -146,13 +183,13 @@ final class ReadOnlyCallbackTestCase extends TestCase
     /**
      * @return array{Process, WorkflowInstance}
      */
-    private function start(object $workflow): array
+    private function start(object $workflow, array $interceptors = []): array
     {
         $this->factory = new WorkerFactoryMock(DataConverter::createDefault());
         $services = ServiceContainer::fromWorkerFactory(
             $this->factory,
             ExceptionInterceptor::createDefault(),
-            new SimplePipelineProvider(),
+            new SimplePipelineProvider($interceptors),
             new StderrLogger(),
         );
 
@@ -290,4 +327,59 @@ final class SideEffectSendingWorkflow
 
         yield Workflow::await(static fn(): bool => false);
     }
+}
+
+final class CommandSendingInboundInterceptor implements WorkflowInboundCallsInterceptor
+{
+    use WorkflowInboundCallsInterceptorTrait;
+
+    public ?\Throwable $error = null;
+
+    public function handleQuery(QueryInput $input, callable $next): mixed
+    {
+        $result = $next($input);
+        $this->sendACommand();
+
+        return $result;
+    }
+
+    public function validateUpdate(UpdateInput $input, callable $next): void
+    {
+        $next($input);
+        $this->sendACommand();
+    }
+
+    private function sendACommand(): void
+    {
+        try {
+            Workflow::timer(5);
+        } catch (\Throwable $e) {
+            $this->error ??= $e;
+        }
+    }
+}
+
+#[WorkflowInterface]
+final class HarmlessHandlersWorkflow
+{
+    #[WorkflowMethod(name: 'HarmlessHandlersWorkflow')]
+    public function handle(): \Generator
+    {
+        yield Workflow::await(static fn(): bool => false);
+    }
+
+    #[QueryMethod(name: 'harmless')]
+    public function harmlessQuery(): string
+    {
+        return 'ok';
+    }
+
+    #[Workflow\UpdateMethod(name: 'harmless')]
+    public function harmlessUpdate(): string
+    {
+        return 'done';
+    }
+
+    #[UpdateValidatorMethod(forUpdate: 'harmlessUpdate')]
+    public function validateHarmless(): void {}
 }

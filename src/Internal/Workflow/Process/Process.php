@@ -55,20 +55,16 @@ class Process extends Scope implements ProcessInterface
         $workflowInstance->getQueryDispatcher()
             ->setQueryExecutor(function (QueryInput $input, callable $handler) use ($inboundPipeline): mixed {
                 try {
-                    return $inboundPipeline->with(
+                    return $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (QueryInput $input) use ($handler): mixed {
-                            $context = $this->scopeContext
-                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
-                            Workflow::setCurrentContext($context);
+                            Workflow::setCurrentContext($this->scopeContext
+                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments)));
 
-                            return $context->runReadOnly(
-                                static fn(): mixed => $handler($input->arguments),
-                                'a query handler',
-                            );
+                            return $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                         'handleQuery',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
@@ -79,24 +75,20 @@ class Process extends Scope implements ProcessInterface
             ->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
                 try {
                     Workflow::setCurrentContext($this->scopeContext);
-                    $inboundPipeline->with(
+                    $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
-                            $context = $this->scopeContext->withInput(
+                            Workflow::setCurrentContext($this->scopeContext->withInput(
                                 new Input(
                                     $this->scopeContext->getInfo(),
                                     $input->arguments,
                                     $input->header,
                                 ),
-                            );
-                            Workflow::setCurrentContext($context);
-                            $context->runReadOnly(
-                                static fn(): mixed => $handler($input->arguments),
-                                'an update validator',
-                            );
+                            ));
+                            $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
                         'validateUpdate',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
