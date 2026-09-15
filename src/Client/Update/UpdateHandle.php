@@ -10,6 +10,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
@@ -144,17 +145,22 @@ final class UpdateHandle
              */
         } while ($result === null);
 
+        $context = new WorkflowSerializationContext(
+            $this->clientOptions->namespace,
+            $this->getExecution()->getID(),
+        );
+
         // Accepted with result
         $success = $result->getSuccess();
         if ($success !== null) {
-            $this->result = EncodedValues::fromPayloads($success, $this->converter);
+            $this->result = EncodedValues::fromPayloads($success, $this->converter)->withSerializationContext($context);
             return;
         }
 
         // Accepted with failure
         $failure = $result->getFailure();
         \assert($failure !== null);
-        $e = FailureConverter::mapFailureToException($failure, $this->converter);
+        $e = FailureConverter::mapFailureToException($failure, $this->converter, $context);
 
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),

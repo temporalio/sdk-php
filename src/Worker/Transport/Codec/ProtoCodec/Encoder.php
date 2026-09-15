@@ -35,6 +35,13 @@ class Encoder
     public function encode(CommandInterface $cmd): Message
     {
         $msg = new Message();
+        $payloads = match (true) {
+            $cmd instanceof RequestInterface,
+            $cmd instanceof SuccessResponseInterface,
+            $cmd instanceof UpdateResponse => $cmd->getPayloads(),
+            default => null,
+        };
+        $context = $payloads?->getSerializationContext();
 
         switch (true) {
             case $cmd instanceof RequestInterface:
@@ -56,7 +63,7 @@ class Encoder
                 $msg->setHeader($header->toHeader());
 
                 if ($cmd->getFailure() !== null) {
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter, $context));
                 }
 
                 return $msg;
@@ -78,13 +85,14 @@ class Encoder
                 $msg->setCommand($cmd->getCommand());
                 $msg->setOptions(\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE));
 
+                $updatePayloads = $cmd->getPayloads();
                 if ($cmd->getFailure() !== null) {
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter, $context));
                 }
 
-                if ($cmd->getPayloads() !== null) {
-                    $cmd->getPayloads()->setDataConverter($this->converter);
-                    $msg->setPayloads($cmd->getPayloads()->toPayloads());
+                if ($updatePayloads !== null) {
+                    $updatePayloads->setDataConverter($this->converter);
+                    $msg->setPayloads($updatePayloads->toPayloads());
                 }
 
                 return $msg;

@@ -16,6 +16,7 @@ use Temporal\Client\ActivityCompletionClientInterface;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityCanceledException;
@@ -29,6 +30,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
+    private ?ActivitySerializationContext $context = null;
 
     public function __construct(
         ServiceClientInterface $client,
@@ -38,6 +40,14 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         $this->client = $client;
         $this->clientOptions = $clientOptions;
         $this->converter = $converter;
+    }
+
+    public function withContext(ActivitySerializationContext $context): self
+    {
+        $clone = clone $this;
+        $clone->context = $context;
+
+        return $clone;
     }
 
     public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void
@@ -50,7 +60,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setRunId($runId ?? '')
             ->setActivityId($activityId);
 
-        $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 3), $this->converter);
+        $input = $this->encode(\array_slice(\func_get_args(), 3));
         if (!$input->isEmpty()) {
             $r->setResult($input->toPayloads());
         }
@@ -75,7 +85,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskToken($taskToken);
 
-        $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 1), $this->converter);
+        $input = $this->encode(\array_slice(\func_get_args(), 1));
         if (!$input->isEmpty()) {
             $r->setResult($input->toPayloads());
         }
@@ -103,8 +113,9 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setNamespace($this->clientOptions->namespace)
             ->setWorkflowId($workflowId)
             ->setRunId($runId ?? '')
-            ->setActivityId($activityId)
-            ->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter));
+            ->setActivityId($activityId);
+
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter, $this->context));
 
         try {
             $this->client->RespondActivityTaskFailedById($r);
@@ -123,8 +134,9 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         $r
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
-            ->setTaskToken($taskToken)
-            ->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter));
+            ->setTaskToken($taskToken);
+
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter, $this->context));
 
         try {
             $this->client->RespondActivityTaskFailed($r);
@@ -148,7 +160,8 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setActivityId($activityId);
 
         if (\func_num_args() == 4) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
+            $input = $this->encode([$details]);
+            $r->setDetails($input->toPayloads());
         }
 
         try {
@@ -167,7 +180,8 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setTaskToken($taskToken);
 
         if (\func_num_args() == 2) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
+            $input = $this->encode([$details]);
+            $r->setDetails($input->toPayloads());
         }
 
         try {
@@ -188,7 +202,8 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setActivityId($activityId);
 
         if (\func_num_args() == 4) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
+            $input = $this->encode([$details]);
+            $r->setDetails($input->toPayloads());
         }
 
         try {
@@ -214,7 +229,8 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setTaskToken($taskToken);
 
         if (\func_num_args() == 2) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
+            $input = $this->encode([$details]);
+            $r->setDetails($input->toPayloads());
         }
 
         try {
@@ -229,5 +245,10 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
             throw ActivityCompletionFailureException::fromPrevious($e);
         }
+    }
+
+    private function encode(array $values): EncodedValues
+    {
+        return EncodedValues::fromValues($values, $this->converter)->withSerializationContext($this->context);
     }
 }
