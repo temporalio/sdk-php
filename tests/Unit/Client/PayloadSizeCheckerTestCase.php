@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 use Temporal\Api\Batch\V1\BatchOperationSignal;
+use Temporal\Api\Batch\V1\BatchOperationTermination;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
@@ -222,6 +223,14 @@ final class PayloadSizeCheckerTestCase extends TestCase
         yield 'StartBatchOperation: signal input' => [
             static fn() => (new StartBatchOperationRequest())->setSignalOperation(
                 (new BatchOperationSignal())->setInput(self::payloads(2000)),
+            ),
+            'StartBatchOperation',
+            ['payloads'],
+        ];
+
+        yield 'StartBatchOperation: termination details' => [
+            static fn() => (new StartBatchOperationRequest())->setTerminationOperation(
+                (new BatchOperationTermination())->setDetails(self::payloads(2000)),
             ),
             'StartBatchOperation',
             ['payloads'],

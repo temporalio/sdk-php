@@ -137,6 +137,7 @@ final class PayloadSizeChecker
 
             case $request instanceof StartBatchOperationRequest:
                 $this->payloads($method, $request->getSignalOperation()?->getInput());
+                $this->payloads($method, $request->getTerminationOperation()?->getDetails());
                 return;
 
             case $request instanceof ResetWorkflowExecutionRequest:

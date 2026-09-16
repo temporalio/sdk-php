@@ -180,6 +180,21 @@ final class PayloadLimitsTestCase extends TestCase
         self::assertCount(1, $this->records);
     }
 
+    public function testTheSecondClientOnAServiceClientKeepsItsOwnLimits(): void
+    {
+        $first = new WorkflowClient($this->createClient(), logger: $this->createLogger());
+
+        $second = new WorkflowClient(
+            $this->serviceClientOf($first),
+            (new ClientOptions())->withPayloadLimits(PayloadLimitOptions::disabled()),
+            logger: $this->createLogger(),
+        );
+
+        $this->serviceClientOf($second)->testCall($this->request(1024 * 1024));
+
+        self::assertSame([], $this->records);
+    }
+
     public function testClientIsImmutable(): void
     {
         $client = $this->createClient();

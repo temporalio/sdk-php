@@ -186,7 +186,14 @@ abstract class BaseClient implements GrpcClientInterface
      */
     final public function withDefaultPayloadLimits(PayloadLimitOptions $options, LoggerInterface $logger): static
     {
-        return $this->payloadLimitsConfigured ? $this : $this->withPayloadLimits($options, $logger);
+        if ($this->payloadLimitsConfigured) {
+            return $this;
+        }
+
+        $clone = $this->withPayloadLimits($options, $logger);
+        $clone->payloadLimitsConfigured = false;
+
+        return $clone;
     }
 
     /**
