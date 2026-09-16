@@ -43,7 +43,6 @@ use Temporal\Common\PayloadLimitOptions;
 final class PayloadSizeChecker
 {
     private const MESSAGE_CODE = 'TMPRL1103';
-
     private const MAX_FAILURE_DEPTH = 20;
 
     public function __construct(

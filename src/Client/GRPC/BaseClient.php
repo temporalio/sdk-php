@@ -42,7 +42,6 @@ abstract class BaseClient implements GrpcClientInterface
     private ContextInterface $context;
     private \Stringable|string $apiKey = '';
     private ?PayloadSizeChecker $payloadSizeChecker = null;
-
     private bool $payloadLimitsConfigured = false;
 
     /**

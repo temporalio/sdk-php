@@ -17,7 +17,6 @@ namespace Temporal\Common;
 final class PayloadLimitOptions
 {
     public const DEFAULT_PAYLOAD_SIZE_WARNING = 512 * 1024;
-
     public const DEFAULT_MEMO_SIZE_WARNING = 2 * 1024;
 
     /**
