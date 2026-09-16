@@ -15,7 +15,7 @@ use Temporal\Common\EnvConfig\Client\ConfigTls;
 use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 
 #[CoversClass(ConfigProfile::class)]
-final class ConfigProfileTest extends TestCase
+final class ConfigProfileTestCase extends TestCase
 {
     public static function provideStringableApiKeys(): \Generator
     {
