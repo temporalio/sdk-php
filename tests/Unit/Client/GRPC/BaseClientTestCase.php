@@ -214,6 +214,28 @@ class BaseClientTestCase extends TestCase
         $client->testCall();
     }
 
+    public function testCancelledCallThatOutlivedItsTimeoutIsTimeout(): void
+    {
+        $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
+            public function __construct() {}
+
+            public function testCall(): void
+            {
+                \usleep(120_000);
+
+                throw new class((object) ['code' => StatusCode::CANCELLED, 'metadata' => []]) extends ServiceClientException {};
+            }
+
+            public function close(): void {}
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext($client->getContext()->withTimeout(0.05));
+
+        self::expectException(TimeoutException::class);
+
+        $client->testCall();
+    }
+
     public function testCancelledCallBeforeDeadlineIsCancellation(): void
     {
         $client = $this->createCancellingClientMock()->withContext(
