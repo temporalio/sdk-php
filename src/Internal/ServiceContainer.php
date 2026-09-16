@@ -13,7 +13,6 @@ namespace Temporal\Internal;
 
 use Psr\Log\LoggerInterface;
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Common\PayloadLimitOptions;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
@@ -55,7 +54,6 @@ final class ServiceContainer
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
         public readonly LoggerInterface $logger,
-        public readonly ?PayloadLimitOptions $payloadLimits = null,
     ) {
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -69,7 +67,6 @@ final class ServiceContainer
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
         LoggerInterface $logger,
-        ?PayloadLimitOptions $payloadLimits = null,
     ): self {
         return new self(
             $worker,
@@ -82,7 +79,6 @@ final class ServiceContainer
             $exceptionInterceptor,
             $interceptorProvider,
             $logger,
-            $payloadLimits,
         );
     }
 }

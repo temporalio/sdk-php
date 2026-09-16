@@ -56,10 +56,6 @@ final class PayloadSizeChecker
      */
     public function check(string $method, object $request): void
     {
-        if (!$this->limits->isEnabled()) {
-            return;
-        }
-
         try {
             $this->inspect($method, $request);
         } catch (\Throwable) {

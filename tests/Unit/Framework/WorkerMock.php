@@ -18,7 +18,6 @@ use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
 use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
-use Temporal\Tests\Unit\Framework\Requests\ReplayWorkflow;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
 use Temporal\Tests\Unit\Framework\Server\ServerMock;
@@ -64,13 +63,6 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $runId = Uuid::v4();
         $this->execution[$workflowCLass] = $runId;
         $this->server->addCommand(new StartWorkflow($runId, $workflowCLass, ...$args));
-    }
-
-    public function replayWorkflow(string $workflowCLass, ...$args): void
-    {
-        $runId = Uuid::v4();
-        $this->execution[$workflowCLass] = $runId;
-        $this->server->addCommand(new ReplayWorkflow($runId, $workflowCLass, ...$args));
     }
 
     public function sendSignal(string $workflow, string $name, mixed ...$args): void

@@ -13,7 +13,6 @@ namespace Temporal\Worker;
 
 use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
-use Temporal\Common\PayloadLimitOptions;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
@@ -322,11 +321,6 @@ class WorkerOptions
      */
     #[Marshal(name: 'DeploymentOptions')]
     public WorkerDeploymentOptions $deploymentOptions;
-
-    /**
-     * @experimental This API is experimental and may change in the future.
-     */
-    private ?PayloadLimitOptions $payloadLimits = null;
 
     #[Pure]
     public static function new(): self
@@ -791,25 +785,6 @@ class WorkerOptions
         $self = clone $this;
         $self->maxConcurrentEagerActivityExecutionSize = $size;
         return $self;
-    }
-
-    /**
-     * @experimental This API is experimental and may change in the future.
-     */
-    #[Pure]
-    public function withPayloadLimits(?PayloadLimitOptions $options): self
-    {
-        $self = clone $this;
-        $self->payloadLimits = $options;
-        return $self;
-    }
-
-    /**
-     * @experimental This API is experimental and may change in the future.
-     */
-    public function getPayloadLimits(): PayloadLimitOptions
-    {
-        return $this->payloadLimits ?? PayloadLimitOptions::new();
     }
 
     /**

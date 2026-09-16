@@ -113,7 +113,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
     private Pipeline $callsInterceptor;
 
-    private ?PayloadSizeWarner $payloadSizeWarner = null;
     private readonly QueryDispatcher $queryDispatcher;
     private readonly SignalDispatcher $signalDispatcher;
     private readonly UpdateDispatcher $updateDispatcher;
@@ -543,8 +542,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
             function (RequestInterface $request) use ($waitResponse): PromiseInterface {
-                $this->payloadSizeWarner()?->check($request);
-
                 if (!$waitResponse) {
                     $this->client->send($request);
                     return Promise::resolve();
@@ -901,19 +898,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    private function payloadSizeWarner(): ?PayloadSizeWarner
-    {
-        $limits = $this->services->payloadLimits;
-
-        return $limits?->isEnabled() === true
-            ? $this->payloadSizeWarner ??= new PayloadSizeWarner(
-                $limits,
-                $this->services->dataConverter,
-                $this->services->env,
-                $this->services->logger,
-            )
-            : null;
     }
 }

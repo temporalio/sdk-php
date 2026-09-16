@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\PayloadLimitOptions;
-use Temporal\Worker\WorkerOptions;
 
 final class PayloadLimitOptionsTestCase extends TestCase
 {
@@ -25,23 +24,6 @@ final class PayloadLimitOptionsTestCase extends TestCase
     {
         self::assertNull((new ClientOptions())->payloadLimits);
         self::assertNull((new ClientOptions())->withPayloadLimits(PayloadLimitOptions::new())->withPayloadLimits(null)->payloadLimits);
-        self::assertEquals(PayloadLimitOptions::new(), (new WorkerOptions())->getPayloadLimits());
-        self::assertEquals(
-            PayloadLimitOptions::new(),
-            (new WorkerOptions())->withPayloadLimits(PayloadLimitOptions::disabled())
-                ->withPayloadLimits(null)
-                ->getPayloadLimits(),
-        );
-    }
-
-    public function testTheWorkerGetterResolvesTheDefaultsWithoutStoringThem(): void
-    {
-        $options = WorkerOptions::new();
-
-        $first = $options->getPayloadLimits();
-
-        self::assertEquals($first, $options->getPayloadLimits());
-        self::assertEquals(PayloadLimitOptions::new(), $first);
     }
 
     public function testWithersAreImmutable(): void
@@ -94,20 +76,6 @@ final class PayloadLimitOptionsTestCase extends TestCase
         self::assertNull($options->payloadLimits);
     }
 
-    public function testWorkerOptionsCarryTheLimits(): void
-    {
-        $options = WorkerOptions::new();
-        $limits = PayloadLimitOptions::disabled();
-
-        $result = $options->withPayloadLimits($limits);
-
-        self::assertNotSame($options, $result);
-        self::assertSame($limits, $result->getPayloadLimits());
-        self::assertSame(
-            PayloadLimitOptions::DEFAULT_PAYLOAD_SIZE_WARNING,
-            $options->getPayloadLimits()->payloadSizeWarning,
-        );
-    }
 
     public function testClientOptionsDisableLimits(): void
     {
