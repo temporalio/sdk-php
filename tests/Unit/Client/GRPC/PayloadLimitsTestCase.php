@@ -8,9 +8,14 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
+use Temporal\Api\Workflowservice\V1\CreateScheduleResponse;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\ClientOptions;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\ScheduleClient;
 use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
@@ -195,6 +200,21 @@ final class PayloadLimitsTestCase extends TestCase
         self::assertSame([], $this->records);
     }
 
+    public function testScheduleClientMeasuresTheRequestItBuilds(): void
+    {
+        ScheduleClient::create($this->createClient(), logger: $this->createLogger())
+            ->createSchedule(
+                Schedule::new()->withAction(
+                    StartWorkflowAction::new('Foo')
+                        ->withInput([\str_repeat('x', PayloadLimitOptions::DEFAULT_PAYLOAD_SIZE_WARNING + 1)]),
+                ),
+            );
+
+        self::assertCount(1, $this->records);
+        self::assertStringContainsString('[TMPRL1103]', $this->records[0][0]);
+        self::assertSame('CreateSchedule', $this->records[0][1]['method']);
+    }
+
     public function testClientIsImmutable(): void
     {
         $client = $this->createClient();
@@ -272,16 +292,26 @@ final class PayloadLimitsTestCase extends TestCase
                 return ConnectionState::Ready->value;
             }
 
+            public function CreateSchedule(CreateScheduleRequest $argument, $metadata = [], $options = [])
+            {
+                return $this->unaryCall(new CreateScheduleResponse());
+            }
+
             public function testCall(object $arg, array $metadata = [], array $options = []): object
+            {
+                return $this->unaryCall((object) ['result' => true]);
+            }
+
+            private function unaryCall(object $result): object
             {
                 $code = $this->failures-- > 0 ? StatusCode::UNAVAILABLE : 0;
 
-                return new class($code) {
-                    public function __construct(private int $code) {}
+                return new class($code, $result) {
+                    public function __construct(private int $code, private object $result) {}
 
                     public function wait(): array
                     {
-                        return [(object) ['result' => true], (object) ['code' => $this->code, 'details' => '']];
+                        return [$this->result, (object) ['code' => $this->code, 'details' => '']];
                     }
                 };
             }
