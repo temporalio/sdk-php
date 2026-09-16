@@ -543,7 +543,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
             function (RequestInterface $request) use ($waitResponse): PromiseInterface {
-                // Warn about oversized payloads of the command that is about to be sent
                 $this->payloadSizeWarner()?->check($request);
 
                 if (!$waitResponse) {
@@ -904,9 +903,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
-    /**
-     * NULL when the payload size warning is disabled.
-     */
     private function payloadSizeWarner(): ?PayloadSizeWarner
     {
         $limits = $this->services->payloadLimits;

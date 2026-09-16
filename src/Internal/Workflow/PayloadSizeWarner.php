@@ -19,20 +19,10 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
- * Warns when a command produced by a Workflow carries payloads larger than the configured limit.
- *
- * The payloads are measured the same way the server measures them, so the check costs one extra
- * conversion per command that carries payloads; measuring the result of that conversion is free.
- * Replayed commands are skipped entirely: they are not sent to the server, so there is nothing
- * to warn about.
- *
  * @internal
  */
 final class PayloadSizeWarner
 {
-    /**
-     * Message code used by all the SDKs for the payload size warning.
-     */
     private const MESSAGE_CODE = 'TMPRL1103';
 
     public function __construct(
@@ -42,13 +32,8 @@ final class PayloadSizeWarner
         private readonly LoggerInterface $logger,
     ) {}
 
-    /**
-     * Measure a command that is about to be sent to the server.
-     */
     public function check(RequestInterface $request): void
     {
-        // A replayed command is not sent anywhere, so it is never measured nor reported,
-        // the same way the other SDKs check the payloads only when the request is sent.
         if ($this->env->isReplaying()) {
             return;
         }
@@ -64,8 +49,6 @@ final class PayloadSizeWarner
             $this->warn($request->getName(), 'payloads', $sizes['payloads'], $this->limits->payloadSizeWarning);
             $this->warn($request->getName(), 'memo', $sizes['memo'], $this->limits->memoSizeWarning);
         } catch (\Throwable) {
-            // Measuring and reporting is an observability feature: it must not affect the Workflow
-            // in any way. A value that cannot be converted fails later, in the codec, as before.
         }
     }
 

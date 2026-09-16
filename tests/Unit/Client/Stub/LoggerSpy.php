@@ -7,8 +7,6 @@ namespace Temporal\Tests\Unit\Client\Stub;
 use Psr\Log\AbstractLogger;
 
 /**
- * Collects the log records with their level, so a test can assert on all of them.
- *
  * @internal
  */
 final class LoggerSpy extends AbstractLogger

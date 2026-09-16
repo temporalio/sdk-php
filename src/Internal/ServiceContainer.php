@@ -55,10 +55,6 @@ final class ServiceContainer
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
         public readonly LoggerInterface $logger,
-        /**
-         * Limits the Worker was configured with. Unlike the option objects, NULL here means
-         * the warnings are off: this container has no opinion about the defaults.
-         */
         public readonly ?PayloadLimitOptions $payloadLimits = null,
     ) {
         $this->workflows = new WorkflowCollection();

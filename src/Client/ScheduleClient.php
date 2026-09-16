@@ -56,11 +56,6 @@ final class ScheduleClient implements ScheduleClientInterface
     private ProtoToArrayConverter $protoConverter;
     private PluginRegistry $pluginRegistry;
 
-    /**
-     * @param null|LoggerInterface $logger Logger for client-side warnings, e.g. the payload size
-     *        warning configured by {@see ClientOptions::withPayloadLimits()}. Defaults to a logger
-     *        that writes to STDERR, like the Worker does.
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
@@ -98,7 +93,6 @@ final class ScheduleClient implements ScheduleClientInterface
         );
         $this->protoConverter = new ProtoToArrayConverter($this->converter);
 
-        // Warn about oversized payloads, unless the service client carries its own limits
         if ($serviceClient instanceof BaseClient) {
             $serviceClient = $serviceClient->withDefaultPayloadLimits(
                 $this->clientOptions->payloadLimits ?? PayloadLimitOptions::new(),

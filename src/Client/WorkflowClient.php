@@ -79,11 +79,6 @@ class WorkflowClient implements WorkflowClientInterface
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
 
-    /**
-     * @param null|LoggerInterface $logger Logger for client-side warnings, e.g. the payload size
-     *        warning configured by {@see ClientOptions::withPayloadLimits()}. Defaults to a logger
-     *        that writes to STDERR, like the Worker does.
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
@@ -126,7 +121,6 @@ class WorkflowClient implements WorkflowClientInterface
         $this->interceptorPipeline = $provider->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->reader = new WorkflowReader($this->createReader());
 
-        // Warn about oversized payloads, unless the service client carries its own limits
         if ($serviceClient instanceof BaseClient) {
             $serviceClient = $serviceClient->withDefaultPayloadLimits(
                 $this->clientOptions->payloadLimits ?? PayloadLimitOptions::new(),

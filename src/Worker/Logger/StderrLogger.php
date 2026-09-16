@@ -13,7 +13,6 @@ final class StderrLogger implements LoggerInterface
 
     public function log($level, \Stringable|string $message, array $context = []): void
     {
-        // The STDERR constant is defined by the CLI SAPI only
         $stream = \defined('STDERR') ? \STDERR : \fopen('php://stderr', 'wb');
         if ($stream === false) {
             return;

@@ -43,9 +43,6 @@ abstract class BaseClient implements GrpcClientInterface
     private \Stringable|string $apiKey = '';
     private ?PayloadSizeChecker $payloadSizeChecker = null;
 
-    /**
-     * Whether the payload limits were configured explicitly, so a Client does not override them.
-     */
     private bool $payloadLimitsConfigured = false;
 
     /**
@@ -173,8 +170,6 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
-     * Warn via the given logger when an outgoing request carries payloads larger than the limits.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     final public function withPayloadLimits(PayloadLimitOptions $options, LoggerInterface $logger): static
@@ -188,8 +183,6 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
-     * Apply the limits a Client is configured with, unless this instance already carries its own.
-     *
      * @internal
      */
     final public function withDefaultPayloadLimits(PayloadLimitOptions $options, LoggerInterface $logger): static
@@ -242,7 +235,6 @@ abstract class BaseClient implements GrpcClientInterface
             ] + $ctx->getMetadata());
         }
 
-        // Measured before the pipeline, like the Go SDK does in its outermost client interceptor
         $this->payloadSizeChecker?->check($method, $arg);
 
         return $this->invokePipeline !== null

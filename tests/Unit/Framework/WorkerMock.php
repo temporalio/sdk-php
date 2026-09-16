@@ -66,9 +66,6 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $this->server->addCommand(new StartWorkflow($runId, $workflowCLass, ...$args));
     }
 
-    /**
-     * Run the workflow as if the worker is replaying its history.
-     */
     public function replayWorkflow(string $workflowCLass, ...$args): void
     {
         $runId = Uuid::v4();

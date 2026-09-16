@@ -339,7 +339,6 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
     {
         $dto = (new WorkerOptions())->withPayloadLimits(PayloadLimitOptions::disabled());
 
-        // The limits configure the PHP side only
         self::assertArrayNotHasKey('PayloadLimits', $this->marshal($dto));
         self::assertArrayNotHasKey('payloadLimits', $this->marshal($dto));
     }

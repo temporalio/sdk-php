@@ -12,37 +12,17 @@ declare(strict_types=1);
 namespace Temporal\Common;
 
 /**
- * Payload size limits at which the SDK logs a warning before sending a request to the server.
- *
- * The server rejects requests with oversized payloads, but by default it only logs the problem
- * on its own side, which is invisible to Temporal Cloud users. These limits make the SDK warn
- * about such payloads locally.
- *
- * The Client and the Worker are configured separately, and both warn with the default limits
- * unless they are told otherwise.
- *
- * @see \Temporal\Client\ClientOptions::withPayloadLimits()
- * @see \Temporal\Worker\WorkerOptions::withPayloadLimits()
- *
  * @experimental This API is experimental and may change in the future.
  */
 final class PayloadLimitOptions
 {
-    /**
-     * Default limit (in bytes) at which a payload size warning is logged.
-     */
     public const DEFAULT_PAYLOAD_SIZE_WARNING = 512 * 1024;
 
-    /**
-     * Default limit (in bytes) at which an aggregate memo size warning is logged.
-     */
     public const DEFAULT_MEMO_SIZE_WARNING = 2 * 1024;
 
     /**
-     * @param null|positive-int $payloadSizeWarning Limit in bytes at which a payload size warning
-     *        is logged. NULL disables the warning.
-     * @param null|positive-int $memoSizeWarning Limit in bytes at which an aggregate memo size
-     *        warning is logged. NULL disables the warning.
+     * @param null|positive-int $payloadSizeWarning
+     * @param null|positive-int $memoSizeWarning
      */
     public function __construct(
         public readonly ?int $payloadSizeWarning = self::DEFAULT_PAYLOAD_SIZE_WARNING,
@@ -61,8 +41,6 @@ final class PayloadLimitOptions
     }
 
     /**
-     * No warnings at all.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     public static function disabled(): self
@@ -71,9 +49,7 @@ final class PayloadLimitOptions
     }
 
     /**
-     * Limit in bytes at which a payload size warning is logged.
-     *
-     * @param null|positive-int $bytes NULL disables the warning.
+     * @param null|positive-int $bytes
      *
      * @experimental This API is experimental and may change in the future.
      */
@@ -83,9 +59,7 @@ final class PayloadLimitOptions
     }
 
     /**
-     * Limit in bytes at which an aggregate memo size warning is logged.
-     *
-     * @param null|positive-int $bytes NULL disables the warning.
+     * @param null|positive-int $bytes
      *
      * @experimental This API is experimental and may change in the future.
      */
@@ -95,8 +69,6 @@ final class PayloadLimitOptions
     }
 
     /**
-     * Whether any of the limits is set.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     public function isEnabled(): bool

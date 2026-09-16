@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Common;
@@ -30,7 +23,6 @@ final class PayloadLimitOptionsTestCase extends TestCase
 
     public function testUnsetLimitsMeanTheDefaultOnes(): void
     {
-        // NULL is the unset state in both option objects: the default limits apply
         self::assertNull((new ClientOptions())->payloadLimits);
         self::assertNull((new ClientOptions())->withPayloadLimits(PayloadLimitOptions::new())->withPayloadLimits(null)->payloadLimits);
         self::assertEquals(PayloadLimitOptions::new(), (new WorkerOptions())->getPayloadLimits());

@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client;
@@ -62,9 +55,6 @@ final class PayloadSizeCheckerTestCase extends TestCase
     private LoggerSpy $logger;
 
     /**
-     * Every request shape the checker knows about, so a broken getter chain cannot go unnoticed:
-     * a mistake there produces neither a warning nor an error.
-     *
      * @return iterable<string, array{\Closure(): object, non-empty-string, list<string>}>
      */
     public static function oversizedRequests(): iterable
@@ -284,7 +274,6 @@ final class PayloadSizeCheckerTestCase extends TestCase
 
     public function testExactlyTheLimitIsNotReported(): void
     {
-        // The server rejects what is larger than the limit, so the limit itself is still fine
         $payloads = self::payloads(100);
         $size = \strlen($payloads->serializeToString());
 
@@ -306,7 +295,6 @@ final class PayloadSizeCheckerTestCase extends TestCase
 
     public function testMemoUsesItsOwnLimit(): void
     {
-        // The payload limit is large enough, but the memo limit is not
         $this->check(
             (new StartWorkflowExecutionRequest())->setMemo(self::memo(2000)),
             'StartWorkflowExecution',
@@ -318,8 +306,6 @@ final class PayloadSizeCheckerTestCase extends TestCase
 
     public function testCreateScheduleDoesNotMeasureTheActionMemoOnItsOwn(): void
     {
-        // The server measures the request memo together with the workflow input and does not
-        // look at the memo of the action, so 900 bytes of it are silent even for the memo limit
         $this->check(
             (new CreateScheduleRequest())->setMemo(self::memo(100))->setSchedule(self::schedule(10, 900)),
             'CreateSchedule',
@@ -349,14 +335,11 @@ final class PayloadSizeCheckerTestCase extends TestCase
 
         $this->check((new RespondActivityTaskFailedRequest())->setFailure($failure), 'RespondActivityTaskFailed');
 
-        // The chain is walked up to the depth limit only
         self::assertCount(20, $this->logger->records);
     }
 
     public function testTheReportedSizeIsTheWireSize(): void
     {
-        // The size is counted from the values instead of being produced, so the checker must
-        // still report what the request weighs on the wire
         $payloads = self::payloads(2000);
 
         $this->check((new StartWorkflowExecutionRequest())->setInput($payloads), 'StartWorkflowExecution');
@@ -373,13 +356,11 @@ final class PayloadSizeCheckerTestCase extends TestCase
 
         $this->check($request, 'StartWorkflowExecution');
 
-        // The server keeps a separate limit for them, and no other SDK reports them either
         self::assertSame([], $this->logger->records);
     }
 
     public function testDisabledLimitsProduceNoWarning(): void
     {
-        // The payload is above the default limit, so only the disabled state can keep it silent
         $request = (new StartWorkflowExecutionRequest())->setInput(self::payloads(1024 * 1024));
 
         $this->check($request, 'StartWorkflowExecution', PayloadLimitOptions::disabled());
@@ -414,7 +395,6 @@ final class PayloadSizeCheckerTestCase extends TestCase
             (new StartWorkflowExecutionRequest())->setInput(self::payloads(2000)),
         );
 
-        // Reaching this point is the assertion: measuring must never propagate
         self::assertTrue(true);
     }
 

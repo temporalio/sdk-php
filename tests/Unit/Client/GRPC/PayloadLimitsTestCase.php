@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client\GRPC;
@@ -80,8 +73,6 @@ final class PayloadLimitsTestCase extends TestCase
 
     public function testWarnsWhenTheInterceptorPipelineIsInstalledFirst(): void
     {
-        // `withInterceptorPipeline()` captures a callable bound to the client it was called on,
-        // so the limits must not depend on the order the two are applied in.
         $client = $this->createClient()
             ->withInterceptorPipeline(Pipeline::prepare([$this->passThroughInterceptor()]))
             ->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger());
@@ -126,7 +117,6 @@ final class PayloadLimitsTestCase extends TestCase
         );
 
         $serviceClient = $this->serviceClientOf($client);
-        // Larger than the default limit: only the disabled options can keep it silent
         $serviceClient->testCall($this->request(1024 * 1024));
 
         self::assertSame([], $this->records);
@@ -134,7 +124,6 @@ final class PayloadLimitsTestCase extends TestCase
 
     public function testWorkflowClientWarnsWithTheDefaultLimits(): void
     {
-        // The limits are not configured: the default ones must still be in force
         $client = new WorkflowClient($this->createClient(), logger: $this->createLogger());
 
         $serviceClient = $this->serviceClientOf($client);
@@ -156,7 +145,6 @@ final class PayloadLimitsTestCase extends TestCase
 
     public function testRetriedCallIsMeasuredOnce(): void
     {
-        // The check runs before the call, so the retries of one RPC do not multiply the warnings
         $client = $this->createClient(failures: 2)->withPayloadLimits(
             new PayloadLimitOptions(1024, 1024),
             $this->createLogger(),
@@ -169,7 +157,6 @@ final class PayloadLimitsTestCase extends TestCase
 
     public function testExplicitLimitsOfTheServiceClientSurviveTheClient(): void
     {
-        // The Client must not override what the service client was configured with
         $client = new WorkflowClient(
             $this->createClient()->withPayloadLimits(PayloadLimitOptions::disabled(), $this->createLogger()),
         );
@@ -190,7 +177,6 @@ final class PayloadLimitsTestCase extends TestCase
         $serviceClient = $this->serviceClientOf($client);
         $serviceClient->testCall($this->request(2000));
 
-        // The limit of the service client, not the 512 KiB default of the Client
         self::assertCount(1, $this->records);
     }
 
@@ -228,8 +214,6 @@ final class PayloadLimitsTestCase extends TestCase
     }
 
     /**
-     * The Client hands back the very service client it was given, with the limits applied to it.
-     *
      * @return ServiceClient&object{testCall: callable}
      */
     private function serviceClientOf(WorkflowClient $client): object
@@ -273,9 +257,6 @@ final class PayloadLimitsTestCase extends TestCase
                 return ConnectionState::Ready->value;
             }
 
-            /**
-             * Stands for a real RPC method: returns a successful response without any IO.
-             */
             public function testCall(object $arg, array $metadata = [], array $options = []): object
             {
                 $code = $this->failures-- > 0 ? StatusCode::UNAVAILABLE : 0;

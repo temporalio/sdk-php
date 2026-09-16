@@ -38,29 +38,12 @@ use Google\Protobuf\Internal\Message;
 use Temporal\Common\PayloadLimitOptions;
 
 /**
- * Warns when an outgoing gRPC request carries payloads larger than the configured limits.
- *
- * Sizes are measured the way the server measures them: a `Payloads` or `Memo` message as a whole,
- * a failure through every `details` of its cause chain.
- *
- * Requests are inspected field by field rather than by walking protobuf descriptors: the descriptor
- * API differs between the pure PHP implementation and the `protobuf` extension.
- *
- * Search attributes are not measured here: the server keeps a separate limit for them, and the
- * other SDKs do not report them on client requests either.
- *
  * @internal
  */
 final class PayloadSizeChecker
 {
-    /**
-     * Message code used by all the SDKs for the payload size warning.
-     */
     private const MESSAGE_CODE = 'TMPRL1103';
 
-    /**
-     * Failures nest through `cause`, so the chain is walked with a limit.
-     */
     private const MAX_FAILURE_DEPTH = 20;
 
     public function __construct(
@@ -69,7 +52,7 @@ final class PayloadSizeChecker
     ) {}
 
     /**
-     * @param non-empty-string $method RPC method name.
+     * @param non-empty-string $method
      */
     public function check(string $method, object $request): void
     {
@@ -80,13 +63,9 @@ final class PayloadSizeChecker
         try {
             $this->inspect($method, $request);
         } catch (\Throwable) {
-            // Measuring is an observability feature: it must never break the RPC call
         }
     }
 
-    /**
-     * Size of a message as the server sees it on the wire.
-     */
     private static function sizeOf(?Message $message): int
     {
         return $message === null ? 0 : \strlen($message->serializeToString());
@@ -148,8 +127,6 @@ final class PayloadSizeChecker
                 return;
 
             case $request instanceof CreateScheduleRequest:
-                // The server checks the memo of the request and the workflow input as one value,
-                // and it supports no other action, so anything else is left to it
                 $action = $request->getSchedule()?->getAction()?->getStartWorkflow();
                 if ($action === null) {
                     return;
@@ -161,8 +138,6 @@ final class PayloadSizeChecker
                     self::sizeOf($request->getMemo()) + self::sizeOf($action->getInput()),
                     $this->limits->payloadSizeWarning,
                 );
-                // Nothing nested in the request is measured again: the server has no separate
-                // check for the memo of the action, and the other SDKs do not report it either
                 return;
 
             case $request instanceof StartBatchOperationRequest:
@@ -183,9 +158,6 @@ final class PayloadSizeChecker
         }
     }
 
-    /**
-     * Every `details` of a failure and of its causes is measured on its own, as the server does.
-     */
     private function failure(string $method, ?Failure $failure, int $depth = 0): void
     {
         if ($failure === null || $depth >= self::MAX_FAILURE_DEPTH) {

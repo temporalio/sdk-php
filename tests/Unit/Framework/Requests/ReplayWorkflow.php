@@ -10,8 +10,6 @@ use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
- * Same as {@see StartWorkflow}, but the worker is told that it replays the history.
- *
  * @internal
  */
 final class ReplayWorkflow extends ServerRequest

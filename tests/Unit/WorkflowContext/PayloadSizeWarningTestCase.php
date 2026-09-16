@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\WorkflowContext;
@@ -66,7 +59,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
 
     public function testExactlyTheLimitIsNotReported(): void
     {
-        // The server rejects what is larger than the limit, so the limit itself is still fine
         $payloads = EncodedValues::fromValues(['x']);
         $payloads->setDataConverter(DataConverter::createDefault());
         $size = \strlen($payloads->toPayloads()->serializeToString());
@@ -97,7 +89,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
 
     public function testReplayedCommandIsNotMeasuredAtAll(): void
     {
-        // A raw logger and a working converter, so only the replay guard can keep it silent
         $warner = new PayloadSizeWarner(
             new PayloadLimitOptions(1024, 1024),
             DataConverter::createDefault(),
@@ -118,14 +109,11 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
             enableLoggingInReplay: true,
         );
 
-        // A replayed command is never sent, so it is not reported regardless of the logger settings
         self::assertSame([], $this->records);
     }
 
     public function testUnconvertibleValueIsNotReportedAndDoesNotThrow(): void
     {
-        // The converter fails on the value; the check must stay silent and let the codec fail
-        // later, exactly as it did before the check existed.
         $warner = new PayloadSizeWarner(
             new PayloadLimitOptions(1024, 1024),
             $this->throwingConverter(),
@@ -184,20 +172,17 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
 
     public function testUpsertedMemoIsMeasuredAgainstBothLimits(): void
     {
-        // The server checks the same command as a payload map and as a Memo, and so does Go
         $this->warner()->check(new UpsertMemo(['key' => \str_repeat('x', 2000)]));
 
         self::assertCount(2, $this->records);
         self::assertStringContainsString('payloads', $this->records[0][0]);
         self::assertStringContainsString('memo', $this->records[1][0]);
         self::assertSame('UpsertMemo', $this->records[0][1]['command']);
-        // The key length plus the data of the payload, the way the server counts it
         self::assertSame(\strlen('key') + 2002, $this->records[0][1]['size']);
     }
 
     public function testUpsertedMemoUsesTheMemoLimitOfItsOwn(): void
     {
-        // The payload limit is large enough, but the memo limit is not
         $warner = new PayloadSizeWarner(
             new PayloadLimitOptions(1024 * 1024, 1024),
             DataConverter::createDefault(),
@@ -225,7 +210,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
 
     public function testUnsetTypedSearchAttributeHasNothingToMeasure(): void
     {
-        // A limit of one byte reports everything, so the size itself is what is asserted
         $warner = new PayloadSizeWarner(
             new PayloadLimitOptions(1, 1),
             DataConverter::createDefault(),
@@ -240,7 +224,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
             [SearchAttributeKey::forText('Attr')->valueUnset()],
         ));
 
-        // Only the update that carries a value is measured, and only its key and its value are
         self::assertSame([\strlen('Attr') + \strlen('"xx"')], \array_column(
             \array_column($this->records, 1),
             'size',
@@ -271,7 +254,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
             Header::empty(),
         );
 
-        // The payload limit is large enough, but the memo limit is not
         $warner = new PayloadSizeWarner(
             new PayloadLimitOptions(1024 * 1024, 1024),
             DataConverter::createDefault(),
@@ -287,7 +269,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
 
     public function testThrowingLoggerDoesNotBreakTheWorkflow(): void
     {
-        // A logger that fails must not take the Workflow down with it: the command is still sent
         $attempts = 0;
         $logger = new class($attempts) extends AbstractLogger {
             public function __construct(private int &$attempts) {}
@@ -299,7 +280,6 @@ final class PayloadSizeWarningTestCase extends AbstractUnit
             }
         };
 
-        // The Workflow result is asserted by the run itself: a failing check would never send it
         $this->runWorkflowWithArgument(\str_repeat('x', 2000), logger: $logger);
 
         self::assertSame(1, $attempts, 'The warning was attempted and its failure was swallowed.');

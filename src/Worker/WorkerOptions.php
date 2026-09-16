@@ -324,11 +324,6 @@ class WorkerOptions
     public WorkerDeploymentOptions $deploymentOptions;
 
     /**
-     * Payload size limits at which the Workflow logs a warning; NULL means the defaults.
-     *
-     * The property is private because it configures the PHP side only and must never be sent
-     * to the RoadRunner worker: only public properties are marshalled.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     private ?PayloadLimitOptions $payloadLimits = null;
@@ -799,13 +794,6 @@ class WorkerOptions
     }
 
     /**
-     * Payload size limits at which a Workflow logs a warning about the commands it produces.
-     *
-     * The limits of the Client are configured separately, see {@see \Temporal\Client\ClientOptions::withPayloadLimits()}.
-     *
-     * @param null|PayloadLimitOptions $options NULL restores the default limits,
-     *        {@see PayloadLimitOptions::disabled()} turns the warnings off.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     #[Pure]
@@ -817,8 +805,6 @@ class WorkerOptions
     }
 
     /**
-     * Payload size limits at which a Workflow logs a warning about the commands it produces.
-     *
      * @experimental This API is experimental and may change in the future.
      */
     public function getPayloadLimits(): PayloadLimitOptions
