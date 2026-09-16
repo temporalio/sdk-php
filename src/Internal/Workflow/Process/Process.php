@@ -55,17 +55,16 @@ class Process extends Scope implements ProcessInterface
         $workflowInstance->getQueryDispatcher()
             ->setQueryExecutor(function (QueryInput $input, callable $handler) use ($inboundPipeline): mixed {
                 try {
-                    return $inboundPipeline->with(
+                    return $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (QueryInput $input) use ($handler): mixed {
-                            $context = $this->scopeContext
-                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
-                            $context->setReadonly(true);
-                            Workflow::setCurrentContext($context);
+                            Workflow::setCurrentContext($this->scopeContext
+                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments)));
+
                             return $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                         'handleQuery',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
@@ -76,7 +75,7 @@ class Process extends Scope implements ProcessInterface
             ->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
                 try {
                     Workflow::setCurrentContext($this->scopeContext);
-                    $inboundPipeline->with(
+                    $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
                             Workflow::setCurrentContext($this->scopeContext->withInput(
                                 new Input(
@@ -89,7 +88,7 @@ class Process extends Scope implements ProcessInterface
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
                         'validateUpdate',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
