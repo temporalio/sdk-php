@@ -232,6 +232,7 @@ abstract class BaseClient implements GrpcClientInterface
         $attempt = 0;
         $retryOption = RpcRetryOptions::fromRetryOptions($ctx->getRetryOptions());
         $initialIntervalMs = $congestionInitialIntervalMs = $throttler = null;
+        $deadline = null;
 
         do {
             ++$attempt;
@@ -261,6 +262,10 @@ abstract class BaseClient implements GrpcClientInterface
                     }
 
                     if ($e->getCode() === StatusCode::CANCELLED) {
+                        if ($deadline !== null && new \DateTimeImmutable() >= $deadline) {
+                            throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
+                        }
+
                         throw new CanceledException($e->getMessage(), $e->getCode(), $e);
                     }
 

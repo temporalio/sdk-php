@@ -15,6 +15,7 @@ use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -202,6 +203,35 @@ class BaseClientTestCase extends TestCase
         $client->testCall();
     }
 
+    public function testCancelledCallAfterDeadlineIsTimeout(): void
+    {
+        $client = $this->createCancellingClientMock()->withContext(
+            $this->createClientMock()->getContext()->withDeadline(new \DateTimeImmutable('-1 second')),
+        );
+
+        self::expectException(TimeoutException::class);
+
+        $client->testCall();
+    }
+
+    public function testCancelledCallBeforeDeadlineIsCancellation(): void
+    {
+        $client = $this->createCancellingClientMock()->withContext(
+            $this->createClientMock()->getContext()->withDeadline(new \DateTimeImmutable('+10 seconds')),
+        );
+
+        self::expectException(CanceledException::class);
+
+        $client->testCall();
+    }
+
+    public function testCancelledCallWithoutDeadlineIsCancellation(): void
+    {
+        self::expectException(CanceledException::class);
+
+        $this->createCancellingClientMock()->testCall();
+    }
+
     /**
      * After attempts are exhausted, the last error is thrown.
      */
@@ -242,6 +272,20 @@ class BaseClientTestCase extends TestCase
             self::assertTrue($e->isTestError());
             self::assertSame(3, $e->attempt);
         }
+    }
+
+    private function createCancellingClientMock(): BaseClient
+    {
+        return $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
+            public function __construct() {}
+
+            public function testCall(): void
+            {
+                throw new class((object) ['code' => StatusCode::CANCELLED, 'metadata' => []]) extends ServiceClientException {};
+            }
+
+            public function close(): void {}
+        })->withInterceptorPipeline(null);
     }
 
     private function createClientMock(?callable $serviceClientFactory = null): BaseClient
