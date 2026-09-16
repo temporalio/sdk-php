@@ -17,6 +17,7 @@ use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
+use Temporal\Exception\IllegalStateException;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
@@ -71,6 +72,7 @@ use Temporal\Internal\Workflow\Process\HandlerState;
 use Temporal\Promise;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
@@ -102,6 +104,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected array $trace = [];
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
+    protected bool $inReadOnlyCallback = false;
     protected ?string $currentDetails = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
@@ -177,10 +180,50 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
+    public function isReadonly(): bool
+    {
+        return $this->readonly || $this->inReadOnlyCallback;
+    }
+
+    public function assertWritable(): void
+    {
+        if ($this->inReadOnlyCallback) {
+            throw new IllegalStateException(
+                'Workflow calls that send commands are not allowed inside read-only callbacks.',
+            );
+        }
+
+        if ($this->readonly) {
+            throw new \RuntimeException('Workflow is not initialized.');
+        }
+    }
+
+    /**
+     * @template T
+     * @param callable(): T $callback
+     * @return T
+     */
+    public function runReadOnly(callable $callback): mixed
+    {
+        if ($this->inReadOnlyCallback || !FeatureFlags::$readOnlyWorkflowCallbacks) {
+            return $callback();
+        }
+
+        $this->inReadOnlyCallback = true;
+
+        try {
+            return $callback();
+        } finally {
+            $this->inReadOnlyCallback = false;
+        }
+    }
+
     public function withInput(Input $input): static
     {
         $clone = clone $this;
         $clone->awaits = &$this->awaits;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
         $clone->trace = &$this->trace;
         $clone->input = $input;
         return $clone;
@@ -265,11 +308,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
         try {
             if (!$this->isReplaying()) {
-                $value = $this->callsInterceptor->with(
-                    $closure,
-                    /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
-                    'sideEffect',
-                )(new SideEffectInput($closure, $options));
+                $value = $this->runReadOnly(
+                    fn(): mixed => $this->callsInterceptor->with(
+                        $closure,
+                        /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
+                        'sideEffect',
+                    )(new SideEffectInput($closure, $options)),
+                );
             }
         } catch (\Throwable $e) {
             return reject($e);
@@ -492,7 +537,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         bool $cancellable = true,
         bool $waitResponse = true,
     ): PromiseInterface {
-        $this->readonly and throw new \RuntimeException('Workflow is not initialized.');
+        $this->assertWritable();
         $this->recordTrace();
 
         // Intercept workflow outbound calls
@@ -676,7 +721,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
-                if ($condition()) {
+                if ($this->runReadOnly($condition)) {
                     unset($this->awaits[$awaitsGroupId][$i]);
                     $deferred->resolve(null);
                     $this->resolveConditionGroup($awaitsGroupId);
@@ -780,7 +825,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             $condition instanceof Mutex and $condition = static fn(): bool => !$condition->isLocked();
 
             if ($condition instanceof \Closure) {
-                $callableResult = $condition($conditionGroupId);
+                $callableResult = $this->runReadOnly(
+                    static fn(): mixed => $condition($conditionGroupId),
+                );
                 if ($callableResult === true) {
                     $this->resolveConditionGroup($conditionGroupId);
                     return resolve(true);
@@ -850,7 +897,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected function recordTrace(): void
     {
-        $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+        if ($this->isReadonly()) {
+            return;
+        }
+
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
     /**
