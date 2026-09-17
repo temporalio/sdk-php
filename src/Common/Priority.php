@@ -25,8 +25,6 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  * from the calling workflow, or if there is no calling workflow, then use the default value.
  *
  * @see \Temporal\Api\Common\V1\Priority
- *
- * @internal The feature is experimental and may change in the future.
  */
 final class Priority
 {
