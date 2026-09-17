@@ -495,8 +495,6 @@ final class ChildWorkflowOptions extends Options
      * backed up in a queue.
      *
      * @return $this
-     *
-     * @internal Experimental
      */
     #[Pure]
     public function withPriority(Priority $priority): self

@@ -321,8 +321,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Defaults to inheriting priority from the workflow that scheduled the activity.
      *
      * @return $this
-     *
-     * @internal Experimental
      */
     #[Pure]
     public function withPriority(Priority $priority): self
