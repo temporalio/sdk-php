@@ -13,6 +13,7 @@ use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Common\WorkerVersionStamp as WorkerVersionStampDto;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
@@ -24,6 +25,7 @@ final class WorkflowExecutionInfoMapper
 {
     public function __construct(
         private readonly DataConverterInterface $converter,
+        private readonly ?SerializationContext $context = null,
     ) {}
 
     public function fromMessage(WorkflowExecutionInfo $message): WorkflowExecutionInfoDto
@@ -74,14 +76,12 @@ final class WorkflowExecutionInfoMapper
 
     private function prepareMemo(?Memo $memo): EncodedCollection
     {
-        if ($memo === null) {
-            return EncodedCollection::fromValues([], $this->converter);
-        }
+        $collection = $memo === null
+            ? EncodedCollection::fromValues([], $this->converter)
+            : EncodedCollection::fromPayloadCollection($memo->getFields(), $this->converter);
+        $collection->setSerializationContext($this->context);
 
-        return EncodedCollection::fromPayloadCollection(
-            $memo->getFields(),
-            $this->converter,
-        );
+        return $collection;
     }
 
     private function prepareSearchAttributes(?SearchAttributes $searchAttributes): EncodedCollection

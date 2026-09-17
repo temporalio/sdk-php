@@ -43,9 +43,12 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
+        $process = $this->running->find($request->getID());
         $this->kill($request->getID());
 
-        $resolver->resolve(EncodedValues::fromValues([null]));
+        $response = EncodedValues::fromValues([null]);
+        $process?->getContext()?->applySerializationContext($response);
+        $resolver->resolve($response);
     }
 
     public function kill(string $runId): array

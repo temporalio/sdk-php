@@ -20,8 +20,14 @@ use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo\Manual;
 use Temporal\Api\Workflow\V1\PendingActivityInfo\PauseInfo\Rule;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\DataConverter\SerializationContext;
+use Temporal\DataConverter\SerializationContextAwareInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Internal\Mapper\PendingActivityInfoMapper;
 use Temporal\Workflow\PendingActivityState;
@@ -31,7 +37,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
     public function testFromMessageFullyPopulated(): void
     {
         $converter = DataConverter::createDefault();
-        $mapper = new PendingActivityInfoMapper($converter);
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1');
 
         $info = $mapper->fromMessage(
             new PendingActivityInfo([
@@ -133,7 +139,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
 
     public function testFromMessageMinimal(): void
     {
-        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault());
+        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault(), 'default', 'wf-1');
 
         $info = $mapper->fromMessage(new PendingActivityInfo());
 
@@ -161,7 +167,7 @@ final class PendingActivityInfoMapperTestCase extends TestCase
 
     public function testPauseInfoByRule(): void
     {
-        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault());
+        $mapper = new PendingActivityInfoMapper(DataConverter::createDefault(), 'default', 'wf-1');
 
         $info = $mapper->fromMessage(
             new PendingActivityInfo([
@@ -182,5 +188,150 @@ final class PendingActivityInfoMapperTestCase extends TestCase
         self::assertSame('rule-1', $info->pauseInfo->rule->ruleId);
         self::assertSame('system', $info->pauseInfo->rule->identity);
         self::assertSame('flaky activity', $info->pauseInfo->rule->reason);
+    }
+
+    public function testHeartbeatDetailsDecodeWithActivityContext(): void
+    {
+        $converter = new DataConverter(new ActivityContextSigningConverter());
+
+        $signingConverter = $converter->withSerializationContext(new ActivitySerializationContext(
+            namespace: 'default',
+            workflowId: 'wf-1',
+            activityType: 'MyActivity',
+            taskQueue: 'my-tq',
+        ));
+        $signed = EncodedValues::fromValues(['hb-progress'], $signingConverter);
+
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1');
+        $info = $mapper->fromMessage(new PendingActivityInfo([
+            'activity_type' => new ActivityType(['name' => 'MyActivity']),
+            'activity_options' => (new ActivityOptionsMessage())
+                ->setTaskQueue((new TaskQueueMessage())->setName('my-tq')),
+            'heartbeat_details' => $signed->toPayloads(),
+        ]));
+
+        self::assertSame('hb-progress', $info->heartbeatDetails->getValue(0, Type::TYPE_STRING));
+    }
+
+    /**
+     * The activity worker encodes heartbeat details with the full activity context, which
+     * includes the workflow type; describe() must decode them under the very same context.
+     */
+    public function testHeartbeatDetailsDecodeWithWorkflowTypeInActivityContext(): void
+    {
+        $converter = new DataConverter(new ActivityContextSigningConverter());
+
+        // Exactly what ActivitySerializationContextFactory::fromActivityInfo() builds at runtime.
+        $signingConverter = $converter->withSerializationContext(new ActivitySerializationContext(
+            namespace: 'default',
+            workflowId: 'wf-1',
+            workflowType: 'MyWorkflow',
+            activityType: 'MyActivity',
+            taskQueue: 'my-tq',
+        ));
+        $signed = EncodedValues::fromValues(['hb-progress'], $signingConverter);
+
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1', 'MyWorkflow');
+        $info = $mapper->fromMessage(new PendingActivityInfo([
+            'activity_type' => new ActivityType(['name' => 'MyActivity']),
+            'activity_options' => (new ActivityOptionsMessage())
+                ->setTaskQueue((new TaskQueueMessage())->setName('my-tq')),
+            'heartbeat_details' => $signed->toPayloads(),
+        ]));
+
+        self::assertSame('hb-progress', $info->heartbeatDetails->getValue(0, Type::TYPE_STRING));
+    }
+
+    /**
+     * The last activity failure is converted with the same activity context as the heartbeat
+     * details, so its details payloads must decode under the workflow type as well.
+     */
+    public function testLastFailureDetailsDecodeWithWorkflowTypeInActivityContext(): void
+    {
+        $converter = new DataConverter(new ActivityContextSigningConverter());
+
+        $context = new ActivitySerializationContext(
+            namespace: 'default',
+            workflowId: 'wf-1',
+            workflowType: 'MyWorkflow',
+            activityType: 'MyActivity',
+            taskQueue: 'my-tq',
+        );
+        $signed = EncodedValues::fromValues(['failure-detail'], $converter->withSerializationContext($context));
+
+        $mapper = new PendingActivityInfoMapper($converter, 'default', 'wf-1', 'MyWorkflow');
+        $info = $mapper->fromMessage(new PendingActivityInfo([
+            'activity_type' => new ActivityType(['name' => 'MyActivity']),
+            'activity_options' => (new ActivityOptionsMessage())
+                ->setTaskQueue((new TaskQueueMessage())->setName('my-tq')),
+            'last_failure' => (new Failure())
+                ->setMessage('boom')
+                ->setApplicationFailureInfo(
+                    (new ApplicationFailureInfo())->setType('MyError')->setDetails($signed->toPayloads()),
+                ),
+        ]));
+
+        self::assertInstanceOf(ApplicationFailure::class, $info->lastFailure);
+        self::assertSame('failure-detail', $info->lastFailure->getDetails()->getValue(0, Type::TYPE_STRING));
+    }
+}
+
+final class ActivityContextSigningConverter implements PayloadConverterInterface, SerializationContextAwareInterface
+{
+    private const ENCODING = 'act-signed';
+
+    private ?SerializationContext $context = null;
+
+    public function withSerializationContext(?SerializationContext $context): static
+    {
+        $clone = clone $this;
+        $clone->context = $context;
+        return $clone;
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->context;
+    }
+
+    public function getEncodingType(): string
+    {
+        return self::ENCODING;
+    }
+
+    public function toPayload($value): ?Payload
+    {
+        if (!\is_string($value)) {
+            return null;
+        }
+
+        return (new Payload())
+            ->setMetadata(['encoding' => self::ENCODING, 'signature' => $this->signature()])
+            ->setData($value);
+    }
+
+    public function fromPayload(Payload $payload, Type $type): mixed
+    {
+        $metadata = $payload->getMetadata();
+        $actual = $metadata['signature'] ?? '';
+        $expected = $this->signature();
+
+        if ($actual !== $expected) {
+            throw new \RuntimeException(
+                \sprintf('Signature mismatch: expected "%s", got "%s"', $expected, $actual),
+            );
+        }
+
+        return $payload->getData();
+    }
+
+    private function signature(): string
+    {
+        return $this->context instanceof ActivitySerializationContext
+            ? (string) $this->context->workflowId
+                . ':' . (string) $this->context->workflowType
+                . ':' . (string) $this->context->activityType
+                . ':' . (string) $this->context->taskQueue
+            : '';
     }
 }
