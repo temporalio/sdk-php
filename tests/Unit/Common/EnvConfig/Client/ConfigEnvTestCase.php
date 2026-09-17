@@ -13,7 +13,7 @@ use Temporal\Common\EnvConfig\Client\ConfigProfile;
 use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 
 #[CoversClass(ConfigEnv::class)]
-final class ConfigEnvTest extends TestCase
+final class ConfigEnvTestCase extends TestCase
 {
     private array $env;
 

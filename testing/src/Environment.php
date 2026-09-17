@@ -123,6 +123,7 @@ final class Environment
             try {
                 $check->run();
             } catch (ProcessTimedOutException) {
+                // Not ready yet.
                 return false;
             }
 
@@ -192,7 +193,13 @@ final class Environment
 
             $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
             $check->setTimeout(1);
-            $check->run();
+
+            try {
+                $check->run();
+            } catch (ProcessTimedOutException) {
+                // Not ready yet.
+                return false;
+            }
 
             return \str_contains($check->getOutput(), 'Workers of');
         });
