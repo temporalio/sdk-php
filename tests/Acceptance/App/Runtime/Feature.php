@@ -20,6 +20,9 @@ final class Feature
     /** @var list<class-string<PayloadConverterInterface>> Lazy callables */
     public array $converters = [];
 
+    /** @var list<class-string> Nexus service implementation classes */
+    public array $nexusServices = [];
+
     /**
      * @param non-empty-string $taskQueue
      */

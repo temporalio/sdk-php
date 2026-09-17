@@ -130,6 +130,26 @@ final class State
         $this->getFeature($inputFeature)->activities[] = $class;
     }
 
+    /**
+     * @param class-string $class
+     */
+    public function addNexusService(\Temporal\Tests\Acceptance\App\Input\Feature $inputFeature, string $class): void
+    {
+        $this->getFeature($inputFeature)->nexusServices[] = $class;
+    }
+
+    /**
+     * @return \Traversable<Feature, class-string>
+     */
+    public function nexusServices(): \Traversable
+    {
+        foreach ($this->features as $feature) {
+            foreach ($feature->nexusServices as $service) {
+                yield $feature => $service;
+            }
+        }
+    }
+
     private function getFeature(\Temporal\Tests\Acceptance\App\Input\Feature $feature): Feature
     {
         return $this->features[$feature->testClass] ??= new Feature($feature->taskQueue);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
+use Temporal\Nexus\Attribute\Service as NexusService;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
@@ -35,6 +36,19 @@ final class RuntimeBuilder
 
                     if ($class->getAttributes(ActivityInterface::class) !== []) {
                         $runtime->addActivity($feature, $classString);
+                    }
+
+                    if (!$class->isInterface() && !$class->isAbstract()) {
+                        if ($class->getAttributes(NexusService::class) !== []) {
+                            $runtime->addNexusService($feature, $classString);
+                        } else {
+                            foreach ($class->getInterfaces() as $interface) {
+                                if ($interface->getAttributes(NexusService::class) !== []) {
+                                    $runtime->addNexusService($feature, $classString);
+                                    break;
+                                }
+                            }
+                        }
                     }
 
                     if ($class->implementsInterface(PayloadConverterInterface::class)) {
