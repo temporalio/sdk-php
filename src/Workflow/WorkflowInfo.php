@@ -144,8 +144,6 @@ final class WorkflowInfo
 
     /**
      * The priority of the Workflow task.
-     *
-     * @internal ExperimentalAPI
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;

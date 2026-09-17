@@ -23,27 +23,30 @@ namespace Temporal\Internal\Events;
 trait EventEmitterTrait
 {
     /**
-     * @var array<T, array<callable>>
+     * @var array<T, \SplQueue<callable>>
      */
     protected array $once = [];
 
     public function once(string $event, callable $then): static
     {
-        $this->once[$event][] = $then;
+        ($this->once[$event] ??= new \SplQueue())->enqueue($then);
 
         return $this;
     }
 
     public function emit(string $event, array $arguments = []): void
     {
-        if (!\array_key_exists($event, $this->once)) {
-            return;
-        }
-        while (!empty($this->once[$event])) {
-            $callback = \array_shift($this->once[$event]);
+        // Re-read: a nested emit of the same event drops the queue, a later once() makes a new one.
+        while (true) {
+            $queue = $this->once[$event] ?? null;
+
+            if ($queue === null || $queue->isEmpty()) {
+                unset($this->once[$event]);
+                return;
+            }
+
+            $callback = $queue->dequeue();
             $callback(...$arguments);
         }
-
-        unset($this->once[$event]);
     }
 }
