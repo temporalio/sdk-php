@@ -70,15 +70,15 @@ final class Client implements ClientInterface
         Workflow::setCurrentContext($context);
         if ($response instanceof FailureResponseInterface) {
             $failure = $response->getFailure();
-            if ($serializationContext !== null && $failure instanceof TemporalFailure) {
-                $failure->setSerializationContext($serializationContext);
+            if ($serializationContext !== null) {
+                TemporalFailure::bindSerializationContext($failure, $serializationContext);
             }
 
             $deferred->reject($failure);
         } else {
             $payloads = $response->getPayloads();
             if ($serializationContext !== null && $payloads instanceof EncodedValues) {
-                $payloads->setSerializationContext($serializationContext);
+                $payloads = $payloads->withSerializationContext($serializationContext);
             }
             $deferred->resolve($payloads);
         }

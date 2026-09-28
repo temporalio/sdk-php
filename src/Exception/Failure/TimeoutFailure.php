@@ -52,12 +52,10 @@ class TimeoutFailure extends TemporalFailure
         $this->lastHeartbeatDetails->setDataConverter($converter);
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
+    protected function applySerializationContext(?SerializationContext $context): void
     {
-        if ($this->lastHeartbeatDetails instanceof EncodedValues) {
-            $this->lastHeartbeatDetails->setSerializationContext($context);
+        if ($this->lastHeartbeatDetails instanceof EncodedValues && $this->lastHeartbeatDetails->getSerializationContext() === null) {
+            $this->lastHeartbeatDetails = $this->lastHeartbeatDetails->withSerializationContext($context);
         }
-
-        parent::setSerializationContext($context);
     }
 }

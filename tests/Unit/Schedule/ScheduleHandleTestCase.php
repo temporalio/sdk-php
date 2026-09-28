@@ -19,6 +19,7 @@ use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\UpdateScheduleResponse;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\BackfillPeriod;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
@@ -29,7 +30,10 @@ use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -289,6 +293,31 @@ class ScheduleHandleTestCase extends TestCase
         $this->assertSame('test-id', $testContext->request->getScheduleId());
         // Test result
         $this->assertSame('test-conflict-token', $result->conflictToken);
+    }
+
+    public function testDescribeBindsStartWorkflowInputToTheWorkflowContext(): void
+    {
+        $converter = DataConverter::createDefault();
+        $marshaller = new Marshaller(new AttributeMapperFactory(new AttributeReader()));
+        $schedule = Schedule::new()->withAction(
+            StartWorkflowAction::new('TestWorkflow')->withWorkflowId('workflow-id')->withInput(['argument']),
+        );
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('DescribeSchedule')
+            ->willReturn((new DescribeScheduleResponse())->setSchedule(
+                (new ScheduleMapper($converter, $marshaller))->toMessage($schedule),
+            ));
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock, marshaller: $marshaller);
+
+        $action = $scheduleHandle->describe()->schedule->action;
+
+        $this->assertInstanceOf(StartWorkflowAction::class, $action);
+        $this->assertInstanceOf(EncodedValues::class, $action->input);
+        $this->assertEquals(
+            new WorkflowSerializationContext('default', 'workflow-id'),
+            $action->input->getSerializationContext(),
+        );
     }
 
     public function testListScheduleMatchingTimes(): void

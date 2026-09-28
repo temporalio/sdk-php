@@ -14,7 +14,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\SerializationContextBinder;
+use Temporal\DataConverter\SerializationContextAwareInterface;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\Client\UpdateResponse;
@@ -62,10 +62,11 @@ class Encoder
                     $context = $payloads instanceof EncodedValues
                         ? $payloads->getSerializationContext()
                         : null;
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
-                        $cmd->getFailure(),
-                        SerializationContextBinder::bind($this->converter, $context),
-                    ));
+                    $converter = $this->converter;
+                    if ($context !== null && $converter instanceof SerializationContextAwareInterface) {
+                        $converter = $converter->withSerializationContext($context);
+                    }
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter));
                 }
 
                 return $msg;
@@ -92,10 +93,11 @@ class Encoder
                     $context = $updatePayloads instanceof EncodedValues
                         ? $updatePayloads->getSerializationContext()
                         : null;
-                    $msg->setFailure(FailureConverter::mapExceptionToFailure(
-                        $cmd->getFailure(),
-                        SerializationContextBinder::bind($this->converter, $context),
-                    ));
+                    $converter = $this->converter;
+                    if ($context !== null && $converter instanceof SerializationContextAwareInterface) {
+                        $converter = $converter->withSerializationContext($context);
+                    }
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $converter));
                 }
 
                 if ($updatePayloads !== null) {

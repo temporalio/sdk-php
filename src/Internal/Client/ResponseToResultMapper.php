@@ -53,7 +53,7 @@ final class ResponseToResultMapper
         if ($success !== null) {
             $values = EncodedValues::fromPayloads($success, $this->converter);
             if ($namespace !== null) {
-                $values->setSerializationContext(
+                $values = $values->withSerializationContext(
                     new WorkflowSerializationContext($namespace, $workflowExecution->getID()),
                 );
             }

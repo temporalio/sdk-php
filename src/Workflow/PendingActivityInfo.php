@@ -10,6 +10,7 @@ use Temporal\Common\Priority;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  * DTO that contains information about a pending activity of a Workflow Execution.
@@ -20,6 +21,8 @@ use Temporal\Exception\Failure\TemporalFailure;
 #[Immutable]
 final class PendingActivityInfo
 {
+    use CloneWith;
+
     /**
      * @internal
      */
@@ -87,4 +90,13 @@ final class PendingActivityInfo
          */
         public readonly ?PendingActivityOptions $activityOptions,
     ) {}
+
+    public function withHeartbeatDetails(ValuesInterface $heartbeatDetails): self
+    {
+        /**
+         * @see self::$heartbeatDetails
+         * @psalm-suppress ImpureMethodCall
+         */
+        return $this->cloneWith('heartbeatDetails', $heartbeatDetails);
+    }
 }

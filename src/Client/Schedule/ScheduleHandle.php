@@ -17,12 +17,15 @@ use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Info\ScheduleDescription;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Client\Schedule\Update\ScheduleUpdate;
 use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -139,7 +142,17 @@ final class ScheduleHandle
         $values = $this->protoConverter->convert($response);
         $dto = new ScheduleDescription();
 
-        return $this->marshaller->unmarshal($values, $dto);
+        $description = $this->marshaller->unmarshal($values, $dto);
+        $action = $description->schedule->action ?? null;
+        if (!$action instanceof StartWorkflowAction || !$action->input instanceof EncodedValues) {
+            return $description;
+        }
+
+        return $description->withSchedule($description->schedule->withAction($action->withInput(
+            $action->input->withSerializationContext(
+                new WorkflowSerializationContext($this->namespace, $action->workflowId),
+            ),
+        )));
     }
 
     /**

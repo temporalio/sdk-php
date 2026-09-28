@@ -36,10 +36,11 @@ final class ScheduleMapper
             $action = $dto->action;
             $action->input?->setDataConverter($this->converter);
             if ($namespace !== null && $action->input instanceof EncodedValues) {
-                $action->input->setSerializationContext(new WorkflowSerializationContext(
+                $action = $action->withInput($action->input->withSerializationContext(new WorkflowSerializationContext(
                     namespace: $namespace,
                     workflowId: $action->workflowId,
-                ));
+                )));
+                $dto = $dto->withAction($action);
             }
             $action->header?->setDataConverter($this->converter);
             $action->memo?->setDataConverter($this->converter);

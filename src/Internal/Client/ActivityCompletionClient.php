@@ -52,7 +52,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setActivityId($activityId);
 
         $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 3), $this->converter);
-        $input->setSerializationContext(new ActivitySerializationContext(
+        $input = $input->withSerializationContext(new ActivitySerializationContext(
             namespace: $this->clientOptions->namespace,
             workflowId: $workflowId,
         ));
@@ -81,7 +81,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setTaskToken($taskToken);
 
         $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 1), $this->converter);
-        $input->setSerializationContext(new ActivitySerializationContext(
+        $input = $input->withSerializationContext(new ActivitySerializationContext(
             namespace: $this->clientOptions->namespace,
         ));
         if (!$input->isEmpty()) {
@@ -157,7 +157,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
         if (\func_num_args() == 4) {
             $input = EncodedValues::fromValues([$details], $this->converter);
-            $input->setSerializationContext(new ActivitySerializationContext(
+            $input = $input->withSerializationContext(new ActivitySerializationContext(
                 namespace: $this->clientOptions->namespace,
                 workflowId: $workflowId,
             ));
@@ -181,7 +181,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
         if (\func_num_args() == 2) {
             $input = EncodedValues::fromValues([$details], $this->converter);
-            $input->setSerializationContext(new ActivitySerializationContext(
+            $input = $input->withSerializationContext(new ActivitySerializationContext(
                 namespace: $this->clientOptions->namespace,
             ));
             $r->setDetails($input->toPayloads());
@@ -206,7 +206,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
         if (\func_num_args() == 4) {
             $input = EncodedValues::fromValues([$details], $this->converter);
-            $input->setSerializationContext(new ActivitySerializationContext(
+            $input = $input->withSerializationContext(new ActivitySerializationContext(
                 namespace: $this->clientOptions->namespace,
                 workflowId: $workflowId,
             ));
@@ -237,7 +237,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
 
         if (\func_num_args() == 2) {
             $input = EncodedValues::fromValues([$details], $this->converter);
-            $input->setSerializationContext(new ActivitySerializationContext(
+            $input = $input->withSerializationContext(new ActivitySerializationContext(
                 namespace: $this->clientOptions->namespace,
             ));
             $r->setDetails($input->toPayloads());

@@ -17,6 +17,7 @@ use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\WorkflowSerializationContext;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
@@ -76,29 +77,28 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $this->loop->once(
             LoopInterface::ON_QUERY,
             static function () use ($name, $request, $resolver, $handler, $context, $headers): void {
+                $info = $context->getInfo();
+                $request->getTickInfo()->applyTo($info);
+
+                $serializationContext = new WorkflowSerializationContext(
+                    $info->namespace,
+                    $info->execution->getID(),
+                );
+
                 try {
                     // Define Context for interceptors Pipeline
                     Workflow::setCurrentContext($context);
 
-                    $info = $context->getInfo();
-                    $request->getTickInfo()->applyTo($info);
-
-                    $serializationContext = new WorkflowSerializationContext(
-                        $info->namespace,
-                        $info->execution->getID(),
-                    );
-
                     $arguments = $request->getPayloads();
                     if ($arguments instanceof EncodedValues) {
-                        $arguments->setSerializationContext($serializationContext);
+                        $arguments = $arguments->withSerializationContext($serializationContext);
                     }
 
                     $result = $handler(new QueryInput($name, $arguments, $info));
 
-                    $resultValues = EncodedValues::fromValues([$result]);
-                    $resultValues->setSerializationContext($serializationContext);
-                    $resolver->resolve($resultValues);
+                    $resolver->resolve(EncodedValues::fromValues([$result])->withSerializationContext($serializationContext));
                 } catch (\Throwable $e) {
+                    TemporalFailure::bindSerializationContext($e, $serializationContext);
                     $resolver->reject($e);
                 }
             },

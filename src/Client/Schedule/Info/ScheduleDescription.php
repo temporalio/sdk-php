@@ -7,6 +7,7 @@ namespace Temporal\Client\Schedule\Info;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  * Describes the current Schedule details.
@@ -16,6 +17,8 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  */
 final class ScheduleDescription
 {
+    use CloneWith;
+
     /**
      * The complete current schedule details. This may not match the schedule as created because:
      *  - some types of schedule specs may get compiled into others (e.g. CronString into StructuredCalendarSpec)
@@ -59,4 +62,10 @@ final class ScheduleDescription
      * @internal The DTO is a result of a query, so it is not possible to create it manually.
      */
     public function __construct() {}
+
+    public function withSchedule(Schedule $schedule): self
+    {
+        /** @see self::$schedule */
+        return $this->cloneWith('schedule', $schedule);
+    }
 }

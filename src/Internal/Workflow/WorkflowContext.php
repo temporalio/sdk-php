@@ -28,6 +28,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\DataConverter\WorkflowSerializationContext;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
@@ -280,8 +281,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         } catch (\Throwable) {
         }
 
-        $values = EncodedValues::fromValues([$value]);
-        $values->setSerializationContext(
+        $values = EncodedValues::fromValues([$value])->withSerializationContext(
             new WorkflowSerializationContext($this->getInfo()->namespace, $this->getInfo()->execution->getID()),
         );
 
@@ -312,7 +312,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     ? EncodedValues::fromValues($input->result)
                     : EncodedValues::empty();
 
-                $values->setSerializationContext(
+                $values = $values->withSerializationContext(
                     new WorkflowSerializationContext(
                         $this->getInfo()->namespace,
                         $this->getInfo()->execution->getID(),
@@ -329,7 +329,19 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function panic(?\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            function (PanicInput $failure): PromiseInterface {
+                if ($failure->failure !== null) {
+                    TemporalFailure::bindSerializationContext(
+                        $failure->failure,
+                        new WorkflowSerializationContext(
+                            $this->getInfo()->namespace,
+                            $this->getInfo()->execution->getID(),
+                        ),
+                    );
+                }
+
+                return $this->request(new Panic($failure->failure), false);
+            },
             /** @see WorkflowOutboundCallsInterceptor::panic() */
             'panic',
         )(new PanicInput($failure));
@@ -344,8 +356,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             function (ContinueAsNewInput $input): PromiseInterface {
                 $this->continueAsNew = true;
 
-                $arguments = EncodedValues::fromValues($input->args);
-                $arguments->setSerializationContext(
+                $arguments = EncodedValues::fromValues($input->args)->withSerializationContext(
                     new WorkflowSerializationContext(
                         $this->getInfo()->namespace,
                         $this->getInfo()->execution->getID(),

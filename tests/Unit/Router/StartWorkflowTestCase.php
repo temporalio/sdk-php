@@ -12,8 +12,10 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -29,11 +31,14 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\StartWorkflow;
 use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -59,6 +64,37 @@ final class StartWorkflowTestCase extends AbstractUnit
         $this->router->handle($request, [], new Deferred());
         $this->assertNotNull($this->services->running->find($runId));
         $this->assertNotNull($this->services->running->find($workflowInfo->execution->getRunID()));
+    }
+
+    public function testLastCompletionResultIsBoundToTheWorkflowContext(): void
+    {
+        $runId = Uuid::v4();
+        $request = new ServerRequest(
+            name: 'StartWorkflow',
+            info: new TickInfo(new \DateTimeImmutable()),
+            options: ['lastCompletion' => 1],
+            payloads: EncodedValues::fromValues(['argument', 'last-result'], DataConverter::createDefault()),
+            id: $runId,
+        );
+
+        $workflowInfo = new WorkflowInfo();
+        $workflowInfo->type->name = 'DummyWorkflow';
+        $workflowInfo->execution = new WorkflowExecution('workflow-id', $runId);
+
+        $this->marshaller->expects($this->once())
+            ->method('unmarshal')
+            ->willReturn(new Input($workflowInfo));
+
+        $this->router->handle($request, [], new Deferred());
+
+        $process = $this->services->running->find($runId);
+        $this->assertInstanceOf(Process::class, $process);
+        $lastCompletionResult = $process->getContext()->getLastCompletionResultValues();
+        $this->assertInstanceOf(EncodedValues::class, $lastCompletionResult);
+        $this->assertEquals(
+            new WorkflowSerializationContext($workflowInfo->namespace, 'workflow-id'),
+            $lastCompletionResult->getSerializationContext(),
+        );
     }
 
     public function testRequestRunId(): void

@@ -79,7 +79,7 @@ final class WorkflowStarter
         $header = Header::empty();
         $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
         $arguments = EncodedValues::fromValues($args, $this->converter);
-        $arguments->setSerializationContext($context);
+        $arguments = $arguments->withSerializationContext($context);
 
         return $this->interceptors->with(
             fn(StartInput $input): WorkflowExecution => $this->executeRequest(
@@ -107,9 +107,9 @@ final class WorkflowStarter
         $header = Header::empty();
         $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
-        $arguments->setSerializationContext($context);
+        $arguments = $arguments->withSerializationContext($context);
         $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
-        $signalArguments->setSerializationContext($context);
+        $signalArguments = $signalArguments->withSerializationContext($context);
 
         return $this->interceptors->with(
             function (SignalWithStartInput $input): WorkflowExecution {
@@ -149,9 +149,9 @@ final class WorkflowStarter
     ): UpdateWithStartOutput {
         $context = new WorkflowSerializationContext($this->clientOptions->namespace, $options->workflowId);
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
-        $arguments->setSerializationContext($context);
+        $arguments = $arguments->withSerializationContext($context);
         $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter);
-        $updateArguments->setSerializationContext($context);
+        $updateArguments = $updateArguments->withSerializationContext($context);
 
         return $this->interceptors->with(
             function (UpdateWithStartInput $input): UpdateWithStartOutput {

@@ -65,19 +65,22 @@ final class StartWorkflow extends Route
         /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
 
+        $info = $input->info;
+        $request->getTickInfo()->applyTo($info);
+
+        $serializationContext = new WorkflowSerializationContext($info->namespace, $info->execution->getID());
+        if ($payloads instanceof EncodedValues) {
+            $payloads = $payloads->withSerializationContext($serializationContext);
+        }
+
+        if ($lastCompletionResult instanceof EncodedValues) {
+            $lastCompletionResult = $lastCompletionResult->withSerializationContext($serializationContext);
+        }
+
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;
         /** @psalm-suppress InaccessibleProperty */
         $input->header = $request->getHeader();
-
-        $info = $input->info;
-        $request->getTickInfo()->applyTo($info);
-
-        if ($input->input instanceof EncodedValues) {
-            $input->input->setSerializationContext(
-                new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
-            );
-        }
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 

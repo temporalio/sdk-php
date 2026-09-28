@@ -87,11 +87,13 @@ class InvokeActivity extends Route
         );
 
         if ($payloads instanceof EncodedValues) {
-            $payloads->setSerializationContext($serializationContext);
+            $context = $context->withInput($payloads->withSerializationContext($serializationContext));
         }
 
         if ($heartbeatDetails instanceof EncodedValues) {
-            $heartbeatDetails->setSerializationContext($serializationContext);
+            $context = $context->withLastHeartbeatDetails(
+                $heartbeatDetails->withSerializationContext($serializationContext),
+            );
         }
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
@@ -126,14 +128,10 @@ class InvokeActivity extends Route
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resultPayloads = EncodedValues::fromValues([$result]);
-                $resultPayloads->setSerializationContext($serializationContext);
-                $resolver->resolve($resultPayloads);
+                $resolver->resolve(EncodedValues::fromValues([$result])->withSerializationContext($serializationContext));
             }
         } catch (\Throwable $e) {
-            if ($e instanceof TemporalFailure) {
-                $e->setSerializationContext($serializationContext);
-            }
+            TemporalFailure::bindSerializationContext($e, $serializationContext);
 
             $resolver->reject($e);
         } finally {

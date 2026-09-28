@@ -102,15 +102,6 @@ class ApplicationFailure extends TemporalFailure
         $this->details->setDataConverter($converter);
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
-    {
-        if ($this->details instanceof EncodedValues) {
-            $this->details->setSerializationContext($context);
-        }
-
-        parent::setSerializationContext($context);
-    }
-
     public function setNextRetryDelay(?\DateInterval $nextRetryDelay): void
     {
         $this->nextRetryDelay = $nextRetryDelay;
@@ -119,5 +110,12 @@ class ApplicationFailure extends TemporalFailure
     public function getApplicationErrorCategory(): ApplicationErrorCategory
     {
         return $this->category;
+    }
+
+    protected function applySerializationContext(?SerializationContext $context): void
+    {
+        if ($this->details instanceof EncodedValues && $this->details->getSerializationContext() === null) {
+            $this->details = $this->details->withSerializationContext($context);
+        }
     }
 }

@@ -28,9 +28,9 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
         $converter = new ContextRecordingDataConverter();
         $context = new WorkflowSerializationContext('default', 'wf-1');
 
-        $values = EncodedValues::fromValues(['hello'], $converter);
-        $values->setSerializationContext($context);
-        $values->toPayloads();
+        EncodedValues::fromValues(['hello'], $converter)
+            ->withSerializationContext($context)
+            ->toPayloads();
 
         self::assertSame($context, $converter->lastUsedContext);
     }
@@ -41,11 +41,41 @@ final class EncodedValuesSerializationContextTestCase extends AbstractUnit
         $context = new WorkflowSerializationContext('default', 'wf-1');
 
         $payloads = EncodedValues::fromValues(['hello'], $converter)->toPayloads();
-        $values = EncodedValues::fromPayloads($payloads, $converter);
-        $values->setSerializationContext($context);
-        $values->getValue(0);
+        EncodedValues::fromPayloads($payloads, $converter)
+            ->withSerializationContext($context)
+            ->getValue(0);
 
         self::assertSame($context, $converter->lastUsedContext);
+    }
+
+    public function testNumericLookingWorkflowIdsAreDifferentContexts(): void
+    {
+        $converter = new ContextRecordingDataConverter();
+        $rebound = new WorkflowSerializationContext('default', '1e2');
+
+        EncodedValues::fromValues(['hello'], $converter)
+            ->withSerializationContext(new WorkflowSerializationContext('default', '100'))
+            ->withSerializationContext($rebound)
+            ->toPayloads();
+
+        self::assertSame($rebound, $converter->lastUsedContext);
+    }
+
+    public function testEqualContextKeepsSameInstance(): void
+    {
+        $values = EncodedValues::fromValues(['hello'])
+            ->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
+
+        self::assertSame($values, $values->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1')));
+    }
+
+    public function testRebindingLeavesOriginalInstanceUnchanged(): void
+    {
+        $original = EncodedValues::fromValues(['hello']);
+
+        $original->withSerializationContext(new WorkflowSerializationContext('default', 'wf-1'));
+
+        self::assertNull($original->getSerializationContext());
     }
 
     public function testWithoutContextConverterSeesNull(): void

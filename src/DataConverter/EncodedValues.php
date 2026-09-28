@@ -42,7 +42,6 @@ class EncodedValues implements ValuesInterface
 
     private ?DataConverterInterface $converter = null;
     private ?SerializationContext $serializationContext = null;
-    private ?DataConverterInterface $boundConverter = null;
 
     /**
      * Can not be constructed directly.
@@ -164,15 +163,26 @@ class EncodedValues implements ValuesInterface
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
-        $this->boundConverter = null;
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
+    /**
+     * @psalm-mutation-free
+     */
+    public function withSerializationContext(?SerializationContext $context): static
     {
-        $this->serializationContext = $context;
-        $this->boundConverter = null;
+        if (self::isSameContext($context, $this->serializationContext)) {
+            return $this;
+        }
+
+        $clone = clone $this;
+        $clone->serializationContext = $context;
+
+        return $clone;
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getSerializationContext(): ?SerializationContext
     {
         return $this->serializationContext;
@@ -193,6 +203,18 @@ class EncodedValues implements ValuesInterface
     public function isEmpty(): bool
     {
         return $this->count() === 0;
+    }
+
+    /**
+     * @psalm-pure
+     */
+    private static function isSameContext(?SerializationContext $left, ?SerializationContext $right): bool
+    {
+        if ($left === null || $right === null) {
+            return $left === $right;
+        }
+
+        return $left::class === $right::class && (array) $left === (array) $right;
     }
 
     private function isVoidType(mixed $type = null): bool
@@ -244,9 +266,10 @@ class EncodedValues implements ValuesInterface
             throw new \LogicException('DataConverter is not set.');
         }
 
-        return $this->boundConverter ??= SerializationContextBinder::bind(
-            $this->converter,
-            $this->serializationContext,
-        );
+        if ($this->serializationContext !== null && $this->converter instanceof SerializationContextAwareInterface) {
+            return $this->converter->withSerializationContext($this->serializationContext);
+        }
+
+        return $this->converter;
     }
 }

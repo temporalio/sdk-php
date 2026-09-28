@@ -46,7 +46,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
             $arguments = $request->getPayloads();
             if ($arguments instanceof EncodedValues) {
-                $arguments->setSerializationContext($serializationContext);
+                $arguments = $arguments->withSerializationContext($serializationContext);
             }
 
             $input = new UpdateInput(
@@ -83,12 +83,11 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             }
         } catch (\Throwable $e) {
-            if ($e instanceof TemporalFailure) {
-                $info = $context->getInfo();
-                $e->setSerializationContext(
-                    new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
-                );
-            }
+            $info = $context->getInfo();
+            TemporalFailure::bindSerializationContext(
+                $e,
+                new WorkflowSerializationContext($info->namespace, $info->execution->getID()),
+            );
 
             $context->getClient()->send(
                 new UpdateResponse(
@@ -106,8 +105,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $deferred = new Deferred();
         $deferred->promise()->then(
             static function (mixed $value) use ($updateId, $context, $serializationContext): void {
-                $values = EncodedValues::fromValues([$value]);
-                $values->setSerializationContext($serializationContext);
+                $values = EncodedValues::fromValues([$value])->withSerializationContext($serializationContext);
 
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,
@@ -117,9 +115,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             },
             static function (\Throwable $err) use ($updateId, $context, $serializationContext): void {
-                if ($err instanceof TemporalFailure) {
-                    $err->setSerializationContext($serializationContext);
-                }
+                TemporalFailure::bindSerializationContext($err, $serializationContext);
 
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,

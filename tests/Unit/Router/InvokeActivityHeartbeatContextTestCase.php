@@ -11,10 +11,12 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
@@ -35,6 +37,7 @@ final class InvokeActivityHeartbeatContextTestCase extends AbstractUnit
     private const NAMESPACE = 'test-namespace';
     private const TASK_QUEUE = 'test-task-queue';
     private const ACTIVITY = 'HeartbeatDetailsActivity.ReadSignature';
+    private const FAILING_ACTIVITY = 'WrappedFailureActivity.Throw';
 
     public function testHeartbeatDetailsAreDecodedWithTheActivityContext(): void
     {
@@ -46,6 +49,36 @@ final class InvokeActivityHeartbeatContextTestCase extends AbstractUnit
         );
     }
 
+    public function testFailureBehindPlainExceptionIsBoundToTheActivityContext(): void
+    {
+        $converter = new DataConverter(new ContextSignatureConverter());
+        $router = new InvokeActivity(
+            $this->createServices($converter),
+            $this->createMock(RPCConnectionInterface::class),
+            new SimplePipelineProvider(),
+        );
+
+        $resolver = new Deferred();
+        $router->handle($this->createRequest($converter, self::FAILING_ACTIVITY), [], $resolver);
+
+        $error = null;
+        $resolver->promise()->then(null, static function (\Throwable $e) use (&$error): void {
+            $error = $e;
+        });
+
+        $this->assertInstanceOf(\RuntimeException::class, $error);
+        $failure = $error->getPrevious();
+        $this->assertInstanceOf(ApplicationFailure::class, $failure);
+        $this->assertEquals(
+            new ActivitySerializationContext(
+                namespace: self::NAMESPACE,
+                activityType: self::FAILING_ACTIVITY,
+                taskQueue: self::TASK_QUEUE,
+            ),
+            $failure->getDetails()->getSerializationContext(),
+        );
+    }
+
     private function runActivity(): string
     {
         $converter = new DataConverter(new ContextSignatureConverter());
@@ -53,7 +86,7 @@ final class InvokeActivityHeartbeatContextTestCase extends AbstractUnit
         $router = new InvokeActivity($services, $this->createMock(RPCConnectionInterface::class), new SimplePipelineProvider());
 
         $resolver = new Deferred();
-        $router->handle($this->createRequest($converter), [], $resolver);
+        $router->handle($this->createRequest($converter, self::ACTIVITY), [], $resolver);
 
         $result = null;
         $resolver->promise()->then(static function (ValuesInterface $values) use (&$result): void {
@@ -63,14 +96,14 @@ final class InvokeActivityHeartbeatContextTestCase extends AbstractUnit
         return $result;
     }
 
-    private function createRequest(DataConverter $converter): ServerRequest
+    private function createRequest(DataConverter $converter, string $activity): ServerRequest
     {
         $options = [
-            'name' => self::ACTIVITY,
+            'name' => $activity,
             'heartbeatDetails' => 1,
             'info' => [
                 'TaskToken' => \base64_encode('token'),
-                'ActivityType' => ['Name' => self::ACTIVITY],
+                'ActivityType' => ['Name' => $activity],
                 'ActivityID' => '1',
                 'WorkflowNamespace' => self::NAMESPACE,
                 'TaskQueue' => self::TASK_QUEUE,
@@ -102,8 +135,10 @@ final class InvokeActivityHeartbeatContextTestCase extends AbstractUnit
         );
 
         $reader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
-        foreach ($reader->fromClass(HeartbeatDetailsActivity::class) as $proto) {
-            $services->activities->add($proto);
+        foreach ([HeartbeatDetailsActivity::class, WrappedFailureActivity::class] as $class) {
+            foreach ($reader->fromClass($class) as $proto) {
+                $services->activities->add($proto);
+            }
         }
 
         return $services;

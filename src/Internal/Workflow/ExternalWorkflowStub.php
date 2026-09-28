@@ -49,10 +49,10 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
                         ? $input->namespace
                         : Workflow::getCurrentContext()->getInfo()->namespace;
 
-                    $input->input->setSerializationContext(new WorkflowSerializationContext(
+                    $input = $input->with(input: $input->input->withSerializationContext(new WorkflowSerializationContext(
                         namespace: $namespace,
                         workflowId: $input->workflowId,
-                    ));
+                    )));
                 }
 
                 return $this->request(

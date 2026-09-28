@@ -154,7 +154,7 @@ final class UpdateHandle
         $success = $result->getSuccess();
         if ($success !== null) {
             $values = EncodedValues::fromPayloads($success, $this->converter);
-            $values->setSerializationContext($context);
+            $values = $values->withSerializationContext($context);
             $this->result = $values;
             return;
         }
