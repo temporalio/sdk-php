@@ -48,6 +48,13 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 |---|---|---|
 | `TEMPORAL_ADDRESS` | `127.0.0.1:7233` | server address |
 | `TEMPORAL_NAMESPACE` | `default` | namespace |
+| `TEMPORAL_API_KEY` | none | API key, sent as `Authorization: Bearer <key>`. Turns TLS on. `ServiceCredentials::withApiKey()` passed to `create()` has priority |
+| `TEMPORAL_TLS` | off | `true` turns TLS on with the system root certificates, `false` turns it off also with an API key |
+| `TEMPORAL_TLS_SERVER_CA_CERT_PATH` / `_DATA` | system roots | server root CA (PEM file or PEM text). Turns TLS on |
+| `TEMPORAL_TLS_CLIENT_CERT_PATH` / `_DATA` | none | client certificate for mTLS (PEM) |
+| `TEMPORAL_TLS_CLIENT_KEY_PATH` / `_DATA` | none | client private key for mTLS (PEM) |
+| `TEMPORAL_TLS_SERVER_NAME` | host of the address | server name for the certificate check |
+| `TEMPORAL_PROFILE`, `TEMPORAL_CONFIG_FILE` | `default`, `temporal.toml` in the user config directory | TOML profile with the same settings (`Temporal\Common\EnvConfig\ConfigClient`). The env values override it. The `TEMPORAL_TLS*` and `TEMPORAL_API_KEY` values apply only with `TEMPORAL_ADDRESS`, `TEMPORAL_NAMESPACE` or a profile |
 | `TEMPORAL_CORE_WORKFLOW_PROCESSES` | `1` | workflow processes (each has its own sticky cache) |
 | `TEMPORAL_CORE_ACTIVITY_PROCESSES` | `0` | activity processes; `0` runs activities in the workflow process |
 | `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` | `1` | activities that one activity process runs at the same time in Fibers on the Revolt event loop (only for non-blocking activity code, `revolt/event-loop` must be installed) |
@@ -55,6 +62,10 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_THREADS` | CPU count | tokio worker threads per process |
 | `TEMPORAL_CORE_PROFILE` | off | `1` logs per-phase timings and process CPU to stderr every 10 s and at shutdown |
 | `TEMPORAL_CORE_LOG` | off | sdk-core log filter, for example `info` |
+
+The worker sends the `client-name: temporal-php-2` and `client-version: <temporal/sdk version>` headers, as RoadRunner does.
+
+On macOS, TLS with the system root certificates (`TEMPORAL_TLS=true` or an API key without `TEMPORAL_TLS_SERVER_CA_CERT_*`) crashes the forked processes (Security.framework after `fork()`). Set `TEMPORAL_TLS_SERVER_CA_CERT_PATH=/etc/ssl/cert.pem` or run one process (`TEMPORAL_CORE_ACTIVITY_PROCESSES=0`, `TEMPORAL_CORE_WORKFLOW_PROCESSES=1`). Linux is not affected.
 
 `SIGTERM`/`SIGINT` to the parent process stops all children gracefully. A child that does not stop within the largest `WorkerOptions` stop timeout (10 s by default) gets `SIGKILL`. A child that exits unexpectedly is started again.
 

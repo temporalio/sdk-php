@@ -136,13 +136,15 @@ Differences and limits:
 - **Local activities** run in the workflow process, not in the activity processes.
 - **Fork.** gRPC channels created before `run()` hang in the children. Create clients and connections lazily.
 - **Fiber concurrency** helps only activities that use non-blocking I/O (Revolt/amphp). A blocking call (PDO, curl, `sleep`) stops all activities of the process. It needs `revolt/event-loop`. `Facade` context is fiber-local only for fibers started by the worker.
-- **Not done yet:** TLS, API key, other client options in the bridge; prebuilt binaries; `temporal.UpdateAPIKey`; the RR KV caches of the testing package (the Functional harness still starts `rr serve` as a KV store only).
+- **Connection:** TLS, mTLS, server name override and API key come from the standard env config (`TEMPORAL_TLS*`, `TEMPORAL_API_KEY`, TOML profile), checked through a TLS terminator. On macOS, TLS with *system* roots crashes forked children (Security framework is not fork-safe); set `TEMPORAL_TLS_SERVER_CA_CERT_PATH` or use one process. Linux is not affected.
+- **Linux:** builds and runs in Docker (`core/docker/Dockerfile`, linux/arm64): 304–330 wf/s on `seq 200 × 1`, 752 act/s with Fibers, graceful `docker stop`.
+- **Not done yet:** prebuilt binaries; `temporal.UpdateAPIKey` at run time; the RR KV caches of the testing package (the Functional harness still starts `rr serve` as a KV store only).
 
 ## 7. Next steps
 
 1. Distribution: prebuilt `libtemporal_php_bridge` for linux-x64/arm64 and macOS (GitHub release assets, downloaded by `dload` like `rr` today), or a PHP extension built from the same crate.
 2. Fork safety: create per-process objects (gRPC clients, DB connections) after `run()` forks, or spawn fresh processes (`proc_open` of the same script) as RoadRunner does. A gRPC channel created before `fork()` hangs in the children (ext-grpc limitation).
-3. Replace the remaining RoadRunner RPC users: `WorkflowReplayer` (sdk-core has a replayer), `temporal.UpdateAPIKey`, the RR KV caches used by the testing package.
-4. TLS / API key / client options in the bridge config.
+3. Replace the remaining RoadRunner users: `temporal.UpdateAPIKey`, the RR KV caches of the testing package. (`WorkflowReplayer` already has a core backend: `new WorkflowReplayer($coreWorkerFactory)`.)
+4. macOS: load system TLS roots in the parent before `fork()`, or spawn fresh processes.
 5. SDK hot spots that help both transports: `CarbonInterval` in the marshaller, attribute reading per workflow start.
 6. Fibers for workflows (the `sdk-php-fiber-runtime` branch) together with this transport.

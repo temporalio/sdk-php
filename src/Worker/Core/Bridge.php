@@ -130,7 +130,7 @@ final class Bridge
         $errLen = $this->ffi->new('size_t');
         $worker = $this->ffi->$function($this->runtime, $json, \strlen($json), ...[...$args, \FFI::addr($err), \FFI::addr($errLen)]);
 
-        if (\FFI::isNull($worker)) {
+        if ($worker === null) {
             $message = \FFI::isNull($err) ? 'unknown error' : $this->take($err, $errLen->cdata);
             throw new \RuntimeException('Unable to create sdk-core worker: ' . $message);
         }

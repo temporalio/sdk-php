@@ -20,6 +20,9 @@ use Revolt\EventLoop;
 use Temporal\Api\History\V1\History;
 use Temporal\Internal\Support\Facade;
 use Temporal\Client\WorkflowClient;
+use Temporal\Common\EnvConfig\Client\ConfigProfile;
+use Temporal\Common\EnvConfig\ConfigClient;
+use Temporal\Common\SdkVersion;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Plugin\PluginRegistry;
@@ -47,6 +50,7 @@ class CoreWorkerFactory extends WorkerFactory
 
     private string $address;
     private string $namespace;
+    private ConfigProfile $connection;
     private int $workflowProcesses;
     private int $activityProcesses;
     private int $activityConcurrency;
@@ -68,8 +72,15 @@ class CoreWorkerFactory extends WorkerFactory
         $converter ??= DataConverter::createDefault();
         /** @psalm-suppress UnsafeInstantiation */
         $factory = new static($converter, $rpc ?? new ActivityTasks($converter), $credentials, $pluginRegistry, $client);
-        $factory->address = $address ?? $_SERVER['TEMPORAL_ADDRESS'] ?? '127.0.0.1:7233';
-        $factory->namespace = $namespace ?? $_SERVER['TEMPORAL_NAMESPACE'] ?? 'default';
+        $profile = ConfigClient::load();
+        $factory->address = $address ?? $profile->address ?? '127.0.0.1:7233';
+        $factory->namespace = $namespace ?? $profile->namespace ?? 'default';
+        $factory->connection = new ConfigProfile(
+            $factory->address,
+            $factory->namespace,
+            $credentials?->apiKey ?: $profile->apiKey,
+            $profile->tlsConfig,
+        );
         $factory->workflowProcesses = $workflowProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_WORKFLOW_PROCESSES'] ?? 1);
         $factory->activityProcesses = $activityProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_PROCESSES'] ?? 0);
         $factory->activityConcurrency = (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_CONCURRENCY'] ?? 1);
@@ -139,6 +150,15 @@ class CoreWorkerFactory extends WorkerFactory
         $this->finalize($bridge, [$core]);
 
         return $failure;
+    }
+
+    private static function pem(?string $value): ?string
+    {
+        if ($value === null || !\is_file($value)) {
+            return $value;
+        }
+
+        return \file_get_contents($value);
     }
 
     /**
@@ -421,9 +441,22 @@ class CoreWorkerFactory extends WorkerFactory
     {
         $options = $worker->getOptions();
         $isActivity = $role === self::ROLE_ACTIVITY;
+        $tls = $this->connection->tlsConfig;
+        if ($tls?->disabled) {
+            $tls = null;
+        }
 
         return [
-            'target_url' => 'http://' . $this->address,
+            'target_url' => ($tls === null ? 'http://' : 'https://') . $this->address,
+            'client_name' => SdkVersion::SDK_NAME,
+            'client_version' => SdkVersion::getSdkVersion(),
+            'api_key' => $this->connection->apiKey === null ? null : (string) $this->connection->apiKey,
+            'tls' => $tls === null ? null : [
+                'server_root_ca_cert' => self::pem($tls->rootCerts),
+                'domain' => $tls->serverName,
+                'client_cert' => self::pem($tls->certChain),
+                'client_private_key' => self::pem($tls->privateKey),
+            ],
             'namespace' => $this->namespace,
             'task_queue' => $worker->getID(),
             'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),

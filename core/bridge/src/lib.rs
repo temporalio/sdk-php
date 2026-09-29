@@ -11,7 +11,7 @@ use std::{
     },
     time::Duration,
 };
-use temporalio_client::{Connection, ConnectionOptions};
+use temporalio_client::{ClientTlsOptions, Connection, ConnectionOptions, TlsOptions};
 use temporalio_common::{
     protos::coresdk::{
         ActivityHeartbeat, ActivityTaskCompletion,
@@ -351,6 +351,22 @@ fn versioning_strategy(config: &Value) -> Result<WorkerVersioningStrategy, Strin
     ))
 }
 
+fn tls_options(tls: &Value) -> Option<TlsOptions> {
+    let tls = tls.as_object()?;
+    let text = |key: &str| tls.get(key).and_then(Value::as_str).map(str::to_owned);
+    let bytes = |key: &str| text(key).map(String::into_bytes);
+    Some(TlsOptions {
+        server_root_ca_cert: bytes("server_root_ca_cert"),
+        domain: text("domain"),
+        client_tls_options: bytes("client_cert").zip(bytes("client_private_key")).map(
+            |(client_cert, client_private_key)| ClientTlsOptions {
+                client_cert,
+                client_private_key,
+            },
+        ),
+    })
+}
+
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
     let config: Value =
         serde_json::from_slice(config).map_err(|e| format!("Invalid config JSON: {e}"))?;
@@ -364,10 +380,13 @@ fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
         .and_then(Value::as_str)
         .map(str::to_owned)
         .unwrap_or_else(|| format!("{}@temporal-php", std::process::id()));
+    let text = |key: &str| config.get(key).and_then(Value::as_str).map(str::to_owned);
     let options = ConnectionOptions::new(Url::parse(target).map_err(|e| e.to_string())?)
-        .client_name("temporal-php".to_owned())
-        .client_version(env!("CARGO_PKG_VERSION").to_owned())
+        .client_name(text("client_name").unwrap_or_default())
+        .client_version(text("client_version").unwrap_or_default())
         .identity(identity)
+        .maybe_api_key(text("api_key"))
+        .maybe_tls_options(config.get("tls").and_then(tls_options))
         .build();
     let handle = rt.core.tokio_handle();
     let worker = handle.block_on(async {
