@@ -6,7 +6,7 @@ All contributors must complete the Temporal Contributor License Agreement (CLA) 
 
 ## Development environment
 
-- [PHP 8.1+](https://www.php.net/downloads.php)
+- [PHP 8.2+](https://www.php.net/downloads.php)
 - [Composer](https://getcomposer.org/download/)
 
 ## Build

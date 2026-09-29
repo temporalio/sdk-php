@@ -125,8 +125,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Single-line fixed summary for this activity that will appear in UI/CLI.
      * This can be in single-line Temporal Markdown format.
      *
-     * @experimental This API is experimental and may change in the future.
-     *
      * @since RoadRunner 2025.1.2
      */
     #[Marshal(name: 'Summary')]
@@ -323,8 +321,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Defaults to inheriting priority from the workflow that scheduled the activity.
      *
      * @return $this
-     *
-     * @internal Experimental
      */
     #[Pure]
     public function withPriority(Priority $priority): self
@@ -339,8 +335,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      *
      * Single-line fixed summary for this activity that will appear in UI/CLI.
      * This can be in single-line Temporal Markdown format.
-     *
-     * @experimental This API is experimental and may change in the future.
      *
      * @return $this
      */

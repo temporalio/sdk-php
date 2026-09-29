@@ -10,6 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Support\TestOutputStyle;
@@ -118,7 +119,13 @@ final class Environment
                 '--address', $temporalServerAddress,
             ]);
             $check->setTimeout(1);
-            $check->run();
+
+            try {
+                $check->run();
+            } catch (ProcessTimedOutException) {
+                // Not ready yet.
+                return false;
+            }
 
             return \str_contains($check->getOutput(), 'SERVING');
         }, onFailure: function (Process $process): void {
@@ -186,7 +193,13 @@ final class Environment
 
             $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
             $check->setTimeout(1);
-            $check->run();
+
+            try {
+                $check->run();
+            } catch (ProcessTimedOutException) {
+                // Not ready yet.
+                return false;
+            }
 
             return \str_contains($check->getOutput(), 'Workers of');
         });

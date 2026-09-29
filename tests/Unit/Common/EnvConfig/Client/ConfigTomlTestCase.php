@@ -13,7 +13,7 @@ use Temporal\Common\EnvConfig\Client\ConfigToml;
 use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 
 #[CoversClass(ConfigToml::class)]
-final class ConfigTomlTest extends TestCase
+final class ConfigTomlTestCase extends TestCase
 {
     public static function provideInvalidProfileStructures(): \Generator
     {

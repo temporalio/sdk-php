@@ -6,18 +6,11 @@ namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Client\Common\ServerCapabilities;
 
-interface ServiceClientInterface
+interface ServiceClientInterface extends GrpcClientInterface
 {
-    public function getContext(): ContextInterface;
-
-    public function withContext(ContextInterface $context): static;
-
-    public function withAuthKey(\Stringable|string $key): static;
-
-    public function getConnection(): \Temporal\Client\GRPC\Connection\ConnectionInterface;
-
-    public function getServerCapabilities(): ?\Temporal\Client\Common\ServerCapabilities;
+    public function getServerCapabilities(): ?ServerCapabilities;
 
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
@@ -98,8 +91,6 @@ interface ServiceClientInterface
      *
      * Upon failure, it returns `MultiOperationExecutionFailure` where the status code
      * equals the status code of the *first* operation that failed to be started.
-     *
-     * NOTE: Experimental API.
      *
      * @throws ServiceClientException
      */
@@ -449,8 +440,10 @@ interface ServiceClientInterface
     public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListArchivedWorkflowExecutionsResponse;
 
     /**
-     * ScanWorkflowExecutions is a visibility API to list large amount of workflow
+     * ScanWorkflowExecutions _was_ a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
+     * It has since been deprecated in favor of `ListWorkflowExecutions` and rewritten
+     * to use `ListWorkflowExecutions` internally.
      *
      * Deprecated: Replaced with `ListWorkflowExecutions`.
      * (-- api-linter: core::0127::http-annotation=disabled
@@ -876,6 +869,13 @@ interface ServiceClientInterface
     public function UpdateWorkerDeploymentVersionMetadata(V1\UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionMetadataResponse;
 
     /**
+     * Set/unset the ManagerIdentity of a Worker Deployment.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentManager(V1\SetWorkerDeploymentManagerRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentManagerResponse;
+
+    /**
      * Invokes the specified Update function on user Workflow code.
      *
      * @throws ServiceClientException
@@ -1139,7 +1139,9 @@ interface ServiceClientInterface
     public function UpdateWorkerConfig(V1\UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerConfigResponse;
 
     /**
-     * Close the communication channel associated with this stub.
+     * DescribeWorker returns information about the specified worker.
+     *
+     * @throws ServiceClientException
      */
-    public function close(): void;
+    public function DescribeWorker(V1\DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerResponse;
 }

@@ -185,12 +185,6 @@
       <code><![CDATA[$priorityKey]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Common/RetryOptions.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
-      <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
-    </PossiblyNullArgument>
-  </file>
   <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
     <ImpureMethodCall>
       <code><![CDATA[valueSet]]></code>
@@ -238,12 +232,6 @@
     <PossiblyUndefinedArrayOffset>
       <code><![CDATA[$parts[1]]]></code>
     </PossiblyUndefinedArrayOffset>
-  </file>
-  <file src="src/DataConverter/EncodedCollection.php">
-    <InvalidArgument>
-      <code><![CDATA[$name]]></code>
-      <code><![CDATA[$value]]></code>
-    </InvalidArgument>
   </file>
   <file src="src/DataConverter/JsonConverter.php">
     <DeprecatedClass>
@@ -726,9 +714,6 @@
     </InvalidOperand>
   </file>
   <file src="src/Internal/Marshaller/Type/ObjectType.php">
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>
-    </InvalidPropertyAssignmentValue>
     <InvalidReturnStatement>
       <code><![CDATA[$this->reflection->getName() === \stdClass::class
             ? (object) $data

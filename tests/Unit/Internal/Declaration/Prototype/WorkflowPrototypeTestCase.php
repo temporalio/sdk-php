@@ -17,7 +17,7 @@ use Temporal\Workflow\HandlerUnfinishedPolicy;
 use Temporal\Workflow\ReturnType;
 
 #[CoversClass(WorkflowPrototype::class)]
-final class WorkflowPrototypeTest extends TestCase
+final class WorkflowPrototypeTestCase extends TestCase
 {
     private \ReflectionClass $reflectionClass;
     private \ReflectionMethod $reflectionMethod;

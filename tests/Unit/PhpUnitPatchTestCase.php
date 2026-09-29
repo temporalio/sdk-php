@@ -6,7 +6,7 @@ namespace Temporal\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
-class PhpUnitPatchTest extends TestCase
+class PhpUnitPatchTestCase extends TestCase
 {
     public function testInstanceOf(): void
     {

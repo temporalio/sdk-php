@@ -15,8 +15,6 @@ use Temporal\Internal\Traits\CloneWith;
 
 /**
  * TimerOptions is used to specify options for a timer.
- *
- * @experimental This API is experimental and may change in the future.
  */
 final class TimerOptions
 {
