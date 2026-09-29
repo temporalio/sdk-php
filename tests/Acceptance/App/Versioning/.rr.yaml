@@ -1,0 +1,16 @@
+version: "3"
+
+rpc:
+    listen: ${ROADRUNNER_ADDRESS:-tcp://127.0.0.1:6002}
+
+server:
+    command: "php worker.php"
+
+temporal:
+    address: ${TEMPORAL_ADDRESS:-127.0.0.1:7233}
+    namespace: ${TEMPORAL_NAMESPACE:-default}
+    activities:
+        num_workers: 1
+
+logs:
+    mode: none
