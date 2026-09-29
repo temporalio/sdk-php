@@ -34,6 +34,7 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
+use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -98,12 +99,20 @@ try {
     $container->bindSingleton(DataConverter::class, $converter);
 
     $plugins = [new TranscriptPlugin($workerTranscript)];
+    $coreTransport = \getenv('TEMPORAL_WORKER_TRANSPORT') === 'core';
     $container->bindSingleton(
         WorkerFactoryInterface::class,
-        WorkerFactory::create(
-            converter: $converter,
-            pluginRegistry: new PluginRegistry($plugins),
-        )
+        $coreTransport
+            ? CoreWorkerFactory::create(
+                converter: $converter,
+                pluginRegistry: new PluginRegistry($plugins),
+                address: $runtime->address,
+                namespace: $runtime->namespace,
+            )
+            : WorkerFactory::create(
+                converter: $converter,
+                pluginRegistry: new PluginRegistry($plugins),
+            )
     );
 
     $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
@@ -111,7 +120,7 @@ try {
         return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
     };
 
-    $serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
+    $serviceClient = static fn(): ServiceClientInterface => $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
         ? ServiceClient::create($runtime->address)
         : ServiceClient::createSSL(
             $runtime->address,
@@ -119,8 +128,10 @@ try {
             clientPem: $runtime->command->tlsCert,
         );
     $options = (new ClientOptions())->withNamespace($runtime->namespace);
-    $workflowClient = WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
-    $scheduleClient = ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
+    $workflowClient = static fn(ServiceClientInterface $serviceClient): WorkflowClientInterface
+        => WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
+    $scheduleClient = static fn(ServiceClientInterface $serviceClient): ScheduleClientInterface
+        => ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
 
     $container->bindSingleton(State::class, $runtime);
     $container->bindSingleton(LoggerInterface::class, $logger);
@@ -137,11 +148,21 @@ try {
         $getWorker($feature)->registerWorkflowTypes($workflow);
     }
 
+    $activityInstances = [];
     foreach ($runtime->activities() as $feature => $activity) {
-        $getWorker($feature)->registerActivityImplementations($container->make($activity));
+        if (!$coreTransport) {
+            $getWorker($feature)->registerActivityImplementations($container->make($activity));
+            continue;
+        }
+        $getWorker($feature)->registerActivity(
+            $activity,
+            static function () use ($activity, $container, &$activityInstances): object {
+                return $activityInstances[$activity] ??= $container->make($activity);
+            },
+        );
     }
 
-    $host = new RecordingHost(RoadRunner::create(), $workerTranscript);
+    $host = $coreTransport ? null : new RecordingHost(RoadRunner::create(), $workerTranscript);
     $container->get(WorkerFactoryInterface::class)->run($host);
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);

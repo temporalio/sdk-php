@@ -1,0 +1,356 @@
+<?php
+
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Temporal\Worker\Core;
+
+use Carbon\CarbonInterval;
+use Psr\Log\LoggerInterface;
+use Revolt\EventLoop;
+use Temporal\Internal\Support\Facade;
+use Temporal\Client\WorkflowClient;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Worker\ServiceCredentials;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
+use Temporal\Worker\Transport\HostConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\WorkerInterface;
+use Temporal\WorkerFactory;
+
+final class CoreWorkerFactory extends WorkerFactory
+{
+    private const ROLE_ALL = 'all';
+    private const ROLE_WORKFLOW = 'workflow';
+    private const ROLE_ACTIVITY = 'activity';
+    private const POLL_TIMEOUT_MS = 500;
+    private const FINALIZE_TIMEOUT_SECONDS = 2;
+    private const MAX_ACTIVITY_POLLERS = 8;
+    private const STICKY_SCHEDULE_TO_START_TIMEOUT_MS = 5000;
+
+    private string $address;
+    private string $namespace;
+    private int $workflowProcesses;
+    private int $activityProcesses;
+    private int $activityConcurrency;
+    private LoggerInterface $logger;
+    private bool $stopping = false;
+
+    public static function create(
+        ?DataConverterInterface $converter = null,
+        ?RPCConnectionInterface $rpc = null,
+        ?ServiceCredentials $credentials = null,
+        ?PluginRegistry $pluginRegistry = null,
+        ?WorkflowClient $client = null,
+        ?string $address = null,
+        ?string $namespace = null,
+        ?int $workflowProcesses = null,
+        ?int $activityProcesses = null,
+    ): static {
+        $converter ??= DataConverter::createDefault();
+        $factory = new self($converter, $rpc ?? new ActivityTasks($converter), $credentials, $pluginRegistry, $client);
+        $factory->address = $address ?? $_SERVER['TEMPORAL_ADDRESS'] ?? '127.0.0.1:7233';
+        $factory->namespace = $namespace ?? $_SERVER['TEMPORAL_NAMESPACE'] ?? 'default';
+        $factory->workflowProcesses = $workflowProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_WORKFLOW_PROCESSES'] ?? 1);
+        $factory->activityProcesses = $activityProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_PROCESSES'] ?? 0);
+        $factory->activityConcurrency = (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_CONCURRENCY'] ?? 1);
+        $factory->logger = new StderrLogger();
+
+        return $factory;
+    }
+
+    public function run(?HostConnectionInterface $host = null): int
+    {
+        if ($this->workflowProcesses + $this->activityProcesses <= 1) {
+            return $this->serve($this->activityProcesses === 0 ? self::ROLE_ALL : self::ROLE_ACTIVITY);
+        }
+
+        $roles = [
+            ...\array_fill(0, $this->workflowProcesses, $this->activityProcesses === 0 ? self::ROLE_ALL : self::ROLE_WORKFLOW),
+            ...\array_fill(0, $this->activityProcesses, self::ROLE_ACTIVITY),
+        ];
+
+        return $this->supervise($roles);
+    }
+
+    /**
+     * @param list<non-empty-string> $roles
+     */
+    private function supervise(array $roles): int
+    {
+        $children = [];
+        foreach ($roles as $role) {
+            $children[$this->spawn($role)] = $role;
+        }
+
+        $stop = function () use (&$children): void {
+            $this->stopping = true;
+            foreach (\array_keys($children) as $pid) {
+                \posix_kill($pid, \SIGTERM);
+            }
+        };
+        \pcntl_async_signals(true);
+        \pcntl_signal(\SIGTERM, $stop, false);
+        \pcntl_signal(\SIGINT, $stop, false);
+
+        $code = 0;
+        while ($children !== []) {
+            $pid = \pcntl_wait($status);
+            if ($pid <= 0) {
+                continue;
+            }
+            $role = $children[$pid];
+            unset($children[$pid]);
+            $code = \max($code, \pcntl_wexitstatus($status));
+            if (!$this->stopping) {
+                $children[$this->spawn($role)] = $role;
+            }
+        }
+
+        return $code;
+    }
+
+    private function spawn(string $role): int
+    {
+        $pid = \pcntl_fork();
+        if ($pid === 0) {
+            \register_shutdown_function(fn() => $this->exitChild(1));
+            $this->exitChild($this->serve($role));
+        }
+
+        return $pid;
+    }
+
+    private function exitChild(int $code): never
+    {
+        \fflush(\STDOUT);
+        \fflush(\STDERR);
+        \FFI::cdef('void _exit(int status);')->_exit($code);
+    }
+
+    private function serve(string $role): int
+    {
+        \pcntl_async_signals(true);
+        \pcntl_signal(\SIGTERM, fn() => $this->stopping = true);
+        \pcntl_signal(\SIGINT, fn() => $this->stopping = true);
+
+        $bridge = new Bridge();
+        $profiler = ($_SERVER['TEMPORAL_CORE_PROFILE'] ?? false) ? new Profiler($this->logger, $role) : null;
+        $dispatch = $profiler === null ? $this->dispatchCommands(...) : function (array $commands, array $headers) use ($profiler): array {
+            $startedAt = \hrtime(true);
+            try {
+                return $this->dispatchCommands($commands, $headers);
+            } finally {
+                $profiler->add('php-sdk-dispatch', $startedAt);
+            }
+        };
+        if ($this->rpc instanceof ActivityTasks) {
+            $this->rpc->bind($bridge, $dispatch);
+        }
+
+        $workers = [];
+        foreach ($this->queues as $worker) {
+            \assert($worker instanceof WorkerInterface);
+            $taskQueue = $worker->getID();
+            $workers[] = [
+                'core' => $bridge->newWorker($this->config($worker, $role)),
+                'taskQueue' => $taskQueue,
+                'activations' => new WorkflowActivations($this->converter, $dispatch, $this->namespace, $taskQueue),
+                'workflows' => $role !== self::ROLE_ACTIVITY,
+            ];
+        }
+
+        $activityPolls = $role === self::ROLE_ACTIVITY ? \min(self::MAX_ACTIVITY_POLLERS, $this->activityConcurrency) : 1;
+        $open = 0;
+        foreach ($workers as $tag => $worker) {
+            if ($worker['workflows']) {
+                $bridge->pollWorkflowActivation($worker['core'], $tag);
+                ++$open;
+            }
+            for ($i = 0; $i < $activityPolls; ++$i) {
+                $bridge->pollActivityTask($worker['core'], $tag);
+                ++$open;
+            }
+        }
+
+        $shutdownRequested = false;
+        $shutdown = function () use (&$shutdownRequested, $workers, $bridge): void {
+            if (!$this->stopping || $shutdownRequested) {
+                return;
+            }
+            $shutdownRequested = true;
+            foreach ($workers as $worker) {
+                $bridge->initiateShutdown($worker['core']);
+            }
+        };
+        $concurrent = $role === self::ROLE_ACTIVITY && $this->activityConcurrency > 1;
+        $handle = function (array $events) use (&$open, $workers, $bridge, $profiler, $concurrent): void {
+            foreach ($events as [$tag, $kind, $status, $data]) {
+                $worker = $workers[$tag];
+                $startedAt = \hrtime(true);
+                switch ($kind) {
+                    case Bridge::KIND_WORKFLOW_ACTIVATION:
+                        if ($status !== Bridge::STATUS_OK) {
+                            $this->onPollFailure($status, $data, $open, static fn() => $bridge->pollWorkflowActivation($worker['core'], $tag));
+                            break;
+                        }
+                        $bridge->completeWorkflowActivation($worker['core'], $tag, $worker['activations']->handle($data));
+                        $bridge->pollWorkflowActivation($worker['core'], $tag);
+                        $profiler?->add('workflow-activation', $startedAt);
+                        break;
+
+                    case Bridge::KIND_ACTIVITY_TASK:
+                        if ($status !== Bridge::STATUS_OK) {
+                            $this->onPollFailure($status, $data, $open, static fn() => $bridge->pollActivityTask($worker['core'], $tag));
+                            break;
+                        }
+                        $bridge->pollActivityTask($worker['core'], $tag);
+                        $run = function () use ($worker, $tag, $data, $bridge, $profiler, $startedAt): void {
+                            $completion = $this->rpc->handle($worker['core'], $worker['taskQueue'], $data);
+                            if ($completion !== null) {
+                                $bridge->completeActivityTask($worker['core'], $tag, $completion);
+                            }
+                            $profiler?->add('activity-task', $startedAt);
+                        };
+                        if ($concurrent) {
+                            EventLoop::queue(static function () use ($run): void {
+                                $fiber = new \Fiber($run);
+                                Facade::isolateFiber($fiber);
+                                $fiber->start();
+                            });
+                        } else {
+                            $run();
+                        }
+                        break;
+
+                    case Bridge::KIND_WORKFLOW_COMPLETED:
+                    case Bridge::KIND_ACTIVITY_COMPLETED:
+                        $this->logger->error('sdk-core completion failed: ' . $data);
+                        break;
+                }
+            }
+        };
+
+        if ($concurrent) {
+            $this->runEventLoop($bridge, $handle, $shutdown, $open);
+        }
+
+        while ($open > 0) {
+            $shutdown();
+            $waitedAt = \hrtime(true);
+            $events = $bridge->nextEvents(self::POLL_TIMEOUT_MS);
+            $profiler?->add('wait', $waitedAt);
+            $handle($events);
+        }
+
+        $profiler?->report();
+        foreach ($workers as $tag => $worker) {
+            $bridge->finalizeShutdown($worker['core'], $tag);
+        }
+        $finalized = 0;
+        $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
+        while ($finalized < \count($workers) && \microtime(true) < $deadline) {
+            foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind]) {
+                if ($kind === Bridge::KIND_SHUTDOWN) {
+                    ++$finalized;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private function runEventLoop(Bridge $bridge, \Closure $handle, \Closure $shutdown, int &$open): void
+    {
+        $pipe = \fopen('php://fd/' . $bridge->eventFd(), 'r');
+        \stream_set_blocking($pipe, false);
+        $pump = static function () use ($bridge, $handle, $pipe): void {
+            \fread($pipe, 65536);
+            $handle($bridge->nextEvents(0));
+        };
+        $readable = EventLoop::onReadable($pipe, $pump);
+        $timer = EventLoop::repeat(self::POLL_TIMEOUT_MS / 1000, static function () use ($shutdown, $pump, &$open, &$readable, &$timer): void {
+            $shutdown();
+            $pump();
+            if ($open === 0) {
+                EventLoop::cancel($readable);
+                EventLoop::cancel($timer);
+            }
+        });
+        $pump();
+        EventLoop::run();
+    }
+
+    private function onPollFailure(int $status, string $error, int &$open, \Closure $repoll): void
+    {
+        if ($status === Bridge::STATUS_SHUTDOWN) {
+            --$open;
+            return;
+        }
+
+        $this->logger->error('sdk-core poll failed: ' . $error);
+        $repoll();
+    }
+
+    private function config(WorkerInterface $worker, string $role): array
+    {
+        $options = $worker->getOptions();
+        $isActivity = $role === self::ROLE_ACTIVITY;
+
+        return [
+            'target_url' => 'http://' . $this->address,
+            'namespace' => $this->namespace,
+            'task_queue' => $worker->getID(),
+            'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),
+            'workflows' => !$isActivity,
+            'activities' => true,
+            'no_remote_activities' => $role === self::ROLE_WORKFLOW,
+            'max_cached_workflows' => $isActivity ? 0 : (int) ($_SERVER['TEMPORAL_CORE_MAX_CACHED_WORKFLOWS'] ?? 10000),
+            'max_outstanding_workflow_tasks' => $options->maxConcurrentWorkflowTaskExecutionSize ?: 100,
+            'max_outstanding_activities' => $isActivity ? $this->activityConcurrency : 1,
+            'max_outstanding_local_activities' => 1,
+            'max_concurrent_workflow_task_polls' => $options->maxConcurrentWorkflowTaskPollers ?: 4,
+            'sticky_queue_schedule_to_start_timeout_ms' => $options->stickyScheduleToStartTimeout === null
+                ? self::STICKY_SCHEDULE_TO_START_TIMEOUT_MS
+                : (int) CarbonInterval::instance($options->stickyScheduleToStartTimeout)->totalMilliseconds,
+            'max_concurrent_activity_task_polls' => $options->maxConcurrentActivityTaskPollers ?: \min(self::MAX_ACTIVITY_POLLERS, $isActivity ? $this->activityConcurrency : 1),
+        ];
+    }
+
+    /**
+     * @param list<CommandInterface> $commands
+     * @return list<CommandInterface>
+     */
+    private function dispatchCommands(array $commands, array $headers): array
+    {
+        foreach ($commands as $command) {
+            $this->env->update($command->getTickInfo());
+
+            if ($command instanceof ServerResponseInterface) {
+                $this->client->dispatch($command);
+                continue;
+            }
+
+            $this->server->dispatch($command, $headers);
+        }
+
+        $this->tick();
+
+        $outgoing = [];
+        foreach ($this->responses as $command) {
+            $outgoing[] = $command;
+        }
+
+        return $outgoing;
+    }
+}

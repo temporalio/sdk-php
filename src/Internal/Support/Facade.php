@@ -24,6 +24,9 @@ abstract class Facade
 
     private static ?object $ctx = null;
 
+    /** @var \WeakMap<\Fiber, array{?object}>|null */
+    private static ?\WeakMap $fiberCtx = null;
+
     /**
      * Facade constructor.
      */
@@ -37,12 +40,32 @@ abstract class Facade
      */
     public static function setCurrentContext(?object $ctx): void
     {
-        self::$ctx = $ctx;
+        $fiber = \Fiber::getCurrent();
+        if ($fiber === null || self::$fiberCtx === null || !self::$fiberCtx->offsetExists($fiber)) {
+            self::$ctx = $ctx;
+            return;
+        }
+
+        self::$fiberCtx[$fiber] = [$ctx];
     }
 
     public static function getCurrentContext(): ?object
     {
-        return self::$ctx;
+        $fiber = \Fiber::getCurrent();
+        if ($fiber === null || self::$fiberCtx === null || !self::$fiberCtx->offsetExists($fiber)) {
+            return self::$ctx;
+        }
+
+        return self::$fiberCtx[$fiber][0];
+    }
+
+    /**
+     * @internal
+     */
+    public static function isolateFiber(\Fiber $fiber): void
+    {
+        self::$fiberCtx ??= new \WeakMap();
+        self::$fiberCtx[$fiber] = [null];
     }
 
     /**
@@ -56,13 +79,13 @@ abstract class Facade
      */
     public static function usingContext(?object $ctx, callable $callback): mixed
     {
-        $saved = self::$ctx;
-        self::$ctx = $ctx;
+        $saved = self::getCurrentContext();
+        self::setCurrentContext($ctx);
 
         try {
             return $callback();
         } finally {
-            self::$ctx = $saved;
+            self::setCurrentContext($saved);
         }
     }
 

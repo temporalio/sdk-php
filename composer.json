@@ -48,6 +48,8 @@
         "psr-4": {
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
+            "Coresdk\\": "core/generated/Coresdk",
+            "GPBMetadata\\Temporal\\Sdk\\": "core/generated/GPBMetadata/Temporal/Sdk",
             "Temporal\\Testing\\": "testing/src",
             "Temporal\\": "src"
         },
