@@ -42,6 +42,7 @@ use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class ActivityTasks implements RPCConnectionInterface
 {
+    public const SIDE_EFFECT = '__php_side_effect';
     private const HEARTBEAT = 'temporal.RecordActivityHeartbeat';
 
     private ?Bridge $bridge = null;
@@ -73,6 +74,13 @@ final class ActivityTasks implements RPCConnectionInterface
 
         $start = $task->getStart();
         $token = $task->getTaskToken();
+        if ($start->getActivityType() === self::SIDE_EFFECT) {
+            return (new ActivityTaskCompletion([
+                'task_token' => $token,
+                'result' => new ActivityExecutionResult(['completed' => new ActivitySuccess(['result' => $start->getInput()[0] ?? null])]),
+            ]))->serializeToString();
+        }
+
         $this->running[$token] = [$worker, null];
 
         try {

@@ -56,7 +56,18 @@ RESULTS_PLACEHOLDER
 
 ## 5. Where the time goes (debug labels, 1000 wf × 1 activity at 100 wf/s)
 
-PROFILE_PLACEHOLDER
+`TEMPORAL_CORE_PROFILE=1`, Docker server, `seq` 1000 × 1 activity at 100 wf/s, 1 workflow + 4 activity processes:
+
+| process | process CPU (PHP + Rust) | PHP SDK dispatch | adapter + protobuf (activation − dispatch) | Rust / sdk-core (rest) |
+|---|---|---|---|---|
+| workflow (3000 activations) | 1468 ms | 394 ms (131 µs / activation) | 174 ms (58 µs / activation) | ~900 ms (~300 µs / activation) |
+| activity (250 tasks each) | 145 ms | 24 ms (96 µs / task) | 18 ms (70 µs / task) | ~100 ms |
+
+- The PHP adapter costs 15–20 % of the PHP busy time. The rest of the PHP time is the SDK itself (the same code runs under RoadRunner).
+- An xdebug profile of the workflow process shows the SDK hot spots, which are the same with RoadRunner: `Carbon\CarbonInterval` (duration parsing in the marshaller, ~20 % of the busy PHP time), promises, attribute reading.
+- sdk-core (history processing, gRPC, protobuf) is the largest part of the process CPU, but it replaces the whole Go process: the total worker CPU is still 25–35 % lower than `rr` + PHP.
+- Tried and not helpful: fewer tokio threads (`TEMPORAL_CORE_THREADS=2`), no completion acknowledgements (kept: fewer wake-ups, no measurable CPU change).
+- Found and fixed: task-queue partitions. With the default 4 partitions and few pollers, tasks waited up to 2 s on partitions that no poller read (both transports). The benchmark server uses 1 partition.
 
 ## 6. Limitations and differences to RoadRunner
 
@@ -64,4 +75,9 @@ LIMITS_PLACEHOLDER
 
 ## 7. Next steps
 
-NEXT_PLACEHOLDER
+1. Distribution: prebuilt `libtemporal_php_bridge` for linux-x64/arm64 and macOS (GitHub release assets, downloaded by `dload` like `rr` today), or a PHP extension built from the same crate.
+2. Fork safety: create per-process objects (gRPC clients, DB connections) after `run()` forks, or spawn fresh processes (`proc_open` of the same script) as RoadRunner does. A gRPC channel created before `fork()` hangs in the children (ext-grpc limitation).
+3. Replace the remaining RoadRunner RPC users: `WorkflowReplayer` (sdk-core has a replayer), `temporal.UpdateAPIKey`, the RR KV caches used by the testing package.
+4. TLS / API key / client options in the bridge config.
+5. SDK hot spots that help both transports: `CarbonInterval` in the marshaller, attribute reading per workflow start.
+6. Fibers for workflows (the `sdk-php-fiber-runtime` branch) together with this transport.

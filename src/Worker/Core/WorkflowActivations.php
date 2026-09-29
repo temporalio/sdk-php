@@ -83,6 +83,7 @@ use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
 final class WorkflowActivations
 {
     private const DEFAULT_VERSION = -1;
+    private const SIDE_EFFECT_TIMEOUT_SECONDS = 60;
     private const SEARCH_ATTRIBUTE_TYPES = [
         'bool' => 'Bool',
         'float64' => 'Double',
@@ -100,12 +101,14 @@ final class WorkflowActivations
 
     /**
      * @param \Closure(list<CommandInterface>, array): list<CommandInterface> $dispatch
+     * @param array<string, int> $versioningBehaviors
      */
     public function __construct(
         private readonly DataConverterInterface $converter,
         private readonly \Closure $dispatch,
         private readonly string $namespace,
         private readonly string $taskQueue,
+        private readonly array $versioningBehaviors,
     ) {
         $this->timeZone = new \DateTimeZone(\date_default_timezone_get());
     }
@@ -141,7 +144,11 @@ final class WorkflowActivations
         $completion = new WorkflowActivationCompletion(['run_id' => $activation->getRunId()]);
 
         try {
-            $completion->setSuccessful(new CompletionSuccess(['commands' => $this->process($activation)]));
+            $commands = $this->process($activation);
+            $completion->setSuccessful(new CompletionSuccess([
+                'commands' => $commands,
+                'versioning_behavior' => $this->runs[$activation->getRunId()]->versioningBehavior ?? 0,
+            ]));
         } catch (\Throwable $e) {
             $completion->setFailed(new CompletionFailure([
                 'failure' => FailureConverter::mapExceptionToFailure($e, $this->converter),
@@ -177,6 +184,7 @@ final class WorkflowActivations
         foreach ($activation->getJobs() as $job) {
             switch ($job->getVariant()) {
                 case 'initialize_workflow':
+                    $run->versioningBehavior = $this->versioningBehaviors[$job->getInitializeWorkflow()->getWorkflowType()] ?? 0;
                     $messages[] = $this->startWorkflow($job->getInitializeWorkflow(), $runId, $tick);
                     break;
                 case 'fire_timer':
@@ -372,9 +380,20 @@ final class WorkflowActivations
                 return [new SuccessResponse($this->getVersion($run, $options, $tick, $commands), $id, $tick)];
 
             case 'SideEffect':
-                $payloads = $command->getPayloads();
-                $payloads->setDataConverter($this->converter);
-                return [new SuccessResponse(EncodedValues::fromPayloads($payloads->toPayloads(), $this->converter), $id, $tick)];
+                $seq = $run->bind($id, RunState::LOCAL_ACTIVITY);
+                $commands[] = new WorkflowCommand([
+                    'schedule_local_activity' => $run->localActivities[$seq] = new ScheduleLocalActivity([
+                        'seq' => $seq,
+                        'activity_id' => (string) $seq,
+                        'activity_type' => ActivityTasks::SIDE_EFFECT,
+                        'attempt' => 1,
+                        'original_schedule_time' => $this->timestamp($tick->time),
+                        'arguments' => $this->payloads($command->getPayloads()),
+                        'schedule_to_close_timeout' => new Duration(['seconds' => self::SIDE_EFFECT_TIMEOUT_SECONDS]),
+                    ]),
+                    'user_metadata' => $this->userMetadata($options['summary'] ?? ''),
+                ]);
+                return [];
 
             case 'ExecuteChildWorkflow':
                 $start = $this->startChild($run, $run->bind($id, RunState::CHILD), $command);

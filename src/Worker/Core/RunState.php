@@ -22,6 +22,8 @@ final class RunState
     public const SIGNAL_EXTERNAL = 5;
     public const CANCEL_EXTERNAL = 6;
 
+    public int $versioningBehavior = 0;
+
     /** @var array<string, int> */
     public array $patches = [];
 

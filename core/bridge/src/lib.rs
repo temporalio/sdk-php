@@ -18,7 +18,8 @@ use temporalio_common::{
         workflow_completion::WorkflowActivationCompletion,
     },
     telemetry::{CoreLog, CoreLogConsumer, Logger, TelemetryOptions},
-    worker::WorkerTaskTypes,
+    protos::temporal::api::enums::v1::VersioningBehavior,
+    worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
 use temporalio_sdk_core::{
     CoreRuntime, PollError, PollerBehavior, RuntimeOptions, TokioRuntimeBuilder, Url, Worker,
@@ -272,9 +273,7 @@ fn worker_config(config: &Value) -> Result<WorkerConfig, String> {
     WorkerConfig::builder()
         .namespace(text("namespace", "default"))
         .task_queue(text("task_queue", ""))
-        .versioning_strategy(WorkerVersioningStrategy::None {
-            build_id: text("build_id", ""),
-        })
+        .versioning_strategy(versioning_strategy(config)?)
         .max_cached_workflows(number("max_cached_workflows", 1000) as usize)
         .max_outstanding_workflow_tasks(number("max_outstanding_workflow_tasks", 100) as usize)
         .max_outstanding_activities(number("max_outstanding_activities", 100) as usize)
@@ -305,6 +304,49 @@ fn worker_config(config: &Value) -> Result<WorkerConfig, String> {
             enable_nexus: false,
         })
         .build()
+}
+
+fn versioning_strategy(config: &Value) -> Result<WorkerVersioningStrategy, String> {
+    let deployment = config.get("deployment");
+    let Some(version) = deployment
+        .and_then(|d| d.get("Version"))
+        .filter(|v| !v.is_null())
+    else {
+        return Ok(WorkerVersioningStrategy::None {
+            build_id: config
+                .get("build_id")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_owned(),
+        });
+    };
+    let text = |key: &str| {
+        version
+            .get(key)
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned()
+    };
+    let default_behavior = deployment
+        .and_then(|d| d.get("DefaultVersioningBehavior"))
+        .and_then(Value::as_i64)
+        .unwrap_or(0) as i32;
+    Ok(WorkerVersioningStrategy::WorkerDeploymentBased(
+        WorkerDeploymentOptions {
+            version: WorkerDeploymentVersion {
+                deployment_name: text("DeploymentName"),
+                build_id: text("BuildId"),
+            },
+            use_worker_versioning: deployment
+                .and_then(|d| d.get("UseVersioning"))
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+            default_versioning_behavior: match default_behavior {
+                0 => None,
+                v => Some(VersioningBehavior::try_from(v).map_err(|e| e.to_string())?),
+            },
+        },
+    ))
 }
 
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {

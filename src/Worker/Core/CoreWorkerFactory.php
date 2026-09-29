@@ -37,6 +37,8 @@ final class CoreWorkerFactory extends WorkerFactory
     private const FINALIZE_TIMEOUT_SECONDS = 2;
     private const MAX_ACTIVITY_POLLERS = 8;
     private const STICKY_SCHEDULE_TO_START_TIMEOUT_MS = 5000;
+    private const STOP_TIMEOUT_SECONDS = 10;
+    private const STOP_POLL_INTERVAL_US = 100_000;
 
     private string $address;
     private string $namespace;
@@ -93,8 +95,10 @@ final class CoreWorkerFactory extends WorkerFactory
             $children[$this->spawn($role)] = $role;
         }
 
-        $stop = function () use (&$children): void {
+        $deadline = null;
+        $stop = function () use (&$children, &$deadline): void {
             $this->stopping = true;
+            $deadline ??= \microtime(true) + $this->stopTimeout();
             foreach (\array_keys($children) as $pid) {
                 \posix_kill($pid, \SIGTERM);
             }
@@ -105,8 +109,17 @@ final class CoreWorkerFactory extends WorkerFactory
 
         $code = 0;
         while ($children !== []) {
-            $pid = \pcntl_wait($status);
-            if ($pid <= 0) {
+            $pid = \pcntl_wait($status, $this->stopping ? \WNOHANG : 0);
+            if ($pid === 0 && \microtime(true) >= $deadline) {
+                foreach (\array_keys($children) as $child) {
+                    \posix_kill($child, \SIGKILL);
+                }
+            }
+            if ($pid === 0) {
+                \usleep(self::STOP_POLL_INTERVAL_US);
+                continue;
+            }
+            if ($pid < 0) {
                 continue;
             }
             $role = $children[$pid];
@@ -118,6 +131,32 @@ final class CoreWorkerFactory extends WorkerFactory
         }
 
         return $code;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function versioningBehaviors(WorkerInterface $worker): array
+    {
+        $behaviors = [];
+        foreach ($worker->getWorkflows() as $workflow) {
+            $behaviors[$workflow->getID()] = $workflow->getVersioningBehavior()->value;
+        }
+
+        return $behaviors;
+    }
+
+    private function stopTimeout(): float
+    {
+        $timeouts = [];
+        foreach ($this->queues as $worker) {
+            $timeout = $worker->getOptions()->workerStopTimeout;
+            if ($timeout !== null) {
+                $timeouts[] = CarbonInterval::instance($timeout)->totalSeconds;
+            }
+        }
+
+        return $timeouts === [] ? self::STOP_TIMEOUT_SECONDS : \max($timeouts);
     }
 
     private function spawn(string $role): int
@@ -165,7 +204,7 @@ final class CoreWorkerFactory extends WorkerFactory
             $workers[] = [
                 'core' => $bridge->newWorker($this->config($worker, $role)),
                 'taskQueue' => $taskQueue,
-                'activations' => new WorkflowActivations($this->converter, $dispatch, $this->namespace, $taskQueue),
+                'activations' => new WorkflowActivations($this->converter, $dispatch, $this->namespace, $taskQueue, $this->versioningBehaviors($worker)),
                 'workflows' => $role !== self::ROLE_ACTIVITY,
             ];
         }
@@ -314,6 +353,7 @@ final class CoreWorkerFactory extends WorkerFactory
             'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),
             'workflows' => !$isActivity,
             'activities' => true,
+            'deployment' => isset($options->deploymentOptions) ? $this->marshaller->marshal($options->deploymentOptions) : null,
             'no_remote_activities' => $role === self::ROLE_WORKFLOW,
             'max_cached_workflows' => $isActivity ? 0 : (int) ($_SERVER['TEMPORAL_CORE_MAX_CACHED_WORKFLOWS'] ?? 10000),
             'max_outstanding_workflow_tasks' => $options->maxConcurrentWorkflowTaskExecutionSize ?: 100,
