@@ -59,3 +59,7 @@ Docker Desktop has 4 CPUs and 6 GB. Start: `docker compose -f bench/server/compo
 
 At full speed the server is still the limit. In a 2000x1 burst, rr used about 47 % CPU and the workflow PHP process about 13 %. In a 1000x1 burst, the Docker server used about 290 % of its 4 CPUs.
 Use `BENCH_RATE` (for example 50 and 100 wf/s) to compare the worker below saturation.
+
+## Core transport comparison
+
+The final RoadRunner vs sdk-core comparison is in `core/REPORT.md` section 4 (`matrix.jsonl`, `matrix.sh`). `matrix-iteration1.jsonl` is an earlier run made while other test suites ran on the same machine.
