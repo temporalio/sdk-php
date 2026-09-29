@@ -39,6 +39,7 @@ final class CoreWorkerFactory extends WorkerFactory
     private const STICKY_SCHEDULE_TO_START_TIMEOUT_MS = 5000;
     private const STOP_TIMEOUT_SECONDS = 10;
     private const STOP_POLL_INTERVAL_US = 100_000;
+    private const MIN_CHILD_UPTIME_SECONDS = 1;
 
     private string $address;
     private string $namespace;
@@ -91,8 +92,11 @@ final class CoreWorkerFactory extends WorkerFactory
     private function supervise(array $roles): int
     {
         $children = [];
+        $startedAt = [];
         foreach ($roles as $role) {
-            $children[$this->spawn($role)] = $role;
+            $pid = $this->spawn($role);
+            $children[$pid] = $role;
+            $startedAt[$pid] = \microtime(true);
         }
 
         $deadline = null;
@@ -123,11 +127,20 @@ final class CoreWorkerFactory extends WorkerFactory
                 continue;
             }
             $role = $children[$pid];
-            unset($children[$pid]);
+            $uptime = \microtime(true) - $startedAt[$pid];
+            unset($children[$pid], $startedAt[$pid]);
             $code = \max($code, \pcntl_wexitstatus($status));
-            if (!$this->stopping) {
-                $children[$this->spawn($role)] = $role;
+            if ($this->stopping) {
+                continue;
             }
+            if ($uptime < self::MIN_CHILD_UPTIME_SECONDS) {
+                $this->logger->error(\sprintf('Worker process (%s) exited during startup, stopping', $role));
+                $stop();
+                continue;
+            }
+            $pid = $this->spawn($role);
+            $children[$pid] = $role;
+            $startedAt[$pid] = \microtime(true);
         }
 
         return $code;

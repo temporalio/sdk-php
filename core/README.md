@@ -55,7 +55,9 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_PROFILE` | off | `1` logs per-phase timings and process CPU to stderr every 10 s and at shutdown |
 | `TEMPORAL_CORE_LOG` | off | sdk-core log filter, for example `info` |
 
-`SIGTERM`/`SIGINT` to the parent process stops all children gracefully.
+`SIGTERM`/`SIGINT` to the parent process stops all children gracefully. A child that does not stop within the largest `WorkerOptions` stop timeout (10 s by default) gets `SIGKILL`. A child that exits unexpectedly is started again.
+
+`run()` forks the role processes. Create gRPC clients (`WorkflowClient` used inside activities), database connections and other sockets lazily, after the fork: a gRPC channel created before `fork()` hangs in the children (ext-grpc limitation).
 
 ## Benchmarks
 

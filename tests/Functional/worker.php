@@ -9,6 +9,7 @@ use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Interceptor\HeaderChanger;
 use Temporal\Tests\Interceptor\InterceptorCallsCounter;
+use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\WorkerInterface;
 
@@ -36,7 +37,7 @@ $getClasses = static function (string $dir, string $namespace): iterable {
     }
 };
 
-$factory = WorkerFactory::create();
+$factory = \getenv('TEMPORAL_WORKER_TRANSPORT') === 'core' ? CoreWorkerFactory::create() : WorkerFactory::create();
 
 $interceptors = [
     InterceptorCallsCounter::class,

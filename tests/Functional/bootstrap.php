@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Symfony\Component\Process\Process;
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
 use Temporal\Tests\SearchAttributeTestInvoker;
@@ -19,22 +20,41 @@ $systemInfo = SystemInfo::detect();
 $environment = Environment::create(systemInfo: $systemInfo);
 $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
-$environment->startRoadRunner(
-    rrCommand: [
-        $rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
-        'serve',
-        '-c', $configFile,
-        '-w', $configDir,
-        '-o',
-        'server.command=' . \implode(',', [
-            PHP_BINARY,
-            ...$environment->command->getPhpBinaryArguments(),
-            'worker.php',
-            ...$environment->command->getCommandLineArguments(),
-        ]),
-    ],
-    configFile: $configFile,
-);
+if (\getenv('TEMPORAL_WORKER_TRANSPORT') === 'core') {
+    $kvStorage = new Process([$rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable, 'serve', '-c', $configDir . '/.rr.kv.yaml', '-w', $configDir], timeout: null);
+    $kvStorage->start();
+    $kvStorage->waitUntil(static fn(string $type, string $output): bool => \str_contains($output, 'RoadRunner server started'));
+    $coreWorkerLog = $rootDir . '/runtime/tests/functional-core-worker.log';
+    @\mkdir(\dirname($coreWorkerLog), recursive: true);
+    $coreWorker = Process::fromShellCommandline(
+        'exec ' . \escapeshellarg(PHP_BINARY) . ' worker.php >> ' . \escapeshellarg($coreWorkerLog) . ' 2>&1',
+        $configDir,
+        ['TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1, 'TEMPORAL_CORE_ACTIVITY_PROCESSES' => 1],
+        timeout: null,
+    );
+    $coreWorker->start();
+    \register_shutdown_function(static function () use ($coreWorker, $kvStorage): void {
+        $coreWorker->stop(5);
+        $kvStorage->stop(5);
+    });
+} else {
+    $environment->startRoadRunner(
+        rrCommand: [
+            $rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
+            'serve',
+            '-c', $configFile,
+            '-w', $configDir,
+            '-o',
+            'server.command=' . \implode(',', [
+                PHP_BINARY,
+                ...$environment->command->getPhpBinaryArguments(),
+                'worker.php',
+                ...$environment->command->getCommandLineArguments(),
+            ]),
+        ],
+        configFile: $configFile,
+    );
+}
 
 \register_shutdown_function(static fn() => $environment->stop());
 
