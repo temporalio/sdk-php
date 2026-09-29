@@ -65,11 +65,9 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 
 The worker sends the `client-name: temporal-php-2` and `client-version: <temporal/sdk version>` headers, as RoadRunner does.
 
-On macOS, TLS with the system root certificates (`TEMPORAL_TLS=true` or an API key without `TEMPORAL_TLS_SERVER_CA_CERT_*`) crashes the forked processes (Security.framework after `fork()`). Set `TEMPORAL_TLS_SERVER_CA_CERT_PATH=/etc/ssl/cert.pem` or run one process (`TEMPORAL_CORE_ACTIVITY_PROCESSES=0`, `TEMPORAL_CORE_WORKFLOW_PROCESSES=1`). Linux is not affected.
-
 `SIGTERM`/`SIGINT` to the parent process stops all children gracefully. A child that does not stop within the largest `WorkerOptions` stop timeout (10 s by default) gets `SIGKILL`. A child that exits unexpectedly is started again.
 
-`run()` forks the role processes. Create gRPC clients (`WorkflowClient` used inside activities), database connections and other sockets lazily, after the fork: a gRPC channel created before `fork()` hangs in the children (ext-grpc limitation).
+`run()` starts each role process as a fresh `php` process with the same script, arguments and changed ini settings (like RoadRunner starts its workers). The script runs again in every child, so objects created before `run()` (gRPC clients, connections) are per process.
 
 ## Benchmarks
 

@@ -37,6 +37,7 @@ use Temporal\WorkerFactory;
 
 class CoreWorkerFactory extends WorkerFactory
 {
+    private const ENV_ROLE = 'TEMPORAL_CORE_ROLE';
     private const ROLE_ALL = 'all';
     private const ROLE_WORKFLOW = 'workflow';
     private const ROLE_ACTIVITY = 'activity';
@@ -57,6 +58,12 @@ class CoreWorkerFactory extends WorkerFactory
     private static ?Bridge $replayBridge = null;
     private LoggerInterface $logger;
     private bool $stopping = false;
+
+    /** @var list<resource> */
+    private array $processes = [];
+
+    /** @var list<string>|null */
+    private ?array $iniArguments = null;
 
     public static function create(
         ?DataConverterInterface $converter = null,
@@ -91,6 +98,12 @@ class CoreWorkerFactory extends WorkerFactory
 
     public function run(?HostConnectionInterface $host = null): int
     {
+        $role = \getenv(self::ENV_ROLE);
+        if (\is_string($role) && $role !== '') {
+            \register_shutdown_function(fn() => $this->exitChild(1));
+            $this->exitChild($this->serve($role));
+        }
+
         if ($this->workflowProcesses + $this->activityProcesses <= 1) {
             return $this->serve($this->activityProcesses === 0 ? self::ROLE_ALL : self::ROLE_ACTIVITY);
         }
@@ -249,13 +262,43 @@ class CoreWorkerFactory extends WorkerFactory
 
     private function spawn(string $role): int
     {
-        $pid = \pcntl_fork();
-        if ($pid === 0) {
-            \register_shutdown_function(fn() => $this->exitChild(1));
-            $this->exitChild($this->serve($role));
+        $process = \proc_open(
+            [\PHP_BINARY, ...$this->iniArguments(), \get_included_files()[0], ...\array_slice($_SERVER['argv'], 1)],
+            [\STDIN, \STDOUT, \STDERR],
+            $pipes,
+            null,
+            [...\getenv(), self::ENV_ROLE => $role],
+        );
+        if ($process === false) {
+            throw new \RuntimeException(\sprintf('Unable to start a %s worker process', $role));
+        }
+        $this->processes[] = $process;
+
+        return \proc_get_status($process)['pid'];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function iniArguments(): array
+    {
+        if ($this->iniArguments !== null) {
+            return $this->iniArguments;
         }
 
-        return $pid;
+        $defaults = \json_decode(
+            (string) \shell_exec(\escapeshellarg(\PHP_BINARY) . ' -r ' . \escapeshellarg('echo json_encode(ini_get_all(null, false));')),
+            true,
+        ) ?: [];
+        $this->iniArguments = [];
+        foreach (\ini_get_all(null, false) as $name => $value) {
+            if ($value !== null && ($defaults[$name] ?? null) !== $value) {
+                $this->iniArguments[] = '-d';
+                $this->iniArguments[] = $name . '="' . \addcslashes((string) $value, '"\\') . '"';
+            }
+        }
+
+        return $this->iniArguments;
     }
 
     private function exitChild(int $code): never
