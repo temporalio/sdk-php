@@ -21,6 +21,7 @@ cd core/bridge && cargo build --release
 
 The result is `core/bridge/target/release/libtemporal_php_bridge.dylib` (`.so` on Linux).
 Set `TEMPORAL_CORE_BRIDGE_LIB` to use a library from another path.
+Linux image (Rust build stage + `php:8.5-cli` with ffi, pcntl, sockets, protobuf): `docker build -f core/docker/Dockerfile -t temporal-php-core .` from the repository root.
 PHP needs `ext-ffi` (the default `ffi.enable=preload` allows FFI in the CLI), `ext-protobuf` is recommended, `ext-pcntl` and `ext-posix` for the process supervisor.
 
 ## Run a worker
