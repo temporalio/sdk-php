@@ -17,13 +17,15 @@ use temporalio_common::{
         ActivityHeartbeat, ActivityTaskCompletion,
         workflow_completion::WorkflowActivationCompletion,
     },
-    telemetry::{CoreLog, CoreLogConsumer, Logger, TelemetryOptions},
     protos::temporal::api::enums::v1::VersioningBehavior,
+    protos::temporal::api::history::v1::History,
+    telemetry::{CoreLog, CoreLogConsumer, Logger, TelemetryOptions},
     worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
 use temporalio_sdk_core::{
     CoreRuntime, PollError, PollerBehavior, RuntimeOptions, TokioRuntimeBuilder, Url, Worker,
     WorkerConfig, WorkerVersioningStrategy,
+    replay::{HistoryForReplay, ReplayWorkerInput},
 };
 use tokio::runtime::Handle;
 
@@ -387,6 +389,31 @@ fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
     })
 }
 
+fn new_replayer(rt: &TpbRuntime, config: &[u8], history: &[u8]) -> Result<TpbWorker, String> {
+    let config: Value =
+        serde_json::from_slice(config).map_err(|e| format!("Invalid config JSON: {e}"))?;
+    let history = History::decode(history).map_err(|e| format!("Invalid history: {e}"))?;
+    let workflow_id = config
+        .get("workflow_id")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let input = ReplayWorkerInput::new(
+        worker_config(&config)?,
+        futures_util::stream::iter([HistoryForReplay::new(history, workflow_id)]),
+    );
+    let handle = rt.core.tokio_handle();
+    let worker = {
+        let _guard = handle.enter();
+        temporalio_sdk_core::init_replay_worker(input)
+            .map_err(|e| format!("Replay worker start failed: {e}"))?
+    };
+    Ok(TpbWorker {
+        worker: Some(Arc::new(worker)),
+        handle,
+        queue: rt.queue.clone(),
+    })
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_worker_new(
     rt: *mut TpbRuntime,
@@ -395,7 +422,40 @@ pub extern "C" fn tpb_worker_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbWorker {
-    match new_worker(unsafe { &*rt }, slice(config, config_len)) {
+    worker_or_error(
+        new_worker(unsafe { &*rt }, slice(config, config_len)),
+        err,
+        err_len,
+    )
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn tpb_replayer_new(
+    rt: *mut TpbRuntime,
+    config: *const u8,
+    config_len: usize,
+    history: *const u8,
+    history_len: usize,
+    err: *mut *mut u8,
+    err_len: *mut usize,
+) -> *mut TpbWorker {
+    worker_or_error(
+        new_replayer(
+            unsafe { &*rt },
+            slice(config, config_len),
+            slice(history, history_len),
+        ),
+        err,
+        err_len,
+    )
+}
+
+fn worker_or_error(
+    result: Result<TpbWorker, String>,
+    err: *mut *mut u8,
+    err_len: *mut usize,
+) -> *mut TpbWorker {
+    match result {
         Ok(worker) => Box::into_raw(Box::new(worker)),
         Err(message) => {
             let (data, len) = into_raw_bytes(message.into_bytes());
@@ -456,7 +516,11 @@ pub extern "C" fn tpb_complete_workflow_activation(
     w.handle.spawn(async move {
         let result = core.complete_workflow_activation(completion).await;
         drop(core);
-        queue.push_error(tag, KIND_WORKFLOW_COMPLETED, result.map_err(|e| e.to_string()));
+        queue.push_error(
+            tag,
+            KIND_WORKFLOW_COMPLETED,
+            result.map_err(|e| e.to_string()),
+        );
     });
 }
 
@@ -482,7 +546,11 @@ pub extern "C" fn tpb_complete_activity_task(
     w.handle.spawn(async move {
         let result = core.complete_activity_task(completion).await;
         drop(core);
-        queue.push_error(tag, KIND_ACTIVITY_COMPLETED, result.map_err(|e| e.to_string()));
+        queue.push_error(
+            tag,
+            KIND_ACTIVITY_COMPLETED,
+            result.map_err(|e| e.to_string()),
+        );
     });
 }
 

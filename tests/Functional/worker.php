@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Temporal\Testing\CoreWorkerFactory;
 use Temporal\Testing\MockChildWorkflowInterceptor;
 use Temporal\Testing\MockSearchAttributeInterceptor;
 use Temporal\Testing\MockSideEffectInterceptor;
@@ -9,7 +10,6 @@ use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Interceptor\HeaderChanger;
 use Temporal\Tests\Interceptor\InterceptorCallsCounter;
-use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\WorkerInterface;
 

@@ -13,6 +13,9 @@ namespace Temporal\Tests;
 
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\TestCase as BaseTestCase;
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Testing\Replay\WorkflowReplayer;
+use Temporal\Worker\Core\CoreWorkerFactory;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -29,5 +32,17 @@ abstract class TestCase extends BaseTestCase
         }
 
         $this->assertEquals($expected, $actual);
+    }
+
+    protected function createReplayer(WorkflowClientInterface $client, string ...$workflows): WorkflowReplayer
+    {
+        if (\getenv('TEMPORAL_WORKER_TRANSPORT') !== 'core') {
+            return new WorkflowReplayer();
+        }
+
+        $factory = CoreWorkerFactory::create();
+        $factory->newWorker()->registerWorkflowTypes(...$workflows);
+
+        return new WorkflowReplayer($factory, $client);
     }
 }

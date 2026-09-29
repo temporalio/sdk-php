@@ -49,17 +49,12 @@ final class Bridge
 
     public function newWorker(array $config): \FFI\CData
     {
-        $json = \json_encode($config, \JSON_THROW_ON_ERROR);
-        $err = $this->ffi->new('uint8_t*');
-        $errLen = $this->ffi->new('size_t');
-        $worker = $this->ffi->tpb_worker_new($this->runtime, $json, \strlen($json), \FFI::addr($err), \FFI::addr($errLen));
+        return $this->createWorker('tpb_worker_new', $config);
+    }
 
-        if (\FFI::isNull($worker)) {
-            $message = \FFI::isNull($err) ? 'unknown error' : $this->take($err, $errLen->cdata);
-            throw new \RuntimeException('Unable to create sdk-core worker: ' . $message);
-        }
-
-        return $worker;
+    public function newReplayer(array $config, string $history): \FFI\CData
+    {
+        return $this->createWorker('tpb_replayer_new', $config, $history, \strlen($history));
     }
 
     public function pollWorkflowActivation(\FFI\CData $worker, int $tag): void
@@ -126,6 +121,21 @@ final class Bridge
         \array_push($this->backlog, ...$events);
 
         return $events;
+    }
+
+    private function createWorker(string $function, array $config, string|int ...$args): \FFI\CData
+    {
+        $json = \json_encode($config, \JSON_THROW_ON_ERROR);
+        $err = $this->ffi->new('uint8_t*');
+        $errLen = $this->ffi->new('size_t');
+        $worker = $this->ffi->$function($this->runtime, $json, \strlen($json), ...[...$args, \FFI::addr($err), \FFI::addr($errLen)]);
+
+        if (\FFI::isNull($worker)) {
+            $message = \FFI::isNull($err) ? 'unknown error' : $this->take($err, $errLen->cdata);
+            throw new \RuntimeException('Unable to create sdk-core worker: ' . $message);
+        }
+
+        return $worker;
     }
 
     /**

@@ -1816,6 +1816,7 @@ dependencies = [
 name = "temporal-php-bridge"
 version = "0.1.0"
 dependencies = [
+ "futures-util",
  "libc",
  "prost",
  "serde_json",

@@ -12,8 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Worker\Core;
 
 use Carbon\CarbonInterval;
+use Coresdk\Workflow_activation\RemoveFromCache;
+use Coresdk\Workflow_activation\RemoveFromCache\EvictionReason;
+use Coresdk\Workflow_activation\WorkflowActivation;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
+use Temporal\Api\History\V1\History;
 use Temporal\Internal\Support\Facade;
 use Temporal\Client\WorkflowClient;
 use Temporal\DataConverter\DataConverter;
@@ -28,7 +32,7 @@ use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\WorkerFactory;
 
-final class CoreWorkerFactory extends WorkerFactory
+class CoreWorkerFactory extends WorkerFactory
 {
     private const ROLE_ALL = 'all';
     private const ROLE_WORKFLOW = 'workflow';
@@ -46,6 +50,7 @@ final class CoreWorkerFactory extends WorkerFactory
     private int $workflowProcesses;
     private int $activityProcesses;
     private int $activityConcurrency;
+    private static ?Bridge $replayBridge = null;
     private LoggerInterface $logger;
     private bool $stopping = false;
 
@@ -61,7 +66,8 @@ final class CoreWorkerFactory extends WorkerFactory
         ?int $activityProcesses = null,
     ): static {
         $converter ??= DataConverter::createDefault();
-        $factory = new self($converter, $rpc ?? new ActivityTasks($converter), $credentials, $pluginRegistry, $client);
+        /** @psalm-suppress UnsafeInstantiation */
+        $factory = new static($converter, $rpc ?? new ActivityTasks($converter), $credentials, $pluginRegistry, $client);
         $factory->address = $address ?? $_SERVER['TEMPORAL_ADDRESS'] ?? '127.0.0.1:7233';
         $factory->namespace = $namespace ?? $_SERVER['TEMPORAL_NAMESPACE'] ?? 'default';
         $factory->workflowProcesses = $workflowProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_WORKFLOW_PROCESSES'] ?? 1);
@@ -84,6 +90,55 @@ final class CoreWorkerFactory extends WorkerFactory
         ];
 
         return $this->supervise($roles);
+    }
+
+    public function replay(History $history, string $workflowId): ?RemoveFromCache
+    {
+        $taskQueue = (string) $history->getEvents()[0]?->getWorkflowExecutionStartedEventAttributes()?->getTaskQueue()?->getName();
+        $worker = $this->queues->find($taskQueue);
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf('Cannot find a worker for task queue "%s"', $taskQueue));
+        }
+
+        $bridge = self::$replayBridge ??= new Bridge();
+        $core = $bridge->newReplayer(
+            ['workflow_id' => $workflowId] + $this->config($worker, self::ROLE_WORKFLOW),
+            $history->serializeToString(),
+        );
+        $activations = new WorkflowActivations($this->converter, $this->dispatchCommands(...), $this->namespace, $taskQueue, $this->versioningBehaviors($worker));
+
+        $failure = null;
+        $bridge->pollWorkflowActivation($core, 0);
+        while (true) {
+            foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind, $status, $data]) {
+                if ($kind === Bridge::KIND_WORKFLOW_COMPLETED) {
+                    throw new \RuntimeException('sdk-core completion failed: ' . $data);
+                }
+                if ($kind !== Bridge::KIND_WORKFLOW_ACTIVATION) {
+                    continue;
+                }
+                if ($status === Bridge::STATUS_SHUTDOWN) {
+                    break 2;
+                }
+                if ($status !== Bridge::STATUS_OK) {
+                    throw new \RuntimeException('sdk-core poll failed: ' . $data);
+                }
+
+                $activation = new WorkflowActivation();
+                $activation->mergeFromString($data);
+                foreach ($activation->getJobs() as $job) {
+                    $eviction = $job->getRemoveFromCache();
+                    if ($eviction !== null && !\in_array($eviction->getReason(), [EvictionReason::CACHE_FULL, EvictionReason::LANG_REQUESTED], true)) {
+                        $failure = $eviction;
+                    }
+                }
+                $bridge->completeWorkflowActivation($core, 0, $activations->handle($data));
+                $bridge->pollWorkflowActivation($core, 0);
+            }
+        }
+        $this->finalize($bridge, [$core]);
+
+        return $failure;
     }
 
     /**
@@ -306,20 +361,28 @@ final class CoreWorkerFactory extends WorkerFactory
         }
 
         $profiler?->report();
-        foreach ($workers as $tag => $worker) {
-            $bridge->finalizeShutdown($worker['core'], $tag);
+        $this->finalize($bridge, \array_column($workers, 'core'));
+
+        return 0;
+    }
+
+    /**
+     * @param list<\FFI\CData> $cores
+     */
+    private function finalize(Bridge $bridge, array $cores): void
+    {
+        foreach ($cores as $tag => $core) {
+            $bridge->finalizeShutdown($core, $tag);
         }
         $finalized = 0;
         $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
-        while ($finalized < \count($workers) && \microtime(true) < $deadline) {
+        while ($finalized < \count($cores) && \microtime(true) < $deadline) {
             foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind]) {
                 if ($kind === Bridge::KIND_SHUTDOWN) {
                     ++$finalized;
                 }
             }
         }
-
-        return 0;
     }
 
     private function runEventLoop(Bridge $bridge, \Closure $handle, \Closure $shutdown, int &$open): void

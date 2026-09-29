@@ -46,7 +46,7 @@ final class ReplayerTestCase extends TestCase
         $run = $this->workflowClient->start($workflow, 'hello');
         $run->getResult('string');
 
-        (new WorkflowReplayer())->replayFromServer(
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromServer(
             'WorkflowWithSequence',
             $run->getExecution(),
         );
@@ -91,10 +91,11 @@ final class ReplayerTestCase extends TestCase
                 \unlink($file);
             }
 
-            (new WorkflowReplayer())->downloadHistory('WorkflowWithSequence', $run->getExecution(), $file);
+            $replayer = $this->createReplayer($this->workflowClient, WorkflowWithSequence::class);
+            $replayer->downloadHistory('WorkflowWithSequence', $run->getExecution(), $file);
             $this->assertFileExists($file);
 
-            (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+            $replayer->replayFromJSON('WorkflowWithSequence', $file);
         } finally {
             if (\is_file($file)) {
                 \unlink($file);
@@ -108,14 +109,14 @@ final class ReplayerTestCase extends TestCase
 
         $this->expectException(NonDeterministicWorkflowException::class);
 
-        (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromJSON('WorkflowWithSequence', $file);
     }
 
     public function testReplayNonDetermenisticWorkflowThroughFirstDetermenisticEvents(): void
     {
         $file = \dirname(__DIR__, 1) . '/Fixtures/history/squence-workflow-damaged.json';
 
-        (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file, lastEventId: 11);
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromJSON('WorkflowWithSequence', $file, lastEventId: 11);
 
         $this->assertTrue(true);
     }
