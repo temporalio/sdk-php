@@ -89,6 +89,7 @@ final class RuntimeBuilder
         FeatureFlags::$cancelAbandonedChildWorkflows = false;
         FeatureFlags::$warnOnActivityMethodWithoutAttribute = true;
         FeatureFlags::$propagateCancellationToNewScopes = true;
+        FeatureFlags::$generateChildWorkflowIds = true;
     }
 
     /**

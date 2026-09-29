@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Internal\Workflow\GeneratedChildWorkflowId;
 use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
@@ -26,6 +27,8 @@ final class ExecuteChildWorkflow extends Request
 
     /** @var non-empty-string */
     private string $workflowType;
+
+    private ?GeneratedChildWorkflowId $generatedWorkflowId = null;
 
     /**
      * @param non-empty-string $name Workflow name
@@ -43,5 +46,40 @@ final class ExecuteChildWorkflow extends Request
     public function getWorkflowType(): string
     {
         return $this->workflowType;
+    }
+
+    public function getOptions(): array
+    {
+        $options = $this->options;
+        if ($this->generatedWorkflowId !== null) {
+            $options['options']['WorkflowID'] = $this->generatedWorkflowId->getWorkflowId();
+        }
+
+        return $options;
+    }
+
+    public function getWorkflowId(): ?string
+    {
+        if ($this->generatedWorkflowId !== null) {
+            return $this->generatedWorkflowId->getWorkflowId();
+        }
+
+        $options = $this->options['options'] ?? null;
+        $workflowId = \is_array($options) ? $options['WorkflowID'] ?? null : null;
+
+        return \is_string($workflowId) && $workflowId !== '' ? $workflowId : null;
+    }
+
+    public function getGeneratedWorkflowId(): ?GeneratedChildWorkflowId
+    {
+        return $this->generatedWorkflowId;
+    }
+
+    public function withGeneratedWorkflowId(GeneratedChildWorkflowId $workflowId): self
+    {
+        $clone = clone $this;
+        $clone->generatedWorkflowId = $workflowId;
+
+        return $clone;
     }
 }

@@ -61,6 +61,7 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
+use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
@@ -106,6 +107,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $readonly = true;
     protected bool $inReadOnlyCallback = false;
     protected ?string $currentDetails = null;
+    protected int $childWorkflowSequence = 0;
+
+    /** @var array<int, GeneratedChildWorkflowId> */
+    protected array $generatedChildWorkflowIds = [];
+
+    /** @var array<int, GeneratedChildWorkflowId> */
+    protected array $pendingChildWorkflowIds = [];
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -224,8 +232,68 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
         $clone->trace = &$this->trace;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->childWorkflowSequence = &$this->childWorkflowSequence;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->generatedChildWorkflowIds = &$this->generatedChildWorkflowIds;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->pendingChildWorkflowIds = &$this->pendingChildWorkflowIds;
         $clone->input = $input;
         return $clone;
+    }
+
+    public function withGeneratedChildWorkflowId(RequestInterface $request): RequestInterface
+    {
+        if (!FeatureFlags::$generateChildWorkflowIds) {
+            return $request;
+        }
+
+        if (!$request instanceof ExecuteChildWorkflow || $request->getWorkflowId() !== null) {
+            return $request;
+        }
+
+        $runId = $this->getInfo()->execution->getRunID();
+        \assert($runId !== null);
+        $workflowId = new GeneratedChildWorkflowId(
+            $runId,
+            $this->childWorkflowSequence + \count($this->pendingChildWorkflowIds) + 1,
+        );
+        $this->pendingChildWorkflowIds[$request->getID()] = $workflowId;
+
+        return $request->withGeneratedWorkflowId($workflowId);
+    }
+
+    public function withSentChildWorkflowId(RequestInterface $request): RequestInterface
+    {
+        $request = $this->withGeneratedChildWorkflowId($request);
+        $workflowId = $request instanceof ExecuteChildWorkflow ? $request->getGeneratedWorkflowId() : null;
+        if ($workflowId === null) {
+            return $request;
+        }
+
+        unset($this->pendingChildWorkflowIds[$request->getID()]);
+        $this->forgetSentChildWorkflowIds();
+        $workflowId->sequence = ++$this->childWorkflowSequence;
+        $this->generatedChildWorkflowIds[$request->getID()] = $workflowId;
+
+        return $request;
+    }
+
+    public function releaseGeneratedChildWorkflowId(RequestInterface $request): void
+    {
+        $released = $this->generatedChildWorkflowIds[$request->getID()] ?? null;
+        if ($released === null) {
+            return;
+        }
+
+        unset($this->generatedChildWorkflowIds[$request->getID()]);
+        --$this->childWorkflowSequence;
+
+        foreach ($this->generatedChildWorkflowIds as $workflowId) {
+            if ($workflowId->sequence > $released->sequence) {
+                --$workflowId->sequence;
+            }
+        }
     }
 
     public function getLastCompletionResultValues(): ?ValuesInterface
@@ -539,19 +607,27 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->assertWritable();
         $this->recordTrace();
 
-        // Intercept workflow outbound calls
-        return $this->requestInterceptor->with(
-            function (RequestInterface $request) use ($waitResponse): PromiseInterface {
-                if (!$waitResponse) {
-                    $this->client->send($request);
-                    return Promise::resolve();
-                }
+        $request = $this->withGeneratedChildWorkflowId($request);
 
-                return $this->client->request($request, $this);
-            },
-            /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
-            'handleOutboundRequest',
-        )($request);
+        try {
+            // Intercept workflow outbound calls
+            return $this->requestInterceptor->with(
+                function (RequestInterface $request) use ($waitResponse): PromiseInterface {
+                    $request = $this->withSentChildWorkflowId($request);
+
+                    if (!$waitResponse) {
+                        $this->client->send($request);
+                        return Promise::resolve();
+                    }
+
+                    return $this->client->request($request, $this);
+                },
+                /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
+                'handleOutboundRequest',
+            )($request);
+        } finally {
+            unset($this->pendingChildWorkflowIds[$request->getID()]);
+        }
     }
 
     public function getStackTrace(): string
@@ -898,5 +974,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    private function forgetSentChildWorkflowIds(): void
+    {
+        foreach (\array_keys($this->generatedChildWorkflowIds) as $requestId) {
+            if ($this->services->queue->has($requestId)) {
+                return;
+            }
+
+            unset($this->generatedChildWorkflowIds[$requestId]);
+        }
     }
 }

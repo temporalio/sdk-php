@@ -389,6 +389,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             if ($client->isQueued($request)) {
                 $client->cancel($request);
+                $this->context->releaseGeneratedChildWorkflowId($request);
                 return;
             }
 
@@ -450,7 +451,10 @@ class Scope implements CancellationScopeInterface, Destroyable
 
                 // todo ->context or ->scopeContext?
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext));
+                $this->nextPromise($this->context->getClient()->request(
+                    $this->context->withSentChildWorkflowId($current),
+                    $this->scopeContext,
+                ));
                 break;
 
             case $current instanceof \Generator:

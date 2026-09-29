@@ -100,4 +100,14 @@ final class FeatureFlags
      * @since SDK 2.18.0
      */
     public static bool $readOnlyWorkflowCallbacks = true;
+
+    /**
+     * Generate the ID of a Child Workflow started without an explicit ID in the SDK, with the same
+     * `<parentRunId>_<sequence>` formula RoadRunner uses, so interceptors and converters see it before
+     * the command is sent. FALSE (default) leaves the ID to RoadRunner.
+     *
+     * @experimental
+     * @since SDK 2.18.0
+     */
+    public static bool $generateChildWorkflowIds = false;
 }
