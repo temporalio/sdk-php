@@ -23,6 +23,7 @@ use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -131,7 +132,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             ->catch($this->onException(...));
 
         $deferred
-            ? $this->services->loop->once($this->layer, $this->next(...))
+            ? $this->services->loop->once($this->layer, fn(): mixed => Facade::usingContext($this->scopeContext, $this->next(...)))
             : $this->next();
     }
 
@@ -222,11 +223,13 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->cancelled = true;
         $this->cancelReason = $reason;
 
-        foreach ($this->onCancel as $i => $handler) {
-            $this->makeCurrent();
-            unset($this->onCancel[$i]);
-            $handler($reason);
-        }
+        Facade::usingContext($this->scopeContext, function () use ($reason): void {
+            foreach ($this->onCancel as $i => $handler) {
+                $this->makeCurrent();
+                unset($this->onCancel[$i]);
+                $handler($reason);
+            }
+        });
     }
 
     /**
@@ -290,9 +293,10 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
-            $this->makeCurrent();
-            $this->context->resolveConditions();
-            unset($this->onCancel[$cancelID]);
+            Facade::usingContext($this->scopeContext, function () use ($cancelID): void {
+                $this->context->resolveConditions();
+                unset($this->onCancel[$cancelID]);
+            });
         };
 
         $deferred->promise()->then($cleanup, $cleanup);
@@ -300,8 +304,12 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
-        $this->context?->destroy();
-        $this->scopeContext?->destroy();
+        // A Destroyable workflow instance may use the Workflow facade from its destroy().
+        Facade::usingContext($this->scopeContext, function (): void {
+            $this->context?->destroy();
+            $this->scopeContext?->destroy();
+        });
+
         unset(
             $this->coroutine,
             $this->context,
@@ -394,9 +402,10 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
-            $this->makeCurrent();
-            $this->context->resolveConditions();
-            unset($this->onCancel[$cancelID]);
+            Facade::usingContext($this->scopeContext, function () use ($cancelID): void {
+                $this->context->resolveConditions();
+                unset($this->onCancel[$cancelID]);
+            });
         };
 
         $promise->then($cleanup, $cleanup);
@@ -574,7 +583,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function defer(\Closure $tick): void
     {
-        $this->services->loop->once($this->layer, $tick);
+        $this->services->loop->once($this->layer, fn(): mixed => Facade::usingContext($this->scopeContext, $tick));
         $this->services->queue->count() === 0 and $this->services->loop->tick();
     }
 }
