@@ -46,7 +46,7 @@ trap 'exit 143' TERM INT
 
 case "$TRANSPORT" in
     rr) "$RR_BIN" serve -c .rr.yaml > "$TMP/worker.log" 2>&1 & ;;
-    core) $PHP -dopcache.enable_cli=1 worker.php > "$TMP/worker.log" 2>&1 & ;;
+    core) $PHP -dopcache.enable_cli=1 ${BENCH_WORKER_PHP_FLAGS:-} worker.php > "$TMP/worker.log" 2>&1 & ;;
     *) echo "unknown transport: $TRANSPORT" >&2; exit 1 ;;
 esac
 WORKER_PID=$!

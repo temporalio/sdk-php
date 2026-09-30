@@ -99,3 +99,40 @@ The benchmark sums RSS, which counts shared file-backed pages (the php binary, t
 | **core total** | | **338** | **183 (−11 %)** |
 
 Result: with fresh child processes the core transport uses slightly more RSS but **11 % less real memory** than RoadRunner: the Go process (63 MB) is gone, each PHP process pays ~3 MB for the tokio runtime and bridge data, and the idle supervisor costs 20 MB. No change adopted; the RSS column in the benchmarks overstates both transports.
+
+## E6. PHP runtime: opcache, JIT, preload, file cache, shared memory
+
+Hot loop without FFI (`WorkflowActivations` start → activity result → evict, and `ActivityTasks::handle`), minimum of 6 runs, µs per iteration:
+
+| variant | workflow path | activity path | peak memory MB |
+|---|---|---|---|
+| no opcache | 160.5 | 24.4 | 11.7 |
+| opcache | 155.1 | 24.2 | 4.1 |
+| opcache + JIT tracing | 104.6 (−33 %) | 19.3 (−20 %) | |
+| opcache + JIT function | 119.2 | 22.7 | |
+
+Process start (autoload, factory, bridge, one protobuf message), ms, 8 runs:
+
+| variant | ms |
+|---|---|
+| no opcache | 25–35 |
+| opcache (CLI, empty shared memory each start) | 41–48 |
+| opcache + `file_cache` | 21–27 |
+| opcache + `file_cache_only` | 19–26 |
+| `opcache.preload` | exits with code 255 and no message on PHP 8.5.6 when the preload script compiles protobuf-generated classes or `src/` |
+
+End to end, interleaved, 3 repetitions (the machine was loaded by other benchmarks, so the absolute rate is below 100/s):
+
+| variant | scenario | wf/s | p50 ms | worker CPU s | RSS MB |
+|---|---|---|---|---|---|
+| opcache | @100/s | 86.9 | 879 | 2.55 | 334 |
+| opcache + JIT tracing | @100/s | 83.9 | 2131 | 2.98 (+17 %) | 368 |
+| opcache | seq 200×5 | 46.5 | 3779 | 1.59 | 354 |
+| opcache + JIT tracing | seq 200×5 | 41.7 | 4907 | 2.00 (+26 %) | 386 |
+
+Result:
+- Opcache: 3 % faster hot path and 3× less heap, the benchmark and the CI job keep it on. Each CLI process has its own shared memory, so opcache does not share compiled code between the worker processes.
+- `file_cache` is the only way to share compiled code between the fresh child processes (fork is not possible with ext-grpc), it saves ~20 ms per process start. A worker starts its processes once, so this is not a throughput lever.
+- Preload: not usable (crash on PHP 8.5.6), and for a long-lived worker it only saves the one-time class load.
+- JIT: the steady-state hot path is 20–33 % faster, but in a 10-second run the trace compilation costs more CPU than it saves.
+- The supervisor passes the parent `opcache.*` settings to the child processes, so a user enables JIT or `file_cache` with `php -d ... worker.php` and no code change.
