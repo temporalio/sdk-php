@@ -11,7 +11,6 @@ BENCH_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$BENCH_DIR"
 
 RR_BIN=${RR_BIN:-$BENCH_DIR/../rr}
-TEMPORAL_BIN=${TEMPORAL_BIN:-$BENCH_DIR/../temporal}
 CONCURRENCY=${BENCH_CONCURRENCY:-8}
 WARMUP=${BENCH_WARMUP:-20}
 RATE=${BENCH_RATE:-0}
@@ -43,6 +42,7 @@ cleanup() {
     rm -rf "$TMP"
 }
 trap cleanup EXIT
+trap 'exit 143' TERM INT
 
 case "$TRANSPORT" in
     rr) "$RR_BIN" serve -c .rr.yaml > "$TMP/worker.log" 2>&1 & ;;
@@ -72,16 +72,10 @@ cpu_seconds() {
     ps -o time= -p "$(worker_pids)" | awk '{n=split($1,a,":"); s=0; for(i=1;i<=n;i++) s=s*60+a[i]; t+=s} END {printf "%.2f", t}'
 }
 
-for _ in $(seq 1 120); do
-    types=$("$TEMPORAL_BIN" task-queue describe --address "$TEMPORAL_ADDRESS" --task-queue "$BENCH_TASK_QUEUE" -o json 2>/dev/null \
-        | jq '[.pollers[]?.taskQueueType] | unique | length' || echo 0)
-    [ "$types" = "2" ] && break
-    kill -0 "$WORKER_PID" 2>/dev/null || { cat "$TMP/worker.log" >&2; exit 1; }
-    sleep 0.5
-done
-[ "$types" = "2" ] || { echo "worker is not ready" >&2; cat "$TMP/worker.log" >&2; exit 1; }
+echo "worker started (pid $WORKER_PID), warmup: $WARMUP workflows" >&2
 
 $PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency=2 --timeout="$TIMEOUT" > /dev/null
+echo "warmup done" >&2
 
 (
     while kill -0 "$WORKER_PID" 2>/dev/null; do
