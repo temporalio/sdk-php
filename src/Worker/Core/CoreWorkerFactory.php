@@ -299,7 +299,7 @@ class CoreWorkerFactory extends WorkerFactory
 
     private function spawn(string $role): int
     {
-        if (!\extension_loaded('grpc')) {
+        if (\PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started()) {
             $pid = \pcntl_fork();
             if ($pid === -1) {
                 throw new \RuntimeException(\sprintf('Unable to fork a %s worker process', $role));
@@ -337,7 +337,7 @@ class CoreWorkerFactory extends WorkerFactory
             return $this->iniArguments;
         }
 
-        $noIni = \php_ini_loaded_file() === false ? ['-n'] : [];
+        $noIni = \php_ini_loaded_file() === false && \php_ini_scanned_files() === false ? ['-n'] : [];
         $probe = \json_decode(
             (string) \shell_exec(\implode(' ', \array_map(\escapeshellarg(...), [
                 \PHP_BINARY,

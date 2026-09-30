@@ -72,6 +72,11 @@ final class Bridge
         return self::$shared;
     }
 
+    public static function started(): bool
+    {
+        return self::$shared !== null && self::$sharedPid === (int) \getmypid();
+    }
+
     public function eventFd(): int
     {
         $this->pumped = true;
