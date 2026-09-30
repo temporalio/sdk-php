@@ -19,8 +19,8 @@ PHP is single-threaded and has no async runtime in the core language. A PHP proc
 | option | result |
 |---|---|
 | **A. sdk-core (Rust) in-process via PHP FFI** — the engine that the TypeScript, Python, .NET and Ruby SDKs use | **Implemented. Works. Faster than RR (see §4).** |
-| B. Pure PHP, ext-grpc (blocking) | Activities only: works (`bench/experiments/pure-php`). A process blocks in each poll, so N activities need N processes. |
-| C. Pure PHP, non-blocking gRPC (`thesis/grpc-client` on amphp/Revolt + Fibers) | Activities only: works, 1 process with 8 polls = 4 blocking processes, 1/3 of the memory. Same CPU per activity as sdk-core. |
+| B. Pure PHP, ext-grpc (blocking) | Activities only: works. A process blocks in each poll, so N activities need N processes. CPU per 1000 activities 0.63–0.65 s (sdk-core: 0.45–0.51 s). |
+| C. Pure PHP, non-blocking gRPC (`thesis/grpc-client` 0.3.3 on amphp/Revolt + Fibers, `google/protobuf` encoder) | Activities only: works, 1 process with 8 polls = 4 blocking processes, 52 MB vs 170 MB RSS. CPU per 1000 activities 0.46–0.65 s, the same order as sdk-core. The server rejects a long poll without a deadline, so both clients send a 70 s gRPC timeout. |
 | D. Pure PHP workflow worker | Not viable as a short project: it re-implements about 15 000 lines of sdk-core state machines (estimate 3–6 person-months + replay test suite). |
 | E. Fibers + event loop on top of option A | **Implemented** for activities: one PHP process runs hundreds of I/O-bound activities at the same time. |
 
@@ -53,7 +53,7 @@ Option A keeps all I/O in Rust threads. PHP blocks only when it has nothing to d
 ## 4. Benchmarks
 
 Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT off, xdebug off. Temporal 1.29.3 + PostgreSQL in Docker (4 CPU), 1 task-queue partition (`bench/server`). RoadRunner 2025.1.15.
-Both transports: 1 workflow process + 4 activity processes (RR: `num_workers: 4`), unless the label says otherwise. Every row is the mean of 2 runs, 0 failed workflows in all 44 runs. Raw data: `bench/matrix.jsonl`, harness: `bench/matrix.sh`.
+Both transports: 1 workflow process + 4 activity processes (RR: `num_workers: 4`), unless the label says otherwise. Every row is the mean of 2 runs, 0 failed workflows in all 44 runs. Harness: `bench/matrix.sh` (writes `bench/matrix.jsonl`).
 "worker CPU s" = CPU time of all worker processes (rr + PHP, or the PHP supervisor + children, Rust threads included) during the measured run.
 
 **Fixed rate (the server is not saturated): the worker cost**
