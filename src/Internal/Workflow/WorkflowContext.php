@@ -74,6 +74,7 @@ use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
+use Temporal\Workflow\AwaitOptions;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
@@ -669,14 +670,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new AwaitInput($conditions));
     }
 
-    public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public function awaitWithTimeout($intervalOrOptions, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
-        $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+        $options = $intervalOrOptions instanceof AwaitOptions
+            ? $intervalOrOptions
+            : AwaitOptions::new($intervalOrOptions);
 
         return $this->callsInterceptor->with(
             function (AwaitWithTimeoutInput $input): PromiseInterface {
                 /** Bypassing {@see timer()} to acquire a timer request ID */
-                $request = new NewTimer(new AwaitOptions($input->interval, null));
+                $request = new NewTimer(new AwaitOptions($input->interval, $input->timerOptions));
                 $requestId = $request->getID();
                 $timer = $this->request($request);
                 \assert($timer instanceof CompletableResultInterface);
@@ -707,7 +710,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             },
             /** @see WorkflowOutboundCallsInterceptor::awaitWithTimeout() */
             'awaitWithTimeout',
-        )(new AwaitWithTimeoutInput($intervalObject, $conditions));
+        )(new AwaitWithTimeoutInput($options->interval, $conditions, $options->options));
     }
 
     /**
