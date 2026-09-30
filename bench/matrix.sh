@@ -4,13 +4,12 @@ cd "$(dirname "$0")"
 export BENCH_ACTIVITY_WORKERS=4 BENCH_RESULTS=${BENCH_RESULTS:-$PWD/matrix.jsonl}
 FAILED=0
 run() {
-  local output
-  output=$("$@" 2>&1)
-  if echo "$output" | grep -qE '^\{'; then
-    echo "${BENCH_LABEL:-$2}: $(echo "$output" | grep -E '^[a-z]+: [0-9]+ wf' | tail -1)"
-  else
-    echo "FAILED: $*"
-    echo "$output" | tail -60
+  echo "::group::${BENCH_LABEL:-$2} $3 $4 $5 $6 ${BENCH_RATE:+@${BENCH_RATE}/s}"
+  local code=0
+  timeout --kill-after=15 "${BENCH_RUN_TIMEOUT:-600}" "$@" 2>&1 || code=$?
+  echo "::endgroup::"
+  if [ "$code" -ne 0 ]; then
+    echo "FAILED ($code): $*"
     FAILED=1
   fi
 }

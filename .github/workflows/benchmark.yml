@@ -83,10 +83,12 @@ jobs:
           exit 1
 
       - name: Run the benchmark matrix
+        timeout-minutes: 45
         run: bench/matrix.sh
         env:
           BENCH_RUNS: ${{ inputs.runs || '1' }}
           BENCH_TIMEOUT: 180
+          BENCH_RUN_TIMEOUT: 420
           BENCH_RESULTS: ${{ github.workspace }}/bench/matrix.jsonl
 
       - name: Print results
