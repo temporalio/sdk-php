@@ -282,3 +282,40 @@ CPU and throughput are within the noise. The CI benchmark (Linux, no ext-grpc) r
 Result: **adopted**. Without ext-grpc the SDK clients use the bridge, and on Linux the supervisor forks. With ext-grpc nothing changes.
 Side finding, fixed: when PHP runs without a php.ini but with a scan dir (the official Docker images), fresh children were started with `-n` and `-d extension=FFI`, which does not load (`ffi.so`); now `-n` is used only when neither is loaded.
 Side finding, fixed: in a Fibers activity process a heartbeat did not read pending events, so an activity that blocks between heartbeats never saw its cancellation or pause (`CancelTryCancel`, `ActivityPaused` failed with concurrency > 1 on both clients).
+
+## E16. Boundary format and thread hand-offs
+
+Question: the data crosses the bridge as protobuf bytes (Rust encode → PHP decode, and back), and every event moves between the tokio thread and the PHP thread. Can C structs or fewer thread hops remove this cost?
+
+Other SDKs (sources at their main branches, sdk-core at our rev):
+- Python, TypeScript, .NET and Ruby all send protobuf bytes for activations, completions, activity tasks, heartbeats and client calls. The .NET C bridge uses `#[repr(C)]` structs only for options, and only removes one copy (it parses Rust-owned memory in place). No SDK found a protobuf cost worth an issue.
+- All four run sdk-core on a multi-thread tokio runtime with one thread per core and deliver results through 4–5 thread hops (callback → language event loop → worker pool → back). The PHP bridge has 2 hops and 1 tokio thread. No SDK drives tokio from the language thread.
+- Their defaults (cache 1000–10000, 5 pollers, ratio 0.2, fixed slots, no autoscaling) match ours; ours now uses 8 workflow pollers split 4/4 (E7).
+- The per-worker `temporal-real-sysinfo` thread (E13) is fixed in sdk-core after our rev (temporalio/sdk-rust#1393, 83 commits later, coresdk protos changed on the way).
+
+Protobuf vs C structs, hot loop (PHP 8.5, ext-protobuf, one `ResolveActivity` activation of 109 bytes):
+
+| path | µs per activation |
+|---|---|
+| `mergeFromString` + read run id, timestamp, history length, job seq, payload | 0.95–1.03 |
+| the same fields from a C struct through FFI | 0.22–0.26 |
+| + building the `Payload` object the SDK needs | +0.23 |
+
+The saving is ~0.5 µs of 200–400 µs per activation in a running worker (≤ 0.25 %), for a hand-kept C mirror of dozens of nested messages. JSON is not on the worker path (only worker/client creation and client-call metadata). **Not changed.**
+
+Tokio driven by the PHP thread (`current_thread` runtime, `block_on` inside `tpb_next_events`, no tokio worker thread), interleaved, 3 repetitions, server recreated before each; metric: instructions and cycles of all worker processes (`BENCH_RUSAGE`, `bench/rusage.c`):
+
+| variant | scenario | wf/s | worker CPU s | G instructions | G cycles |
+|---|---|---|---|---|---|
+| tokio thread | @100/s | 101.0 | 1.68 | 4.40 | 6.85 |
+| PHP-driven | @100/s | 101.0 | 1.61 | 4.22 (−4 %) | 6.61 (−4 %) |
+| tokio thread | seq 200×10 | 58.0 | 1.83 | 5.39 | 7.65 |
+| PHP-driven | seq 200×10 | 53.5 (−8 %) | 1.75 | 5.15 (−4 %) | 7.28 (−5 %) |
+| tokio thread | noact 2000 | 562.8 | 1.09 | 3.54 | 4.45 |
+| PHP-driven | noact 2000 | 531.6 (−6 %) | 0.99 | 3.35 (−5 %) | 4.11 (−8 %) |
+| PHP-driven + one runtime tick after each complete/poll call | seq 200×10 | 56.4 vs 60.4 (−7 %) | 1.76 vs 1.74 | −3 % | +2 % |
+| same | noact 2000 | 562.8 vs 569.3 (−1 %) | 0.99 vs 1.05 | −4 % | −5 % |
+
+While PHP runs workflow code the network does not move, so bursts lose the overlap between PHP work and gRPC. The mode also cannot work with the Revolt loop (nobody drives tokio while PHP waits in `stream_select`), and a long local activity or a blocking activity would stop workflow-task and activity heartbeats. **Rejected**: 3–5 % fewer instructions do not pay for lower burst throughput and these limits.
+
+Result: the boundary and the hand-offs are already the cheapest of the five SDKs; the remaining cost is gRPC/h2 work in sdk-core and the PHP SDK itself.

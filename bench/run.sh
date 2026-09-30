@@ -86,8 +86,11 @@ echo "warmup done" >&2
 SAMPLER_PID=$!
 
 CPU_BEFORE=$(cpu_seconds)
+RUSAGE_BEFORE=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0 0 0")
 RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency="$CONCURRENCY" --rate="$RATE" --timeout="$TIMEOUT")
 CPU_AFTER=$(cpu_seconds)
+RUSAGE_AFTER=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0 0 0")
+RUSAGE=$(jq -nc --argjson a "[${RUSAGE_BEFORE// /,}]" --argjson b "[${RUSAGE_AFTER// /,}]" '{instructions: ($b[0] - $a[0]), cycles: ($b[1] - $a[1])}')
 WORKER_PROCESSES=$(descendants "$WORKER_PID" | wc -l | tr -d ' ')
 
 kill "$SAMPLER_PID" 2>/dev/null || true
@@ -100,11 +103,12 @@ echo "$RESULT" | jq -c \
     --arg transport "$TRANSPORT" \
     --arg time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson stats "$STATS" \
+    --argjson rusage "$RUSAGE" \
     --argjson cpu "$(awk -v a="$CPU_AFTER" -v b="$CPU_BEFORE" 'BEGIN {printf "%.2f", a - b}')" \
     --argjson workers "$BENCH_ACTIVITY_WORKERS" \
     --argjson procs "$WORKER_PROCESSES" \
     --arg label "${BENCH_LABEL:-$TRANSPORT}" \
     --argjson wfprocs "${TEMPORAL_CORE_WORKFLOW_PROCESSES:-1}" \
     --argjson concurrency "${TEMPORAL_CORE_ACTIVITY_CONCURRENCY:-1}" \
-    '{time: $time, transport: $transport, label: $label, activity_workers: $workers, workflow_processes: $wfprocs, activity_concurrency: $concurrency, worker_child_processes: $procs} + . + {worker: ($stats + {cpu_seconds: $cpu})}' \
+    '{time: $time, transport: $transport, label: $label, activity_workers: $workers, workflow_processes: $wfprocs, activity_concurrency: $concurrency, worker_child_processes: $procs} + . + {worker: ($stats + {cpu_seconds: $cpu} + $rusage)}' \
     | tee -a "$RESULTS_FILE"
