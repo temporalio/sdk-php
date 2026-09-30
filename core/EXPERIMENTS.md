@@ -245,3 +245,40 @@ Time Profiler, workflow process: PHP main thread 45 %, tokio worker 42–46 %, s
 | fused complete + poll in one FFI call | −0.7 % | +0.4 % | rejected, noise |
 
 Result: the bridge is not the cost. The rest is sdk-core gRPC syscalls, tokio and sdk-core thread hand-offs, and the PHP SDK. sdk-core also runs a `temporal-real-sysinfo` thread per worker (100 ms refresh) that `WorkerConfig` cannot turn off: 6 idle processes use 68 ms CPU in 30 s.
+
+## E14. gRPC client through sdk-core, forked children
+
+Idea: the worker path never used ext-grpc, only the SDK clients did (the starter, activities that signal or complete workflows). If the clients call the server through the bridge, a worker needs no ext-grpc, and without ext-grpc the supervisor can `fork()` its children, so they share opcache and the code loaded before `run()`.
+
+The bridge got `tpb_client_new` / `tpb_client_call`: a tonic channel (TLS from the same settings as the worker) and a raw unary call with a byte codec. The PHP clients keep their retries, deadlines and metadata; `CoreStub` replaces `Grpc\BaseStub::_simpleRequest` and returns a call whose `wait()` takes the result from the event queue (a Fiber in a Fibers activity process suspends instead). A client-side deadline is reported as `DEADLINE_EXCEEDED`, as ext-grpc does (tonic reports `CANCELLED`).
+
+What blocks `fork()`:
+- ext-grpc: a call in a forked child hangs, also when the parent made no call; `grpc.enable_fork_support=1` fails with "failed to shutdown gRPC Core after fork()".
+- macOS: loading the TLS system roots in a forked child aborts (`objc ... initialize may have been in progress in another thread when fork() was called`), also when the parent never used TLS. On Linux the same test passes.
+- An sdk-core runtime that already runs in the parent (threads). The supervisor forks only when none exists.
+
+Memory, 1 workflow + 4 activity processes after 300 workflows:
+
+| platform | children | total RSS MB | shared-aware MB |
+|---|---|---|---|
+| macOS | fresh processes (ext-grpc) | 332–336 | 195–201 (footprint) |
+| macOS | forked (no ext-grpc, no TLS) | 186 | **98 (−50 %)** |
+| Linux (Docker, arm64) | fresh processes | 336 | 209 (PSS) |
+| Linux (Docker, arm64) | forked | 285–304 | **135–143 (−35 %)** |
+
+Interleaved on macOS (2 repetitions; macOS then still forked):
+
+| variant | scenario | wf/s | p50 ms | worker CPU s | RSS MB |
+|---|---|---|---|---|---|
+| ext-grpc, fresh processes | @100/s | 101.1 | 12 | 1.65 | 332 |
+| no ext-grpc, forked | @100/s | 101.0 | 12 | 1.69 | 186 |
+| ext-grpc, fresh processes | seq 200×10 | 48.6 | 3804 | 1.89 | 357 |
+| no ext-grpc, forked | seq 200×10 | 52.1 | 3570 | 1.64 | 212 |
+| ext-grpc, fresh processes | noact 2000 | 489.6 | 1376 | 1.05 | 294 |
+| no ext-grpc, forked | noact 2000 | 459.7 | 1668 | 1.08 | 147 |
+
+CPU and throughput are within the noise. The CI benchmark (Linux, no ext-grpc) runs every scenario with 0 failed workflows.
+
+Result: **adopted**. Without ext-grpc the SDK clients use the bridge, and on Linux the supervisor forks. With ext-grpc nothing changes.
+Side finding, fixed: when PHP runs without a php.ini but with a scan dir (the official Docker images), fresh children were started with `-n` and `-d extension=FFI`, which does not load (`ffi.so`); now `-n` is used only when neither is loaded.
+Side finding, fixed: in a Fibers activity process a heartbeat did not read pending events, so an activity that blocks between heartbeats never saw its cancellation or pause (`CancelTryCancel`, `ActivityPaused` failed with concurrency > 1 on both clients).

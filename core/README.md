@@ -71,7 +71,13 @@ The exit code is non-zero when a child crashed, was killed, or an sdk-core worke
 
 Mapped `WorkerOptions`: workflow/activity pollers and concurrency, `workerActivitiesPerSecond`, `taskQueueActivitiesPerSecond`, `stickyScheduleToStartTimeout`, `workerStopTimeout`, `disableWorkflowWorker`, `localActivityWorkerOnly`, `workflowPanicPolicy` (for panics in workflow code), `identity`, `buildID`, `deploymentOptions`. Worker plugins (`WorkerPluginInterface::run()`) wrap every worker process.
 
-`run()` starts each role process as a fresh `php` process with the same script, arguments and changed ini settings (like RoadRunner starts its workers). The script runs again in every child, so objects created before `run()` (gRPC clients, connections) are per process.
+`run()` starts the role processes in one of two ways:
+- On Linux without ext-grpc, it forks them. The children share the compiled code, opcache and the objects created before `run()` (copy-on-write): 35 % less memory on Linux (PSS), 50 % on macOS (footprint), see `EXPERIMENTS.md` E14. A client created before `run()` connects again in each child.
+- Otherwise (ext-grpc loaded, macOS, or a client call before `run()` that started the sdk-core runtime), it starts each child as a fresh `php` process with the same script, arguments and changed ini settings, like RoadRunner starts its workers. The script runs again in every child. ext-grpc cannot be used after `fork()`, and on macOS TLS with the system roots crashes a forked child.
+
+## gRPC client without ext-grpc
+
+When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` and the testing `TestService` send their calls through the sdk-core bridge (tonic, rustls with the system roots). `create()` and `createSSL()` work as before; the SDK retries, deadlines, metadata and API key are unchanged. Inside a Fibers activity process a call suspends only its own Fiber.
 
 ## Benchmarks
 
