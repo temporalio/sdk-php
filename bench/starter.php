@@ -15,7 +15,7 @@ require __DIR__ . '/autoload.php';
 const TEMPORAL_NAMESPACE = 'default';
 const SCENARIO_WORKFLOW = ['seq' => 'BenchWorkflow', 'par' => 'BenchParallelWorkflow', 'noact' => 'BenchWorkflow', 'io' => 'BenchIoWorkflow', 'cpu' => 'BenchCpuWorkflow'];
 
-$opts = \getopt('', ['scenario:', 'workflows:', 'activities:', 'payload:', 'concurrency:', 'timeout:', 'rate:']);
+$opts = \getopt('', ['scenario:', 'workflows:', 'activities:', 'payload:', 'concurrency:', 'timeout:', 'rate:', 'prefix:', 'part:', 'started-at:']);
 $scenario = $opts['scenario'] ?? 'seq';
 $workflows = (int) ($opts['workflows'] ?? 100);
 $activities = $scenario === 'noact' ? 0 : (int) ($opts['activities'] ?? 1);
@@ -26,7 +26,7 @@ $rate = (float) ($opts['rate'] ?? 0);
 $address = \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7557';
 $taskQueue = \getenv('BENCH_TASK_QUEUE') ?: 'bench';
 $workflowType = SCENARIO_WORKFLOW[$scenario] ?? throw new \InvalidArgumentException("Unknown scenario: {$scenario}");
-$prefix = \sprintf('bench-%s-%s-', $scenario, \bin2hex(\random_bytes(4)));
+$prefix = $opts['prefix'] ?? \sprintf('bench-%s-%s-', $scenario, \bin2hex(\random_bytes(4)));
 
 function startWorkflows(string $address, string $taskQueue, string $workflowType, string $prefix, array $indexes, int $activities, int $payload, float $rate, float $startedAt): void
 {
@@ -56,19 +56,36 @@ function percentile(array $sorted, float $p): float
     return $sorted[\max(0, (int) \ceil($p / 100 * \count($sorted)) - 1)];
 }
 
-$startedAt = \microtime(true);
-$pids = [];
-for ($worker = 0; $worker < \min($concurrency, $workflows); $worker++) {
-    $pid = \pcntl_fork();
-    if ($pid === 0) {
-        startWorkflows($address, $taskQueue, $workflowType, $prefix, \range($worker, $workflows - 1, $concurrency), $activities, $payload, $rate, $startedAt);
-        \FFI::cdef('void _exit(int status);')->_exit(0);
-    }
-    $pids[] = $pid;
+if (isset($opts['part'])) {
+    $part = (int) $opts['part'];
+    startWorkflows($address, $taskQueue, $workflowType, $prefix, \range($part, $workflows - 1, $concurrency), $activities, $payload, $rate, (float) $opts['started-at']);
+    exit(0);
 }
-foreach ($pids as $pid) {
-    \pcntl_waitpid($pid, $status);
-    if (\pcntl_wexitstatus($status) !== 0) {
+
+$startedAt = \microtime(true);
+$starters = [];
+for ($part = 0; $part < \min($concurrency, $workflows); $part++) {
+    $starters[] = \proc_open(
+        [
+            \PHP_BINARY,
+            ...\array_slice($_SERVER['argv'], 0),
+            '--prefix=' . $prefix,
+            '--part=' . $part,
+            '--started-at=' . $startedAt,
+        ],
+        [\STDIN, \STDOUT, \STDERR],
+        $pipes,
+    );
+}
+foreach ($starters as $starter) {
+    while (($status = \proc_get_status($starter))['running']) {
+        if (\microtime(true) - $startedAt > $timeout) {
+            \proc_terminate($starter, 9);
+            throw new \RuntimeException('A starter process timed out');
+        }
+        \usleep(20_000);
+    }
+    if ($status['exitcode'] !== 0) {
         throw new \RuntimeException('A starter process failed');
     }
 }
