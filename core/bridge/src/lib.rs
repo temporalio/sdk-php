@@ -390,21 +390,25 @@ fn versioning_strategy(config: &Value) -> Result<WorkerVersioningStrategy, Strin
         .and_then(|d| d.get("DefaultVersioningBehavior"))
         .and_then(Value::as_i64)
         .unwrap_or(0) as i32;
+    let default_versioning_behavior = match default_behavior {
+        0 => None,
+        v => Some(VersioningBehavior::try_from(v).map_err(|e| e.to_string())?.into()),
+    };
     Ok(WorkerVersioningStrategy::WorkerDeploymentBased(
-        WorkerDeploymentOptions {
-            version: WorkerDeploymentVersion {
-                deployment_name: text("DeploymentName"),
-                build_id: text("BuildId"),
-            },
-            use_worker_versioning: deployment
+        WorkerDeploymentOptions::new(
+            WorkerDeploymentVersion::builder()
+                .deployment_name(text("DeploymentName"))
+                .build_id(text("BuildId"))
+                .build(),
+        )
+        .use_worker_versioning(
+            deployment
                 .and_then(|d| d.get("UseVersioning"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
-            default_versioning_behavior: match default_behavior {
-                0 => None,
-                v => Some(VersioningBehavior::try_from(v).map_err(|e| e.to_string())?),
-            },
-        },
+        )
+        .maybe_default_versioning_behavior(default_versioning_behavior)
+        .build(),
     ))
 }
 
@@ -412,16 +416,20 @@ fn tls_options(tls: &Value) -> Option<TlsOptions> {
     let tls = tls.as_object()?;
     let text = |key: &str| tls.get(key).and_then(Value::as_str).map(str::to_owned);
     let bytes = |key: &str| text(key).map(String::into_bytes);
-    Some(TlsOptions {
-        server_root_ca_cert: bytes("server_root_ca_cert"),
-        domain: text("domain"),
-        client_tls_options: bytes("client_cert").zip(bytes("client_private_key")).map(
-            |(client_cert, client_private_key)| ClientTlsOptions {
-                client_cert,
-                client_private_key,
-            },
-        ),
-    })
+    Some(
+        TlsOptions::builder()
+            .maybe_server_root_ca_cert(bytes("server_root_ca_cert"))
+            .maybe_domain(text("domain"))
+            .maybe_client_tls_options(bytes("client_cert").zip(bytes("client_private_key")).map(
+                |(client_cert, client_private_key)| {
+                    ClientTlsOptions::builder()
+                        .client_cert(client_cert)
+                        .client_private_key(client_private_key)
+                        .build()
+                },
+            ))
+            .build(),
+    )
 }
 
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {

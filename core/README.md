@@ -4,14 +4,14 @@ This directory holds the native part of the RoadRunner-free worker transport.
 
 | path | content |
 |---|---|
-| `bridge/` | Rust `cdylib` over Temporal sdk-core (`temporalio-sdk-core`, pinned git revision). Completion-queue C API, no callbacks into PHP. |
+| `bridge/` | Rust `cdylib` over Temporal sdk-core (`temporalio-sdk-core` 0.9.0 from crates.io). Completion-queue C API, no callbacks into PHP. |
 | `bridge/include/temporal_php_bridge.h` | The header that `FFI::cdef()` loads. |
 | `docs/protocol-mapping.md` | RoadRunner ↔ PHP SDK ↔ sdk-core message mapping, gaps and risks. |
 | `REPORT.md` | Why RoadRunner exists, what was tried, benchmark results, limitations. |
 
 The PHP side is in `src/Worker/Core/`.
 
-The PHP classes for the `coresdk.*` protos (`Coresdk\...`) come from `roadrunner-php/roadrunner-api-dto`, generated from the same sdk-core revision as the bridge (`sdk-core` submodule there). Bump both together.
+The PHP classes for the `coresdk.*` protos (`Coresdk\...`) come from `roadrunner-php/roadrunner-api-dto`, generated from the same sdk-core release as the bridge (`sdk-core` submodule there, `core-v0.9.0`). Bump both together.
 
 ## Build
 
