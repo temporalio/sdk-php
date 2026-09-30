@@ -34,7 +34,6 @@ use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\TransportException;
 use Temporal\Interceptor\Header;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\DateTime;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
@@ -219,7 +218,7 @@ final class ActivityTasks implements RPCConnectionInterface
         $info->type = new ActivityType();
         $info->type->name = $start->getActivityType();
         $info->taskQueue = $taskQueue;
-        $info->heartbeatTimeout = DateInterval::parse($this->nanos($start->getHeartbeatTimeout()), DateInterval::FORMAT_NANOSECONDS);
+        $info->heartbeatTimeout = WorkflowActivations::interval($start->getHeartbeatTimeout());
         $info->scheduledTime = DateTime::parse($this->time($start->getScheduledTime())->format(\DATE_RFC3339_EXTENDED));
         $info->startedTime = DateTime::parse($startedTime->format(\DATE_RFC3339_EXTENDED));
         $info->deadline = DateTime::parse(

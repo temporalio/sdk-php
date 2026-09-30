@@ -91,6 +91,7 @@ final class WorkflowActivations
 {
     private const DEFAULT_VERSION = -1;
     private const SIDE_EFFECT_TIMEOUT_SECONDS = 60;
+    private const INTERVAL_CACHE_SIZE = 64;
     private const SEARCH_ATTRIBUTE_TYPES = [
         'bool' => 'Bool',
         'float64' => 'Double',
@@ -100,6 +101,9 @@ final class WorkflowActivations
         'string' => 'Text',
         'datetime' => 'Datetime',
     ];
+
+    /** @var array<int, CarbonInterval> */
+    private static array $intervals = [];
 
     /** @var array<string, RunState> */
     private array $runs = [];
@@ -149,6 +153,19 @@ final class WorkflowActivations
         return $options;
     }
 
+    public static function interval(?Duration $duration): CarbonInterval
+    {
+        $nanos = self::nanos($duration);
+        if (!isset(self::$intervals[$nanos])) {
+            if (\count(self::$intervals) >= self::INTERVAL_CACHE_SIZE) {
+                self::$intervals = [];
+            }
+            self::$intervals[$nanos] = DateInterval::parse($nanos, DateInterval::FORMAT_NANOSECONDS);
+        }
+
+        return clone self::$intervals[$nanos];
+    }
+
     public function handle(string $bytes): string
     {
         $activation = new WorkflowActivation();
@@ -173,11 +190,6 @@ final class WorkflowActivations
     private static function nanos(?Duration $duration): int
     {
         return $duration === null ? 0 : $duration->getSeconds() * 1_000_000_000 + $duration->getNanos();
-    }
-
-    private static function interval(?Duration $duration): CarbonInterval
-    {
-        return DateInterval::parse(self::nanos($duration), DateInterval::FORMAT_NANOSECONDS);
     }
 
     /**
