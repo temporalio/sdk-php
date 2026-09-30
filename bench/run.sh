@@ -10,8 +10,8 @@ TRANSPORT=$1 SCENARIO=$2 WORKFLOWS=$3 ACTIVITIES=$4 PAYLOAD=$5
 BENCH_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$BENCH_DIR"
 
-RR_BIN=${RR_BIN:-/Users/xepozz/IdeaProjects/temporalio/sdk-php-fiber-runtime/rr}
-TEMPORAL_BIN=${TEMPORAL_BIN:-/Users/xepozz/IdeaProjects/temporalio/sdk-php-fiber-runtime/temporal}
+RR_BIN=${RR_BIN:-$BENCH_DIR/../rr}
+TEMPORAL_BIN=${TEMPORAL_BIN:-$BENCH_DIR/../temporal}
 CONCURRENCY=${BENCH_CONCURRENCY:-8}
 WARMUP=${BENCH_WARMUP:-20}
 RATE=${BENCH_RATE:-0}
@@ -58,6 +58,11 @@ worker_pids() {
 }
 
 cpu_seconds() {
+    if [ -d /proc ]; then
+        for pid in $(worker_pids | tr ',' ' '); do cat "/proc/$pid/stat" 2>/dev/null; done \
+            | awk -v hz="$(getconf CLK_TCK)" '{sub(/.*\) /, ""); t+=$12+$13} END {printf "%.2f", t/hz}'
+        return
+    fi
     ps -o time= -p "$(worker_pids)" | awk '{n=split($1,a,":"); s=0; for(i=1;i<=n;i++) s=s*60+a[i]; t+=s} END {printf "%.2f", t}'
 }
 
@@ -95,7 +100,7 @@ echo "$RESULT" | jq -c \
     --arg transport "$TRANSPORT" \
     --arg time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson stats "$STATS" \
-    --argjson cpu "$(echo "$CPU_AFTER - $CPU_BEFORE" | bc)" \
+    --argjson cpu "$(awk -v a="$CPU_AFTER" -v b="$CPU_BEFORE" 'BEGIN {printf "%.2f", a - b}')" \
     --argjson workers "$BENCH_ACTIVITY_WORKERS" \
     --argjson procs "$WORKER_PROCESSES" \
     --arg label "${BENCH_LABEL:-$TRANSPORT}" \

@@ -1,0 +1,105 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Repetitions of the whole matrix
+        required: false
+        default: '1'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'core/**'
+      - 'bench/**'
+      - 'composer.json'
+      - '.github/workflows/benchmark.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  cancel-in-progress: true
+  group: benchmark-${{ github.ref }}
+
+jobs:
+  benchmark:
+    permissions:
+      contents: read
+    name: RoadRunner vs sdk-core
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      XDEBUG_MODE: off
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: 8.4
+          extensions: dom, sockets, grpc, curl, protobuf, ffi, pcntl, posix
+          ini-values: opcache.enable_cli=1
+
+      - name: Install dependencies with composer
+        uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
+
+      - name: Download binaries
+        run: composer get:binaries
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
+
+      - name: Cache the bridge build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/bridge/target
+          key: bridge-${{ runner.os }}-${{ hashFiles('core/bridge/Cargo.lock', 'core/bridge/src/**', 'core/bridge/build.rs') }}
+          restore-keys: bridge-${{ runner.os }}-
+
+      - name: Build the sdk-core bridge
+        run: cargo build --release --lib --manifest-path core/bridge/Cargo.toml
+
+      - name: Start the Temporal server
+        run: |
+          docker compose -f bench/server/compose.yaml up -d
+          for i in $(seq 1 60); do
+            ./temporal operator namespace describe default --address 127.0.0.1:7557 >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          docker compose -f bench/server/compose.yaml logs
+          exit 1
+
+      - name: Run the benchmark matrix
+        run: bench/matrix.sh
+        env:
+          BENCH_RUNS: ${{ inputs.runs || '1' }}
+          BENCH_RESULTS: ${{ github.workspace }}/bench/matrix.jsonl
+
+      - name: Print results
+        if: always()
+        run: |
+          {
+            echo "## Worker benchmark: RoadRunner vs sdk-core"
+            echo
+            echo "Runner: $(nproc) CPU, $(free -g | awk '/Mem/ {print $2}') GB. The Temporal server runs on the same runner, compare the rows with each other only."
+            echo
+            bench/summary.sh bench/matrix.jsonl
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: benchmark-results
+          path: bench/matrix.jsonl
+          if-no-files-found: ignore
+
+      - name: Stop the Temporal server
+        if: always()
+        run: docker compose -f bench/server/compose.yaml down

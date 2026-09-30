@@ -2,8 +2,11 @@
 set -u
 cd "$(dirname "$0")"
 export BENCH_ACTIVITY_WORKERS=4 BENCH_RESULTS=${BENCH_RESULTS:-$PWD/matrix.jsonl}
-run() { "$@" 2>&1 | grep -E '^\{' >/dev/null || echo "FAILED: $*" >&2; }
-for r in 1 2; do
+FAILED=0
+run() {
+  "$@" 2>&1 | grep -E '^\{' >/dev/null || { echo "FAILED: $*" >&2; FAILED=1; }
+}
+for r in $(seq 1 "${BENCH_RUNS:-2}"); do
   for t in rr core; do
     run ./run.sh $t seq 1000 1 100
     run ./run.sh $t seq 200 10 100
@@ -21,3 +24,4 @@ for r in 1 2; do
   BENCH_LABEL=core-4wf TEMPORAL_CORE_WORKFLOW_PROCESSES=4 run ./run.sh core noact 2000 0 100
 done
 echo MATRIX DONE
+exit $FAILED
