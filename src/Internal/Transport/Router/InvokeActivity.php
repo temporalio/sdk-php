@@ -53,9 +53,11 @@ class InvokeActivity extends Route
         $header = $request->getHeader();
         $heartbeatDetails = null;
 
-        // always in binary format
-        $taskToken = $options['info']['TaskToken'] ?? '';
-        $options['info']['TaskToken'] = \base64_decode($taskToken);
+        if (!($options['info'] ?? null) instanceof ActivityInfo) {
+            // always in binary format
+            $taskToken = $options['info']['TaskToken'] ?? '';
+            $options['info']['TaskToken'] = \base64_decode($taskToken);
+        }
 
         if (($options['heartbeatDetails'] ?? 0) !== 0) {
             $offset = \count($payloads) - ($options['heartbeatDetails'] ?? 0);
