@@ -100,7 +100,99 @@ The benchmark sums RSS, which counts shared file-backed pages (the php binary, t
 
 Result: with fresh child processes the core transport uses slightly more RSS but **11 % less real memory** than RoadRunner: the Go process (63 MB) is gone, each PHP process pays ~3 MB for the tokio runtime and bridge data, and the idle supervisor costs 20 MB. No change adopted; the RSS column in the benchmarks overstates both transports.
 
-## E6. PHP runtime: opcache, JIT, preload, file cache, shared memory
+## Throughput (RPS) series: E6–E11
+
+Setup: the Docker server (`bench/server`, Temporal 1.29.3 + PostgreSQL on tmpfs) in a Docker VM with **4 CPUs**, shared with another benchmark. The server was recreated after every repetition: the tmpfs database grows to ~2 GB after ~40k workflows and then slows the server 3–10×.
+Two harnesses, interleaved A/B, 3 repetitions each:
+- **burst**: `bench/run.sh` (the starter starts the workflows while the worker runs, 16 starter processes).
+- **drain**: all workflows are started first, then the worker starts; rate = workflows / (last close − worker start). This removes the start phase from the measurement.
+"server CPU" = CPU of the Temporal and PostgreSQL containers (cgroup `usage_usec`).
+
+### E6. What limits throughput
+
+| drain | wf/s | worker CPU (all processes) | server CPU |
+|---|---|---|---|
+| noact 4000, 1 workflow process, 20 pollers (ratio 1) | 956 | peak ~55 % of one core | **~3.5 of 4 cores** |
+| noact 4000, 2 workflow processes | 916 | peak ~58 % | ~3.5 |
+| noact 4000, `TEMPORAL_CORE_THREADS=2` | 947 | peak ~63 % | ~3.5 |
+| seq 2000×1 (all poller variants) | 200–300 | peak 45–75 % | 3–3.5 |
+
+The server is the limit: more workflow processes or tokio threads do not change the rate, the server VM is saturated, and the worker uses about half a core.
+With the old defaults, a single workflow process was the limit for new workflows, with low CPU: see E7.
+
+### E7. Workflow task pollers (adopted)
+
+sdk-core splits `max_concurrent_workflow_task_polls` between the normal queue and the sticky queue with `nonsticky_to_sticky_poll_ratio` (`max(1, floor(n × ratio))` normal pollers). The old default (4 pollers, ratio 0.2) gave **1 normal-queue poller**. Every new workflow is taken from the normal queue, so one poll round trip (~2.5 ms) capped the pickup at ~400 new workflows/s per process, with the worker at 20–30 % CPU.
+
+| variant (pollers normal/sticky) | drain noact 3000 | drain seq 2000×1 | drain seq 400×5 | drain seq 200×10 |
+|---|---|---|---|---|
+| 4, ratio 0.2 (1/3), old | 340 | 199 | 64 | 31.8 |
+| **8, ratio 0.5 (4/4), new** | **612 (+80 %)** | **233 (+17 %)** | 64 | 39.9 |
+| autoscaling (min 1, initial 5, max 100) | 693 | 225 | 67 | 40.0 |
+
+| burst | variant | wf/s | p50 ms | p99 ms | worker CPU s |
+|---|---|---|---|---|---|
+| noact 2000 | 4 / 0.2 | 339 | 2955 | 4276 | 1.32 |
+| | **8 / 0.5** | **589 (+74 %)** | **1510** | **1697** | 1.22 |
+| seq 1000×1 | 4 / 0.2 | 249 | 1953 | 3112 | 1.75 |
+| | **8 / 0.5** | **281 (+13 %)** | 2006 | **2312** | 1.80 |
+| seq 1000×1 @100/s | 4 / 0.2 | 101 | 14 | 45 | 2.00 |
+| | 8 / 0.5 | 101 | 14 | 45 | 1.98 |
+| seq 200×10 | 4 / 0.2 | 50.9 | 3579 | 3735 | 2.20 |
+| | 8 / 0.5 | 50.6 | 3651 | 3724 | 2.24 |
+
+- 16 pollers (8/8) against 8 (4/4): noact +2 %, seq and par equal. Not adopted.
+- Scenarios with many activities are limited by the 4 activity processes, not by the pollers.
+- The CPU per workflow and the latency at a fixed rate do not change.
+- **Autoscaling is not adopted**: on the Fibers scenario (io 300×10, 1 activity process, 200 Fibers) it was −40 % (68 vs 114 wf/s, all 3 repetitions), it adds a completion tail (on `seq 2000×1` the rate between the first and the last completion is 20–25 % below the p5–p95 rate, 0–3 % with fixed pollers), and it pulls work so fast that a drain of 2000 `seq ×1` workflows crashed the workflow process at the default `memory_limit=128M` (see E10).
+
+**Adopted:** 8 workflow task pollers, ratio 0.5 (`WorkerOptions::$maxConcurrentWorkflowTaskPollers` still overrides the number).
+
+### E8. Workflow processes
+
+| burst | 1 process, 8 pollers | 4 processes, 8 pollers each | 4 processes, old 4 pollers each |
+|---|---|---|---|
+| noact 2000 wf/s (p50 ms) | 444 (2257) | 533 (298) | 522 (1727) |
+| seq 1000×1 wf/s (CPU s) | 293 (1.70) | 265 (1.98) | 265 (2.02) |
+
+At the server limit, more processes help only the pure-start workload (more normal-queue pollers) and cost 15–20 % more CPU on real workflows. The earlier "×1.9 with 4 processes" on `noact` (REPORT §4) came mostly from 4 × 1 normal-queue pollers. **No change**: keep 1 workflow process and add processes for CPU-heavy workflow code (REPORT §4: ×2.6 at 5 ms per activation).
+
+### E9. Per-process capacity
+
+The server did not saturate the workflow process, so the capacity is derived from the CPU per activation, measured in three ways:
+
+| method | PHP main thread | tokio thread | rate |
+|---|---|---|---|
+| drain noact 4000 at ~950 wf/s (8000 activations incl. evictions), `ps -M` per thread | ~125 µs / activation | ~75 µs / activation | main thread 25–30 % busy |
+| query probe: 64–128 clients query cached workflows (no history writes) | 69 µs / query | 123 µs / query | 3300 queries/s, main 23 %, tokio 41 % busy; the server stops at ~3300/s |
+| replay of a 200-activity history (no network) | serial: ~90 µs / activation | | ~11 000 activations/s |
+
+One workflow process with 1 tokio thread handles about **5 000–8 000 activations/s** of light workflow code (2 500–4 000 `noact` wf/s), 2.5–4× what this 4-CPU server can deliver.
+The tokio thread is the first to saturate on query-heavy loads (123 µs per query); `TEMPORAL_CORE_THREADS=4` almost doubled the Rust CPU (7.6 s for 30 300 queries vs 4.1 s for 32 300 queries) without a higher rate.
+Side finding: replay cost per activation grows with the history length (90 µs at 1 200 events, 295 µs at 12 000 events, after the 0.33 s JSON decode is removed). Not examined further.
+
+### E10. Sticky cache and `memory_limit`
+
+A cached workflow costs ~50 KB of PHP heap (2000 cached `QueryProbeWorkflow` instances: `memory_get_usage()` 120 MB vs ~20 MB idle; RSS +183 MB including sdk-core). With the default `memory_limit=128M` one workflow process holds ~2000 open workflows, but `max_cached_workflows` is 10 000. When more workflows are open (a backlog with slow activities), the process dies with "Allowed memory size exhausted", the supervisor restarts it, and its in-flight workflow tasks wait for the 10 s workflow task timeout.
+Observed with autoscaling at 2000 backlog, and with the new 8/0.5 default at 5000 backlog (`seq 5000×1` drain; the old default did not crash there because it picked up work slower). RoadRunner has the same exposure (sdk-go default sticky cache 10 000, the same PHP workflow objects).
+**No change made.** Options: raise `memory_limit` for workflow processes, set `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` to about `memory_limit / 64 KB`, or derive the default cache size from `memory_limit`.
+
+### E11. Activity side
+
+| variant | scenario | act/s | p99 ms | worker CPU s |
+|---|---|---|---|---|
+| 1 slot per activity process | par 100×20 | 430 | 4480 | 1.46 |
+| 2 slots (prefetch 1 task) | par 100×20 | 515 (+19 %) | 3735 | 1.35 |
+| 1 slot | seq 200×10 | 525 | 3598 | 2.33 |
+| 2 slots | seq 200×10 | 550 (+5 %) | 3440 | 2.29 |
+| 8 pollers per Fibers process | io 300×10 | 968 | 2755 | 1.82 |
+| 16 pollers | io 300×10 | 1053 (+9 %) | 2510 | 1.76 |
+| 32 pollers | io 300×10 | 956 | 2667 | 1.87 |
+
+- **Prefetch is not adopted**: the second task waits behind a running blocking activity, but its start-to-close timeout already runs, and an idle process cannot take it.
+- Fibers pollers 8 → 16: +9 %, inside the run-to-run noise (±10 %). **No change.**
+
+## E12. PHP runtime: opcache, JIT, preload, file cache, shared memory
 
 Hot loop without FFI (`WorkflowActivations` start → activity result → evict, and `ActivityTasks::handle`), minimum of 6 runs, µs per iteration:
 

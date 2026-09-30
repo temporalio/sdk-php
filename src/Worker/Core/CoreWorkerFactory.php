@@ -46,6 +46,8 @@ class CoreWorkerFactory extends WorkerFactory
     private const POLL_TIMEOUT_MS = 500;
     private const FINALIZE_TIMEOUT_SECONDS = 2;
     private const MAX_ACTIVITY_POLLERS = 8;
+    private const WORKFLOW_TASK_POLLERS = 8;
+    private const NONSTICKY_TO_STICKY_POLL_RATIO = 0.5;
     private const STICKY_SCHEDULE_TO_START_TIMEOUT_MS = 5000;
     private const STOP_TIMEOUT_SECONDS = 10;
     private const STOP_POLL_INTERVAL_US = 100_000;
@@ -601,7 +603,8 @@ class CoreWorkerFactory extends WorkerFactory
             'max_outstanding_workflow_tasks' => \max($minWorkflowTasks, $options->maxConcurrentWorkflowTaskExecutionSize ?: 100),
             'max_outstanding_activities' => $isActivity ? $this->activityConcurrency : 1,
             'max_outstanding_local_activities' => 1,
-            'max_concurrent_workflow_task_polls' => \max($minWorkflowTasks, $options->maxConcurrentWorkflowTaskPollers ?: 4),
+            'max_concurrent_workflow_task_polls' => \max($minWorkflowTasks, $options->maxConcurrentWorkflowTaskPollers ?: self::WORKFLOW_TASK_POLLERS),
+            'nonsticky_to_sticky_poll_ratio' => self::NONSTICKY_TO_STICKY_POLL_RATIO,
             'sticky_queue_schedule_to_start_timeout_ms' => $options->stickyScheduleToStartTimeout === null
                 ? self::STICKY_SCHEDULE_TO_START_TIMEOUT_MS
                 : (int) CarbonInterval::instance($options->stickyScheduleToStartTimeout)->totalMilliseconds,
