@@ -52,53 +52,54 @@ Option A keeps all I/O in Rust threads. PHP blocks only when it has nothing to d
 
 ## 4. Benchmarks
 
-Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT off, xdebug off. Temporal 1.29.3 + PostgreSQL in Docker (4 CPU), 1 task-queue partition (`bench/server`). RoadRunner 2025.1.15.
-Both transports: 1 workflow process + 4 activity processes (RR: `num_workers: 4`), unless the label says otherwise. Every row is the mean of 2 runs, 0 failed workflows in all 44 runs. Harness: `bench/matrix.sh` (writes `bench/matrix.jsonl`).
-"worker CPU s" = CPU time of all worker processes (rr + PHP, or the PHP supervisor + children, Rust threads included) during the measured run.
+Final code (`e07ebfbe`: 1 tokio thread per process, fresh child processes, production fixes).
+Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT/xdebug/pcov off. Temporal 1.29.3 + PostgreSQL in Docker (`bench/server`, 1 task-queue partition). RoadRunner 2025.1.15.
+Both transports: 1 workflow process + 4 activity processes unless the label says otherwise. Mean of 2 runs per row, 44 runs, 0 failed workflows. Harness: `bench/matrix.sh`, table: `bench/summary.sh`.
+"worker CPU s" = CPU time of all worker processes (rr + PHP, or the PHP supervisor + children incl. Rust threads) during the measured run.
 
-**Fixed rate (the server is not saturated): the worker cost**
+**Fixed rate (server not saturated): worker cost**
 
-| scenario | transport | p50 ms | p99 ms | worker CPU s | RSS MB |
-|---|---|---|---|---|---|
-| 1000 wf × 1 activity @ 50/s | rr | 11 | 16 | 3.26 | 327 |
-| | **core** | 11 | 15 | **2.21 (−32 %)** | **198 (−39 %)** |
-| 1000 wf × 1 activity @ 100/s | rr | 11 | 16 | 2.54 | 327 |
-| | **core** | 11 | 16 | **1.76 (−31 %)** | **197 (−40 %)** |
-| 1000 wf, no activities @ 100/s | rr | 4 | 6 | 1.27 | 293 |
-| | **core** | 4 | 7 | **0.89 (−30 %)** | **153 (−48 %)** |
+| scenario | transport | p50 ms | p99 ms | worker CPU s |
+|---|---|---|---|---|
+| 1000 wf × 1 activity @ 50/s | rr | 16 | 27 | 4.45 |
+| | **core** | 16 | 26 | **2.73 (−39 %)** |
+| 1000 wf × 1 activity @ 100/s | rr | 18 | 82 | 4.10 |
+| | **core** | 18 | **51** | **2.51 (−39 %)** |
+| 1000 wf, no activities @ 100/s | rr | 7 | 29 | 1.90 |
+| | **core** | 6 | 23 | **1.14 (−40 %)** |
 
-**Full speed (the Docker server is the limit)**
+**Full speed**
 
-| scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s | RSS MB |
-|---|---|---|---|---|---|---|---|
-| seq 1000 × 1 | rr | 297.8 | 298 | 1555 | 2560 | 1.94 | 334 |
-| | core | 311.1 | 311 | 1501 | 2405 | 1.49 | 196 |
-| seq 200 × 10 | rr | 53.9 | 538 | 1672 | 3053 | 2.33 | 336 |
-| | core | 67.4 | 674 | 2718 | 2812 | 1.90 | 225 |
-| noact 2000 | rr | 427.3 | – | 2261 | 3351 | 1.75 | 300 |
-| | core | 430.6 | – | 2264 | 3291 | 1.32 | 155 |
-| | core, 4 workflow processes | **726.6** | – | 1096 | 1180 | 1.34 | 244 |
-| par 100 × 20 | rr | 26.6 | 531 | 1952 | 3674 | 1.51 | 387 |
-| | core | 27.8 | 554 | 1831 | 3501 | 1.02 | 259 |
-| | core, 1 activity process, 200 Fibers | 48.7 | 975 | 1117 | 1965 | 0.94 | 169 |
+| scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s |
+|---|---|---|---|---|---|---|
+| seq 1000 × 1 | rr | 188.5 | 189 | 2510 | 4055 | 3.31 |
+| | core | **209.7** | 210 | 2145 | 3607 | **2.17** |
+| par 100 × 20 | rr | 18.9 | 377 | 2866 | 5181 | 2.63 |
+| | core | 17.9 | 358 | 3110 | 5516 | **1.66** |
+| | core, 1 activity process, 200 Fibers | **34.6** | **692** | 1537 | 2761 | 1.23 |
+| seq 200 × 10 (interleaved A/B, 3 runs) | rr | 36.7 | 367 | 2611 | 4853 | 3.86 |
+| | core | **43.7** | **437** | 4185 | **4353** | **2.54** |
+| noact 2000 (interleaved A/B, 3 runs) | rr | 252.0 | – | 3730 | 5466 | 3.02 |
+| | core, 1 tokio thread | **281.5** | – | 3259 | 4846 | **1.80** |
+| | core, 18 tokio threads | 267.6 | – | 3563 | 5232 | 2.18 |
+| | core, 4 workflow processes (matrix) | **457.7** | – | 1649 | 1873 | 1.99 |
 
 **Where RoadRunner cannot scale**
 
 | scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s | RSS MB |
 |---|---|---|---|---|---|---|---|
-| I/O-bound: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.8 | 38 | 13188 | 26092 | 1.73 | 391 |
-| | core (4 activity processes) | 3.6 | 36 | 13995 | 27815 | 1.34 | 231 |
-| | **core, 1 activity process, 200 Fibers** | **104** | **1040 (×27)** | **626** | **882** | 0.61 | 148 |
-| CPU-bound workflow code: 300 wf, 5 ms CPU per activation | rr (1 workflow process, fixed) | 94.6 | 95 | 2303 | 2892 | 3.69 | 365 |
-| | core, 1 workflow process | 95.3 | 95 | 1869 | 2921 | 3.45 | 206 |
-| | **core, 4 workflow processes** | **294.6 (×3.1)** | 295 | **602** | **669** | 3.51 | 316 |
+| I/O: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.9 | 39 | 12874 | 25481 | 2.43 | 390 |
+| | **core, 1 activity process, 200 Fibers** | **77.9** | **778 (×20)** | **705** | **1185** | 0.73 | 199 |
+| CPU-bound workflow code (5 ms per activation) | rr (1 workflow process, fixed) | 86.5 | 87 | 2455 | 3038 | 4.13 | 358 |
+| | **core, 4 workflow processes** | **220.7 (×2.6)** | 221 | **782** | **877** | 3.75 | 523 |
 
 Conclusions:
-- Same throughput and latency as RoadRunner wherever the server is the limit, with 20–35 % less worker CPU (no Go process, no pipe protocol, no re-encoding between two processes).
-- Memory: the matrix above ran with `fork()`-ed children (35–50 % less RSS than RoadRunner). The final code starts children as fresh `php` processes (see below); then the RSS is the same as RoadRunner: `seq 1000 × 1 @ 100/s` core 335 MB / 1.84 CPU s vs rr 330 MB / 2.49 CPU s (2 runs each), Fibers `io` 204 MB.
-- RoadRunner has exactly one workflow PHP process. The core transport can run several (each with its own sticky cache): ×3.1 for CPU-bound workflow code, ×1.7 for `noact` bursts.
-- For I/O-bound activities, one PHP process with Fibers replaces dozens of blocking processes (×27 here with 4× fewer processes).
-- In `seq 200 × 10` core has higher p50 but lower p99 and +25 % throughput: both are server queueing at saturation.
+- Worker CPU is **34–40 % lower** than RoadRunner at the same throughput and latency (fixed rate), and 25–40 % lower at full speed.
+- Throughput is the same or higher (+11 % `seq 1000×1`, +19 % `seq 200×10`, +12 % `noact` in interleaved runs); p99 is lower in every full-speed scenario except `par 100×20` (−5 % throughput, within run-to-run noise).
+- `seq 200×10`: the p50 is higher for core, the p99 and the total time are lower — core interleaves all 200 workflows, RoadRunner finishes early ones first.
+- Real memory (macOS footprint, E5) is 11 % lower; summed RSS is the same (it double-counts shared pages).
+- Several workflow processes (×2.6 on CPU-bound workflow code, ×1.9 on `noact` bursts) and Fibers (×20 on I/O-bound activities) are not possible with RoadRunner.
+- Order effects: in a sequential matrix the Docker server slows down over time; the `noact 2000` and `seq 200×10` rows above therefore use interleaved A/B runs (the sequential matrix had shown core −17 % and −5 % for them, which the interleaved runs did not reproduce).
 
 ## 5. Where the time goes (debug labels, 1000 wf × 1 activity at 100 wf/s)
 
