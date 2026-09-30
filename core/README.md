@@ -56,7 +56,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_TLS_SERVER_NAME` | host of the address | server name for the certificate check |
 | `TEMPORAL_PROFILE`, `TEMPORAL_CONFIG_FILE` | `default`, `temporal.toml` in the user config directory | TOML profile with the same settings (`Temporal\Common\EnvConfig\ConfigClient`). The env values override it. The `TEMPORAL_TLS*` and `TEMPORAL_API_KEY` values apply only with `TEMPORAL_ADDRESS`, `TEMPORAL_NAMESPACE` or a profile |
 | `TEMPORAL_CORE_WORKFLOW_PROCESSES` | `1` | workflow processes (each has its own sticky cache) |
-| `TEMPORAL_CORE_ACTIVITY_PROCESSES` | `0` | activity processes; `0` runs activities in the workflow process |
+| `TEMPORAL_CORE_ACTIVITY_PROCESSES` | `1` | activity processes; `0` runs activities in the workflow process (they block workflow tasks while they run) |
 | `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` | `1` | activities that one activity process runs at the same time in Fibers on the Revolt event loop (only for non-blocking activity code, `revolt/event-loop` must be installed) |
 | `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | `10000` | sticky cache size per workflow process |
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process (1 thread uses 15–22 % less CPU than one per core, see `EXPERIMENTS.md` E2) |
@@ -65,7 +65,11 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 
 The worker sends the `client-name: temporal-php-2` and `client-version: <temporal/sdk version>` headers, as RoadRunner does.
 
-`SIGTERM`/`SIGINT` to the parent process stops all children gracefully. A child that does not stop within the largest `WorkerOptions` stop timeout (10 s by default) gets `SIGKILL`. A child that exits unexpectedly is started again.
+`SIGTERM`/`SIGINT` to the parent process stops all children gracefully. Running activities get `WorkerOptions::$workerStopTimeout` to finish (0 by default, as in sdk-go), then they are cancelled. A child that is still alive 10 s after that gets `SIGKILL`.
+A child that exits unexpectedly is started again, with a growing delay if it keeps crashing right after start. A child that crashes during the first start stops the whole worker (a configuration error). A child stops by itself when the supervisor process is gone.
+The exit code is non-zero when a child crashed, was killed, or an sdk-core worker shut down unexpectedly.
+
+Mapped `WorkerOptions`: workflow/activity pollers and concurrency, `workerActivitiesPerSecond`, `taskQueueActivitiesPerSecond`, `stickyScheduleToStartTimeout`, `workerStopTimeout`, `disableWorkflowWorker`, `localActivityWorkerOnly`, `workflowPanicPolicy` (for panics in workflow code), `identity`, `buildID`, `deploymentOptions`. Worker plugins (`WorkerPluginInterface::run()`) wrap every worker process.
 
 `run()` starts each role process as a fresh `php` process with the same script, arguments and changed ini settings (like RoadRunner starts its workers). The script runs again in every child, so objects created before `run()` (gRPC clients, connections) are per process.
 

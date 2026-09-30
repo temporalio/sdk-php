@@ -1,15 +1,19 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+use futures_util::FutureExt;
 use prost::Message;
 use serde_json::Value;
 use std::{
+    any::Any,
     collections::VecDeque,
+    future::Future,
     os::fd::RawFd,
+    panic::{AssertUnwindSafe, catch_unwind},
     sync::{
         Arc, Condvar, Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use temporalio_client::{ClientTlsOptions, Connection, ConnectionOptions, TlsOptions};
 use temporalio_common::{
@@ -38,6 +42,10 @@ const KIND_SHUTDOWN_FINALIZED: i32 = 5;
 const STATUS_OK: i32 = 0;
 const STATUS_ERROR: i32 = 1;
 const STATUS_SHUTDOWN: i32 = 2;
+
+const FINALIZED: &str = "Worker is already finalized";
+const FINALIZE_WAIT: Duration = Duration::from_secs(5);
+const FINALIZE_RETRY_INTERVAL: Duration = Duration::from_millis(10);
 
 #[repr(C)]
 pub struct TpbEvent {
@@ -148,9 +156,36 @@ pub struct TpbWorker {
 }
 
 impl TpbWorker {
-    fn core(&self) -> Arc<Worker> {
-        self.worker.clone().expect("worker is already finalized")
+    fn core(&self, tag: u64, kind: i32) -> Option<Arc<Worker>> {
+        if self.worker.is_none() {
+            self.queue
+                .push(tag, kind, STATUS_ERROR, FINALIZED.as_bytes().to_vec());
+        }
+        self.worker.clone()
     }
+
+    fn spawn(&self, tag: u64, kind: i32, task: impl Future<Output = ()> + Send + 'static) {
+        let queue = self.queue.clone();
+        let task = AssertUnwindSafe(task).catch_unwind();
+        self.handle.spawn(async move {
+            if let Err(panic) = task.await {
+                queue.push(tag, kind, STATUS_ERROR, panic_message(panic).into_bytes());
+            }
+        });
+    }
+}
+
+fn panic_message(panic: Box<dyn Any + Send>) -> String {
+    let message = panic
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic.downcast_ref::<String>().map(String::as_str))
+        .unwrap_or("unknown panic");
+    format!("Panic in temporal-php-bridge: {message}")
+}
+
+fn guard<T>(fallback: impl FnOnce(String) -> T, body: impl FnOnce() -> T) -> T {
+    catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|panic| fallback(panic_message(panic)))
 }
 
 fn new_runtime() -> Result<TpbRuntime, String> {
@@ -200,7 +235,7 @@ fn new_runtime() -> Result<TpbRuntime, String> {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_runtime_new() -> *mut TpbRuntime {
-    match new_runtime() {
+    match guard(Err, new_runtime) {
         Ok(runtime) => Box::into_raw(Box::new(runtime)),
         Err(err) => {
             eprintln!("tpb_runtime_new: {err}");
@@ -212,7 +247,7 @@ pub extern "C" fn tpb_runtime_new() -> *mut TpbRuntime {
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_runtime_free(rt: *mut TpbRuntime) {
     if !rt.is_null() {
-        drop(unsafe { Box::from_raw(rt) });
+        guard(|_| (), || drop(unsafe { Box::from_raw(rt) }));
     }
 }
 
@@ -231,24 +266,29 @@ pub extern "C" fn tpb_next_events(
     max: usize,
 ) -> usize {
     let queue = &unsafe { &*rt }.queue;
-    let mut events = queue.events.lock().unwrap();
-    if events.is_empty() && timeout_ms != 0 {
-        events = if timeout_ms < 0 {
-            queue.ready.wait_while(events, |e| e.is_empty()).unwrap()
-        } else {
-            let timeout = Duration::from_millis(timeout_ms as u64);
-            queue
-                .ready
-                .wait_timeout_while(events, timeout, |e| e.is_empty())
-                .unwrap()
-                .0
-        };
-    }
-    let count = events.len().min(max);
-    for (i, event) in events.drain(..count).enumerate() {
-        unsafe { out.add(i).write(event) };
-    }
-    count
+    guard(
+        |_| 0,
+        || {
+            let mut events = queue.events.lock().unwrap();
+            if events.is_empty() && timeout_ms != 0 {
+                events = if timeout_ms < 0 {
+                    queue.ready.wait_while(events, |e| e.is_empty()).unwrap()
+                } else {
+                    let timeout = Duration::from_millis(timeout_ms as u64);
+                    queue
+                        .ready
+                        .wait_timeout_while(events, timeout, |e| e.is_empty())
+                        .unwrap()
+                        .0
+                };
+            }
+            let count = events.len().min(max);
+            for (i, event) in events.drain(..count).enumerate() {
+                unsafe { out.add(i).write(event) };
+            }
+            count
+        },
+    )
 }
 
 #[unsafe(no_mangle)]
@@ -270,6 +310,12 @@ fn worker_config(config: &Value) -> Result<WorkerConfig, String> {
         |key: &str, default: u64| config.get(key).and_then(Value::as_u64).unwrap_or(default);
     let flag =
         |key: &str, default: bool| config.get(key).and_then(Value::as_bool).unwrap_or(default);
+    let rate = |key: &str| {
+        config
+            .get(key)
+            .and_then(Value::as_f64)
+            .filter(|rate| *rate != 0.0)
+    };
     let workflows = flag("workflows", true);
     let activities = flag("activities", true);
     WorkerConfig::builder()
@@ -298,7 +344,12 @@ fn worker_config(config: &Value) -> Result<WorkerConfig, String> {
             "sticky_queue_schedule_to_start_timeout_ms",
             10_000,
         )))
-        .graceful_shutdown_period(Duration::ZERO)
+        .graceful_shutdown_period(Duration::from_millis(number(
+            "graceful_shutdown_period_ms",
+            0,
+        )))
+        .maybe_max_worker_activities_per_second(rate("max_worker_activities_per_second"))
+        .maybe_max_task_queue_activities_per_second(rate("max_task_queue_activities_per_second"))
         .task_types(WorkerTaskTypes {
             enable_workflows: workflows,
             enable_local_activities: workflows && activities,
@@ -442,7 +493,9 @@ pub extern "C" fn tpb_worker_new(
     err_len: *mut usize,
 ) -> *mut TpbWorker {
     worker_or_error(
-        new_worker(unsafe { &*rt }, slice(config, config_len)),
+        guard(Err, || {
+            new_worker(unsafe { &*rt }, slice(config, config_len))
+        }),
         err,
         err_len,
     )
@@ -459,11 +512,13 @@ pub extern "C" fn tpb_replayer_new(
     err_len: *mut usize,
 ) -> *mut TpbWorker {
     worker_or_error(
-        new_replayer(
-            unsafe { &*rt },
-            slice(config, config_len),
-            slice(history, history_len),
-        ),
+        guard(Err, || {
+            new_replayer(
+                unsafe { &*rt },
+                slice(config, config_len),
+                slice(history, history_len),
+            )
+        }),
         err,
         err_len,
     )
@@ -494,8 +549,10 @@ fn worker_or_error(
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_poll_workflow_activation(w: *mut TpbWorker, tag: u64) {
     let w = unsafe { &*w };
-    let (core, queue) = (w.core(), w.queue.clone());
-    w.handle.spawn(async move {
+    let (Some(core), queue) = (w.core(tag, KIND_WORKFLOW_ACTIVATION), w.queue.clone()) else {
+        return;
+    };
+    w.spawn(tag, KIND_WORKFLOW_ACTIVATION, async move {
         let result = core.poll_workflow_activation().await;
         drop(core);
         queue.push_poll(tag, KIND_WORKFLOW_ACTIVATION, result);
@@ -505,8 +562,10 @@ pub extern "C" fn tpb_poll_workflow_activation(w: *mut TpbWorker, tag: u64) {
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_poll_activity_task(w: *mut TpbWorker, tag: u64) {
     let w = unsafe { &*w };
-    let (core, queue) = (w.core(), w.queue.clone());
-    w.handle.spawn(async move {
+    let (Some(core), queue) = (w.core(tag, KIND_ACTIVITY_TASK), w.queue.clone()) else {
+        return;
+    };
+    w.spawn(tag, KIND_ACTIVITY_TASK, async move {
         let result = core.poll_activity_task().await;
         drop(core);
         queue.push_poll(tag, KIND_ACTIVITY_TASK, result);
@@ -531,8 +590,10 @@ pub extern "C" fn tpb_complete_workflow_activation(
             );
         }
     };
-    let (core, queue) = (w.core(), w.queue.clone());
-    w.handle.spawn(async move {
+    let (Some(core), queue) = (w.core(tag, KIND_WORKFLOW_COMPLETED), w.queue.clone()) else {
+        return;
+    };
+    w.spawn(tag, KIND_WORKFLOW_COMPLETED, async move {
         let result = core.complete_workflow_activation(completion).await;
         drop(core);
         queue.push_error(
@@ -561,8 +622,10 @@ pub extern "C" fn tpb_complete_activity_task(
             );
         }
     };
-    let (core, queue) = (w.core(), w.queue.clone());
-    w.handle.spawn(async move {
+    let (Some(core), queue) = (w.core(tag, KIND_ACTIVITY_COMPLETED), w.queue.clone()) else {
+        return;
+    };
+    w.spawn(tag, KIND_ACTIVITY_COMPLETED, async move {
         let result = core.complete_activity_task(completion).await;
         drop(core);
         queue.push_error(
@@ -583,9 +646,17 @@ pub extern "C" fn tpb_record_activity_heartbeat(
     let Ok(heartbeat) = ActivityHeartbeat::decode(slice(data, len)) else {
         return 1;
     };
-    let _guard = w.handle.enter();
-    w.core().record_activity_heartbeat(heartbeat);
-    0
+    let Some(core) = &w.worker else {
+        return 1;
+    };
+    guard(
+        |_| 1,
+        || {
+            let _guard = w.handle.enter();
+            core.record_activity_heartbeat(heartbeat);
+            0
+        },
+    )
 }
 
 #[unsafe(no_mangle)]
@@ -593,49 +664,171 @@ pub extern "C" fn tpb_request_workflow_eviction(
     w: *mut TpbWorker,
     run_id: *const libc::c_char,
     len: usize,
-) {
+) -> i32 {
     let w = unsafe { &*w };
-    let _guard = w.handle.enter();
-    w.core()
-        .request_workflow_eviction(&String::from_utf8_lossy(slice(run_id, len)));
+    let Some(core) = &w.worker else {
+        return 1;
+    };
+    guard(
+        |_| 1,
+        || {
+            let _guard = w.handle.enter();
+            core.request_workflow_eviction(&String::from_utf8_lossy(slice(run_id, len)));
+            0
+        },
+    )
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn tpb_worker_initiate_shutdown(w: *mut TpbWorker) {
+pub extern "C" fn tpb_worker_initiate_shutdown(w: *mut TpbWorker) -> i32 {
     let w = unsafe { &*w };
-    let _guard = w.handle.enter();
-    w.core().initiate_shutdown();
+    let Some(core) = &w.worker else {
+        return 1;
+    };
+    guard(
+        |_| 1,
+        || {
+            let _guard = w.handle.enter();
+            core.initiate_shutdown();
+            0
+        },
+    )
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_worker_finalize_shutdown(w: *mut TpbWorker, tag: u64) {
     let w = unsafe { &mut *w };
     let Some(core) = w.worker.take() else {
-        return w.queue.push_result(
-            tag,
-            KIND_SHUTDOWN_FINALIZED,
-            Err("Worker is already finalized".into()),
-        );
+        return w
+            .queue
+            .push_result(tag, KIND_SHUTDOWN_FINALIZED, Err(FINALIZED.into()));
     };
     let queue = w.queue.clone();
-    w.handle.spawn(async move {
-        let result = match Arc::try_unwrap(core) {
-            Ok(core) => {
-                core.finalize_shutdown().await;
-                Ok(Vec::new())
-            }
-            Err(core) => Err(format!(
-                "Cannot finalize, {} references are alive, wait for all polls and completions first",
-                Arc::strong_count(&core)
-            )),
-        };
+    w.spawn(tag, KIND_SHUTDOWN_FINALIZED, async move {
+        let result = finalize(core).await;
         queue.push_result(tag, KIND_SHUTDOWN_FINALIZED, result);
     });
+}
+
+async fn finalize(mut core: Arc<Worker>) -> Result<Vec<u8>, String> {
+    let deadline = Instant::now() + FINALIZE_WAIT;
+    loop {
+        match Arc::try_unwrap(core) {
+            Ok(core) => {
+                core.finalize_shutdown().await;
+                return Ok(Vec::new());
+            }
+            Err(shared) if Instant::now() < deadline => {
+                core = shared;
+                tokio::time::sleep(FINALIZE_RETRY_INTERVAL).await;
+            }
+            Err(shared) => {
+                return Err(format!(
+                    "Cannot finalize, {} references are alive, wait for all polls and completions first",
+                    Arc::strong_count(&shared)
+                ));
+            }
+        }
+    }
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_worker_free(w: *mut TpbWorker) {
     if !w.is_null() {
-        drop(unsafe { Box::from_raw(w) });
+        guard(|_| (), || drop(unsafe { Box::from_raw(w) }));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn worker_config_reads_shutdown_period_and_rates() {
+        let config = worker_config(&serde_json::json!({
+            "task_queue": "q",
+            "graceful_shutdown_period_ms": 1500,
+            "max_worker_activities_per_second": 2.5,
+            "max_task_queue_activities_per_second": 0,
+        }))
+        .unwrap();
+        assert_eq!(
+            config.graceful_shutdown_period,
+            Some(Duration::from_millis(1500))
+        );
+        assert_eq!(config.max_worker_activities_per_second, Some(2.5));
+        assert_eq!(config.max_task_queue_activities_per_second, None);
+
+        let config = worker_config(&serde_json::json!({"task_queue": "q"})).unwrap();
+        assert_eq!(config.graceful_shutdown_period, Some(Duration::ZERO));
+        assert_eq!(config.max_worker_activities_per_second, None);
+    }
+
+    #[test]
+    fn finalized_worker_and_panicking_task_report_error_events() {
+        let rt = tpb_runtime_new();
+        let queue = unsafe { &*rt }.queue.clone();
+        let w = Box::into_raw(Box::new(TpbWorker {
+            worker: None,
+            handle: unsafe { &*rt }.core.tokio_handle(),
+            queue,
+        }));
+        tpb_poll_workflow_activation(w, 1);
+        tpb_complete_activity_task(w, 2, std::ptr::null(), 0);
+        tpb_worker_finalize_shutdown(w, 3);
+        unsafe { &*w }.spawn(4, KIND_ACTIVITY_TASK, async { panic!("boom") });
+        assert_eq!(tpb_worker_initiate_shutdown(w), 1);
+        assert_eq!(tpb_request_workflow_eviction(w, std::ptr::null(), 0), 1);
+        assert_eq!(tpb_record_activity_heartbeat(w, std::ptr::null(), 0), 1);
+
+        let mut events = Vec::new();
+        while events.len() < 4 {
+            let mut buf: [TpbEvent; 8] = std::array::from_fn(|_| TpbEvent {
+                tag: 0,
+                kind: 0,
+                status: 0,
+                data: std::ptr::null_mut(),
+                len: 0,
+            });
+            let count = tpb_next_events(rt, 5_000, buf.as_mut_ptr(), buf.len());
+            assert!(count > 0);
+            for e in &buf[..count] {
+                let text = String::from_utf8_lossy(slice(e.data.cast(), e.len)).into_owned();
+                events.push((e.tag, e.kind, e.status, text));
+                tpb_bytes_free(e.data, e.len);
+            }
+        }
+        events.sort();
+        assert_eq!(
+            events,
+            vec![
+                (
+                    1,
+                    KIND_WORKFLOW_ACTIVATION,
+                    STATUS_ERROR,
+                    FINALIZED.to_owned()
+                ),
+                (
+                    2,
+                    KIND_ACTIVITY_COMPLETED,
+                    STATUS_ERROR,
+                    FINALIZED.to_owned()
+                ),
+                (
+                    3,
+                    KIND_SHUTDOWN_FINALIZED,
+                    STATUS_ERROR,
+                    FINALIZED.to_owned()
+                ),
+                (
+                    4,
+                    KIND_ACTIVITY_TASK,
+                    STATUS_ERROR,
+                    "Panic in temporal-php-bridge: boom".to_owned()
+                ),
+            ]
+        );
+        tpb_worker_free(w);
+        tpb_runtime_free(rt);
     }
 }

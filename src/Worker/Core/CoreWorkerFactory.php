@@ -32,6 +32,9 @@ use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\WorkerInterface;
+use Temporal\Worker\WorkflowPanicPolicy;
+use Temporal\Plugin\WorkerPluginInterface;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\WorkerFactory;
 
 class CoreWorkerFactory extends WorkerFactory
@@ -47,6 +50,9 @@ class CoreWorkerFactory extends WorkerFactory
     private const STOP_TIMEOUT_SECONDS = 10;
     private const STOP_POLL_INTERVAL_US = 100_000;
     private const MIN_CHILD_UPTIME_SECONDS = 1;
+    private const MAX_RESTART_DELAY_SECONDS = 30;
+    private const MIN_CACHED_WORKFLOW_TASKS = 2;
+    private const SIGNAL_EXIT_CODE_BASE = 128;
 
     private string $address;
     private string $namespace;
@@ -57,6 +63,9 @@ class CoreWorkerFactory extends WorkerFactory
     private static ?Bridge $replayBridge = null;
     private LoggerInterface $logger;
     private bool $stopping = false;
+    private bool $crashed = false;
+    private ?int $supervisorPid = null;
+    private static int $replayTag = 0;
 
     /** @var list<resource> */
     private array $processes = [];
@@ -76,6 +85,9 @@ class CoreWorkerFactory extends WorkerFactory
         ?int $activityProcesses = null,
     ): static {
         $converter ??= DataConverter::createDefault();
+        if ($rpc !== null && !$rpc instanceof ActivityTasks) {
+            throw new \InvalidArgumentException(\sprintf('The sdk-core transport needs %s as the RPC connection', ActivityTasks::class));
+        }
         /** @psalm-suppress UnsafeInstantiation */
         $factory = new static($converter, $rpc ?? new ActivityTasks($converter), $credentials, $pluginRegistry, $client);
         $profile = ConfigClient::load();
@@ -88,7 +100,7 @@ class CoreWorkerFactory extends WorkerFactory
             $profile->tlsConfig,
         );
         $factory->workflowProcesses = $workflowProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_WORKFLOW_PROCESSES'] ?? 1);
-        $factory->activityProcesses = $activityProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_PROCESSES'] ?? 0);
+        $factory->activityProcesses = $activityProcesses ?? (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_PROCESSES'] ?? 1);
         $factory->activityConcurrency = (int) ($_SERVER['TEMPORAL_CORE_ACTIVITY_CONCURRENCY'] ?? 1);
         $factory->logger = new StderrLogger();
 
@@ -99,12 +111,13 @@ class CoreWorkerFactory extends WorkerFactory
     {
         $role = \getenv(self::ENV_ROLE);
         if (\is_string($role) && $role !== '') {
+            $this->supervisorPid = \posix_getppid();
             \register_shutdown_function(fn() => $this->exitChild(1));
-            $this->exitChild($this->serve($role));
+            $this->exitChild($this->servePlugins($role));
         }
 
         if ($this->workflowProcesses + $this->activityProcesses <= 1) {
-            return $this->serve($this->activityProcesses === 0 ? self::ROLE_ALL : self::ROLE_ACTIVITY);
+            return $this->servePlugins($this->activityProcesses === 0 ? self::ROLE_ALL : self::ROLE_ACTIVITY);
         }
 
         $roles = [
@@ -128,12 +141,44 @@ class CoreWorkerFactory extends WorkerFactory
             ['workflow_id' => $workflowId] + $this->config($worker, self::ROLE_WORKFLOW),
             $history->serializeToString(),
         );
-        $activations = new WorkflowActivations($this->converter, $this->dispatchCommands(...), $this->namespace, $taskQueue, $this->versioningBehaviors($worker));
+        $tag = ++self::$replayTag;
+        try {
+            $failure = $this->drainReplay($bridge, $core, $tag, $this->activations($worker, $this->dispatchCommands(...)));
+        } finally {
+            $this->finalize($bridge, [$tag => $core]);
+            $bridge->freeWorker($core);
+        }
 
+        if ($failure !== null) {
+            throw $failure;
+        }
+    }
+
+    private static function pem(?string $value): ?string
+    {
+        if ($value === null || !\is_file($value)) {
+            return $value;
+        }
+
+        return \file_get_contents($value);
+    }
+
+    private static function gracefulShutdownMs(WorkerInterface $worker): int
+    {
+        $timeout = $worker->getOptions()->workerStopTimeout;
+
+        return $timeout === null ? 0 : (int) CarbonInterval::instance($timeout)->totalMilliseconds;
+    }
+
+    private function drainReplay(Bridge $bridge, \FFI\CData $core, int $tag, WorkflowActivations $activations): ?ReplayFailedException
+    {
         $failure = null;
-        $bridge->pollWorkflowActivation($core, 0);
+        $bridge->pollWorkflowActivation($core, $tag);
         while (true) {
-            foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind, $status, $data]) {
+            foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [$eventTag, $kind, $status, $data]) {
+                if ($eventTag !== $tag) {
+                    continue;
+                }
                 if ($kind === Bridge::KIND_WORKFLOW_COMPLETED) {
                     throw new \RuntimeException('sdk-core completion failed: ' . $data);
                 }
@@ -155,24 +200,12 @@ class CoreWorkerFactory extends WorkerFactory
                         $failure = new ReplayFailedException($eviction->getMessage(), $eviction->getReason() === EvictionReason::NONDETERMINISM);
                     }
                 }
-                $bridge->completeWorkflowActivation($core, 0, $activations->handle($data));
-                $bridge->pollWorkflowActivation($core, 0);
+                $bridge->completeWorkflowActivation($core, $tag, $activations->handle($data));
+                $bridge->pollWorkflowActivation($core, $tag);
             }
         }
-        $this->finalize($bridge, [$core]);
 
-        if ($failure !== null) {
-            throw $failure;
-        }
-    }
-
-    private static function pem(?string $value): ?string
-    {
-        if ($value === null || !\is_file($value)) {
-            return $value;
-        }
-
-        return \file_get_contents($value);
+        return $failure;
     }
 
     /**
@@ -181,11 +214,8 @@ class CoreWorkerFactory extends WorkerFactory
     private function supervise(array $roles): int
     {
         $children = [];
-        $startedAt = [];
         foreach ($roles as $role) {
-            $pid = $this->spawn($role);
-            $children[$pid] = $role;
-            $startedAt[$pid] = \microtime(true);
+            $children[$this->spawn($role)] = [$role, \microtime(true), 0];
         }
 
         $deadline = null;
@@ -202,34 +232,38 @@ class CoreWorkerFactory extends WorkerFactory
 
         $code = 0;
         while ($children !== []) {
-            $pid = \pcntl_wait($status, $this->stopping ? \WNOHANG : 0);
-            if ($pid === 0 && \microtime(true) >= $deadline) {
-                foreach (\array_keys($children) as $child) {
-                    \posix_kill($child, \SIGKILL);
+            $pid = \pcntl_wait($status, \WNOHANG);
+            if ($pid <= 0) {
+                if ($this->stopping && \microtime(true) >= $deadline) {
+                    foreach (\array_keys($children) as $child) {
+                        \posix_kill($child, \SIGKILL);
+                    }
                 }
-            }
-            if ($pid === 0) {
                 \usleep(self::STOP_POLL_INTERVAL_US);
                 continue;
             }
-            if ($pid < 0) {
-                continue;
-            }
-            $role = $children[$pid];
-            $uptime = \microtime(true) - $startedAt[$pid];
-            unset($children[$pid], $startedAt[$pid]);
-            $code = \max($code, \pcntl_wexitstatus($status));
+            [$role, $startedAt, $restarts] = $children[$pid];
+            unset($children[$pid]);
+            $exitCode = \pcntl_wifsignaled($status) ? self::SIGNAL_EXIT_CODE_BASE + \pcntl_wtermsig($status) : \pcntl_wexitstatus($status);
             if ($this->stopping) {
+                $code = \max($code, $exitCode);
                 continue;
             }
-            if ($uptime < self::MIN_CHILD_UPTIME_SECONDS) {
+            $this->logger->error(\sprintf('Worker process (%s) exited with code %d', $role, $exitCode));
+            $uptime = \microtime(true) - $startedAt;
+            if ($uptime < self::MIN_CHILD_UPTIME_SECONDS && $restarts === 0) {
                 $this->logger->error(\sprintf('Worker process (%s) exited during startup, stopping', $role));
+                $code = \max($code, $exitCode, 1);
                 $stop();
                 continue;
             }
-            $pid = $this->spawn($role);
-            $children[$pid] = $role;
-            $startedAt[$pid] = \microtime(true);
+            if ($uptime < self::MIN_CHILD_UPTIME_SECONDS) {
+                \sleep(\min(self::MAX_RESTART_DELAY_SECONDS, 2 ** \min($restarts, 5)));
+            }
+            if ($this->stopping) {
+                continue;
+            }
+            $children[$this->spawn($role)] = [$role, \microtime(true), $uptime < self::MIN_CHILD_UPTIME_SECONDS ? $restarts + 1 : 0];
         }
 
         return $code;
@@ -258,7 +292,7 @@ class CoreWorkerFactory extends WorkerFactory
             }
         }
 
-        return $timeouts === [] ? self::STOP_TIMEOUT_SECONDS : \max($timeouts);
+        return ($timeouts === [] ? 0 : \max($timeouts)) + self::STOP_TIMEOUT_SECONDS;
     }
 
     private function spawn(string $role): int
@@ -287,15 +321,28 @@ class CoreWorkerFactory extends WorkerFactory
             return $this->iniArguments;
         }
 
-        $defaults = \json_decode(
-            (string) \shell_exec(\escapeshellarg(\PHP_BINARY) . ' -r ' . \escapeshellarg('echo json_encode(ini_get_all(null, false));')),
+        $noIni = \php_ini_loaded_file() === false ? ['-n'] : [];
+        $probe = \json_decode(
+            (string) \shell_exec(\implode(' ', \array_map(\escapeshellarg(...), [
+                \PHP_BINARY,
+                ...$noIni,
+                '-r',
+                'echo json_encode([ini_get_all(null, false), get_loaded_extensions(), get_loaded_extensions(true)]);',
+            ]))),
             true,
-        ) ?: [];
-        $this->iniArguments = [];
+        ) ?: [[], [], []];
+        [$defaults, $extensions, $zendExtensions] = $probe;
+
+        $this->iniArguments = $noIni;
+        foreach (\array_diff(\get_loaded_extensions(), $extensions) as $extension) {
+            \array_push($this->iniArguments, '-d', 'extension=' . $extension);
+        }
+        foreach (\array_diff(\get_loaded_extensions(true), $zendExtensions) as $extension) {
+            \array_push($this->iniArguments, '-d', 'zend_extension=' . $extension);
+        }
         foreach (\ini_get_all(null, false) as $name => $value) {
             if ($value !== null && ($defaults[$name] ?? null) !== $value) {
-                $this->iniArguments[] = '-d';
-                $this->iniArguments[] = $name . '="' . \addcslashes((string) $value, '"\\') . '"';
+                \array_push($this->iniArguments, '-d', $name . '="' . \addcslashes((string) $value, '"\\') . '"');
             }
         }
 
@@ -307,6 +354,12 @@ class CoreWorkerFactory extends WorkerFactory
         \fflush(\STDOUT);
         \fflush(\STDERR);
         \FFI::cdef('void _exit(int status);')->_exit($code);
+    }
+
+    private function servePlugins(string $role): int
+    {
+        return Pipeline::prepare($this->pluginRegistry->getPlugins(WorkerPluginInterface::class))
+            ->with(fn(): int => $this->serve($role), 'run')($this);
     }
 
     private function serve(string $role): int
@@ -325,20 +378,28 @@ class CoreWorkerFactory extends WorkerFactory
                 $profiler->add('php-sdk-dispatch', $startedAt);
             }
         };
-        if ($this->rpc instanceof ActivityTasks) {
-            $this->rpc->bind($bridge, $dispatch);
-        }
+        $concurrent = $role === self::ROLE_ACTIVITY && $this->activityConcurrency > 1;
+        \assert($this->rpc instanceof ActivityTasks);
+        $this->rpc->bind($bridge, $dispatch, $concurrent);
 
         $workers = [];
         foreach ($this->queues as $worker) {
             \assert($worker instanceof WorkerInterface);
-            $taskQueue = $worker->getID();
+            $config = $this->config($worker, $role);
+            if (!$config['workflows'] && !$config['activities']) {
+                continue;
+            }
             $workers[] = [
-                'core' => $bridge->newWorker($this->config($worker, $role)),
-                'taskQueue' => $taskQueue,
-                'activations' => new WorkflowActivations($this->converter, $dispatch, $this->namespace, $taskQueue, $this->versioningBehaviors($worker)),
-                'workflows' => $role !== self::ROLE_ACTIVITY,
+                'core' => $bridge->newWorker($config),
+                'taskQueue' => $worker->getID(),
+                'activations' => $this->activations($worker, $dispatch),
+                'workflows' => $config['workflows'],
+                'activities' => $config['activities'],
             ];
+        }
+        if ($workers === []) {
+            $this->logger->info(\sprintf('No task queue needs a %s process, exiting', $role));
+            return 0;
         }
 
         $activityPolls = $role === self::ROLE_ACTIVITY ? \min(self::MAX_ACTIVITY_POLLERS, $this->activityConcurrency) : 1;
@@ -348,7 +409,7 @@ class CoreWorkerFactory extends WorkerFactory
                 $bridge->pollWorkflowActivation($worker['core'], $tag);
                 ++$open;
             }
-            for ($i = 0; $i < $activityPolls; ++$i) {
+            for ($i = 0; $worker['activities'] && $i < $activityPolls; ++$i) {
                 $bridge->pollActivityTask($worker['core'], $tag);
                 ++$open;
             }
@@ -356,6 +417,10 @@ class CoreWorkerFactory extends WorkerFactory
 
         $shutdownRequested = false;
         $shutdown = function () use (&$shutdownRequested, $workers, $bridge): void {
+            if ($this->supervisorPid !== null && \posix_getppid() !== $this->supervisorPid && !$this->stopping) {
+                $this->logger->error('The supervisor process is gone, stopping');
+                $this->stopping = true;
+            }
             if (!$this->stopping || $shutdownRequested) {
                 return;
             }
@@ -364,7 +429,6 @@ class CoreWorkerFactory extends WorkerFactory
                 $bridge->initiateShutdown($worker['core']);
             }
         };
-        $concurrent = $role === self::ROLE_ACTIVITY && $this->activityConcurrency > 1;
         $handle = function (array $events) use (&$open, $workers, $bridge, $profiler, $concurrent): void {
             foreach ($events as [$tag, $kind, $status, $data]) {
                 $worker = $workers[$tag];
@@ -427,7 +491,7 @@ class CoreWorkerFactory extends WorkerFactory
         $profiler?->report();
         $this->finalize($bridge, \array_column($workers, 'core'));
 
-        return 0;
+        return $this->crashed ? 1 : 0;
     }
 
     /**
@@ -474,6 +538,11 @@ class CoreWorkerFactory extends WorkerFactory
     {
         if ($status === Bridge::STATUS_SHUTDOWN) {
             --$open;
+            if (!$this->stopping) {
+                $this->logger->error('sdk-core worker shut down unexpectedly, stopping the process');
+                $this->crashed = true;
+                $this->stopping = true;
+            }
             return;
         }
 
@@ -481,10 +550,26 @@ class CoreWorkerFactory extends WorkerFactory
         $repoll();
     }
 
+    private function activations(WorkerInterface $worker, \Closure $dispatch): WorkflowActivations
+    {
+        return new WorkflowActivations(
+            $this->converter,
+            $dispatch,
+            $this->namespace,
+            $worker->getID(),
+            $this->versioningBehaviors($worker),
+            $worker->getOptions()->workflowPanicPolicy === WorkflowPanicPolicy::FailWorkflow,
+        );
+    }
+
     private function config(WorkerInterface $worker, string $role): array
     {
         $options = $worker->getOptions();
         $isActivity = $role === self::ROLE_ACTIVITY;
+        $workflows = !$isActivity && !$options->disableWorkflowWorker;
+        $remoteActivities = $role !== self::ROLE_WORKFLOW && !$options->localActivityWorkerOnly;
+        $cachedWorkflows = $workflows ? (int) ($_SERVER['TEMPORAL_CORE_MAX_CACHED_WORKFLOWS'] ?? 10000) : 0;
+        $minWorkflowTasks = $cachedWorkflows > 0 ? self::MIN_CACHED_WORKFLOW_TASKS : 1;
         $tls = $this->connection->tlsConfig;
         if ($tls?->disabled) {
             $tls = null;
@@ -504,15 +589,19 @@ class CoreWorkerFactory extends WorkerFactory
             'namespace' => $this->namespace,
             'task_queue' => $worker->getID(),
             'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),
-            'workflows' => !$isActivity,
-            'activities' => true,
+            'workflows' => $workflows,
+            'activities' => $workflows || $remoteActivities,
             'deployment' => isset($options->deploymentOptions) ? $this->marshaller->marshal($options->deploymentOptions) : null,
-            'no_remote_activities' => $role === self::ROLE_WORKFLOW,
-            'max_cached_workflows' => $isActivity ? 0 : (int) ($_SERVER['TEMPORAL_CORE_MAX_CACHED_WORKFLOWS'] ?? 10000),
-            'max_outstanding_workflow_tasks' => $options->maxConcurrentWorkflowTaskExecutionSize ?: 100,
+            'build_id' => $options->buildID,
+            'no_remote_activities' => !$remoteActivities,
+            'graceful_shutdown_period_ms' => self::gracefulShutdownMs($worker),
+            'max_worker_activities_per_second' => $options->workerActivitiesPerSecond ?: null,
+            'max_task_queue_activities_per_second' => $options->taskQueueActivitiesPerSecond ?: null,
+            'max_cached_workflows' => $cachedWorkflows,
+            'max_outstanding_workflow_tasks' => \max($minWorkflowTasks, $options->maxConcurrentWorkflowTaskExecutionSize ?: 100),
             'max_outstanding_activities' => $isActivity ? $this->activityConcurrency : 1,
             'max_outstanding_local_activities' => 1,
-            'max_concurrent_workflow_task_polls' => $options->maxConcurrentWorkflowTaskPollers ?: 4,
+            'max_concurrent_workflow_task_polls' => \max($minWorkflowTasks, $options->maxConcurrentWorkflowTaskPollers ?: 4),
             'sticky_queue_schedule_to_start_timeout_ms' => $options->stickyScheduleToStartTimeout === null
                 ? self::STICKY_SCHEDULE_TO_START_TIMEOUT_MS
                 : (int) CarbonInterval::instance($options->stickyScheduleToStartTimeout)->totalMilliseconds,

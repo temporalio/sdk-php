@@ -109,6 +109,7 @@ final class WorkflowActivations
         private readonly string $namespace,
         private readonly string $taskQueue,
         private readonly array $versioningBehaviors,
+        private readonly bool $failWorkflowOnPanic = false,
     ) {
         $this->timeZone = new \DateTimeZone(\date_default_timezone_get());
     }
@@ -151,7 +152,7 @@ final class WorkflowActivations
             ]));
         } catch (\Throwable $e) {
             $completion->setFailed(new CompletionFailure([
-                'failure' => FailureConverter::mapExceptionToFailure($e, $this->converter),
+                'failure' => Failures::fromThrowable($e, $this->converter),
             ]));
         }
 
@@ -299,12 +300,12 @@ final class WorkflowActivations
             if ($response instanceof SuccessClientResponse) {
                 $result->setSucceeded(new QuerySuccess(['response' => $this->firstPayload($response->getPayloads())]));
             } elseif ($response instanceof FailedClientResponse) {
-                $result->setFailed(FailureConverter::mapExceptionToFailure($response->getFailure(), $this->converter));
+                $result->setFailed(Failures::fromThrowable($response->getFailure(), $this->converter));
             }
         }
 
         if ($result->getVariant() === null || $result->getVariant() === '') {
-            $result->setFailed(FailureConverter::mapExceptionToFailure(new \LogicException('Query produced no result'), $this->converter));
+            $result->setFailed(Failures::fromThrowable(new \LogicException('Query produced no result'), $this->converter));
         }
 
         return new WorkflowCommand(['respond_to_query' => $result]);
@@ -452,7 +453,14 @@ final class WorkflowActivations
                 return [];
 
             case 'Panic':
-                throw $command->getFailure() ?? new \RuntimeException($options['message'] ?? 'Workflow panic');
+                $panic = $command->getFailure() ?? new \RuntimeException($options['message'] ?? 'Workflow panic');
+                if (!$this->failWorkflowOnPanic) {
+                    throw $panic;
+                }
+                $commands[] = new WorkflowCommand(['fail_workflow_execution' => new FailWorkflowExecution([
+                    'failure' => Failures::fromThrowable($panic, $this->converter),
+                ])]);
+                return [];
 
             default:
                 throw new \LogicException(\sprintf('Command "%s" is not supported by the sdk-core transport', $command->getName()));
@@ -512,7 +520,25 @@ final class WorkflowActivations
             }
         }
 
-        return EncodedValues::fromValues([$run->versions[$changeId]], $this->converter);
+        $version = $run->versions[$changeId];
+        if ($version < (int) $options['minSupported']) {
+            throw new \LogicException(\sprintf(
+                'Workflow code removed support of version %d for "%s" changeID. The oldest supported version is %d',
+                $version,
+                $changeId,
+                $options['minSupported'],
+            ));
+        }
+        if ($version > (int) $options['maxSupported']) {
+            throw new \LogicException(\sprintf(
+                'Workflow code is too old to support version %d for "%s" changeID. The maximum supported version is %d',
+                $version,
+                $changeId,
+                $options['maxSupported'],
+            ));
+        }
+
+        return EncodedValues::fromValues([$version], $this->converter);
     }
 
     private function completeWorkflow(RequestInterface $command): WorkflowCommand
@@ -529,7 +555,7 @@ final class WorkflowActivations
         }
 
         return new WorkflowCommand(['fail_workflow_execution' => new FailWorkflowExecution([
-            'failure' => FailureConverter::mapExceptionToFailure($failure, $this->converter),
+            'failure' => Failures::fromThrowable($failure, $this->converter),
         ])]);
     }
 
@@ -667,7 +693,7 @@ final class WorkflowActivations
         $failure = $response->getFailure();
 
         match (true) {
-            $failure !== null => $result->setRejected(FailureConverter::mapExceptionToFailure($failure, $this->converter)),
+            $failure !== null => $result->setRejected(Failures::fromThrowable($failure, $this->converter)),
             $response->getCommand() === UpdateResponse::COMMAND_VALIDATED => $result->setAccepted(new GPBEmpty()),
             default => $result->setCompleted($this->firstPayload($response->getPayloads())),
         };

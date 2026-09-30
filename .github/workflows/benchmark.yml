@@ -7,13 +7,6 @@ on:
         description: Repetitions of the whole matrix
         required: false
         default: '1'
-  push:
-    paths:
-      - 'src/**'
-      - 'core/**'
-      - 'bench/**'
-      - 'composer.json'
-      - '.github/workflows/benchmark.yml'
   pull_request:
     paths:
       - 'src/**'

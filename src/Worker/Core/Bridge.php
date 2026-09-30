@@ -38,7 +38,11 @@ final class Bridge
         $header ??= $root . '/include/temporal_php_bridge.h';
 
         $this->ffi = \FFI::cdef((string) \file_get_contents($header), $library);
-        $this->runtime = $this->ffi->tpb_runtime_new();
+        $runtime = $this->ffi->tpb_runtime_new();
+        if ($runtime === null) {
+            throw new \RuntimeException('Unable to create the sdk-core runtime, see stderr for details');
+        }
+        $this->runtime = $runtime;
         $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
     }
 
@@ -95,6 +99,11 @@ final class Bridge
     public function finalizeShutdown(\FFI\CData $worker, int $tag): void
     {
         $this->ffi->tpb_worker_finalize_shutdown($worker, $tag);
+    }
+
+    public function freeWorker(\FFI\CData $worker): void
+    {
+        $this->ffi->tpb_worker_free($worker);
     }
 
     /**

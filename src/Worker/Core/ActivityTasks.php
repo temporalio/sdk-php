@@ -30,7 +30,6 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Exception\Failure\CanceledFailure;
-use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\TransportException;
 use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
@@ -46,6 +45,7 @@ final class ActivityTasks implements RPCConnectionInterface
     private const HEARTBEAT = 'temporal.RecordActivityHeartbeat';
 
     private ?Bridge $bridge = null;
+    private bool $concurrent = false;
 
     /** @var array<string, array{\FFI\CData, ?Cancel}> */
     private array $running = [];
@@ -57,10 +57,11 @@ final class ActivityTasks implements RPCConnectionInterface
         private readonly DataConverterInterface $converter,
     ) {}
 
-    public function bind(Bridge $bridge, \Closure $dispatch): void
+    public function bind(Bridge $bridge, \Closure $dispatch, bool $concurrent): void
     {
         $this->bridge = $bridge;
         $this->dispatch = $dispatch;
+        $this->concurrent = $concurrent;
     }
 
     public function handle(\FFI\CData $worker, string $taskQueue, string $bytes): ?string
@@ -111,7 +112,7 @@ final class ActivityTasks implements RPCConnectionInterface
             (new ActivityHeartbeat(['task_token' => $token, 'details' => $details->getPayloads()]))->serializeToString(),
         );
 
-        if (\Fiber::getCurrent() === null) {
+        if (!$this->concurrent) {
             foreach ($this->bridge->peekEvents() as [, $kind, $status, $data]) {
                 if ($kind === Bridge::KIND_ACTIVITY_TASK && $status === Bridge::STATUS_OK) {
                     $task = new ActivityTask();
@@ -162,12 +163,12 @@ final class ActivityTasks implements RPCConnectionInterface
 
                 if ($cancel !== null && ($error instanceof ActivityCanceledException || $error instanceof CanceledFailure)) {
                     return new ActivityExecutionResult(['cancelled' => new Cancellation([
-                        'failure' => FailureConverter::mapExceptionToFailure(new CanceledFailure($error->getMessage()), $this->converter),
+                        'failure' => Failures::fromThrowable(new CanceledFailure($error->getMessage()), $this->converter),
                     ])]);
                 }
 
                 return new ActivityExecutionResult(['failed' => new ActivityFailure([
-                    'failure' => FailureConverter::mapExceptionToFailure($error, $this->converter),
+                    'failure' => Failures::fromThrowable($error, $this->converter),
                 ])]);
             }
         }

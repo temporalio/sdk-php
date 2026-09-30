@@ -47,9 +47,9 @@ void tpb_complete_activity_task(struct TpbWorker *w, uint64_t tag, const char *d
 
 int32_t tpb_record_activity_heartbeat(struct TpbWorker *w, const char *data, size_t len);
 
-void tpb_request_workflow_eviction(struct TpbWorker *w, const char *run_id, size_t len);
+int32_t tpb_request_workflow_eviction(struct TpbWorker *w, const char *run_id, size_t len);
 
-void tpb_worker_initiate_shutdown(struct TpbWorker *w);
+int32_t tpb_worker_initiate_shutdown(struct TpbWorker *w);
 
 void tpb_worker_finalize_shutdown(struct TpbWorker *w, uint64_t tag);
 

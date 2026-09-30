@@ -135,6 +135,9 @@ Differences and limits:
 - **`Workflow::sideEffect()`** is a local activity that the worker completes itself: one more activation per call, one marker per call (also `uuid*()`).
 - **`Workflow::getVersion()`** maps to patches with id `<changeId>-<version>` and a per-run cache.
 - **Local activities** run in the workflow process, not in the activity processes.
+- **`WorkflowPanicPolicy::FailWorkflow`** applies to panics in workflow code; non-determinism detected by sdk-core still fails the workflow task (sdk-go also fails the workflow for it).
+- **Fibers inside an activity fiber** (`Amp\async`, event loop callbacks) see the global Activity context, not the activity's own one; call `Activity::*` from the activity fiber itself.
+- **Release blocker:** `composer.json` takes `roadrunner-api-dto` from a fork branch (`dev-feature/coresdk-protos`) until the coresdk messages are released upstream; a published package cannot resolve it.
 - **Fiber concurrency** helps only activities that use non-blocking I/O (Revolt/amphp). A blocking call (PDO, curl, `sleep`) stops all activities of the process. It needs `revolt/event-loop`. `Facade` context is fiber-local only for fibers started by the worker.
 - **Connection:** TLS, mTLS, server name override and API key come from the standard env config (`TEMPORAL_TLS*`, `TEMPORAL_API_KEY`, TOML profile), checked through a TLS terminator. (With `fork()`-ed children, TLS with system roots crashed on macOS; with fresh child processes it works: checked through the TLS terminator, the children load the system roots and report the expected `UnknownIssuer` for the private test CA.)
 - **Linux:** builds and runs in Docker (`core/docker/Dockerfile`, linux/arm64): 304–330 wf/s on `seq 200 × 1`, 752 act/s with Fibers, graceful `docker stop`.
