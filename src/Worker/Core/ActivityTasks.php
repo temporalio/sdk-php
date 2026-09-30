@@ -51,7 +51,6 @@ final class ActivityTasks implements RPCConnectionInterface
     private const HEARTBEAT = 'temporal.RecordActivityHeartbeat';
 
     private ?Bridge $bridge = null;
-    private bool $concurrent = false;
 
     /** @var array<string, array{\FFI\CData, ?Cancel}> */
     private array $running = [];
@@ -63,11 +62,10 @@ final class ActivityTasks implements RPCConnectionInterface
         private readonly DataConverterInterface $converter,
     ) {}
 
-    public function bind(Bridge $bridge, \Closure $dispatch, bool $concurrent): void
+    public function bind(Bridge $bridge, \Closure $dispatch): void
     {
         $this->bridge = $bridge;
         $this->dispatch = $dispatch;
-        $this->concurrent = $concurrent;
     }
 
     public function handle(\FFI\CData $worker, string $taskQueue, string $bytes): ?string
@@ -118,13 +116,11 @@ final class ActivityTasks implements RPCConnectionInterface
             (new ActivityHeartbeat(['task_token' => $token, 'details' => $details->getPayloads()]))->serializeToString(),
         );
 
-        if (!$this->concurrent) {
-            foreach ($this->bridge->peekEvents() as [, $kind, $status, $data]) {
-                if ($kind === Bridge::KIND_ACTIVITY_TASK && $status === Bridge::STATUS_OK) {
-                    $task = new ActivityTask();
-                    $task->mergeFromString($data);
-                    $this->cancel($task);
-                }
+        foreach ($this->bridge->peekEvents() as [, $kind, $status, $data]) {
+            if ($kind === Bridge::KIND_ACTIVITY_TASK && $status === Bridge::STATUS_OK) {
+                $task = new ActivityTask();
+                $task->mergeFromString($data);
+                $this->cancel($task);
             }
         }
 

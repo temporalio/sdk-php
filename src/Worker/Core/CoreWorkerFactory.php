@@ -396,7 +396,7 @@ class CoreWorkerFactory extends WorkerFactory
         };
         $concurrent = $role === self::ROLE_ACTIVITY && $this->activityConcurrency > 1;
         \assert($this->rpc instanceof ActivityTasks);
-        $this->rpc->bind($bridge, $dispatch, $concurrent);
+        $this->rpc->bind($bridge, $dispatch);
 
         $workers = [];
         foreach ($this->queues as $worker) {
