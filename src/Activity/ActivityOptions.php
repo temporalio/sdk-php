@@ -135,10 +135,11 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      */
     public function __construct()
     {
-        $this->scheduleToStartTimeout = CarbonInterval::seconds(0);
-        $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
-        $this->startToCloseTimeout = CarbonInterval::seconds(0);
-        $this->heartbeatTimeout = CarbonInterval::seconds(0);
+        $zero = CarbonInterval::seconds(0);
+        $this->scheduleToStartTimeout = $zero;
+        $this->scheduleToCloseTimeout = clone $zero;
+        $this->startToCloseTimeout = clone $zero;
+        $this->heartbeatTimeout = clone $zero;
         $this->priority = Priority::new();
 
         parent::__construct();
