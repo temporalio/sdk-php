@@ -1,5 +1,7 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+mod client;
+
 use futures_util::FutureExt;
 use prost::Message;
 use serde_json::Value;
@@ -41,6 +43,7 @@ const KIND_ACTIVITY_TASK: i32 = 2;
 const KIND_WORKFLOW_COMPLETED: i32 = 3;
 const KIND_ACTIVITY_COMPLETED: i32 = 4;
 const KIND_SHUTDOWN_FINALIZED: i32 = 5;
+const KIND_RPC_RESULT: i32 = 6;
 
 const STATUS_OK: i32 = 0;
 const STATUS_ERROR: i32 = 1;

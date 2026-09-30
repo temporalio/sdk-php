@@ -299,6 +299,20 @@ class CoreWorkerFactory extends WorkerFactory
 
     private function spawn(string $role): int
     {
+        if (!\extension_loaded('grpc')) {
+            $pid = \pcntl_fork();
+            if ($pid === -1) {
+                throw new \RuntimeException(\sprintf('Unable to fork a %s worker process', $role));
+            }
+            if ($pid === 0) {
+                $this->supervisorPid = \posix_getppid();
+                \register_shutdown_function(fn() => $this->exitChild(1));
+                $this->exitChild($this->servePlugins($role));
+            }
+
+            return $pid;
+        }
+
         $process = \proc_open(
             [\PHP_BINARY, ...$this->iniArguments(), \get_included_files()[0], ...\array_slice($_SERVER['argv'], 1)],
             [\STDIN, \STDOUT, \STDERR],
@@ -370,7 +384,7 @@ class CoreWorkerFactory extends WorkerFactory
         \pcntl_signal(\SIGTERM, fn() => $this->stopping = true);
         \pcntl_signal(\SIGINT, fn() => $this->stopping = true);
 
-        $bridge = new Bridge();
+        $bridge = Bridge::shared();
         $profiler = ($_SERVER['TEMPORAL_CORE_PROFILE'] ?? false) ? new Profiler($this->logger, $role) : null;
         $dispatch = $profiler === null ? $this->dispatchCommands(...) : function (array $commands, array $headers) use ($profiler): array {
             $startedAt = \hrtime(true);

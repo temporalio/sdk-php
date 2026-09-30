@@ -1852,6 +1852,7 @@ dependencies = [
 name = "temporal-php-bridge"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "cbindgen",
  "futures-util",
  "libc",
@@ -1862,6 +1863,7 @@ dependencies = [
  "temporalio-common",
  "temporalio-sdk-core",
  "tokio",
+ "tonic",
 ]
 
 [[package]]

@@ -162,4 +162,9 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     {
         return new V1\OperatorServiceClient($address, $options);
     }
+
+    protected static function createCoreStub(string $address, array $config): \Grpc\BaseStub
+    {
+        return new Core\CoreOperatorServiceStub($address, $config);
+    }
 }

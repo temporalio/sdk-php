@@ -9,12 +9,14 @@ name = "temporal_php_bridge"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+base64 = "0.22"
 libc = "0.2"
 mimalloc = { version = "0.1", default-features = false }
 futures-util = "0.3"
 prost = "0.14"
 serde_json = "1.0"
 tokio = { version = "1", default-features = false, features = ["rt", "time"] }
+tonic = { version = "0.14", default-features = false, features = ["channel", "codegen", "tls-ring", "tls-native-roots"] }
 temporalio-sdk-core = { git = "https://github.com/temporalio/sdk-core.git", rev = "2872b5363e1b745cfb90313ebc7a507c5d25c398" }
 temporalio-client = { git = "https://github.com/temporalio/sdk-core.git", rev = "2872b5363e1b745cfb90313ebc7a507c5d25c398" }
 temporalio-common = { git = "https://github.com/temporalio/sdk-core.git", rev = "2872b5363e1b745cfb90313ebc7a507c5d25c398", features = ["core-based-sdk"] }

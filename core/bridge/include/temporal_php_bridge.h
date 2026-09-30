@@ -1,3 +1,5 @@
+typedef struct TpbClient TpbClient;
+
 typedef struct TpbRuntime TpbRuntime;
 
 typedef struct TpbWorker TpbWorker;
@@ -54,3 +56,21 @@ int32_t tpb_worker_initiate_shutdown(struct TpbWorker *w);
 void tpb_worker_finalize_shutdown(struct TpbWorker *w, uint64_t tag);
 
 void tpb_worker_free(struct TpbWorker *w);
+
+struct TpbClient *tpb_client_new(struct TpbRuntime *rt,
+                                 const char *config,
+                                 size_t config_len,
+                                 uint8_t **err,
+                                 size_t *err_len);
+
+void tpb_client_call(struct TpbClient *c,
+                     uint64_t tag,
+                     const char *path,
+                     size_t path_len,
+                     const char *body,
+                     size_t body_len,
+                     const char *metadata,
+                     size_t metadata_len,
+                     uint64_t timeout_ms);
+
+void tpb_client_free(struct TpbClient *c);

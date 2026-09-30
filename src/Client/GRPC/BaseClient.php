@@ -67,7 +67,7 @@ abstract class BaseClient implements GrpcClientInterface
     public static function create(string $address): static
     {
         if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+            return static::createCore($address, ['target_url' => 'http://' . $address]);
         }
 
         return new static(
@@ -96,10 +96,6 @@ abstract class BaseClient implements GrpcClientInterface
         ?string $clientPem = null,
         ?string $overrideServerName = null,
     ): static {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
-        }
-
         $loadCert = static function (?string $cert): ?string {
             return match (true) {
                 $cert === null, $cert === '' => null,
@@ -109,6 +105,15 @@ abstract class BaseClient implements GrpcClientInterface
                 default => $cert,
             };
         };
+
+        if (!\extension_loaded('grpc')) {
+            return static::createCore($address, ['target_url' => 'https://' . $address, 'tls' => (object) \array_filter([
+                'server_root_ca_cert' => $loadCert($crt),
+                'client_private_key' => $loadCert($clientKey),
+                'client_cert' => $loadCert($clientPem),
+                'domain' => $overrideServerName,
+            ], static fn(?string $value): bool => $value !== null)]);
+        }
 
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
@@ -184,6 +189,15 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
+     * @param non-empty-string $address
+     * @param array{target_url: string, tls?: object} $config
+     */
+    protected static function createCoreStub(string $address, array $config): BaseStub
+    {
+        throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+    }
+
+    /**
      * @internal
      */
     final protected function getInternalConnection(): Connection
@@ -218,6 +232,19 @@ abstract class BaseClient implements GrpcClientInterface
      * @param array<array-key, mixed> $options
      */
     abstract protected static function createGrpcStub(string $address, array $options): BaseStub;
+
+    /**
+     * @param non-empty-string $address
+     * @param array{target_url: string, tls?: object} $config
+     */
+    private static function createCore(string $address, array $config): static
+    {
+        if (!\extension_loaded('ffi')) {
+            throw new \RuntimeException('The gRPC or FFI extension is required to use Temporal Client.');
+        }
+
+        return new static(static fn(): BaseStub => static::createCoreStub($address, $config));
+    }
 
     /**
      * Call a gRPC method.

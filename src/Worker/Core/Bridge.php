@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Revolt\EventLoop;
+use Revolt\EventLoop\Suspension;
+
 final class Bridge
 {
     public const KIND_WORKFLOW_ACTIVATION = 1;
@@ -18,17 +21,30 @@ final class Bridge
     public const KIND_WORKFLOW_COMPLETED = 3;
     public const KIND_ACTIVITY_COMPLETED = 4;
     public const KIND_SHUTDOWN = 5;
+    public const KIND_RPC_RESULT = 6;
     public const STATUS_OK = 0;
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     private const EVENT_BUFFER_SIZE = 256;
+    private const RPC_WAIT_MS = 500;
 
+    private static ?self $shared = null;
+    private static int $sharedPid = 0;
     private readonly \FFI $ffi;
     private readonly \FFI\CData $runtime;
     private readonly \FFI\CData $events;
 
     /** @var list<array{int, int, int, string}> */
     private array $backlog = [];
+
+    /** @var array<int, array{int, string}> */
+    private array $rpcResults = [];
+
+    /** @var array<int, Suspension> */
+    private array $rpcWaiters = [];
+
+    private int $rpcTag = 0;
+    private bool $pumped = false;
 
     public function __construct(?string $library = null, ?string $header = null)
     {
@@ -46,8 +62,20 @@ final class Bridge
         $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
     }
 
+    public static function shared(): self
+    {
+        if (self::$shared === null || self::$sharedPid !== (int) \getmypid()) {
+            self::$shared = new self();
+            self::$sharedPid = (int) \getmypid();
+        }
+
+        return self::$shared;
+    }
+
     public function eventFd(): int
     {
+        $this->pumped = true;
+
         return $this->ffi->tpb_event_fd($this->runtime);
     }
 
@@ -59,6 +87,46 @@ final class Bridge
     public function newReplayer(array $config, string $history): \FFI\CData
     {
         return $this->createWorker('tpb_replayer_new', $config, $history, \strlen($history));
+    }
+
+    public function newClient(array $config): \FFI\CData
+    {
+        return $this->createWorker('tpb_client_new', $config);
+    }
+
+    public function freeClient(\FFI\CData $client): void
+    {
+        $this->ffi->tpb_client_free($client);
+    }
+
+    /**
+     * @param array<string, list<string>> $metadata
+     */
+    public function startCall(\FFI\CData $client, string $path, string $request, array $metadata, int $timeoutMs): int
+    {
+        $tag = ++$this->rpcTag;
+        $json = $metadata === [] ? '' : \json_encode($metadata, \JSON_THROW_ON_ERROR);
+        $this->ffi->tpb_client_call($client, $tag, $path, \strlen($path), $request, \strlen($request), $json, \strlen($json), $timeoutMs);
+
+        return $tag;
+    }
+
+    /**
+     * @return array{int, string}
+     */
+    public function awaitCall(int $tag): array
+    {
+        if (!isset($this->rpcResults[$tag]) && $this->pumped && \Fiber::getCurrent() !== null) {
+            $this->rpcWaiters[$tag] = EventLoop::getSuspension();
+            $this->rpcWaiters[$tag]->suspend();
+        }
+        while (!isset($this->rpcResults[$tag])) {
+            \array_push($this->backlog, ...$this->fetch(self::RPC_WAIT_MS));
+        }
+        $result = $this->rpcResults[$tag];
+        unset($this->rpcResults[$tag]);
+
+        return $result;
     }
 
     public function pollWorkflowActivation(\FFI\CData $worker, int $tag): void
@@ -141,7 +209,7 @@ final class Bridge
 
         if ($worker === null) {
             $message = \FFI::isNull($err) ? 'unknown error' : $this->take($err, $errLen->cdata);
-            throw new \RuntimeException('Unable to create sdk-core worker: ' . $message);
+            throw new \RuntimeException(\sprintf('%s failed: %s', $function, $message));
         }
 
         return $worker;
@@ -156,7 +224,17 @@ final class Bridge
         $result = [];
         for ($i = 0; $i < $count; ++$i) {
             $event = $this->events[$i];
-            $result[] = [$event->tag, $event->kind, $event->status, $this->take($event->data, $event->len)];
+            $data = $this->take($event->data, $event->len);
+            if ($event->kind !== self::KIND_RPC_RESULT) {
+                $result[] = [$event->tag, $event->kind, $event->status, $data];
+                continue;
+            }
+            $this->rpcResults[$event->tag] = [$event->status, $data];
+            if (isset($this->rpcWaiters[$event->tag])) {
+                $waiter = $this->rpcWaiters[$event->tag];
+                unset($this->rpcWaiters[$event->tag]);
+                $waiter->resume();
+            }
         }
 
         return $result;

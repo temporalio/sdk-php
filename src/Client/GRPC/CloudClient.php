@@ -915,6 +915,11 @@ class CloudClient extends BaseClient implements CloudClientInterface
         return new V1\CloudServiceClient($address, $options);
     }
 
+    protected static function createCoreStub(string $address, array $config): \Grpc\BaseStub
+    {
+        return new Core\CoreCloudServiceStub($address, $config);
+    }
+
     protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null): mixed
     {
         if ($this->apiVersion !== '') {
