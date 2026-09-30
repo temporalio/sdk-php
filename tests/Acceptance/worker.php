@@ -120,7 +120,7 @@ try {
         return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
     };
 
-    $serviceClient = static fn(): ServiceClientInterface => $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
+    $serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
         ? ServiceClient::create($runtime->address)
         : ServiceClient::createSSL(
             $runtime->address,
@@ -128,10 +128,8 @@ try {
             clientPem: $runtime->command->tlsCert,
         );
     $options = (new ClientOptions())->withNamespace($runtime->namespace);
-    $workflowClient = static fn(ServiceClientInterface $serviceClient): WorkflowClientInterface
-        => WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
-    $scheduleClient = static fn(ServiceClientInterface $serviceClient): ScheduleClientInterface
-        => ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
+    $workflowClient = WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
+    $scheduleClient = ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
 
     $container->bindSingleton(State::class, $runtime);
     $container->bindSingleton(LoggerInterface::class, $logger);
@@ -148,18 +146,8 @@ try {
         $getWorker($feature)->registerWorkflowTypes($workflow);
     }
 
-    $activityInstances = [];
     foreach ($runtime->activities() as $feature => $activity) {
-        if (!$coreTransport) {
-            $getWorker($feature)->registerActivityImplementations($container->make($activity));
-            continue;
-        }
-        $getWorker($feature)->registerActivity(
-            $activity,
-            static function () use ($activity, $container, &$activityInstances): object {
-                return $activityInstances[$activity] ??= $container->make($activity);
-            },
-        );
+        $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
     $host = $coreTransport ? null : new RecordingHost(RoadRunner::create(), $workerTranscript);

@@ -102,7 +102,7 @@ final class RRStarter
         @\mkdir(\dirname($log), recursive: true);
         $command = \implode(' ', \array_map(\escapeshellarg(...), $workerArgs));
         $this->coreWorker = Process::fromShellCommandline(
-            'exec ' . $command . ' >> ' . \escapeshellarg($log) . ' 2>&1',
+            \sprintf('exec %s >> %s 2>&1', $command, \escapeshellarg($log)),
             $this->runtime->rrConfigDir,
             [
                 'TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1,

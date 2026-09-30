@@ -27,7 +27,7 @@ if (\getenv('TEMPORAL_WORKER_TRANSPORT') === 'core') {
     $coreWorkerLog = $rootDir . '/runtime/tests/functional-core-worker.log';
     @\mkdir(\dirname($coreWorkerLog), recursive: true);
     $coreWorker = Process::fromShellCommandline(
-        'exec ' . \escapeshellarg(PHP_BINARY) . ' worker.php >> ' . \escapeshellarg($coreWorkerLog) . ' 2>&1',
+        \sprintf('exec %s worker.php >> %s 2>&1', \escapeshellarg(PHP_BINARY), \escapeshellarg($coreWorkerLog)),
         $configDir,
         ['TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1, 'TEMPORAL_CORE_ACTIVITY_PROCESSES' => 1],
         timeout: null,
