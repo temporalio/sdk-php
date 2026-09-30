@@ -33,6 +33,9 @@ use temporalio_sdk_core::{
 };
 use tokio::runtime::Handle;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 const KIND_WORKFLOW_ACTIVATION: i32 = 1;
 const KIND_ACTIVITY_TASK: i32 = 2;
 const KIND_WORKFLOW_COMPLETED: i32 = 3;
