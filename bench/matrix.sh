@@ -4,7 +4,15 @@ cd "$(dirname "$0")"
 export BENCH_ACTIVITY_WORKERS=4 BENCH_RESULTS=${BENCH_RESULTS:-$PWD/matrix.jsonl}
 FAILED=0
 run() {
-  "$@" 2>&1 | grep -E '^\{' >/dev/null || { echo "FAILED: $*" >&2; FAILED=1; }
+  local output
+  output=$("$@" 2>&1)
+  if echo "$output" | grep -qE '^\{'; then
+    echo "${BENCH_LABEL:-$2}: $(echo "$output" | grep -E '^[a-z]+: [0-9]+ wf' | tail -1)"
+  else
+    echo "FAILED: $*"
+    echo "$output" | tail -60
+    FAILED=1
+  fi
 }
 for r in $(seq 1 "${BENCH_RUNS:-2}"); do
   for t in rr core; do

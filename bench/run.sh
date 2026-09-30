@@ -15,6 +15,7 @@ TEMPORAL_BIN=${TEMPORAL_BIN:-$BENCH_DIR/../temporal}
 CONCURRENCY=${BENCH_CONCURRENCY:-8}
 WARMUP=${BENCH_WARMUP:-20}
 RATE=${BENCH_RATE:-0}
+TIMEOUT=${BENCH_TIMEOUT:-600}
 RESULTS_FILE=${BENCH_RESULTS:-results.jsonl}
 PHP="php -dxdebug.mode=off -dpcov.enabled=0"
 
@@ -29,6 +30,11 @@ WORKER_PID=
 SAMPLER_PID=
 
 cleanup() {
+    local code=$?
+    if [ "$code" -ne 0 ] && [ -f "$TMP/worker.log" ]; then
+        echo "--- worker log (last 40 lines)" >&2
+        tail -40 "$TMP/worker.log" >&2
+    fi
     [ -n "$SAMPLER_PID" ] && kill "$SAMPLER_PID" 2>/dev/null || true
     if [ -n "$WORKER_PID" ]; then
         kill -TERM "$WORKER_PID" 2>/dev/null || true
@@ -75,7 +81,7 @@ for _ in $(seq 1 120); do
 done
 [ "$types" = "2" ] || { echo "worker is not ready" >&2; cat "$TMP/worker.log" >&2; exit 1; }
 
-$PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency=2 > /dev/null
+$PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency=2 --timeout="$TIMEOUT" > /dev/null
 
 (
     while kill -0 "$WORKER_PID" 2>/dev/null; do
@@ -86,7 +92,7 @@ $PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACT
 SAMPLER_PID=$!
 
 CPU_BEFORE=$(cpu_seconds)
-RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency="$CONCURRENCY" --rate="$RATE")
+RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency="$CONCURRENCY" --rate="$RATE" --timeout="$TIMEOUT")
 CPU_AFTER=$(cpu_seconds)
 WORKER_PROCESSES=$(descendants "$WORKER_PID" | wc -l | tr -d ' ')
 
