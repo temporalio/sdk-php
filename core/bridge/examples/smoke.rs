@@ -152,7 +152,13 @@ fn main() {
     let mut err: *mut u8 = std::ptr::null_mut();
     let mut err_len = 0usize;
     let t = Instant::now();
-    let w = tpb_worker_new(rt, config.as_ptr(), config.len(), &mut err, &mut err_len);
+    let w = tpb_worker_new(
+        rt,
+        config.as_ptr().cast(),
+        config.len(),
+        &mut err,
+        &mut err_len,
+    );
     if w.is_null() {
         panic!(
             "worker_new failed: {}",
@@ -218,7 +224,12 @@ fn main() {
                     next_tag += 1;
                     pending.insert(next_tag, (Instant::now(), label));
                     let bytes = completion.encode_to_vec();
-                    tpb_complete_workflow_activation(w, next_tag, bytes.as_ptr(), bytes.len());
+                    tpb_complete_workflow_activation(
+                        w,
+                        next_tag,
+                        bytes.as_ptr().cast(),
+                        bytes.len(),
+                    );
                     tpb_poll_workflow_activation(w, POLL_WORKFLOW);
                 }
                 (2, 0) => {
@@ -247,7 +258,12 @@ fn main() {
                         result: Some(result),
                     }
                     .encode_to_vec();
-                    tpb_complete_activity_task(w, next_tag, completion.as_ptr(), completion.len());
+                    tpb_complete_activity_task(
+                        w,
+                        next_tag,
+                        completion.as_ptr().cast(),
+                        completion.len(),
+                    );
                     tpb_poll_activity_task(w, POLL_ACTIVITY);
                 }
                 (3 | 4, 0) => {

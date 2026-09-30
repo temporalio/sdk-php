@@ -18,5 +18,8 @@ temporalio-sdk-core = { git = "https://github.com/temporalio/sdk-core.git", rev 
 temporalio-client = { git = "https://github.com/temporalio/sdk-core.git", rev = "2872b5363e1b745cfb90313ebc7a507c5d25c398" }
 temporalio-common = { git = "https://github.com/temporalio/sdk-core.git", rev = "2872b5363e1b745cfb90313ebc7a507c5d25c398", features = ["core-based-sdk"] }
 
+[build-dependencies]
+cbindgen = { version = "0.29", default-features = false }
+
 [profile.release]
 strip = false

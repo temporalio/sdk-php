@@ -117,11 +117,11 @@ fn into_raw_bytes(bytes: Vec<u8>) -> (*mut u8, usize) {
     (Box::into_raw(bytes.into_boxed_slice()).cast(), len)
 }
 
-fn slice<'a>(data: *const u8, len: usize) -> &'a [u8] {
+fn slice<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
     if data.is_null() || len == 0 {
         return &[];
     }
-    unsafe { std::slice::from_raw_parts(data, len) }
+    unsafe { std::slice::from_raw_parts(data.cast(), len) }
 }
 
 #[derive(Debug)]
@@ -436,7 +436,7 @@ fn new_replayer(rt: &TpbRuntime, config: &[u8], history: &[u8]) -> Result<TpbWor
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_worker_new(
     rt: *mut TpbRuntime,
-    config: *const u8,
+    config: *const libc::c_char,
     config_len: usize,
     err: *mut *mut u8,
     err_len: *mut usize,
@@ -451,9 +451,9 @@ pub extern "C" fn tpb_worker_new(
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_replayer_new(
     rt: *mut TpbRuntime,
-    config: *const u8,
+    config: *const libc::c_char,
     config_len: usize,
-    history: *const u8,
+    history: *const libc::c_char,
     history_len: usize,
     err: *mut *mut u8,
     err_len: *mut usize,
@@ -517,7 +517,7 @@ pub extern "C" fn tpb_poll_activity_task(w: *mut TpbWorker, tag: u64) {
 pub extern "C" fn tpb_complete_workflow_activation(
     w: *mut TpbWorker,
     tag: u64,
-    data: *const u8,
+    data: *const libc::c_char,
     len: usize,
 ) {
     let w = unsafe { &*w };
@@ -547,7 +547,7 @@ pub extern "C" fn tpb_complete_workflow_activation(
 pub extern "C" fn tpb_complete_activity_task(
     w: *mut TpbWorker,
     tag: u64,
-    data: *const u8,
+    data: *const libc::c_char,
     len: usize,
 ) {
     let w = unsafe { &*w };
@@ -576,7 +576,7 @@ pub extern "C" fn tpb_complete_activity_task(
 #[unsafe(no_mangle)]
 pub extern "C" fn tpb_record_activity_heartbeat(
     w: *mut TpbWorker,
-    data: *const u8,
+    data: *const libc::c_char,
     len: usize,
 ) -> i32 {
     let w = unsafe { &*w };
@@ -589,7 +589,11 @@ pub extern "C" fn tpb_record_activity_heartbeat(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn tpb_request_workflow_eviction(w: *mut TpbWorker, run_id: *const u8, len: usize) {
+pub extern "C" fn tpb_request_workflow_eviction(
+    w: *mut TpbWorker,
+    run_id: *const libc::c_char,
+    len: usize,
+) {
     let w = unsafe { &*w };
     let _guard = w.handle.enter();
     w.core()
