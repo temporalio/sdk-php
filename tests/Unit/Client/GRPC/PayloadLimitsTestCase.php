@@ -1,0 +1,329 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Unit\Client\GRPC;
+
+use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
+use Temporal\Api\Workflowservice\V1\CreateScheduleResponse;
+use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\ClientOptions;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\ScheduleClient;
+use Temporal\Client\GRPC\Connection\ConnectionState;
+use Temporal\Client\GRPC\ContextInterface;
+use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\GRPC\StatusCode;
+use Temporal\Common\PayloadLimitOptions;
+use Temporal\Client\WorkflowClient;
+use Temporal\Interceptor\GrpcClientInterceptor;
+use Temporal\Internal\Interceptor\Pipeline;
+
+final class PayloadLimitsTestCase extends TestCase
+{
+    /** @var array<array-key, array{string, array}> */
+    private array $records = [];
+
+    public function testWarningIsLoggedOnRpcCall(): void
+    {
+        $client = $this->createClient()->withPayloadLimits(
+            new PayloadLimitOptions(1024, 1024),
+            $this->createLogger(),
+        );
+
+        $client->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+        self::assertStringContainsString('[TMPRL1103]', $this->records[0][0]);
+        self::assertSame('testCall', $this->records[0][1]['method']);
+    }
+
+    public function testNoWarningWithoutLimits(): void
+    {
+        $client = $this->createClient();
+
+        $client->testCall($this->request(2000));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testLimitsCanBeDisabled(): void
+    {
+        $client = $this->createClient()->withPayloadLimits(
+            PayloadLimitOptions::disabled(),
+            $this->createLogger(),
+        );
+
+        $client->testCall($this->request(2000));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testWarningsCanBeTurnedOff(): void
+    {
+        $client = $this->createClient()
+            ->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger())
+            ->withPayloadLimits(PayloadLimitOptions::disabled(), $this->createLogger());
+
+        $client->testCall($this->request(2000));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testWarnsWhenTheInterceptorPipelineIsInstalledFirst(): void
+    {
+        $client = $this->createClient()
+            ->withInterceptorPipeline(Pipeline::prepare([$this->passThroughInterceptor()]))
+            ->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger());
+
+        $client->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+    }
+
+    public function testWarnsWhenTheLimitsAreInstalledFirst(): void
+    {
+        $client = $this->createClient()
+            ->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger())
+            ->withInterceptorPipeline(Pipeline::prepare([$this->passThroughInterceptor()]));
+
+        $client->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+    }
+
+    public function testWorkflowClientEnablesWarnings(): void
+    {
+        $client = new WorkflowClient(
+            $this->createClient(),
+            (new ClientOptions())->withPayloadLimits(new PayloadLimitOptions(1024, 1024)),
+            logger: $this->createLogger(),
+        );
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+        self::assertStringContainsString('[TMPRL1103]', $this->records[0][0]);
+    }
+
+    public function testWorkflowClientRespectsDisabledLimits(): void
+    {
+        $client = new WorkflowClient(
+            $this->createClient(),
+            (new ClientOptions())->withPayloadLimits(PayloadLimitOptions::disabled()),
+            logger: $this->createLogger(),
+        );
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(1024 * 1024));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testWorkflowClientWarnsWithTheDefaultLimits(): void
+    {
+        $client = new WorkflowClient($this->createClient(), logger: $this->createLogger());
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(PayloadLimitOptions::DEFAULT_PAYLOAD_SIZE_WARNING + 1));
+
+        self::assertCount(1, $this->records);
+        self::assertStringContainsString('[TMPRL1103]', $this->records[0][0]);
+    }
+
+    public function testWorkflowClientKeepsSilentBelowTheDefaultLimits(): void
+    {
+        $client = new WorkflowClient($this->createClient(), logger: $this->createLogger());
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(1024));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testRetriedCallIsMeasuredOnce(): void
+    {
+        $client = $this->createClient(failures: 2)->withPayloadLimits(
+            new PayloadLimitOptions(1024, 1024),
+            $this->createLogger(),
+        );
+
+        $client->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+    }
+
+    public function testExplicitLimitsOfTheServiceClientSurviveTheClient(): void
+    {
+        $client = new WorkflowClient(
+            $this->createClient()->withPayloadLimits(PayloadLimitOptions::disabled(), $this->createLogger()),
+        );
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(1024 * 1024));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testExplicitLoggerOfTheServiceClientSurvivesTheClient(): void
+    {
+        $serviceClient = $this->createClient()
+            ->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger());
+
+        $client = new WorkflowClient($serviceClient);
+
+        $serviceClient = $this->serviceClientOf($client);
+        $serviceClient->testCall($this->request(2000));
+
+        self::assertCount(1, $this->records);
+    }
+
+    public function testTheSecondClientOnAServiceClientKeepsItsOwnLimits(): void
+    {
+        $first = new WorkflowClient($this->createClient(), logger: $this->createLogger());
+
+        $second = new WorkflowClient(
+            $this->serviceClientOf($first),
+            (new ClientOptions())->withPayloadLimits(PayloadLimitOptions::disabled()),
+            logger: $this->createLogger(),
+        );
+
+        $this->serviceClientOf($second)->testCall($this->request(1024 * 1024));
+
+        self::assertSame([], $this->records);
+    }
+
+    public function testScheduleClientMeasuresTheRequestItBuilds(): void
+    {
+        ScheduleClient::create($this->createClient(), logger: $this->createLogger())
+            ->createSchedule(
+                Schedule::new()->withAction(
+                    StartWorkflowAction::new('Foo')
+                        ->withInput([\str_repeat('x', PayloadLimitOptions::DEFAULT_PAYLOAD_SIZE_WARNING + 1)]),
+                ),
+            );
+
+        self::assertCount(1, $this->records);
+        self::assertStringContainsString('[TMPRL1103]', $this->records[0][0]);
+        self::assertSame('CreateSchedule', $this->records[0][1]['method']);
+    }
+
+    public function testClientIsImmutable(): void
+    {
+        $client = $this->createClient();
+
+        $result = $client->withPayloadLimits(new PayloadLimitOptions(1024, 1024), $this->createLogger());
+
+        self::assertNotSame($client, $result);
+
+        $client->testCall($this->request(2000));
+
+        self::assertSame([], $this->records, 'The original client is not affected.');
+    }
+
+    protected function setUp(): void
+    {
+        $this->records = [];
+        parent::setUp();
+    }
+
+    private function passThroughInterceptor(): GrpcClientInterceptor
+    {
+        return new class implements GrpcClientInterceptor {
+            public function interceptCall(
+                string $method,
+                object $arg,
+                ContextInterface $ctx,
+                callable $next,
+            ): object {
+                return $next($method, $arg, $ctx);
+            }
+        };
+    }
+
+    /**
+     * @return ServiceClient&object{testCall: callable}
+     */
+    private function serviceClientOf(WorkflowClient $client): object
+    {
+        $serviceClient = $client->getServiceClient();
+
+        self::assertInstanceOf($this->createClient()::class, $serviceClient);
+
+        return $serviceClient;
+    }
+
+    private function request(int $size): StartWorkflowExecutionRequest
+    {
+        return (new StartWorkflowExecutionRequest())->setInput(
+            new Payloads(['payloads' => [(new Payload())->setData(\str_repeat('x', $size))]]),
+        );
+    }
+
+    private function createLogger(): AbstractLogger
+    {
+        return new class($this->records) extends AbstractLogger {
+            public function __construct(private array &$records) {}
+
+            public function log($level, \Stringable|string $message, array $context = []): void
+            {
+                $this->records[] = [(string) $message, $context];
+            }
+        };
+    }
+
+    /**
+     * @param int<0, max> $failures Number of retryable failures before the call succeeds.
+     */
+    private function createClient(int $failures = 0): ServiceClient
+    {
+        $stub = static fn() => new class($failures) extends WorkflowServiceClient {
+            public function __construct(private int $failures = 0) {}
+
+            public function getConnectivityState($try_to_connect = false): int
+            {
+                return ConnectionState::Ready->value;
+            }
+
+            public function CreateSchedule(CreateScheduleRequest $argument, $metadata = [], $options = [])
+            {
+                return $this->unaryCall(new CreateScheduleResponse());
+            }
+
+            public function testCall(object $arg, array $metadata = [], array $options = []): object
+            {
+                return $this->unaryCall((object) ['result' => true]);
+            }
+
+            private function unaryCall(object $result): object
+            {
+                $code = $this->failures-- > 0 ? StatusCode::UNAVAILABLE : 0;
+
+                return new class($code, $result) {
+                    public function __construct(private int $code, private object $result) {}
+
+                    public function wait(): array
+                    {
+                        return [$this->result, (object) ['code' => $this->code, 'details' => '']];
+                    }
+                };
+            }
+
+            public function close(): void {}
+        };
+
+        return new class($stub) extends ServiceClient {
+            public function testCall(object $request): mixed
+            {
+                return $this->invoke('testCall', $request, null);
+            }
+        };
+    }
+}

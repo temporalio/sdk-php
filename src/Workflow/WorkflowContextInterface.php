@@ -318,10 +318,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::awaitWithTimeout()
      *
-     * @param DateIntervalValue $interval
+     * @param DateIntervalValue|AwaitOptions $intervalOrOptions Timeout value or await options.
      * @return PromiseInterface<bool>
      */
-    public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface;
+    public function awaitWithTimeout($intervalOrOptions, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface;
 
     /**
      * Returns a complete trace of the last calls (for debugging).
