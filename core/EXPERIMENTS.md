@@ -50,3 +50,21 @@ Interleaved A/B on a fresh server, 3 repetitions each:
 Burst throughput differs by up to ±8 % even between two identical variants (the dev server state), so the −4/−11 % throughput differences are within noise; the CPU saving is consistent in all three scenarios.
 With 1 thread the workflow process sys time drops from 542 ms to 339–358 ms.
 **Adopted:** the bridge now defaults to 1 tokio worker thread per process (`TEMPORAL_CORE_THREADS` overrides).
+
+## E3. Adapter overhead (activity path)
+
+Per-phase timings inside `ActivityTasks::handle` in the running worker (1000 wf @100/s, pcov off, 4 activity processes, ~25 tasks/s per process):
+parse 14 µs, build request 44 µs, SDK dispatch 225 µs, result 14 µs, serialize completion 40 µs — ~340 µs per task.
+
+The same code in a hot loop (`handle()` 20 000 times, no FFI):
+
+| part | hot µs |
+|---|---|
+| whole `ActivityTasks::handle` | 22.9 |
+| SDK dispatch (route, marshaller, activity, promises) | 14.6 |
+| adapter `request()` | 4.2 |
+| protobuf parse + serialize of the completion | < 1 |
+
+An xdebug profile had pointed at `Marshaller->unmarshal` (65 % of the activity path); without xdebug it costs ~10 µs, so the profile was an instrumentation artefact.
+Result: the adapter adds ~8 µs of real work per task. The 15× gap between hot (23 µs) and in-worker (340 µs) cost is cold execution: at a few dozen tasks per second per process every task starts with cold caches, a thread wake-up and (on this Mac) often an efficiency core. **No change adopted**; the lever is fewer wake-ups and fewer idle processes, not faster adapter code.
+Side finding: the profiling helper had pcov enabled (the `run.sh` matrix did not), which inflated all per-phase numbers by ~30 %.
