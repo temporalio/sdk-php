@@ -32,7 +32,7 @@
         "nesbot/carbon": "^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
-        "roadrunner-php/roadrunner-api-dto": "^1.15.0",
+        "roadrunner-php/roadrunner-api-dto": "dev-feature/coresdk-protos as 1.18.0",
         "roadrunner-php/version-checker": "^1.0.2",
         "spiral/attributes": "^3.1.8",
         "spiral/roadrunner": "^2025.1.5",
@@ -44,12 +44,16 @@
         "symfony/polyfill-php83": "^1.31.0",
         "symfony/process": "^6.4.33 || ^7.0 || ^8.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/xepozz/roadrunner-api-dto"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
-            "Coresdk\\": "core/generated/Coresdk",
-            "GPBMetadata\\Temporal\\Sdk\\": "core/generated/GPBMetadata/Temporal/Sdk",
             "Temporal\\Testing\\": "testing/src",
             "Temporal\\": "src"
         },
