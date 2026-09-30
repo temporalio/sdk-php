@@ -53,12 +53,12 @@ final class Profiler
         }
 
         $usage = \getrusage();
-        $cpu = $usage['ru_utime.tv_sec'] + $usage['ru_stime.tv_sec'] + ($usage['ru_utime.tv_usec'] + $usage['ru_stime.tv_usec']) / 1e6;
         $this->logger->info(\sprintf(
-            '[core-profile %s pid=%d] process-cpu: %.1fms | %s',
+            '[core-profile %s pid=%d] process-cpu: user=%.1fms sys=%.1fms | %s',
             $this->role,
             \getmypid(),
-            $cpu * 1e3,
+            ($usage['ru_utime.tv_sec'] + $usage['ru_utime.tv_usec'] / 1e6) * 1e3,
+            ($usage['ru_stime.tv_sec'] + $usage['ru_stime.tv_usec'] / 1e6) * 1e3,
             \implode(' | ', $parts),
         ));
     }

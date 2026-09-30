@@ -167,12 +167,12 @@ fn new_runtime() -> Result<TpbRuntime, String> {
         .telemetry_options(telemetry)
         .build()?;
     let mut tokio = TokioRuntimeBuilder::default();
-    if let Some(threads) = std::env::var("TEMPORAL_CORE_THREADS")
-        .ok()
-        .and_then(|v| v.parse::<usize>().ok())
-    {
-        tokio.inner.worker_threads(threads);
-    }
+    tokio.inner.worker_threads(
+        std::env::var("TEMPORAL_CORE_THREADS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .unwrap_or(1),
+    );
     let core = CoreRuntime::new(options, tokio).map_err(|e| e.to_string())?;
     let mut fds: [RawFd; 2] = [0; 2];
     if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {

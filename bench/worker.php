@@ -31,7 +31,7 @@ function runRoadRunner(): void
 function runCore(): void
 {
     $factory = CoreWorkerFactory::create(
-        activityProcesses: (int) (\getenv('BENCH_ACTIVITY_WORKERS') ?: 4),
+        activityProcesses: (int) (\getenv('BENCH_ACTIVITY_WORKERS') === false ? 4 : \getenv('BENCH_ACTIVITY_WORKERS')),
     );
     registerBench($factory);
     exit($factory->run());
