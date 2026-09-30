@@ -53,7 +53,9 @@ class InvokeActivity extends Route
         $header = $request->getHeader();
         $heartbeatDetails = null;
 
-        if (!($options['info'] ?? null) instanceof ActivityInfo) {
+        $info = $options['info'] ?? null;
+        if (!$info instanceof ActivityInfo) {
+            $info = null;
             // always in binary format
             $taskToken = $options['info']['TaskToken'] ?? '';
             $options['info']['TaskToken'] = \base64_decode($taskToken);
@@ -72,9 +74,12 @@ class InvokeActivity extends Route
             $payloads,
             $header,
             $heartbeatDetails,
+            $info,
         );
-        /** @var ActivityContext $context */
-        $context = $this->services->marshaller->unmarshal($options, $context);
+        if ($info === null) {
+            /** @var ActivityContext $context */
+            $context = $this->services->marshaller->unmarshal($options, $context);
+        }
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 

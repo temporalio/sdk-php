@@ -283,6 +283,57 @@ Result: **adopted**. Without ext-grpc the SDK clients use the bridge, and on Lin
 Side finding, fixed: when PHP runs without a php.ini but with a scan dir (the official Docker images), fresh children were started with `-n` and `-d extension=FFI`, which does not load (`ffi.so`); now `-n` is used only when neither is loaded.
 Side finding, fixed: in a Fibers activity process a heartbeat did not read pending events, so an activity that blocks between heartbeats never saw its cancellation or pause (`CancelTryCancel`, `ActivityPaused` failed with concurrency > 1 on both clients).
 
+## E15. PHP adapter hot path
+
+Harness: activation and activity-task bytes captured from a running worker (`bench` scenarios `seq ×1`, `noact`, `par ×5`, `seq ×5`, 30 workflows each plus warmup) are replayed in a loop through `WorkflowActivations::handle()` and `ActivityTasks::handle()`, without FFI. PHP 8.5.6, ext-protobuf, opcache on, no xdebug or pcov, `zend.assertions=-1`. Metric: instructions retired per activation (`proc_pid_rusage`, minimum of 10–15 rounds, ±0.1 % between identical runs) and µs per activation (minimum of the rounds). Every replay gives completions byte-identical to the captured ones (332 activations, 179 activity tasks); the new ActivityInfo objects serialize identically to the old ones for 20 000 random `Start` messages.
+Profiling: excimer and a `pcntl` SIGVTALRM sampler both crash PHP 8.5.6 with SIGBUS (lldb: a jump to an invalid address from `execute_ex` after a VM interrupt). SPX (instrumenting, ~4× overhead) and an `hrtime` split around the dispatch closure were used.
+
+Split, `seq ×1` capture, µs per activation / per task:
+
+| part | workflow before | workflow after | activity before | activity after |
+|---|---|---|---|---|
+| adapter in (activation → `ServerRequest`, without decode) | 4.23 | 3.49 | 10.36 | 6.60 |
+| protobuf decode | 0.37 | 0.35 | 0.49 | 0.47 |
+| SDK (router → workflow or activity code → commands) | 17.26 | 16.22 | 8.72 | 5.21 |
+| adapter out (commands → coresdk messages, without encode) | 3.32 | 3.24 | 2.78 | 2.60 |
+| protobuf encode | 0.10 | 0.10 | 0.11 | 0.11 |
+| other (harness loop) | < 0.1 | < 0.1 | < 0.1 | < 0.1 |
+| **total** | **25.3** | **23.4** | **22.5** | **15.0** |
+
+By workflow activation kind (before → after, µs): start 43.0 → 37.7, activity result 20.9 → 20.4, eviction 11.8 → 11.8.
+
+Instructions per activation, thousands (before → after): `seq ×1` 386.9 → 355.5 (−8.1 %), `noact` 373.6 → 329.7 (−11.8 %), `par ×5` 514.9 → 492.3 (−4.4 %), `seq ×5` 370.6 → 353.4 (−4.6 %), activity task 403.5 → 282.2 (−30.1 %).
+
+| experiment | workflow instr | activity instr | verdict |
+|---|---|---|---|
+| a. `ActivityContext` takes the prebuilt `ActivityInfo` (no default info with three `CarbonImmutable::now()`, no unmarshal over it) | | −13.8 % | **adopted** |
+| b. activation payload fields go to `EncodedValues` without a `Payloads` copy; a single result payload in an `ArrayIterator` | −1.0 % (seq), −1.4 % (par) | −2.8 % | **adopted** |
+| c. info intervals (`WorkflowInfo` timeouts, `RetryOptions`, heartbeat timeout) are clones of cached `CarbonInterval` objects (64 values per process) | −2.8 % | −8.7 % | **adopted** |
+| d. `ActivityInfo` times built from integer microseconds, same millisecond precision and `+00:00` offset (a missing timestamp, which sdk-core does not send, now also gets `+00:00` instead of the local offset) | | −8.7 % | **adopted** |
+| d'. the same with `new Carbon('@…')` | | +17 % | rejected: Carbon parses `@` through `createFromTimestampUTC` |
+| e. `ActivityOptions` clones one `CarbonInterval::seconds(0)` for its four defaults (4.8 → 2.9 µs per stub) | −4.5 % (seq), −1.9 % (par) | | **adopted** |
+| reuse messages (`clear()` + `mergeFromString`) | −0.06 µs | | rejected: noise, and it would clear the payload fields that (b) hands to the SDK |
+| completion built with setters instead of array constructors | +9 % (micro) | | rejected |
+| tick time through `createFromFormat('U.u')` | −0.05 µs | | rejected: noise |
+| `Carbon` prototype clone + `setTimestamp` | 1.8 vs 0.75 µs | | rejected |
+
+End to end, `bench` with 1 workflow + 4 activity processes, own dev server, the machine shared with other benchmarks (load average 4–6), interleaved, instructions of all worker processes:
+
+| scenario | runs | variant | worker instr (M) | workflow process instr (M) | activity processes instr (M) | worker CPU s | wf/s |
+|---|---|---|---|---|---|---|---|
+| `seq 1000×1 @100/s` | 3 | before | 4367 | 3103 | 1264 | 1.46 | 83.9 |
+| | 3 | after | 4140 (−5.2 %) | 3006 (−3.1 %) | 1134 (−10.3 %) | 1.40 (−3.8 %) | 83.3–99.6 |
+| `noact 2000` burst | 13 | before | 3642 | 3621 | | 0.86–1.06 | 186–428 (median 236) |
+| | 13 | after | 3481 (−4.4 %) | 3456 (−4.6 %) | | 0.88–1.14 | 188–372 (median 225) |
+
+The starter did not keep 100 wf/s on the loaded machine for both variants. Burst CPU seconds and throughput move ±30 % between identical runs; the instruction counts move ±1 %.
+
+Result: the adapter (with protobuf) now costs 7.2 µs of 23.4 µs per workflow activation and 9.8 µs of 15.0 µs per activity task; protobuf decode and encode are below 3 % and are not a lever. The PHP main thread of a workflow process does ~3 % less work end to end, an activity process ~10 % less.
+Not done:
+- A core fast path for `ExecuteActivity` that reads `ActivityOptions` instead of the marshalled array: the marshal costs 1.4 µs per scheduled activity (at most −2 % per activation on `seq ×1`, −4 % on `par ×5` before the cost of the replacement). User outbound interceptors read and replace the options array, so the request classes would need a lazy marshal. Not worth the change.
+- The SDK is 69 % of a workflow activation: promise chains, `Scope`, `Facade::usingContext`, five loop events per tick, and `DestroyWorkflow` creates a `DestructMemorizedInstanceException` (with a stack trace) for every eviction. These are the same for both transports.
+- `LocalActivityOptions`, `ChildWorkflowOptions`, `ContinueAsNewOptions` and `WorkflowOptions` build their zero intervals like `ActivityOptions` did (e).
+
 ## E16. Boundary format and thread hand-offs
 
 Question: the data crosses the bridge as protobuf bytes (Rust encode → PHP decode, and back), and every event moves between the tokio thread and the PHP thread. Can C structs or fewer thread hops remove this cost?

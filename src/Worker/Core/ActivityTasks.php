@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Carbon\Carbon;
 use Coresdk\Activity_result\ActivityExecutionResult;
 use Coresdk\Activity_result\Cancellation;
 use Coresdk\Activity_result\Failure as ActivityFailure;
@@ -34,8 +35,6 @@ use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\TransportException;
 use Temporal\Interceptor\Header;
-use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Support\DateTime;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -182,7 +181,7 @@ final class ActivityTasks implements RPCConnectionInterface
     {
         $input = $start->getInput();
         $details = $start->getHeartbeatDetails();
-        $payloads = new Payloads(['payloads' => [...$input, ...$details]]);
+        $payloads = \count($details) === 0 ? $input : new \ArrayIterator([...$input, ...$details]);
 
         return new ServerRequest(
             name: $start->getIsLocal() ? 'InvokeLocalActivity' : 'InvokeActivity',
@@ -192,7 +191,7 @@ final class ActivityTasks implements RPCConnectionInterface
                 'info' => $this->info($token, $start, $taskQueue),
                 'heartbeatDetails' => \count($details),
             ],
-            payloads: EncodedValues::fromPayloads($payloads, $this->converter),
+            payloads: EncodedValues::fromPayloadCollection($payloads, $this->converter),
             id: $start->getActivityId(),
             header: Header::fromPayloadCollection($start->getHeaderFields(), $this->converter),
         );
@@ -203,7 +202,7 @@ final class ActivityTasks implements RPCConnectionInterface
      */
     private function info(string $token, Start $start, string $taskQueue): ActivityInfo
     {
-        $startedTime = $this->time($start->getStartedTime());
+        $startedTime = $this->micros($start->getStartedTime());
         $timeout = $this->nanos($start->getStartToCloseTimeout()) ?: $this->nanos($start->getScheduleToCloseTimeout());
 
         $info = (new \ReflectionClass(ActivityInfo::class))->newInstanceWithoutConstructor();
@@ -219,12 +218,10 @@ final class ActivityTasks implements RPCConnectionInterface
         $info->type = new ActivityType();
         $info->type->name = $start->getActivityType();
         $info->taskQueue = $taskQueue;
-        $info->heartbeatTimeout = DateInterval::parse($this->nanos($start->getHeartbeatTimeout()), DateInterval::FORMAT_NANOSECONDS);
-        $info->scheduledTime = DateTime::parse($this->time($start->getScheduledTime())->format(\DATE_RFC3339_EXTENDED));
-        $info->startedTime = DateTime::parse($startedTime->format(\DATE_RFC3339_EXTENDED));
-        $info->deadline = DateTime::parse(
-            $startedTime->modify(\sprintf('+%d microseconds', \intdiv($timeout, 1000)))->format(\DATE_RFC3339_EXTENDED),
-        );
+        $info->heartbeatTimeout = WorkflowActivations::interval($start->getHeartbeatTimeout());
+        $info->scheduledTime = $this->milliseconds($this->micros($start->getScheduledTime()));
+        $info->startedTime = $this->milliseconds($startedTime);
+        $info->deadline = $this->milliseconds($startedTime + \intdiv($timeout, 1000));
         $info->attempt = $start->getAttempt();
         $info->priority = WorkflowActivations::priorityOptions($start->getPriority());
         $info->retryOptions = WorkflowActivations::retryOptions($start->getRetryPolicy());
@@ -232,11 +229,16 @@ final class ActivityTasks implements RPCConnectionInterface
         return $info;
     }
 
-    private function time(?Timestamp $timestamp): \DateTimeImmutable
+    private function micros(?Timestamp $timestamp): int
     {
         return $timestamp === null
-            ? new \DateTimeImmutable()
-            : \DateTimeImmutable::createFromInterface($timestamp->toDateTime());
+            ? (int) (new \DateTimeImmutable())->format('Uu')
+            : $timestamp->getSeconds() * 1_000_000 + \intdiv($timestamp->getNanos(), 1000);
+    }
+
+    private function milliseconds(int $micros): Carbon
+    {
+        return new Carbon(\gmdate('Y-m-d\TH:i:s', \intdiv($micros, 1_000_000)) . \sprintf('.%03d+00:00', \intdiv($micros % 1_000_000, 1000)));
     }
 
     private function nanos(?Duration $duration): int
