@@ -175,15 +175,22 @@ final class DateInterval
             return null;
         }
 
-        $parsed = self::parse($i);
-        $seconds = (int) $parsed->totalSeconds;
-        $micros = $parsed->microseconds;
+        if ($i->days === false && $i->y === 0 && $i->m === 0 && $i->d === 0) {
+            $micros = (int) \round($i->f * 1_000_000.0);
+            $total = ((float) ($micros % 1000) / 1000.0 + (float) (int) ($micros / 1000)) / 1000.0
+                + (float) $i->s + (float) ($i->i * 60) + (float) ($i->h * 3600);
+            $seconds = (int) ($i->invert === 1 ? -$total : $total);
+        } else {
+            $parsed = self::parse($i);
+            $seconds = (int) $parsed->totalSeconds;
+            $micros = $parsed->microseconds;
+        }
 
         return $nullEmpty && $seconds === 0 && $micros === 0
             ? null
             : (new Duration())
-                ->setSeconds((int) $parsed->totalSeconds)
-                ->setNanos($parsed->microseconds * 1000);
+                ->setSeconds($seconds)
+                ->setNanos($micros * 1000);
     }
 
     private static function validateFormat(string $format): void
