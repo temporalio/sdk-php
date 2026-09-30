@@ -43,11 +43,15 @@ and the Workers component requires [RoadRunner](https://roadrunner.dev).
 It's recommended to use both components with the [`protobuf`](https://pecl.php.net/package/protobuf) extension
 in production to improve performance.
 
-|              | Client      | Worker      |
-|--------------|-------------|-------------|
-| RoadRunner   | —           | required    |
-| ext-grpc     | required    | —           |
-| ext-protobuf | recommended | recommended |
+|              | Client               | Worker               |
+|--------------|----------------------|----------------------|
+| RoadRunner   | —                    | required             |
+| ext-grpc     | required             | —                    |
+| ext-protobuf | recommended (>= 4.0) | recommended (>= 4.0) |
+
+> [!IMPORTANT]
+> Since SDK v2.18, `ext-protobuf` must be version 4.0 or newer when it is installed.
+> Older extension builds (3.x) fail to unmarshal repeated fields, so `composer` now refuses to install the SDK alongside them.
 
 To download RoadRunner, you can use the following command:
 
