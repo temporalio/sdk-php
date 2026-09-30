@@ -228,3 +228,20 @@ Result:
 - Preload: not usable (crash on PHP 8.5.6), and for a long-lived worker it only saves the one-time class load.
 - JIT: the steady-state hot path is 20–33 % faster, but in a 10-second run the trace compilation costs more CPU than it saves.
 - The supervisor passes the parent `opcache.*` settings to the child processes, so a user enables JIT or `file_cache` with `php -d ... worker.php` and no code change.
+
+## E13. Bridge hot path
+
+Metric: instructions retired by all worker processes (`proc_pid_rusage`), ±0.3–1.5 % between identical runs, while CPU seconds moved ±5–20 % on the loaded machine. Fixed rate `seq 600×1 @25/s`, interleaved, 3–4 runs each.
+
+Time Profiler, workflow process: PHP main thread 45 %, tokio worker 42–46 %, sdk-core `workflow-processing` thread 11–12 %. `kevent` park/wake 7–9 %, gRPC `writev` 4.5–5.5 %, `recvfrom` 2–3.4 %, system malloc/free ~5 %. All bridge-owned code (FFI trampolines with the Rust work inside, condvar, encode/decode, `FFI::string`) is 2.7–3.9 %.
+
+| experiment | fixed rate instr | noact burst instr | verdict |
+|---|---|---|---|
+| mimalloc as the global allocator | −4.6…−5.6 % (CPU −4…−7 %) | −4.3…−4.9 % | **adopted**, +1 MB RSS per process |
+| fat LTO + `codegen-units = 1` (on top of mimalloc) | −1.7 % | −1.9 % | **adopted**, library 22 → 15 MB |
+| jemalloc vs mimalloc | +2.3 % | +1.6 % | rejected |
+| tokio `current_thread` on a dedicated thread | −0.1 % | −0.6 % | rejected, same park/unpark |
+| spin 50 / 200 µs before the condvar wait | +20 % / +75 % | +19 % / +69 % | rejected |
+| fused complete + poll in one FFI call | −0.7 % | +0.4 % | rejected, noise |
+
+Result: the bridge is not the cost. The rest is sdk-core gRPC syscalls, tokio and sdk-core thread hand-offs, and the PHP SDK. sdk-core also runs a `temporal-real-sysinfo` thread per worker (100 ms refresh) that `WorkerConfig` cannot turn off: 6 idle processes use 68 ms CPU in 30 s.
