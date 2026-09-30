@@ -19,23 +19,28 @@ use temporalio_common::protos::{
     temporal::api::common::v1::Payload,
 };
 
-const CLI: &str = "/Users/xepozz/IdeaProjects/temporalio/sdk-php-fiber-runtime/temporal";
-const ADDRESS: &str = "127.0.0.1:7555";
 const QUEUE: &str = "smoke-q";
 const POLL_WORKFLOW: u64 = 1;
 const POLL_ACTIVITY: u64 = 2;
 
 struct Event {
-    tag: u64,
     kind: i32,
     status: i32,
     data: Vec<u8>,
 }
 
+fn env(name: &str, default: &str) -> String {
+    std::env::var(name).unwrap_or_else(|_| default.to_owned())
+}
+
+fn address() -> String {
+    env("TEMPORAL_ADDRESS", "127.0.0.1:7233")
+}
+
 fn cli(args: &[&str]) -> String {
-    let out = Command::new(CLI)
+    let out = Command::new(env("TEMPORAL_CLI", "temporal"))
         .args(args)
-        .args(["--address", ADDRESS])
+        .args(["--address", &address()])
         .output()
         .unwrap();
     String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr)
@@ -63,7 +68,6 @@ fn next_events(rt: *mut TpbRuntime) -> Vec<Event> {
             };
             tpb_bytes_free(e.data, e.len);
             Event {
-                tag: e.tag,
                 kind: e.kind,
                 status: e.status,
                 data,
@@ -147,7 +151,8 @@ fn main() {
     let rt = tpb_runtime_new();
     assert!(!rt.is_null());
     let config = format!(
-        r#"{{"target_url":"http://{ADDRESS}","namespace":"default","task_queue":"{QUEUE}","max_cached_workflows":10}}"#
+        r#"{{"target_url":"http://{}","namespace":"default","task_queue":"{QUEUE}","max_cached_workflows":10}}"#,
+        address()
     );
     let mut err: *mut u8 = std::ptr::null_mut();
     let mut err_len = 0usize;
@@ -204,7 +209,6 @@ fn main() {
     println!("both workflows started via CLI in {:?}", t.elapsed());
 
     let mut started = HashMap::new();
-    let mut pending: HashMap<u64, (Instant, String)> = HashMap::new();
     let mut next_tag = 100u64;
     let mut finished = 0;
     let mut shutting_down = false;
@@ -222,7 +226,9 @@ fn main() {
                         scheduled_at = Some(Instant::now());
                     }
                     next_tag += 1;
-                    pending.insert(next_tag, (Instant::now(), label));
+                    if label.ends_with("complete workflow") || label.ends_with("after activity") {
+                        finished += 1;
+                    }
                     let bytes = completion.encode_to_vec();
                     tpb_complete_workflow_activation(
                         w,
@@ -252,7 +258,6 @@ fn main() {
                         other => panic!("unexpected activity task {other:?}"),
                     };
                     next_tag += 1;
-                    pending.insert(next_tag, (Instant::now(), "activity complete".into()));
                     let completion = ActivityTaskCompletion {
                         task_token: task.task_token,
                         result: Some(result),
@@ -265,17 +270,6 @@ fn main() {
                         completion.len(),
                     );
                     tpb_poll_activity_task(w, POLL_ACTIVITY);
-                }
-                (3 | 4, 0) => {
-                    let (at, label) = pending.remove(&e.tag).unwrap();
-                    println!(
-                        "  kind {} ack: {label}: activation->ack roundtrip {:?}",
-                        e.kind,
-                        at.elapsed()
-                    );
-                    if label.ends_with("complete workflow") || label.ends_with("after activity") {
-                        finished += 1;
-                    }
                 }
                 (1, 2) => wf_poll_done = true,
                 (2, 2) => act_poll_done = true,
@@ -314,12 +308,7 @@ fn main() {
             println!("both workflows completed, initiating shutdown");
             tpb_worker_initiate_shutdown(w);
         }
-        if shutting_down
-            && !finalize_requested
-            && wf_poll_done
-            && act_poll_done
-            && pending.is_empty()
-        {
+        if shutting_down && !finalize_requested && wf_poll_done && act_poll_done {
             finalize_requested = true;
             tpb_worker_finalize_shutdown(w, 999);
             println!("both polls returned ShutDown, finalize requested");
