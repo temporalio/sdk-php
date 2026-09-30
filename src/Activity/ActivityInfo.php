@@ -103,8 +103,6 @@ final class ActivityInfo
 
     /**
      * Return the priority of the activity task.
-     *
-     * @internal Experimental API
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;
