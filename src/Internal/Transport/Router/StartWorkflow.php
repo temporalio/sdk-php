@@ -54,15 +54,20 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
-        // Search Attributes and Typed Search Attributes
-        $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
-        $memo = $this->convertMemo($options['info']['Memo'] ?? null);
-        $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
-        $options['info']['TypedSearchAttributes'] = $this->prepareTypedSA($options['search_attributes'] ?? null);
-        $options['info']['Memo'] = $memo?->getValues();
+        $info = $options['info'] ?? null;
+        if ($info instanceof WorkflowInfo) {
+            $input = new Input($info);
+        } else {
+            // Search Attributes and Typed Search Attributes
+            $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
+            $memo = $this->convertMemo($options['info']['Memo'] ?? null);
+            $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
+            $options['info']['TypedSearchAttributes'] = $this->prepareTypedSA($options['search_attributes'] ?? null);
+            $options['info']['Memo'] = $memo?->getValues();
 
-        /** @var Input $input */
-        $input = $this->services->marshaller->unmarshal($options, new Input());
+            /** @var Input $input */
+            $input = $this->services->marshaller->unmarshal($options, new Input());
+        }
 
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;

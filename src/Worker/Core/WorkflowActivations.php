@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Carbon\CarbonInterval;
 use Coresdk\Activity_result\ActivityResolution;
 use Coresdk\Activity_result\DoBackoff;
 use Coresdk\Child_workflow\ChildWorkflowCancellationType;
@@ -59,6 +60,9 @@ use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\Api\Sdk\V1\UserMetadata;
+use Temporal\Common\Priority as PriorityOptions;
+use Temporal\Common\RetryOptions;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
@@ -68,6 +72,7 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
@@ -79,6 +84,8 @@ use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\SuccessResponse;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
+use Temporal\Workflow\WorkflowInfo;
+use Temporal\Workflow\WorkflowType;
 
 final class WorkflowActivations
 {
@@ -114,28 +121,32 @@ final class WorkflowActivations
         $this->timeZone = new \DateTimeZone(\date_default_timezone_get());
     }
 
-    public static function retryInfo(?RetryPolicy $retry): ?array
+    /**
+     * @psalm-suppress InaccessibleProperty, PropertyTypeCoercion
+     */
+    public static function retryOptions(?RetryPolicy $retry): ?RetryOptions
     {
         if ($retry === null) {
             return null;
         }
 
-        return [
-            'InitialInterval' => self::nanos($retry->getInitialInterval()),
-            'BackoffCoefficient' => $retry->getBackoffCoefficient(),
-            'MaximumInterval' => self::nanos($retry->getMaximumInterval()),
-            'MaximumAttempts' => $retry->getMaximumAttempts(),
-            'NonRetryableErrorTypes' => \iterator_to_array($retry->getNonRetryableErrorTypes()),
-        ];
+        $options = (new \ReflectionClass(RetryOptions::class))->newInstanceWithoutConstructor();
+        $options->initialInterval = self::interval($retry->getInitialInterval());
+        $options->backoffCoefficient = $retry->getBackoffCoefficient();
+        $options->maximumInterval = self::interval($retry->getMaximumInterval());
+        $options->maximumAttempts = $retry->getMaximumAttempts();
+        $options->nonRetryableExceptions = \iterator_to_array($retry->getNonRetryableErrorTypes());
+
+        return $options;
     }
 
-    public static function priorityInfo(?Priority $priority): array
+    public static function priorityOptions(?Priority $priority): PriorityOptions
     {
-        return [
-            'PriorityKey' => $priority?->getPriorityKey() ?? 0,
-            'FairnessKey' => $priority?->getFairnessKey() ?? '',
-            'FairnessWeight' => (float) \sprintf('%.7g', $priority?->getFairnessWeight() ?? 0.0),
-        ];
+        $options = PriorityOptions::new($priority?->getPriorityKey() ?? 0);
+        $options->fairnessKey = $priority?->getFairnessKey() ?? '';
+        $options->fairnessWeight = (float) \sprintf('%.7g', $priority?->getFairnessWeight() ?? 0.0);
+
+        return $options;
     }
 
     public function handle(string $bytes): string
@@ -162,6 +173,11 @@ final class WorkflowActivations
     private static function nanos(?Duration $duration): int
     {
         return $duration === null ? 0 : $duration->getSeconds() * 1_000_000_000 + $duration->getNanos();
+    }
+
+    private static function interval(?Duration $duration): CarbonInterval
+    {
+        return DateInterval::parse(self::nanos($duration), DateInterval::FORMAT_NANOSECONDS);
     }
 
     /**
@@ -826,30 +842,7 @@ final class WorkflowActivations
     private function startWorkflow(InitializeWorkflow $init, string $runId, TickInfo $tick): ServerRequest
     {
         $payloads = $this->values($init->getArguments());
-        $options = [
-            'info' => [
-                'WorkflowExecution' => ['ID' => $init->getWorkflowId(), 'RunID' => $runId],
-                'WorkflowType' => ['Name' => $init->getWorkflowType()],
-                'TaskQueueName' => $this->taskQueue,
-                'WorkflowExecutionTimeout' => self::nanos($init->getWorkflowExecutionTimeout()),
-                'WorkflowRunTimeout' => self::nanos($init->getWorkflowRunTimeout()),
-                'WorkflowTaskTimeout' => self::nanos($init->getWorkflowTaskTimeout()),
-                'Namespace' => $this->namespace,
-                'Attempt' => $init->getAttempt(),
-                'CronSchedule' => $init->getCronSchedule() ?: null,
-                'ContinuedExecutionRunID' => $init->getContinuedFromExecutionRunId(),
-                'FirstRunID' => $init->getFirstExecutionRunId(),
-                'OriginalRunID' => $runId,
-                'ParentWorkflowNamespace' => $init->getParentWorkflowInfo()?->getNamespace() ?? '',
-                'ParentWorkflowExecution' => $this->execution($init->getParentWorkflowInfo()?->getWorkflowId(), $init->getParentWorkflowInfo()?->getRunId()),
-                'RootWorkflowExecution' => $this->execution($init->getRootWorkflow()?->getWorkflowId(), $init->getRootWorkflow()?->getRunId()),
-                'SearchAttributes' => $init->hasSearchAttributes() ? \json_decode($init->getSearchAttributes()->serializeToJsonString(), true) : null,
-                'Memo' => $init->hasMemo() ? \json_decode($init->getMemo()->serializeToJsonString(), true) : null,
-                'RetryPolicy' => self::retryInfo($init->getRetryPolicy()),
-                'Priority' => self::priorityInfo($init->getPriority()),
-            ],
-            'search_attributes' => $init->hasSearchAttributes() ? $this->typedSearchAttributes($init->getSearchAttributes()) : null,
-        ];
+        $options = ['info' => $this->workflowInfo($init, $runId)];
 
         $lastCompletion = $init->getLastCompletionResult()?->getPayloads();
         if ($lastCompletion !== null && \count($lastCompletion) > 0) {
@@ -867,6 +860,45 @@ final class WorkflowActivations
             id: $runId,
             header: $this->header($init->getHeaders()),
         );
+    }
+
+    /**
+     * @psalm-suppress InaccessibleProperty, ArgumentTypeCoercion, PropertyTypeCoercion
+     */
+    private function workflowInfo(InitializeWorkflow $init, string $runId): WorkflowInfo
+    {
+        $parent = $init->getParentWorkflowInfo();
+        $root = $init->getRootWorkflow();
+
+        $info = (new \ReflectionClass(WorkflowInfo::class))->newInstanceWithoutConstructor();
+        $info->execution = new WorkflowExecutionDto($init->getWorkflowId(), $runId);
+        $info->type = new WorkflowType();
+        $info->type->name = $init->getWorkflowType();
+        $info->taskQueue = $this->taskQueue;
+        $info->executionTimeout = self::interval($init->getWorkflowExecutionTimeout());
+        $info->runTimeout = self::interval($init->getWorkflowRunTimeout());
+        $info->taskTimeout = self::interval($init->getWorkflowTaskTimeout());
+        $info->namespace = $this->namespace;
+        $info->attempt = $init->getAttempt();
+        $info->cronSchedule = $init->getCronSchedule() ?: null;
+        $info->continuedExecutionRunId = $init->getContinuedFromExecutionRunId();
+        $info->firstExecutionRunId = $init->getFirstExecutionRunId();
+        $info->originalExecutionRunId = $runId;
+        $info->parentNamespace = $parent?->getNamespace() ?? '';
+        $info->parentExecution = $this->execution($parent?->getWorkflowId(), $parent?->getRunId());
+        $info->rootExecution = $this->execution($root?->getWorkflowId(), $root?->getRunId());
+        $info->typedSearchAttributes = TypedSearchAttributes::empty();
+        if ($init->hasSearchAttributes()) {
+            $info->searchAttributes = EncodedCollection::fromPayloadCollection($init->getSearchAttributes()->getIndexedFields(), $this->converter)->getValues();
+            $info->typedSearchAttributes = TypedSearchAttributes::fromJsonArray($this->typedSearchAttributes($init->getSearchAttributes()));
+        }
+        if ($init->hasMemo()) {
+            $info->memo = EncodedCollection::fromPayloadCollection($init->getMemo()->getFields(), $this->converter)->getValues();
+        }
+        $info->retryOptions = self::retryOptions($init->getRetryPolicy());
+        $info->priority = self::priorityOptions($init->getPriority());
+
+        return $info;
     }
 
     private function tickTime(?Timestamp $timestamp): \DateTimeImmutable
@@ -934,9 +966,12 @@ final class WorkflowActivations
         ]);
     }
 
-    private function execution(?string $workflowId, ?string $runId): ?array
+    /**
+     * @psalm-suppress ArgumentTypeCoercion
+     */
+    private function execution(?string $workflowId, ?string $runId): ?WorkflowExecutionDto
     {
-        return $workflowId ? ['ID' => $workflowId, 'RunID' => (string) $runId] : null;
+        return $workflowId ? new WorkflowExecutionDto($workflowId, (string) $runId) : null;
     }
 
     private function headers(): array

@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Internal\Marshaller\Type;
 use Carbon\CarbonInterval;
 use Google\Protobuf\Duration;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -50,6 +51,37 @@ final class DateIntervalTypeTestCase extends TestCase
 
         $this->assertIsInt($result);
         $this->assertSame(5_000_000_000, $result);
+    }
+
+    public static function provideIntervalsForNanoseconds(): iterable
+    {
+        yield 'zero' => [CarbonInterval::seconds(0)];
+        yield 'seconds' => [CarbonInterval::seconds(30)];
+        yield 'fraction' => [CarbonInterval::seconds(30)->microseconds(123456)];
+        yield 'hours minutes' => [CarbonInterval::create(0, 0, 0, 0, 25, 61, 59, 999999)];
+        yield 'inverted' => [CarbonInterval::seconds(5)->microseconds(250)->invert()];
+        yield 'huge hours' => [CarbonInterval::hours(1_000_000)->seconds(7)->microseconds(3)];
+        yield 'native' => [new \DateInterval('PT1H2M3S')];
+        yield 'native fraction' => [\DateInterval::createFromDateString('3 seconds + 7 microseconds')];
+        yield 'days' => [CarbonInterval::days(3)->hours(2)];
+        yield 'months' => [CarbonInterval::months(1)];
+        yield 'diff' => [CarbonInterval::diff('2026-01-01 00:00:00', '2026-01-01 05:06:07.5')];
+
+        \mt_srand(42);
+        for ($i = 0; $i < 50; ++$i) {
+            yield "random $i" => [
+                CarbonInterval::create(0, 0, 0, 0, \mt_rand(0, 100), \mt_rand(0, 59), \mt_rand(0, 59), \mt_rand(0, 999999)),
+            ];
+        }
+    }
+
+    #[DataProvider('provideIntervalsForNanoseconds')]
+    public function testSerializeNanosecondsSameAsCarbonTotal(\DateInterval $interval): void
+    {
+        $type = new DateIntervalType($this->createMock(MarshallerInterface::class), DateInterval::FORMAT_NANOSECONDS);
+        $expected = (int) \round(DateInterval::parse($interval)->totalMicroseconds * 1000);
+
+        $this->assertSame($expected, $type->serialize($interval));
     }
 
     public function testSerializeSeconds(): void

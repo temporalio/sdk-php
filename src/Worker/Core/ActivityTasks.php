@@ -24,6 +24,8 @@ use Coresdk\ActivityHeartbeat;
 use Coresdk\ActivityTaskCompletion;
 use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
+use Temporal\Activity\ActivityInfo;
+use Temporal\Activity\ActivityType;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -32,12 +34,16 @@ use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\TransportException;
 use Temporal\Interceptor\Header;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\DateTime;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowType;
 
 final class ActivityTasks implements RPCConnectionInterface
 {
@@ -181,39 +187,53 @@ final class ActivityTasks implements RPCConnectionInterface
         $input = $start->getInput();
         $details = $start->getHeartbeatDetails();
         $payloads = new Payloads(['payloads' => [...$input, ...$details]]);
-        $startedTime = $this->time($start->getStartedTime());
-        $timeout = $this->nanos($start->getStartToCloseTimeout()) ?: $this->nanos($start->getScheduleToCloseTimeout());
 
         return new ServerRequest(
             name: $start->getIsLocal() ? 'InvokeLocalActivity' : 'InvokeActivity',
             info: new TickInfo(new \DateTimeImmutable()),
             options: [
                 'name' => $start->getActivityType(),
-                'info' => [
-                    'TaskToken' => \base64_encode($token),
-                    'WorkflowType' => ['Name' => $start->getWorkflowType()],
-                    'WorkflowNamespace' => $start->getWorkflowNamespace(),
-                    'WorkflowExecution' => [
-                        'ID' => $start->getWorkflowExecution()?->getWorkflowId() ?? '',
-                        'RunID' => $start->getWorkflowExecution()?->getRunId() ?? '',
-                    ],
-                    'ActivityID' => $start->getActivityId(),
-                    'ActivityType' => ['Name' => $start->getActivityType()],
-                    'TaskQueue' => $taskQueue,
-                    'HeartbeatTimeout' => $this->nanos($start->getHeartbeatTimeout()),
-                    'ScheduledTime' => $this->time($start->getScheduledTime())->format(\DATE_RFC3339_EXTENDED),
-                    'StartedTime' => $startedTime->format(\DATE_RFC3339_EXTENDED),
-                    'Deadline' => $startedTime->modify(\sprintf('+%d microseconds', \intdiv($timeout, 1000)))->format(\DATE_RFC3339_EXTENDED),
-                    'Attempt' => $start->getAttempt(),
-                    'RetryPolicy' => WorkflowActivations::retryInfo($start->getRetryPolicy()),
-                    'Priority' => WorkflowActivations::priorityInfo($start->getPriority()),
-                ],
+                'info' => $this->info($token, $start, $taskQueue),
                 'heartbeatDetails' => \count($details),
             ],
             payloads: EncodedValues::fromPayloads($payloads, $this->converter),
             id: $start->getActivityId(),
             header: Header::fromPayloadCollection($start->getHeaderFields(), $this->converter),
         );
+    }
+
+    /**
+     * @psalm-suppress InaccessibleProperty, ArgumentTypeCoercion
+     */
+    private function info(string $token, Start $start, string $taskQueue): ActivityInfo
+    {
+        $startedTime = $this->time($start->getStartedTime());
+        $timeout = $this->nanos($start->getStartToCloseTimeout()) ?: $this->nanos($start->getScheduleToCloseTimeout());
+
+        $info = (new \ReflectionClass(ActivityInfo::class))->newInstanceWithoutConstructor();
+        $info->taskToken = $token;
+        $info->workflowType = new WorkflowType();
+        $info->workflowType->name = $start->getWorkflowType();
+        $info->workflowNamespace = $start->getWorkflowNamespace();
+        $info->workflowExecution = new WorkflowExecution(
+            $start->getWorkflowExecution()?->getWorkflowId() ?? '',
+            $start->getWorkflowExecution()?->getRunId() ?? '',
+        );
+        $info->id = $start->getActivityId();
+        $info->type = new ActivityType();
+        $info->type->name = $start->getActivityType();
+        $info->taskQueue = $taskQueue;
+        $info->heartbeatTimeout = DateInterval::parse($this->nanos($start->getHeartbeatTimeout()), DateInterval::FORMAT_NANOSECONDS);
+        $info->scheduledTime = DateTime::parse($this->time($start->getScheduledTime())->format(\DATE_RFC3339_EXTENDED));
+        $info->startedTime = DateTime::parse($startedTime->format(\DATE_RFC3339_EXTENDED));
+        $info->deadline = DateTime::parse(
+            $startedTime->modify(\sprintf('+%d microseconds', \intdiv($timeout, 1000)))->format(\DATE_RFC3339_EXTENDED),
+        );
+        $info->attempt = $start->getAttempt();
+        $info->priority = WorkflowActivations::priorityOptions($start->getPriority());
+        $info->retryOptions = WorkflowActivations::retryOptions($start->getRetryPolicy());
+
+        return $info;
     }
 
     private function time(?Timestamp $timestamp): \DateTimeImmutable
