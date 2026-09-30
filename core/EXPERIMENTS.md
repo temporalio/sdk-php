@@ -68,3 +68,34 @@ The same code in a hot loop (`handle()` 20 000 times, no FFI):
 An xdebug profile had pointed at `Marshaller->unmarshal` (65 % of the activity path); without xdebug it costs ~10 µs, so the profile was an instrumentation artefact.
 Result: the adapter adds ~8 µs of real work per task. The 15× gap between hot (23 µs) and in-worker (340 µs) cost is cold execution: at a few dozen tasks per second per process every task starts with cold caches, a thread wake-up and (on this Mac) often an efficiency core. **No change adopted**; the lever is fewer wake-ups and fewer idle processes, not faster adapter code.
 Side finding: the profiling helper had pcov enabled (the `run.sh` matrix did not), which inflated all per-phase numbers by ~30 %.
+
+## E4. Number of activity processes
+
+Interleaved A/B (2 repetitions each, 1 tokio thread per process):
+
+| variant | scenario | wf/s | act/s | p50 ms | worker CPU s | RSS MB |
+|---|---|---|---|---|---|---|
+| 4 activity processes | @100/s | 99.9 | 100 | 139 | 1.85 | 334 |
+| 1 activity process | @100/s | 99.7 | 100 | 141 | **1.68 (−9 %)** | **161** |
+| 4 activity processes | seq 200×5 | 107.9 | 540 | 1544 | 1.21 | 356 |
+| 1 activity process | seq 200×5 | 69.2 | 346 (−36 %) | 2538 | 1.19 | 185 |
+| 2 activity processes (separate series) | @100/s | 99.8 | 100 | 143 | 1.96 (≈ 4 processes) | 218 |
+
+Result: an idle activity process costs little CPU (a few %), and the process count is a capacity setting for blocking activities, not an efficiency one. **No change**: keep it a user setting (`activityProcesses`), and use Fibers for non-blocking activities.
+
+## E5. Real memory: RSS vs physical footprint
+
+The benchmark sums RSS, which counts shared file-backed pages (the php binary, the 30 MB bridge library, opcache code) once per process. macOS `footprint` (private dirty memory) after 300 workflows, 1 workflow + 4 activity processes:
+
+| transport | process | RSS MB | footprint MB |
+|---|---|---|---|
+| rr | `rr` (Go) | 82 | 63 |
+| rr | php workflow worker | 51 | 31 |
+| rr | php activity worker ×4 | 49 each | 28 each |
+| **rr total** | | **327** | **206** |
+| core | supervisor (php, idle) | 41 | 20 |
+| core | workflow process | 66 | 39 |
+| core | activity process ×4 | 58 each | 31 each |
+| **core total** | | **338** | **183 (−11 %)** |
+
+Result: with fresh child processes the core transport uses slightly more RSS but **11 % less real memory** than RoadRunner: the Go process (63 MB) is gone, each PHP process pays ~3 MB for the tokio runtime and bridge data, and the idle supervisor costs 20 MB. No change adopted; the RSS column in the benchmarks overstates both transports.
