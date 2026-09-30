@@ -58,7 +58,11 @@ function percentile(array $sorted, float $p): float
 
 if (isset($opts['part'])) {
     $part = (int) $opts['part'];
-    startWorkflows($address, $taskQueue, $workflowType, $prefix, \range($part, $workflows - 1, $concurrency), $activities, $payload, $rate, (float) $opts['started-at']);
+    $ids = [];
+    for ($id = $part; $id < $workflows; $id += $concurrency) {
+        $ids[] = $id;
+    }
+    startWorkflows($address, $taskQueue, $workflowType, $prefix, $ids, $activities, $payload, $rate, (float) $opts['started-at']);
     exit(0);
 }
 
