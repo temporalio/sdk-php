@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Worker\Core;
 
 use Carbon\CarbonInterval;
-use Coresdk\Workflow_activation\RemoveFromCache;
 use Coresdk\Workflow_activation\RemoveFromCache\EvictionReason;
 use Coresdk\Workflow_activation\WorkflowActivation;
 use Psr\Log\LoggerInterface;
@@ -116,7 +115,7 @@ class CoreWorkerFactory extends WorkerFactory
         return $this->supervise($roles);
     }
 
-    public function replay(History $history, string $workflowId): ?RemoveFromCache
+    public function replay(History $history, string $workflowId): void
     {
         $taskQueue = (string) $history->getEvents()[0]?->getWorkflowExecutionStartedEventAttributes()?->getTaskQueue()?->getName();
         $worker = $this->queues->find($taskQueue);
@@ -153,7 +152,7 @@ class CoreWorkerFactory extends WorkerFactory
                 foreach ($activation->getJobs() as $job) {
                     $eviction = $job->getRemoveFromCache();
                     if ($eviction !== null && !\in_array($eviction->getReason(), [EvictionReason::CACHE_FULL, EvictionReason::LANG_REQUESTED], true)) {
-                        $failure = $eviction;
+                        $failure = new ReplayFailedException($eviction->getMessage(), $eviction->getReason() === EvictionReason::NONDETERMINISM);
                     }
                 }
                 $bridge->completeWorkflowActivation($core, 0, $activations->handle($data));
@@ -162,7 +161,9 @@ class CoreWorkerFactory extends WorkerFactory
         }
         $this->finalize($bridge, [$core]);
 
-        return $failure;
+        if ($failure !== null) {
+            throw $failure;
+        }
     }
 
     private static function pem(?string $value): ?string
