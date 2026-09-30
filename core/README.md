@@ -60,6 +60,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` | `1` | activities that one activity process runs at the same time in Fibers on the Revolt event loop (only for non-blocking activity code, `revolt/event-loop` must be installed) |
 | `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | `10000` | sticky cache size per workflow process |
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process (1 thread uses 15–22 % less CPU than one per core, see `EXPERIMENTS.md` E2) |
+| `TEMPORAL_CORE_GRPC_COMPRESSION` | `gzip` | `gzip` (sdk-core default) or `none`: gzip on the worker's gRPC calls saves network bytes and costs 7–15 % worker CPU (`EXPERIMENTS.md` E17) |
 | `TEMPORAL_CORE_PROFILE` | off | `1` logs per-phase timings and process CPU to stderr every 10 s and at shutdown |
 | `TEMPORAL_CORE_LOG` | off | sdk-core log filter, for example `info` |
 

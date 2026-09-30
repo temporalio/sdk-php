@@ -52,7 +52,7 @@ Option A keeps all I/O in Rust threads. PHP blocks only when it has nothing to d
 
 ## 4. Benchmarks
 
-Final code (after E6–E13: 8 workflow task pollers split 4/4, mimalloc + LTO bridge, protobuf-built `WorkflowInfo`/`ActivityInfo`, cached activity stub prototypes).
+Final code on sdk-core 0.9.0 (crates.io), gzip on the worker's gRPC calls (the sdk-core default; `TEMPORAL_CORE_GRPC_COMPRESSION=none` is 7–15 % cheaper, E17).
 Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT/xdebug/pcov off. Temporal 1.29.3 + PostgreSQL in Docker (`bench/server`, 1 task-queue partition, recreated before the run). RoadRunner 2025.1.15.
 Both transports: 1 workflow process + 4 activity processes unless the label says otherwise. Mean of 2 runs per row, rr and core interleaved in each repetition, 0 failed workflows. Harness: `bench/matrix.sh`, table: `bench/summary.sh`.
 "worker CPU s" = CPU time of all worker processes (rr + PHP, or the PHP supervisor + children incl. Rust threads) during the measured run.
@@ -61,43 +61,43 @@ Both transports: 1 workflow process + 4 activity processes unless the label says
 
 | scenario | transport | p50 ms | p99 ms | worker CPU s |
 |---|---|---|---|---|
-| 1000 wf × 1 activity @ 50/s | rr | 14 | 21 | 4.05 |
-| | **core** | 13 | 20 | **2.15 (−47 %)** |
-| 1000 wf × 1 activity @ 100/s | rr | 13 | 36 | 3.33 |
-| | **core** | 12 | 31 | **1.73 (−48 %)** |
-| 1000 wf, no activities @ 100/s | rr | 6 | 16 | 1.63 |
-| | **core** | 5 | 12 | **0.87 (−47 %)** |
+| 1000 wf × 1 activity @ 50/s | rr | 13 | 25 | 3.75 |
+| | **core** | 13 | 21 | **2.05 (−45 %)** |
+| 1000 wf × 1 activity @ 100/s | rr | 13 | 48 | 3.28 |
+| | **core** | 13 | 34 | **1.76 (−46 %)** |
+| 1000 wf, no activities @ 100/s | rr | 6 | 19 | 1.61 |
+| | **core** | 5 | 14 | **0.85 (−47 %)** |
 
 **Full speed**
 
 | scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s |
 |---|---|---|---|---|---|---|
-| seq 1000 × 1 | rr | 241.9 | 242 | 1985 | 3192 | 2.67 |
-| | core | **284.0 (+17 %)** | 284 | 1719 | 1883 | **1.48** |
-| par 100 × 20 | rr | 21.9 | 437 | 2383 | 4441 | 2.13 |
-| | core | **25.0 (+14 %)** | 500 | 2104 | 3849 | **1.09** |
-| | core, 1 activity process, 200 Fibers | **44.0** | **879** | 1206 | 2141 | 0.79 |
-| seq 200 × 10 | rr | 47.7 | 477 | 2160 | 3851 | 3.21 |
-| | core | **55.3 (+16 %)** | 553 | 3337 | **3389** | **1.79** |
-| noact 2000 | rr | 347.9 | – | 2765 | 4181 | 2.34 |
-| | core | **564.8 (+62 %)** | – | 1320 | 1477 | **1.06** |
-| | core, 4 workflow processes | 592.8 | – | 31 | 81 | 1.37 |
+| seq 1000 × 1 | rr | 265.9 | 266 | 1806 | 2935 | 2.44 |
+| | core | **286.4 (+8 %)** | 286 | 1717 | 1939 | **1.56** |
+| par 100 × 20 | rr | 23.2 | 464 | 2268 | 4188 | 1.96 |
+| | core | 22.6 (−3 %) | 451 | 2370 | 4256 | **1.18** |
+| | core, 1 activity process, 200 Fibers | **42.9** | **857** | 1297 | 2210 | 0.85 |
+| seq 200 × 10 | rr | 48.4 | 484 | 1964 | 3703 | 2.95 |
+| | core | **54.8 (+13 %)** | 548 | 3391 | **3470** | **1.91** |
+| noact 2000 | rr | 378.3 | – | 2486 | 3864 | 2.05 |
+| | core | **540.7 (+43 %)** | – | 1290 | 1601 | **1.09** |
+| | core, 4 workflow processes | 611.7 | – | 31 | 75 | 1.43 |
 
 **Where RoadRunner cannot scale**
 
 | scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s | RSS MB |
 |---|---|---|---|---|---|---|---|
-| I/O: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.8 | 38 | 13168 | 25983 | 2.52 | 393 |
-| | **core, 1 activity process, 200 Fibers** | **91.5** | **914 (×24)** | **669** | **957** | 0.50 | 204 |
-| CPU-bound workflow code (5 ms per activation) | rr (1 workflow process, fixed) | 93.7 | 94 | 2304 | 2937 | 3.93 | 363 |
-| | **core, 4 workflow processes** | **266.4 (×2.8)** | 266 | **542** | **632** | 3.54 | 525 |
+| I/O: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.9 | 39 | 12910 | 25484 | 2.09 | 391 |
+| | **core, 1 activity process, 200 Fibers** | **88.8** | **887 (×23)** | **724** | **993** | 0.53 | 209 |
+| CPU-bound workflow code (5 ms per activation) | rr (1 workflow process, fixed) | 90.8 | 91 | 2365 | 2906 | 3.89 | 364 |
+| | **core, 4 workflow processes** | **269.1 (×3.0)** | 269 | **527** | **581** | 3.55 | 538 |
 
 Conclusions:
-- Worker CPU is **47–48 % lower** than RoadRunner at the same throughput and latency (fixed rate), and 45–55 % lower at full speed.
-- Throughput is higher in every full-speed scenario: +14…+17 % with activities, +62 % for `noact` (8 workflow task pollers, E7); p99 is lower in every scenario.
+- Worker CPU is **45–47 % lower** than RoadRunner at the same throughput and latency (fixed rate), and 35–47 % lower at full speed.
+- Throughput is higher or equal: +8 % `seq 1000×1`, +13 % `seq 200×10`, +43 % `noact` (8 workflow task pollers, E7), −3 % `par 100×20` (within run-to-run noise); p99 is lower in every scenario except `par 100×20`.
 - `seq 200×10`: the p50 is higher for core, the p99 and the total time are lower — core interleaves all 200 workflows, RoadRunner finishes early ones first.
-- Real memory (macOS footprint, E5) is 11 % lower; summed RSS is the same (it double-counts shared pages).
-- Several workflow processes (×2.8 on CPU-bound workflow code) and Fibers (×24 on I/O-bound activities) are not possible with RoadRunner. For light workflows 1 workflow process already reaches the server limit (E8).
+- Real memory: 11 % lower with fresh child processes (E5), 35 % lower (Linux PSS) with forked children without ext-grpc (E14).
+- Several workflow processes (×3.0 on CPU-bound workflow code) and Fibers (×23 on I/O-bound activities) are not possible with RoadRunner.
 
 ## 5. Where the time goes (debug labels, 1000 wf × 1 activity at 100 wf/s)
 

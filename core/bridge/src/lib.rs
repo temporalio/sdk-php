@@ -17,7 +17,9 @@ use std::{
     },
     time::{Duration, Instant},
 };
-use temporalio_client::{ClientTlsOptions, Connection, ConnectionOptions, TlsOptions};
+use temporalio_client::{
+    ClientTlsOptions, Connection, ConnectionOptions, GrpcCompression, TlsOptions,
+};
 use temporalio_common::{
     protos::coresdk::{
         ActivityHeartbeat, ActivityTaskCompletion,
@@ -392,7 +394,11 @@ fn versioning_strategy(config: &Value) -> Result<WorkerVersioningStrategy, Strin
         .unwrap_or(0) as i32;
     let default_versioning_behavior = match default_behavior {
         0 => None,
-        v => Some(VersioningBehavior::try_from(v).map_err(|e| e.to_string())?.into()),
+        v => Some(
+            VersioningBehavior::try_from(v)
+                .map_err(|e| e.to_string())?
+                .into(),
+        ),
     };
     Ok(WorkerVersioningStrategy::WorkerDeploymentBased(
         WorkerDeploymentOptions::new(
@@ -432,6 +438,16 @@ fn tls_options(tls: &Value) -> Option<TlsOptions> {
     )
 }
 
+fn grpc_compression() -> Result<GrpcCompression, String> {
+    match std::env::var("TEMPORAL_CORE_GRPC_COMPRESSION").as_deref() {
+        Err(_) | Ok("gzip") => Ok(GrpcCompression::Gzip),
+        Ok("none") => Ok(GrpcCompression::None),
+        Ok(other) => Err(format!(
+            "Invalid TEMPORAL_CORE_GRPC_COMPRESSION \"{other}\", use \"gzip\" or \"none\""
+        )),
+    }
+}
+
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
     let config: Value =
         serde_json::from_slice(config).map_err(|e| format!("Invalid config JSON: {e}"))?;
@@ -452,6 +468,7 @@ fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
         .identity(identity)
         .maybe_api_key(text("api_key"))
         .maybe_tls_options(config.get("tls").and_then(tls_options))
+        .grpc_compression(grpc_compression()?)
         .build();
     let handle = rt.core.tokio_handle();
     let worker = handle.block_on(async {

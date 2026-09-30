@@ -370,3 +370,25 @@ Tokio driven by the PHP thread (`current_thread` runtime, `block_on` inside `tpb
 While PHP runs workflow code the network does not move, so bursts lose the overlap between PHP work and gRPC. The mode also cannot work with the Revolt loop (nobody drives tokio while PHP waits in `stream_select`), and a long local activity or a blocking activity would stop workflow-task and activity heartbeats. **Rejected**: 3–5 % fewer instructions do not pay for lower burst throughput and these limits.
 
 Result: the boundary and the hand-offs are already the cheapest of the five SDKs; the remaining cost is gRPC/h2 work in sdk-core and the PHP SDK itself.
+
+## E17. sdk-core 0.9.0 (from the April 2026 revision)
+
+The bridge was on the sdk-core git revision `2872b536` (2026-04-26), taken from the `sdk-core` submodule of a local sdk-typescript checkout. It now uses the 0.9.0 release from crates.io (`temporalio-sdk-core` 0.9.0, `temporalio-client`/`temporalio-common` 1.0.0); the coresdk PHP messages in the `roadrunner-api-dto` fork branch are regenerated from `core-v0.9.0` (additive proto changes only). All gates are unchanged (Functional 182/184 on core, RR and core without ext-grpc; Acceptance 159/166 with the same 7 known failures at concurrency 1 and 50 and without ext-grpc; Linux fork check in Docker passes).
+
+Idle, 1 + 4 processes, 30 s: 97 → 21 M instructions (the per-worker 100 ms sysinfo thread is gone).
+
+Under load the first A/B showed +18–24 % instructions and −10 % `noact` throughput. The `sample` profile of the workflow process showed `miniz_oxide` deflate/inflate: `temporalio-client` 1.0 compresses every gRPC request with gzip and accepts gzip responses by default (`ConnectionOptions::grpc_compression`). Interleaved, 3 repetitions, server recreated before each:
+
+| variant | scenario | wf/s | worker CPU s | G instructions | G cycles |
+|---|---|---|---|---|---|
+| April revision | @100/s | 100.9 | 1.47 | 4.15 | 5.93 |
+| 0.9.0, gzip (default) | @100/s | 101.0 | 1.65 (+12 %) | 5.02 (+21 %) | 6.77 |
+| 0.9.0, no compression | @100/s | 101.0 | 1.52 | 4.13 | 6.17 |
+| April revision | seq 200×10 | 61.6 | 1.64 | 5.09 | 6.86 |
+| 0.9.0, gzip (default) | seq 200×10 | 57.9 | 1.89 (+15 %) | 6.30 (+24 %) | 7.88 |
+| 0.9.0, no compression | seq 200×10 | 59.9 | 1.69 | 5.10 | 7.03 |
+| April revision | noact 2000 | 626.1 | 0.94 | 3.36 | 3.85 |
+| 0.9.0, gzip (default) | noact 2000 | 602.6 | 1.04 (+11 %) | 3.94 (+17 %) | 4.32 |
+| 0.9.0, no compression | noact 2000 | 596.0 | 0.98 | 3.33 | 4.04 |
+
+Result: without compression 0.9.0 costs the same as the April revision; the whole difference is gzip. The bridge keeps the sdk-core default (gzip saves network bytes, which matters for Temporal Cloud and remote servers) and `TEMPORAL_CORE_GRPC_COMPRESSION=none` turns it off. The client calls from PHP through the bridge (E14) do not compress.
