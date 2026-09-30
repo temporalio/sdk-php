@@ -981,12 +981,12 @@ final class WorkflowActivations
 
     private function values(RepeatedField $payloads): EncodedValues
     {
-        return EncodedValues::fromPayloads(new Payloads(['payloads' => $payloads]), $this->converter);
+        return EncodedValues::fromPayloadCollection($payloads, $this->converter);
     }
 
     private function valuesFromPayload(?Payload $payload): ?EncodedValues
     {
-        return $payload === null ? null : EncodedValues::fromPayloads(new Payloads(['payloads' => [$payload]]), $this->converter);
+        return $payload === null ? null : EncodedValues::fromPayloadCollection(new \ArrayIterator([$payload]), $this->converter);
     }
 
     private function header(MapField $fields): Header

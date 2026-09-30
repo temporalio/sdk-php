@@ -182,7 +182,7 @@ final class ActivityTasks implements RPCConnectionInterface
     {
         $input = $start->getInput();
         $details = $start->getHeartbeatDetails();
-        $payloads = new Payloads(['payloads' => [...$input, ...$details]]);
+        $payloads = \count($details) === 0 ? $input : (new Payloads(['payloads' => [...$input, ...$details]]))->getPayloads();
 
         return new ServerRequest(
             name: $start->getIsLocal() ? 'InvokeLocalActivity' : 'InvokeActivity',
@@ -192,7 +192,7 @@ final class ActivityTasks implements RPCConnectionInterface
                 'info' => $this->info($token, $start, $taskQueue),
                 'heartbeatDetails' => \count($details),
             ],
-            payloads: EncodedValues::fromPayloads($payloads, $this->converter),
+            payloads: EncodedValues::fromPayloadCollection($payloads, $this->converter),
             id: $start->getActivityId(),
             header: Header::fromPayloadCollection($start->getHeaderFields(), $this->converter),
         );
