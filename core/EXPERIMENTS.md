@@ -226,7 +226,7 @@ Result:
 - Opcache: 3 % faster hot path and 3× less heap, the benchmark and the CI job keep it on. Each CLI process has its own shared memory, so opcache does not share compiled code between the worker processes.
 - `file_cache` is the only way to share compiled code between the fresh child processes (fork is not possible with ext-grpc), it saves ~20 ms per process start. A worker starts its processes once, so this is not a throughput lever.
 - Preload: not usable (crash on PHP 8.5.6), and for a long-lived worker it only saves the one-time class load.
-- JIT: the steady-state hot path is 20–33 % faster, but in a 10-second run the trace compilation costs more CPU than it saves.
+- JIT: the hot loop is 20–33 % faster, but in a 10-second run the trace compilation costs more CPU than it saves. A 60-second run (`seq 6000×1 @100/s`, 2 repetitions on a quiet machine) gives 10.23 vs 10.43 CPU s (−2 %, noise) and +32 MB RSS: PHP is a small part of the worker CPU. Not adopted.
 - The supervisor passes the parent `opcache.*` settings to the child processes, so a user enables JIT or `file_cache` with `php -d ... worker.php` and no code change.
 
 ## E13. Bridge hot path

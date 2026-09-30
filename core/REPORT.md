@@ -52,54 +52,52 @@ Option A keeps all I/O in Rust threads. PHP blocks only when it has nothing to d
 
 ## 4. Benchmarks
 
-Final code (`e07ebfbe`: 1 tokio thread per process, fresh child processes, production fixes).
-Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT/xdebug/pcov off. Temporal 1.29.3 + PostgreSQL in Docker (`bench/server`, 1 task-queue partition). RoadRunner 2025.1.15.
-Both transports: 1 workflow process + 4 activity processes unless the label says otherwise. Mean of 2 runs per row, 44 runs, 0 failed workflows. Harness: `bench/matrix.sh`, table: `bench/summary.sh`.
+Final code (after E6–E13: 8 workflow task pollers split 4/4, mimalloc + LTO bridge, protobuf-built `WorkflowInfo`/`ActivityInfo`, cached activity stub prototypes).
+Setup: Apple M5 Max (18 cores), PHP 8.5.6 NTS, opcache on, JIT/xdebug/pcov off. Temporal 1.29.3 + PostgreSQL in Docker (`bench/server`, 1 task-queue partition, recreated before the run). RoadRunner 2025.1.15.
+Both transports: 1 workflow process + 4 activity processes unless the label says otherwise. Mean of 2 runs per row, rr and core interleaved in each repetition, 0 failed workflows. Harness: `bench/matrix.sh`, table: `bench/summary.sh`.
 "worker CPU s" = CPU time of all worker processes (rr + PHP, or the PHP supervisor + children incl. Rust threads) during the measured run.
 
 **Fixed rate (server not saturated): worker cost**
 
 | scenario | transport | p50 ms | p99 ms | worker CPU s |
 |---|---|---|---|---|
-| 1000 wf × 1 activity @ 50/s | rr | 16 | 27 | 4.45 |
-| | **core** | 16 | 26 | **2.73 (−39 %)** |
-| 1000 wf × 1 activity @ 100/s | rr | 18 | 82 | 4.10 |
-| | **core** | 18 | **51** | **2.51 (−39 %)** |
-| 1000 wf, no activities @ 100/s | rr | 7 | 29 | 1.90 |
-| | **core** | 6 | 23 | **1.14 (−40 %)** |
+| 1000 wf × 1 activity @ 50/s | rr | 14 | 21 | 4.05 |
+| | **core** | 13 | 20 | **2.15 (−47 %)** |
+| 1000 wf × 1 activity @ 100/s | rr | 13 | 36 | 3.33 |
+| | **core** | 12 | 31 | **1.73 (−48 %)** |
+| 1000 wf, no activities @ 100/s | rr | 6 | 16 | 1.63 |
+| | **core** | 5 | 12 | **0.87 (−47 %)** |
 
 **Full speed**
 
 | scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s |
 |---|---|---|---|---|---|---|
-| seq 1000 × 1 | rr | 188.5 | 189 | 2510 | 4055 | 3.31 |
-| | core | **209.7** | 210 | 2145 | 3607 | **2.17** |
-| par 100 × 20 | rr | 18.9 | 377 | 2866 | 5181 | 2.63 |
-| | core | 17.9 | 358 | 3110 | 5516 | **1.66** |
-| | core, 1 activity process, 200 Fibers | **34.6** | **692** | 1537 | 2761 | 1.23 |
-| seq 200 × 10 (interleaved A/B, 3 runs) | rr | 36.7 | 367 | 2611 | 4853 | 3.86 |
-| | core | **43.7** | **437** | 4185 | **4353** | **2.54** |
-| noact 2000 (interleaved A/B, 3 runs) | rr | 252.0 | – | 3730 | 5466 | 3.02 |
-| | core, 1 tokio thread | **281.5** | – | 3259 | 4846 | **1.80** |
-| | core, 18 tokio threads | 267.6 | – | 3563 | 5232 | 2.18 |
-| | core, 4 workflow processes (matrix) | **457.7** | – | 1649 | 1873 | 1.99 |
+| seq 1000 × 1 | rr | 241.9 | 242 | 1985 | 3192 | 2.67 |
+| | core | **284.0 (+17 %)** | 284 | 1719 | 1883 | **1.48** |
+| par 100 × 20 | rr | 21.9 | 437 | 2383 | 4441 | 2.13 |
+| | core | **25.0 (+14 %)** | 500 | 2104 | 3849 | **1.09** |
+| | core, 1 activity process, 200 Fibers | **44.0** | **879** | 1206 | 2141 | 0.79 |
+| seq 200 × 10 | rr | 47.7 | 477 | 2160 | 3851 | 3.21 |
+| | core | **55.3 (+16 %)** | 553 | 3337 | **3389** | **1.79** |
+| noact 2000 | rr | 347.9 | – | 2765 | 4181 | 2.34 |
+| | core | **564.8 (+62 %)** | – | 1320 | 1477 | **1.06** |
+| | core, 4 workflow processes | 592.8 | – | 31 | 81 | 1.37 |
 
 **Where RoadRunner cannot scale**
 
 | scenario | transport | wf/s | act/s | p50 ms | p99 ms | worker CPU s | RSS MB |
 |---|---|---|---|---|---|---|---|
-| I/O: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.9 | 39 | 12874 | 25481 | 2.43 | 390 |
-| | **core, 1 activity process, 200 Fibers** | **77.9** | **778 (×20)** | **705** | **1185** | 0.73 | 199 |
-| CPU-bound workflow code (5 ms per activation) | rr (1 workflow process, fixed) | 86.5 | 87 | 2455 | 3038 | 4.13 | 358 |
-| | **core, 4 workflow processes** | **220.7 (×2.6)** | 221 | **782** | **877** | 3.75 | 523 |
+| I/O: 100 wf × 10 parallel activities of 100 ms | rr (4 activity processes) | 3.8 | 38 | 13168 | 25983 | 2.52 | 393 |
+| | **core, 1 activity process, 200 Fibers** | **91.5** | **914 (×24)** | **669** | **957** | 0.50 | 204 |
+| CPU-bound workflow code (5 ms per activation) | rr (1 workflow process, fixed) | 93.7 | 94 | 2304 | 2937 | 3.93 | 363 |
+| | **core, 4 workflow processes** | **266.4 (×2.8)** | 266 | **542** | **632** | 3.54 | 525 |
 
 Conclusions:
-- Worker CPU is **34–40 % lower** than RoadRunner at the same throughput and latency (fixed rate), and 25–40 % lower at full speed.
-- Throughput is the same or higher (+11 % `seq 1000×1`, +19 % `seq 200×10`, +12 % `noact` in interleaved runs); p99 is lower in every full-speed scenario except `par 100×20` (−5 % throughput, within run-to-run noise).
+- Worker CPU is **47–48 % lower** than RoadRunner at the same throughput and latency (fixed rate), and 45–55 % lower at full speed.
+- Throughput is higher in every full-speed scenario: +14…+17 % with activities, +62 % for `noact` (8 workflow task pollers, E7); p99 is lower in every scenario.
 - `seq 200×10`: the p50 is higher for core, the p99 and the total time are lower — core interleaves all 200 workflows, RoadRunner finishes early ones first.
 - Real memory (macOS footprint, E5) is 11 % lower; summed RSS is the same (it double-counts shared pages).
-- Several workflow processes (×2.6 on CPU-bound workflow code, ×1.9 on `noact` bursts) and Fibers (×20 on I/O-bound activities) are not possible with RoadRunner.
-- Order effects: in a sequential matrix the Docker server slows down over time; the `noact 2000` and `seq 200×10` rows above therefore use interleaved A/B runs (the sequential matrix had shown core −17 % and −5 % for them, which the interleaved runs did not reproduce).
+- Several workflow processes (×2.8 on CPU-bound workflow code) and Fibers (×24 on I/O-bound activities) are not possible with RoadRunner. For light workflows 1 workflow process already reaches the server limit (E8).
 
 ## 5. Where the time goes (debug labels, 1000 wf × 1 activity at 100 wf/s)
 
