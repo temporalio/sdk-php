@@ -6,45 +6,50 @@ use crate::ffi::{
 use crate::queue::{Queue, error_status};
 use crate::runtime::TpbRuntime;
 use prost::Message;
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::sync::Arc;
 use temporalio_client::Connection;
 use temporalio_common::protos::coresdk::{
     ActivityHeartbeat, ActivityTaskCompletion, workflow_completion::WorkflowActivationCompletion,
 };
 use temporalio_sdk_core::Worker;
+use tokio::sync::{OwnedRwLockReadGuard, RwLock};
 
 const FINALIZED: &str = "Worker is already finalized";
-const FINALIZE_WAIT: Duration = Duration::from_secs(5);
-const FINALIZE_RETRY_INTERVAL: Duration = Duration::from_millis(10);
 const CALL_OK: i32 = 0;
 const CALL_FAILED: i32 = 1;
 
 pub struct TpbWorker {
-    worker: Option<Arc<Worker>>,
+    worker: Arc<RwLock<Option<Worker>>>,
     queue: Arc<Queue>,
 }
 
 impl TpbWorker {
     pub fn new(worker: Option<Worker>, queue: Arc<Queue>) -> Self {
         Self {
-            worker: worker.map(Arc::new),
+            worker: Arc::new(RwLock::new(worker)),
             queue,
         }
     }
 
-    fn core(&self, tag: u64, kind: i32) -> Option<Arc<Worker>> {
-        if self.worker.is_none() {
+    fn core(&self, tag: u64, kind: i32) -> Option<OwnedRwLockReadGuard<Option<Worker>, Worker>> {
+        let core = self
+            .worker
+            .clone()
+            .try_read_owned()
+            .ok()
+            .and_then(|worker| OwnedRwLockReadGuard::try_map(worker, Option::as_ref).ok());
+        if core.is_none() {
             self.queue
                 .push(tag, kind, STATUS_ERROR, FINALIZED.as_bytes().to_vec());
         }
-        self.worker.clone()
+        core
     }
 
     fn call(&self, body: impl FnOnce(&Worker)) -> i32 {
-        let Some(core) = &self.worker else {
+        let Ok(worker) = self.worker.try_read() else {
+            return CALL_FAILED;
+        };
+        let Some(core) = worker.as_ref() else {
             return CALL_FAILED;
         };
         let _guard = self.queue.handle.enter();
@@ -250,49 +255,24 @@ pub unsafe extern "C" fn tpb_worker_finalize_shutdown(w: *mut TpbWorker, tag: u6
     guard(
         |_| (),
         || {
-            let w = unsafe { &mut *w };
-            let Some(core) = w.worker.take() else {
-                return w
-                    .queue
-                    .push_error(tag, KIND_SHUTDOWN_FINALIZED, Err(FINALIZED.into()));
-            };
+            let w = unsafe { &*w };
+            let worker = w.worker.clone();
             let queue = w.queue.clone();
             w.queue
                 .spawn(tag, KIND_SHUTDOWN_FINALIZED, error_status, async move {
-                    match finalize(core).await {
-                        Ok(()) => queue.push(tag, KIND_SHUTDOWN_FINALIZED, STATUS_OK, Vec::new()),
-                        Err(message) => queue.push(
+                    let core = worker.write().await.take();
+                    let Some(core) = core else {
+                        return queue.push_error(
                             tag,
                             KIND_SHUTDOWN_FINALIZED,
-                            STATUS_ERROR,
-                            message.into_bytes(),
-                        ),
-                    }
+                            Err(FINALIZED.into()),
+                        );
+                    };
+                    core.finalize_shutdown().await;
+                    queue.push(tag, KIND_SHUTDOWN_FINALIZED, STATUS_OK, Vec::new());
                 });
         },
     )
-}
-
-async fn finalize(mut core: Arc<Worker>) -> Result<(), String> {
-    let deadline = Instant::now() + FINALIZE_WAIT;
-    loop {
-        match Arc::try_unwrap(core) {
-            Ok(core) => {
-                core.finalize_shutdown().await;
-                return Ok(());
-            }
-            Err(shared) if Instant::now() < deadline => {
-                core = shared;
-                tokio::time::sleep(FINALIZE_RETRY_INTERVAL).await;
-            }
-            Err(shared) => {
-                return Err(format!(
-                    "Cannot finalize, {} references are alive, wait for all polls and completions first",
-                    Arc::strong_count(&shared)
-                ));
-            }
-        }
-    }
 }
 
 #[unsafe(no_mangle)]
