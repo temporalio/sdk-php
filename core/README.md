@@ -9,7 +9,7 @@ This directory holds the native part of the RoadRunner-free worker transport.
 | `docs/protocol-mapping.md` | RoadRunner ↔ PHP SDK ↔ sdk-core message mapping, gaps and risks. |
 | `REPORT.md` | Why RoadRunner exists, what was tried, benchmark results, limitations. |
 
-The PHP side is in `src/Worker/Core/`.
+The PHP side is in `src/Worker/Core/` (worker, supervisor, adapter), `src/Internal/Bridge/` (FFI bridge, `TEMPORAL_CORE_*` env, connection options) and `src/Client/GRPC/Core/` (gRPC client without ext-grpc).
 
 The PHP classes for the `coresdk.*` protos (`Coresdk\...`) come from `roadrunner-php/roadrunner-api-dto`, generated from the same sdk-core release as the bridge (`sdk-core` submodule there, `core-v0.9.0`). Bump both together.
 
@@ -67,8 +67,8 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 The worker sends the `client-name: temporal-php-2` and `client-version: <temporal/sdk version>` headers, as RoadRunner does.
 
 `SIGTERM`/`SIGINT` to the parent process stops all children gracefully. Running activities get `WorkerOptions::$workerStopTimeout` to finish (0 by default, as in sdk-go), then they are cancelled. A child that is still alive 10 s after that gets `SIGKILL`.
-A child that exits unexpectedly is started again, with a growing delay if it keeps crashing right after start. A child that crashes during the first start stops the whole worker (a configuration error). A child stops by itself when the supervisor process is gone.
-The exit code is non-zero when a child crashed, was killed, or an sdk-core worker shut down unexpectedly.
+A child that exits unexpectedly is started again after 1, 2, 4 … 30 s; the delay goes back to 0 after the child runs for 60 s. A child that exits in the first second of the first start stops the whole worker (a configuration error). A child stops by itself when the supervisor process is gone.
+The exit code is the highest exit code of the children (128 + signal number for a child stopped by a signal), so it is non-zero when a child crashed, was killed, or an sdk-core worker shut down unexpectedly.
 
 Mapped `WorkerOptions`: workflow/activity pollers and concurrency, `workerActivitiesPerSecond`, `taskQueueActivitiesPerSecond`, `stickyScheduleToStartTimeout`, `workerStopTimeout`, `disableWorkflowWorker`, `localActivityWorkerOnly`, `workflowPanicPolicy` (for panics in workflow code), `identity`, `buildID`, `deploymentOptions`. Worker plugins (`WorkerPluginInterface::run()`) wrap every worker process.
 
@@ -79,6 +79,10 @@ Mapped `WorkerOptions`: workflow/activity pollers and concurrency, `workerActivi
 ## gRPC client without ext-grpc
 
 When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` and the testing `TestService` send their calls through the sdk-core bridge (tonic, rustls with the system roots). `create()` and `createSSL()` work as before; the SDK retries, deadlines, metadata and API key are unchanged. Inside a Fibers activity process a call suspends only its own Fiber.
+
+## Tests
+
+`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, see `REPORT.md` §6.
 
 ## Benchmarks
 

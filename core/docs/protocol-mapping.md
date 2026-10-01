@@ -9,10 +9,10 @@ Path aliases used below:
 | `GO` | `~/go/pkg/mod/go.temporal.io/sdk@v1.48.1-0.20260828153826-57cc5a7d6194/internal` (the version pinned in `RRT/go.mod:18`) |
 | `CP` | `temporalio/sdk-rust` `crates/protos/protos/local/temporal/sdk/core` |
 | `CORE` | `temporalio/sdk-rust` `crates/sdk-core/src` |
-
-The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`; the bridge now uses the `core-v0.9.0` release (`EXPERIMENTS.md` E17), where the files moved but the cited code did not change in a way that matters here.
 | `PY` | `sdk-python/temporalio/worker/_workflow_instance.py` |
 | `TS` | `sdk-typescript/packages/workflow/src` |
+
+The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`; the bridge now uses the `core-v0.9.0` release (`EXPERIMENTS.md` E17), where the files moved but the cited code did not change in a way that matters here.
 
 ---
 
@@ -20,15 +20,15 @@ The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`;
 
 | Seam | Where | What the adapter must do |
 |---|---|---|
-| Host connection | `PHP/WorkerFactory.php:257-271` (`run(?HostConnectionInterface $host)`, loop `waitBatch()` → `dispatch()` → `send()`) | Implement `HostConnectionInterface` (`waitBatch(): ?CommandBatch`, `send(string)`, `error()`). `CommandBatch{messages: string, context: array}`. The frame is decoded by `ProtoCodec` only when `$_SERVER['RR_CODEC']` is `proto`/`protobuf` (`WorkerFactory.php:353-361`). Otherwise `JsonCodec` is used. |
-| Direct objects | `WorkerFactory::dispatch()` `PHP/WorkerFactory.php:367-386` | Build `ServerRequest`/`SuccessResponse`/`FailureResponse` with a `TickInfo`, call `env->update()`, `client->dispatch()` / `server->dispatch($cmd, $headers)`, then `tick()`, then read the `ArrayQueue`. This is private code, so the seam is only usable through a subclass or a change. |
-| RPC | `PHP/Worker/Transport/RPCConnectionInterface.php` (`call(string $method, $payload)`), injected by `WorkerFactory::create(rpc:)` `WorkerFactory.php:151-165` | Implement `call('temporal.RecordActivityHeartbeat', …)`. |
+| Host connection | `PHP/WorkerFactory.php:256-275` (`run(?HostConnectionInterface $host)`, loop `waitBatch()` → `dispatch()` → `send()`) | Implement `HostConnectionInterface` (`waitBatch(): ?CommandBatch`, `send(string)`, `error()`). `CommandBatch{messages: string, context: array}`. The frame is decoded by `ProtoCodec` only when `$_SERVER['RR_CODEC']` is `proto`/`protobuf` (`WorkerFactory.php:387-396`). Otherwise `JsonCodec` is used. |
+| Direct objects | `WorkerFactory::dispatchCommands()` `PHP/WorkerFactory.php:348-362` | Build `ServerRequest`/`SuccessResponse`/`FailureResponse` with a `TickInfo` and pass them to `dispatchCommands()` (`env->update()`, `client->dispatch()` / `server->dispatch($cmd, $headers)`, then `tick()`), then read the `ArrayQueue`. The method was private code inside `dispatch()`; this work made it protected, and `CoreWorkerFactory` uses this seam. |
+| RPC | `PHP/Worker/Transport/RPCConnectionInterface.php` (`call(string $method, $payload)`), injected by `WorkerFactory::create(rpc:)` `WorkerFactory.php:149-163` | Implement `call('temporal.RecordActivityHeartbeat', …)`. |
 
-`WorkerFactory::dispatch()` semantics (`PHP/WorkerFactory.php:367-386`):
+`WorkerFactory::dispatch()` semantics (`PHP/WorkerFactory.php:401-406` and `dispatchCommands()` `:348-362`):
 1. Decode every message of the batch. For each message: `env->update(TickInfo)` (sets `isReplaying`, `tickTime`: `PHP/Worker/Environment/Environment.php:36-40`).
 2. `ServerResponseInterface` → `Client::dispatch()` resolves or rejects the `Deferred` of the request with that `id` (`PHP/Internal/Transport/Client.php:48-70`). An unknown id pushes `UndefinedResponse` (`Client.php:52`).
-3. `ServerRequestInterface` → `Server::dispatch()` → route. `headers['taskQueue']` absent → factory router (only `GetWorkerInfo`). Present → `Worker::dispatch()` (`WorkerFactory.php:388-398`).
-4. `tick()` once: `ON_SIGNAL`, `ON_CALLBACK`, `ON_QUERY`, `ON_TICK`, `ON_FINALLY` (`WorkerFactory.php:278-285`).
+3. `ServerRequestInterface` → `Server::dispatch()` → route. `headers['taskQueue']` absent → factory router (only `GetWorkerInfo`). Present → `Worker::dispatch()` (`WorkerFactory.php:408-419`).
+4. `tick()` once: `ON_SIGNAL`, `ON_CALLBACK`, `ON_QUERY`, `ON_TICK`, `ON_FINALLY` (`WorkerFactory.php:277-284`).
 5. Encode the whole response queue (`ArrayQueue`) in push order and return it.
 
 ---
@@ -45,7 +45,7 @@ The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`;
 
 | JSON key | Go source (`RRT/aggregatedpool/handler.go:27-37`) | PHP use |
 |---|---|---|
-| `taskQueue` (omitempty) | `WorkflowInfo().TaskQueueName` | Routing to the `Worker` (`WorkerFactory.php:388-398`). Activities: `info.TaskQueue` (`activity.go:100-103`). Empty for `GetWorkerInfo`. |
+| `taskQueue` (omitempty) | `WorkflowInfo().TaskQueueName` | Routing to the `Worker` (`WorkerFactory.php:408-419`). Activities: `info.TaskQueue` (`activity.go:100-103`). Empty for `GetWorkerInfo`. |
 | `tickTime` (omitempty) | `env.Now().Format(time.RFC3339)` — **second precision** | `TickInfo.time` (`ProtoCodec.php:65-71`, header wins over message field) |
 | `replay` (omitempty) | `env.IsReplaying()` | `TickInfo.isReplaying` |
 | `history_length` (omitempty) | `GetCurrentHistoryLength()` | `TickInfo.historyLength` |
@@ -363,9 +363,9 @@ Determinism needs only a **fixed** order, because core gives the same jobs on re
 
 | Item | Location | Core replacement |
 |---|---|---|
-| `GetWorkerInfo` handshake (task queues, `WorkerOptions`, workflows with `versioning_behavior`, activities, `PhpSdkVersion`, `Flags.ApiKey`) | `PHP/WorkerFactory.php:304-313`, `Router/GetWorkerInfo.php` | Call the route or read `WorkerFactory` queues to build core `WorkerConfig`. Map `WorkerOptions` (`PHP/Worker/WorkerOptions.php` keys `MaxConcurrent*`, `*PerSecond`, `StickyScheduleToStartTimeout`, `WorkflowPanicPolicy`, `DeadlockDetectionTimeout`, `MaxHeartbeatThrottleInterval`, `DisableEagerActivities`, `BuildID`, `UseBuildIDForVersioning`, `DeploymentOptions`, …). `versioning_behavior` → `Success.versioning_behavior`. |
-| Default `RoadRunner::create()` / `Goridge::create()` | `WorkerFactory.php:158,259`, `RoadRunner.php`, `RoadRunnerVersionChecker.php` | Pass the adapter host and the adapter RPC |
-| `RR_CODEC` env | `WorkerFactory.php:353-361` | Set it, or bypass the codec |
+| `GetWorkerInfo` handshake (task queues, `WorkerOptions`, workflows with `versioning_behavior`, activities, `PhpSdkVersion`, `Flags.ApiKey`) | `PHP/WorkerFactory.php:303-314`, `Router/GetWorkerInfo.php` | Call the route or read `WorkerFactory` queues to build core `WorkerConfig`. Map `WorkerOptions` (`PHP/Worker/WorkerOptions.php` keys `MaxConcurrent*`, `*PerSecond`, `StickyScheduleToStartTimeout`, `WorkflowPanicPolicy`, `DeadlockDetectionTimeout`, `MaxHeartbeatThrottleInterval`, `DisableEagerActivities`, `BuildID`, `UseBuildIDForVersioning`, `DeploymentOptions`, …). `versioning_behavior` → `Success.versioning_behavior`. |
+| Default `RoadRunner::create()` / `Goridge::create()` | `WorkerFactory.php:158,258`, `RoadRunner.php`, `RoadRunnerVersionChecker.php` | Pass the adapter host and the adapter RPC |
+| `RR_CODEC` env | `WorkerFactory.php:387-396` | Set it, or bypass the codec |
 | RPC `temporal.RecordActivityHeartbeat` | `ActivityContext.php:123-129` | §5.3 |
 | RPC `temporal.UpdateAPIKey` (user doc) | `PHP/Worker/ServiceCredentials.php:30-45`, `RRT/rpc.go:421` | core client API key update |
 | RPC `temporal.ReplayWorkflowHistory`, `ReplayWorkflow`, `DownloadWorkflowHistory`, `ReplayFromJSON` | `testing/src/Replay/WorkflowReplayer.php:55-120`, `RRT/rpc.go:118-420` | core replayer (`tpb_replayer_new` in `core/bridge/src/replay.rs`, used by `PHP/Worker/Core/CoreReplayer.php`) |
