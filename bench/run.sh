@@ -6,7 +6,7 @@ if [ $# -lt 5 ]; then
     exit 1
 fi
 
-TRANSPORT=$1 SCENARIO=$2 WORKFLOWS=$3 ACTIVITIES=$4 PAYLOAD=$5
+TRANSPORT=$1 SCENARIO=$2 WORKFLOWS=$3 ACTIVITIES=$4 PARAM=$5
 BENCH_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$BENCH_DIR"
 
@@ -74,7 +74,9 @@ cpu_seconds() {
 
 echo "worker started (pid $WORKER_PID), warmup: $WARMUP workflows" >&2
 
-$PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency=2 --timeout="$TIMEOUT" > /dev/null
+if [ "$WARMUP" -gt 0 ]; then
+    $PHP starter.php --scenario="$SCENARIO" --workflows="$WARMUP" --activities="$ACTIVITIES" --param="$PARAM" --concurrency=2 --timeout="$TIMEOUT" > /dev/null
+fi
 echo "warmup done" >&2
 
 (
@@ -87,7 +89,7 @@ SAMPLER_PID=$!
 
 CPU_BEFORE=$(cpu_seconds)
 RUSAGE_BEFORE=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0")
-RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency="$CONCURRENCY" --rate="$RATE" --timeout="$TIMEOUT")
+RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --param="$PARAM" --concurrency="$CONCURRENCY" --rate="$RATE" --timeout="$TIMEOUT")
 CPU_AFTER=$(cpu_seconds)
 RUSAGE_AFTER=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0")
 RUSAGE=$(jq -nc --argjson a "[${RUSAGE_BEFORE// /,}]" --argjson b "[${RUSAGE_AFTER// /,}]" '{instructions: ($b[0] - $a[0]), cycles: ($b[1] - $a[1])}')

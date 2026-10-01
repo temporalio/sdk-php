@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-const BENCH_DEFAULT_ADDRESS = '127.0.0.1:7557';
-const BENCH_DEFAULT_TASK_QUEUE = 'bench';
-const BENCH_DEFAULT_ACTIVITY_WORKERS = 4;
+function benchEnv(string $name): string
+{
+    $value = \getenv($name);
+    if ($value === false || $value === '') {
+        throw new \RuntimeException("$name is not set, run the benchmark through bench/run.sh or set it");
+    }
+
+    return $value;
+}
 
 foreach (\glob(__DIR__ . '/src/*.php') as $file) {
     require_once $file;

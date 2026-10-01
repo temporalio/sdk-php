@@ -16,7 +16,7 @@ require __DIR__ . '/autoload.php';
 function registerBench(WorkerFactoryInterface $factory): void
 {
     $factory
-        ->newWorker(\getenv('BENCH_TASK_QUEUE') ?: BENCH_DEFAULT_TASK_QUEUE)
+        ->newWorker(benchEnv('BENCH_TASK_QUEUE'))
         ->registerWorkflowTypes(BenchWorkflow::class, BenchParallelWorkflow::class, BenchIoWorkflow::class, BenchCpuWorkflow::class)
         ->registerActivity(BenchActivity::class);
 }
@@ -31,13 +31,14 @@ function runRoadRunner(): void
 function runCore(): void
 {
     $factory = CoreWorkerFactory::create(
-        activityProcesses: (int) (\getenv('BENCH_ACTIVITY_WORKERS') === false ? BENCH_DEFAULT_ACTIVITY_WORKERS : \getenv('BENCH_ACTIVITY_WORKERS')),
+        address: benchEnv('TEMPORAL_ADDRESS'),
+        activityProcesses: (int) benchEnv('BENCH_ACTIVITY_WORKERS'),
     );
     registerBench($factory);
     exit($factory->run());
 }
 
-$transport = \getenv('BENCH_TRANSPORT') ?: 'rr';
+$transport = benchEnv('BENCH_TRANSPORT');
 match ($transport) {
     'rr' => runRoadRunner(),
     'core' => runCore(),

@@ -94,7 +94,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 | variable | default | meaning |
 |---|---|---|
-| `TEMPORAL_ADDRESS` | `127.0.0.1:7557` (the `bench/server` Docker server) | server address |
+| `TEMPORAL_ADDRESS` | `127.0.0.1:7557` (the `bench/server` Docker server); `run.sh` sets it, `worker.php` and `starter.php` require it | server address |
 | `BENCH_RATE` | `0` (as fast as possible) | workflows started per second |
 | `BENCH_CONCURRENCY` | `8` | starter processes |
 | `BENCH_WARMUP` | `20` | warmup workflows |

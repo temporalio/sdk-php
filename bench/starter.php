@@ -15,20 +15,23 @@ require __DIR__ . '/autoload.php';
 const TEMPORAL_NAMESPACE = 'default';
 const SCENARIO_WORKFLOW = ['seq' => 'BenchWorkflow', 'par' => 'BenchParallelWorkflow', 'noact' => 'BenchWorkflow', 'io' => 'BenchIoWorkflow', 'cpu' => 'BenchCpuWorkflow'];
 
-$opts = \getopt('', ['scenario:', 'workflows:', 'activities:', 'payload:', 'concurrency:', 'timeout:', 'rate:', 'prefix:', 'part:', 'started-at:']);
+$opts = \getopt('', ['scenario:', 'workflows:', 'activities:', 'param:', 'concurrency:', 'timeout:', 'rate:', 'prefix:', 'part:', 'started-at:']);
 $scenario = $opts['scenario'] ?? 'seq';
 $workflows = (int) ($opts['workflows'] ?? 100);
+if ($workflows < 1) {
+    throw new \InvalidArgumentException('--workflows must be at least 1');
+}
 $activities = $scenario === 'noact' ? 0 : (int) ($opts['activities'] ?? 1);
-$payload = (int) ($opts['payload'] ?? 100);
+$param = (int) ($opts['param'] ?? 100);
 $concurrency = \max(1, (int) ($opts['concurrency'] ?? 8));
 $timeout = (float) ($opts['timeout'] ?? 600);
 $rate = (float) ($opts['rate'] ?? 0);
-$address = \getenv('TEMPORAL_ADDRESS') ?: BENCH_DEFAULT_ADDRESS;
-$taskQueue = \getenv('BENCH_TASK_QUEUE') ?: BENCH_DEFAULT_TASK_QUEUE;
+$address = benchEnv('TEMPORAL_ADDRESS');
+$taskQueue = benchEnv('BENCH_TASK_QUEUE');
 $workflowType = SCENARIO_WORKFLOW[$scenario] ?? throw new \InvalidArgumentException("Unknown scenario: {$scenario}");
 $prefix = $opts['prefix'] ?? \sprintf('bench-%s-%s-', $scenario, \bin2hex(\random_bytes(4)));
 
-function startWorkflows(string $address, string $taskQueue, string $workflowType, string $prefix, array $indexes, int $activities, int $payload, float $rate, float $startedAt): void
+function startWorkflows(string $address, string $taskQueue, string $workflowType, string $prefix, array $indexes, int $activities, int $param, float $rate, float $startedAt): void
 {
     $client = WorkflowClient::create(ServiceClient::create($address));
     foreach ($indexes as $i) {
@@ -42,7 +45,7 @@ function startWorkflows(string $address, string $taskQueue, string $workflowType
             $workflowType,
             WorkflowOptions::new()->withTaskQueue($taskQueue)->withWorkflowId($prefix . $i),
         );
-        $client->start($stub, $activities, $payload);
+        $client->start($stub, $activities, $param);
     }
 }
 
@@ -62,7 +65,7 @@ if (isset($opts['part'])) {
     for ($id = $part; $id < $workflows; $id += $concurrency) {
         $ids[] = $id;
     }
-    startWorkflows($address, $taskQueue, $workflowType, $prefix, $ids, $activities, $payload, $rate, (float) $opts['started-at']);
+    startWorkflows($address, $taskQueue, $workflowType, $prefix, $ids, $activities, $param, $rate, (float) $opts['started-at']);
     exit(0);
 }
 
@@ -141,7 +144,7 @@ $result = [
     'scenario' => $scenario,
     'workflows' => $workflows,
     'activities_per_workflow' => $activities,
-    'payload_bytes' => $payload,
+    'param' => $param,
     'concurrency' => $concurrency,
     'rate' => $rate,
     'failed' => $failed,
@@ -160,8 +163,8 @@ $result = [
 
 \fprintf(
     \STDERR,
-    "%s: %d wf x %d act, %dB | wall %.2fs | %.1f wf/s | %.1f act/s | p50 %.0fms p95 %.0fms p99 %.0fms | start phase %.2fs (%.0f/s) | failed %d\n",
-    $scenario, $workflows, $activities, $payload, $result['wall_s'], $result['workflows_per_s'], $result['activities_per_s'],
+    "%s: %d wf x %d act, param %d | wall %.2fs | %.1f wf/s | %.1f act/s | p50 %.0fms p95 %.0fms p99 %.0fms | start phase %.2fs (%.0f/s) | failed %d\n",
+    $scenario, $workflows, $activities, $param, $result['wall_s'], $result['workflows_per_s'], $result['activities_per_s'],
     $result['latency_ms_p50'], $result['latency_ms_p95'], $result['latency_ms_p99'], $startPhase, $result['start_rate_per_s'], $failed,
 );
 echo \json_encode($result), "\n";

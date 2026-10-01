@@ -32,6 +32,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       XDEBUG_MODE: off
+      TEMPORAL_ADDRESS: 127.0.0.1:7557
     steps:
       - name: Check Out Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
@@ -69,7 +70,7 @@ jobs:
         run: |
           docker compose -f bench/server/compose.yaml up -d
           for i in $(seq 1 60); do
-            ./temporal operator namespace describe default --address 127.0.0.1:7557 >/dev/null 2>&1 && exit 0
+            ./temporal operator namespace describe default --address "$TEMPORAL_ADDRESS" >/dev/null 2>&1 && exit 0
             sleep 2
           done
           docker compose -f bench/server/compose.yaml logs
