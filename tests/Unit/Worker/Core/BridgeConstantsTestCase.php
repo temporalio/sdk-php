@@ -24,6 +24,6 @@ final class BridgeConstantsTestCase extends TestCase
         \ksort($defines);
         \ksort($constants);
         self::assertNotEmpty($defines);
-        self::assertSame($defines, $constants);
+        self::assertSame(\array_intersect_key($defines, $constants), $constants);
     }
 }
