@@ -280,6 +280,48 @@ pub unsafe extern "C" fn tpb_client_free(c: *mut TpbClient) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testing::{events, runtime};
+
+    #[test]
+    fn call_with_an_invalid_path_reports_invalid_argument() {
+        let rt = runtime();
+        let config = br#"{"target_url":"http://127.0.0.1:1","tls":null}"#;
+        let c = unsafe {
+            tpb_client_new(
+                rt,
+                config.as_ptr().cast(),
+                config.len(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
+        assert!(!c.is_null());
+        let path = b"no path";
+        unsafe {
+            tpb_client_call(
+                c,
+                7,
+                path.as_ptr().cast(),
+                path.len(),
+                std::ptr::null(),
+                0,
+                std::ptr::null(),
+                0,
+                0,
+            )
+        };
+        let [(7, KIND_RPC_RESULT, grpc_code, ref data)] = events(rt, 1)[..] else {
+            panic!("one RPC result expected");
+        };
+        assert_eq!(grpc_code, Code::InvalidArgument as i32);
+        let length = u32::from_le_bytes(data[..4].try_into().unwrap()) as usize;
+        assert_eq!(data.len(), 4 + length);
+        assert!(data[4..].starts_with(b"Invalid RPC path: "));
+        unsafe {
+            tpb_client_free(c);
+            free(rt);
+        }
+    }
 
     #[test]
     fn request_reads_ascii_and_base64_binary_metadata() {

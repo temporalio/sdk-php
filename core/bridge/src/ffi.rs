@@ -15,6 +15,7 @@ pub const STATUS_ERROR: i32 = 1;
 pub const STATUS_SHUTDOWN: i32 = 2;
 
 pub const CALL_OK: i32 = 0;
+pub const CALL_FAILED: i32 = 1;
 
 #[repr(C)]
 pub struct TpbEvent {
