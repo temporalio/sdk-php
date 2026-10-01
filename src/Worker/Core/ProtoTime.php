@@ -53,7 +53,7 @@ final class ProtoTime
             if (\count(self::$intervals) >= self::INTERVAL_CACHE_SIZE) {
                 self::$intervals = [];
             }
-            self::$intervals[$nanos] = DateInterval::parse(self::nanos($duration), DateInterval::FORMAT_NANOSECONDS);
+            self::$intervals[$nanos] = DateInterval::parse($nanos, DateInterval::FORMAT_NANOSECONDS);
         }
 
         return clone self::$intervals[$nanos];

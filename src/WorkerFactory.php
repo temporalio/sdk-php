@@ -58,7 +58,6 @@ use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
@@ -344,7 +343,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
-     * @param iterable<CommandInterface> $commands
+     * @param iterable<ServerRequestInterface|ServerResponseInterface> $commands
      */
     protected function dispatchCommands(iterable $commands, array $headers): void
     {

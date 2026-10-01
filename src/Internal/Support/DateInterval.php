@@ -36,6 +36,7 @@ final class DateInterval
     public const FORMAT_MICROSECONDS = 'microseconds';
     public const FORMAT_NANOSECONDS = 'nanoseconds';
     private const MICROSECONDS_PER_SECOND = 1_000_000;
+    private const MICROSECONDS_PER_SECOND_FLOAT = 1_000_000.0;
     private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
     private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
     private const AVAILABLE_FORMATS = [
@@ -179,7 +180,7 @@ final class DateInterval
         $timeOnly = self::timeOnlyMicroseconds($i);
         if ($timeOnly !== null) {
             $seconds = \intdiv($timeOnly, self::MICROSECONDS_PER_SECOND);
-            $micros = (int) \round($i->f * self::MICROSECONDS_PER_SECOND);
+            $micros = (int) \round($i->f * self::MICROSECONDS_PER_SECOND_FLOAT);
         } else {
             $parsed = self::parse($i);
             $seconds = (int) $parsed->totalSeconds;
@@ -200,7 +201,7 @@ final class DateInterval
         }
 
         $micros = (($i->h * 60 + $i->i) * 60 + $i->s) * self::MICROSECONDS_PER_SECOND
-            + (int) \round($i->f * self::MICROSECONDS_PER_SECOND);
+            + (int) \round($i->f * self::MICROSECONDS_PER_SECOND_FLOAT);
 
         return $i->invert === 1 ? -$micros : $micros;
     }

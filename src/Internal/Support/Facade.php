@@ -24,7 +24,7 @@ abstract class Facade
 
     private static ?object $ctx = null;
 
-    /** @var \WeakMap<\Fiber, array{?object}>|null */
+    /** @var \WeakMap<\Fiber, list{?object}>|null */
     private static ?\WeakMap $fiberCtx = null;
 
     /**
@@ -41,7 +41,7 @@ abstract class Facade
     public static function setCurrentContext(?object $ctx): void
     {
         $fiber = self::isolatedFiber();
-        if ($fiber === null) {
+        if ($fiber === null || self::$fiberCtx === null) {
             self::$ctx = $ctx;
             return;
         }
@@ -52,11 +52,11 @@ abstract class Facade
     public static function getCurrentContext(): ?object
     {
         $fiber = self::isolatedFiber();
-        if ($fiber === null) {
+        if ($fiber === null || self::$fiberCtx === null) {
             return self::$ctx;
         }
 
-        return self::$fiberCtx[$fiber][0];
+        return (self::$fiberCtx[$fiber] ?? [null])[0];
     }
 
     /**
@@ -64,8 +64,10 @@ abstract class Facade
      */
     public static function isolateFiber(\Fiber $fiber): void
     {
-        self::$fiberCtx ??= new \WeakMap();
-        self::$fiberCtx[$fiber] = [null];
+        /** @var \WeakMap<\Fiber, list{?object}> $contexts */
+        $contexts = self::$fiberCtx ?? new \WeakMap();
+        $contexts[$fiber] = [null];
+        self::$fiberCtx = $contexts;
     }
 
     /**

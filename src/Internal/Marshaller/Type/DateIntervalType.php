@@ -69,7 +69,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
         if ($this->format === DateInterval::FORMAT_NANOSECONDS && $value instanceof \DateInterval) {
             $micros = DateInterval::timeOnlyMicroseconds($value);
             if ($micros !== null) {
-                return (int) \round($micros * 1000.0);
+                return (int) \round((float) $micros * 1000.0);
             }
         }
 

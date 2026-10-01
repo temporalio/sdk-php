@@ -57,6 +57,7 @@ final class CommandTranslator
 {
     private const NANOS_PER_MILLISECOND = 1_000_000;
     private const SIDE_EFFECT_TIMEOUT_SECONDS = 60;
+    private const FIRST_ATTEMPT = 1;
     private const NEGATIVE_TIMER_MESSAGE = 'negative duration provided %dms';
     private const NEGATIVE_TIMER_TYPE = 'errorString';
     private const SEARCH_ATTRIBUTE_SET = 'set';
@@ -305,7 +306,7 @@ final class CommandTranslator
             'seq' => $seq,
             'activity_id' => (string) (($options['ActivityID'] ?? '') ?: $seq),
             'activity_type' => $command->getOptions()['name'],
-            'task_queue' => $options['TaskQueueName'] ?? null ?: $this->taskQueue,
+            'task_queue' => ($options['TaskQueueName'] ?? '') ?: $this->taskQueue,
             'headers' => $this->payloads->headerFields($command),
             'arguments' => $this->payloads->payloads($command->getPayloads()),
             'schedule_to_close_timeout' => ProtoTime::optionalDuration($options['ScheduleToCloseTimeout'] ?? 0),
@@ -322,14 +323,8 @@ final class CommandTranslator
     {
         $options = $command->getOptions()['options'];
 
-        return new ScheduleLocalActivity([
-            'seq' => $seq,
-            'activity_id' => (string) $seq,
-            'activity_type' => $command->getOptions()['name'],
-            'attempt' => 1,
-            'original_schedule_time' => ProtoTime::timestamp($tick->time),
+        return $this->localActivity($seq, $command->getOptions()['name'], $command, $tick, [
             'headers' => $this->payloads->headerFields($command),
-            'arguments' => $this->payloads->payloads($command->getPayloads()),
             'schedule_to_close_timeout' => ProtoTime::optionalDuration($options['ScheduleToCloseTimeout'] ?? 0),
             'start_to_close_timeout' => ProtoTime::optionalDuration($options['StartToCloseTimeout'] ?? 0),
             'retry_policy' => $this->retryPolicy($options['RetryPolicy'] ?? null),
@@ -339,15 +334,21 @@ final class CommandTranslator
 
     private function sideEffect(int $seq, RequestInterface $command, TickInfo $tick): ScheduleLocalActivity
     {
+        return $this->localActivity($seq, ActivityTasks::SIDE_EFFECT, $command, $tick, [
+            'schedule_to_close_timeout' => new Duration(['seconds' => self::SIDE_EFFECT_TIMEOUT_SECONDS]),
+        ]);
+    }
+
+    private function localActivity(int $seq, string $type, RequestInterface $command, TickInfo $tick, array $fields): ScheduleLocalActivity
+    {
         return new ScheduleLocalActivity([
             'seq' => $seq,
             'activity_id' => (string) $seq,
-            'activity_type' => ActivityTasks::SIDE_EFFECT,
-            'attempt' => 1,
+            'activity_type' => $type,
+            'attempt' => self::FIRST_ATTEMPT,
             'original_schedule_time' => ProtoTime::timestamp($tick->time),
             'arguments' => $this->payloads->payloads($command->getPayloads()),
-            'schedule_to_close_timeout' => new Duration(['seconds' => self::SIDE_EFFECT_TIMEOUT_SECONDS]),
-        ]);
+        ] + $fields);
     }
 
     private function startChild(RunState $run, int $seq, RequestInterface $command): StartChildWorkflowExecution
