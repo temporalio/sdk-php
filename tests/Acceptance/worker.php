@@ -35,6 +35,7 @@ use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
 use Temporal\Worker\Core\CoreWorkerFactory;
+use Temporal\Tests\CoreWorker;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -99,7 +100,7 @@ try {
     $container->bindSingleton(DataConverter::class, $converter);
 
     $plugins = [new TranscriptPlugin($workerTranscript)];
-    $coreTransport = \getenv('TEMPORAL_WORKER_TRANSPORT') === 'core';
+    $coreTransport = CoreWorker::enabled();
     $container->bindSingleton(
         WorkerFactoryInterface::class,
         $coreTransport

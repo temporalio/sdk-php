@@ -9,6 +9,7 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
+use Temporal\Testing\Interactions\WorkflowInteractions;
 use Temporal\Testing\TemporalServer;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
@@ -94,7 +95,7 @@ final class SimpleWorkflowTestCase extends TestCase
         );
         foreach ($history as $item) {
             if ($item->getEventType() === EventType::EVENT_TYPE_MARKER_RECORDED &&
-                \in_array($item->getMarkerRecordedEventAttributes()->getMarkerName(), ['LocalActivity', 'core_local_activity'], true)
+                \in_array($item->getMarkerRecordedEventAttributes()->getMarkerName(), [WorkflowInteractions::MARKER_LOCAL_ACTIVITY, WorkflowInteractions::MARKER_CORE_LOCAL_ACTIVITY], true)
             ) {
                 // LocalActivity found
                 $this->assertTrue(true);

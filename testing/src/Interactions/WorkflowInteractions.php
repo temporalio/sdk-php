@@ -16,8 +16,8 @@ use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowInteractions
 {
-    private const MARKER_LOCAL_ACTIVITY = 'LocalActivity';
-    private const MARKER_CORE_LOCAL_ACTIVITY = 'core_local_activity';
+    public const MARKER_LOCAL_ACTIVITY = 'LocalActivity';
+    public const MARKER_CORE_LOCAL_ACTIVITY = 'core_local_activity';
     private const MARKER_DETAIL_DATA = 'data';
     private const MARKER_ACTIVITY_TYPE_KEY = 'ActivityType';
     private const MARKER_CORE_ACTIVITY_TYPE_KEY = 'activity_type';

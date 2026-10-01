@@ -37,7 +37,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function createReplayer(WorkflowClientInterface $client, string ...$workflows): WorkflowReplayer|CoreWorkflowReplayer
     {
-        if (\getenv('TEMPORAL_WORKER_TRANSPORT') !== 'core') {
+        if (!CoreWorker::enabled()) {
             return new WorkflowReplayer();
         }
 

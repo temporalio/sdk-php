@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Symfony\Component\Process\Process;
+use Temporal\Tests\CoreWorker;
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
 use Temporal\Testing\Transcript\TranscriptStore;
@@ -71,7 +72,7 @@ final class RRStarter
             $envs['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
         }
 
-        if (\getenv('TEMPORAL_WORKER_TRANSPORT') === 'core') {
+        if (CoreWorker::enabled()) {
             $this->startCoreWorker($workerArgs, $envs);
             return;
         }
@@ -98,24 +99,16 @@ final class RRStarter
 
     private function startCoreWorker(array $workerArgs, array $envs): void
     {
-        $log = $this->runtime->workDir . '/runtime/tests/core-worker.log';
-        @\mkdir(\dirname($log), recursive: true);
-        $command = \implode(' ', \array_map(\escapeshellarg(...), $workerArgs));
-        $this->coreWorker = Process::fromShellCommandline(
-            \sprintf('exec %s >> %s 2>&1', $command, \escapeshellarg($log)),
+        $this->coreWorker = CoreWorker::start(
+            $workerArgs,
             $this->runtime->rrConfigDir,
+            $this->runtime->workDir . '/runtime/tests/core-worker.log',
             [
                 'TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1,
                 'TEMPORAL_CORE_ACTIVITY_PROCESSES' => $this->runtime->activityWorkers,
                 'TEMPORAL_TRANSCRIPT_DIR' => 'runtime/tests/transcripts',
             ] + $envs,
-            timeout: null,
         );
-        $this->coreWorker->start();
-        \usleep(500_000);
-        if (!$this->coreWorker->isRunning()) {
-            throw new \RuntimeException("Core worker exited, see $log");
-        }
     }
 
     public function __destruct()

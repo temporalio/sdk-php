@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Temporal\Testing\CoreWorkerFactory;
+use Temporal\Tests\CoreWorker;
 use Temporal\Testing\MockChildWorkflowInterceptor;
 use Temporal\Testing\MockSearchAttributeInterceptor;
 use Temporal\Testing\MockSideEffectInterceptor;
@@ -37,7 +38,7 @@ $getClasses = static function (string $dir, string $namespace): iterable {
     }
 };
 
-$factory = \getenv('TEMPORAL_WORKER_TRANSPORT') === 'core' ? CoreWorkerFactory::create() : WorkerFactory::create();
+$factory = CoreWorker::enabled() ? CoreWorkerFactory::create() : WorkerFactory::create();
 
 $interceptors = [
     InterceptorCallsCounter::class,

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Symfony\Component\Process\Process;
+use Temporal\Tests\CoreWorker;
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
 use Temporal\Tests\SearchAttributeTestInvoker;
@@ -20,19 +21,18 @@ $systemInfo = SystemInfo::detect();
 $environment = Environment::create(systemInfo: $systemInfo);
 $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
-if (\getenv('TEMPORAL_WORKER_TRANSPORT') === 'core') {
+if (CoreWorker::enabled()) {
     $kvStorage = new Process([$rootDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable, 'serve', '-c', $configDir . '/.rr.kv.yaml', '-w', $configDir], timeout: null);
     $kvStorage->start();
-    $kvStorage->waitUntil(static fn(string $type, string $output): bool => \str_contains($output, 'RoadRunner server started'));
-    $coreWorkerLog = $rootDir . '/runtime/tests/functional-core-worker.log';
-    @\mkdir(\dirname($coreWorkerLog), recursive: true);
-    $coreWorker = Process::fromShellCommandline(
-        \sprintf('exec %s worker.php >> %s 2>&1', \escapeshellarg(PHP_BINARY), \escapeshellarg($coreWorkerLog)),
+    if (!$kvStorage->waitUntil(static fn(string $type, string $output): bool => \str_contains($output, 'RoadRunner server started'))) {
+        throw new \RuntimeException('The RoadRunner KV storage did not start: ' . $kvStorage->getErrorOutput() . $kvStorage->getOutput());
+    }
+    $coreWorker = CoreWorker::start(
+        [PHP_BINARY, 'worker.php'],
         $configDir,
+        $rootDir . '/runtime/tests/functional-core-worker.log',
         ['TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1, 'TEMPORAL_CORE_ACTIVITY_PROCESSES' => 1],
-        timeout: null,
     );
-    $coreWorker->start();
     \register_shutdown_function(static function () use ($coreWorker, $kvStorage): void {
         $coreWorker->stop(5);
         $kvStorage->stop(5);
