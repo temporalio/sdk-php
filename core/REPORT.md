@@ -45,8 +45,8 @@ Option A keeps all I/O in Rust threads. PHP blocks only when it has nothing to d
 ```
 
 - **Rust bridge** (`core/bridge`, ~500 lines). Async operations (`poll_workflow_activation`, `poll_activity_task`, `complete_*`) are spawned on tokio. Results go to a mutex+condvar queue. PHP drains up to 256 events per FFI call with `tpb_next_events(timeout)`. No FFI callback ever runs on a tokio thread, which is what makes it safe for PHP. A pipe fd (`tpb_event_fd`) signals new events to an event loop. Successful completions produce no event (fewer wake-ups).
-- **Adapter** (`src/Worker/Core/WorkflowActivations.php`, `ActivityTasks.php`). It converts sdk-core activation jobs into the same `ServerRequest`/`ServerResponse` objects that RoadRunner produced (`StartWorkflow`, `InvokeSignal`, responses by request id, …). So the whole PHP workflow machinery is reused without change. Outgoing PHP commands become sdk-core `WorkflowCommand`s. Commands that RR answered in the same workflow task (`GetVersion`, `SideEffect`, `Cancel`) are answered by the adapter in a loop inside one activation.
-- **CoreWorkerFactory** (`src/Worker/Core/CoreWorkerFactory.php`) extends `WorkerFactory`. `run()` is a supervisor: it starts one fresh `php` process per role (workflow / activity) with the same script, arguments and changed ini settings (`TEMPORAL_CORE_ROLE` env), restarts a crashed child, stops the supervisor when a child crashes at startup, and kills children that do not stop in time. Each child has its own sdk-core worker per task queue. It replaces the RoadRunner pool and `.rr.yaml`. On Linux without ext-grpc it forks the children instead (shared memory, E14); ext-grpc hangs after `fork()`, and on macOS TLS system roots crash a forked child, so these cases start fresh processes.
+- **Adapter** (`src/Worker/Core/WorkflowActivations.php` with `CommandTranslator`, `ResolutionMapper`, `PatchVersions`, `LocalActivityRetries`, `InfoFactory`, `PayloadMapper`, `ProtoTime`; and `ActivityTasks.php`). It converts sdk-core activation jobs into the same `ServerRequest`/`ServerResponse` objects that RoadRunner produced (`StartWorkflow`, `InvokeSignal`, responses by request id, …). So the whole PHP workflow machinery is reused without change. Outgoing PHP commands become sdk-core `WorkflowCommand`s. Commands that RR answered in the same workflow task (`GetVersion`, `SideEffect`, `Cancel`) are answered by the adapter in a loop inside one activation.
+- **CoreWorkerFactory** (`src/Worker/Core/CoreWorkerFactory.php`) extends `WorkerFactory` and wires `CoreOptions` (arguments and env), `CoreWorkerConfig` (the bridge JSON), `Supervisor` + `ChildProcesses`, `CoreWorkerLoop` (one process) and `CoreReplayer`. `run()` is a supervisor: it starts one fresh `php` process per role (workflow / activity) with the same script, arguments and changed ini settings (`TEMPORAL_CORE_ROLE` env), restarts a crashed child, stops the supervisor when a child crashes at startup, and kills children that do not stop in time. Each child has its own sdk-core worker per task queue. It replaces the RoadRunner pool and `.rr.yaml`. On Linux without ext-grpc it forks the children instead (shared memory, E14); ext-grpc hangs after `fork()`, and on macOS TLS system roots crash a forked child, so these cases start fresh processes.
 - **Fibers + Revolt** (`TEMPORAL_CORE_ACTIVITY_CONCURRENCY`): an activity process runs each activity task in its own Fiber on the Revolt loop, driven by the bridge pipe fd. The Facade context became fiber-local for isolated fibers (`Facade::isolateFiber()`), otherwise concurrent activities overwrite each other's `Activity::getCurrentContext()`.
 - **Debug labels**: `TEMPORAL_CORE_PROFILE=1` prints per process: process CPU (PHP + Rust threads), time waiting for events, time in the PHP SDK dispatch, time per workflow activation and per activity task.
 
@@ -120,7 +120,7 @@ Test suites on the core transport (`TEMPORAL_WORKER_TRANSPORT=core`):
 
 | suite | core | RoadRunner |
 |---|---|---|
-| Unit | 1521/1521 (transport independent) | |
+| Unit | all green (transport independent) | |
 | Functional | 182/184 (2 skipped, same as RR) | 182/184 |
 | Acceptance (full) | 159/166 | not run in this work |
 | Acceptance, `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS=0` (every task replays) | 154/166 | – |
@@ -140,12 +140,13 @@ Differences and limits:
 - **Fiber concurrency** helps only activities that use non-blocking I/O (Revolt/amphp). A blocking call (PDO, curl, `sleep`) stops all activities of the process. It needs `revolt/event-loop`. `Facade` context is fiber-local only for fibers started by the worker.
 - **Connection:** TLS, mTLS, server name override and API key come from the standard env config (`TEMPORAL_TLS*`, `TEMPORAL_API_KEY`, TOML profile), checked through a TLS terminator. (On macOS a forked child crashes when it loads the TLS system roots, even when the parent never used TLS, so macOS always starts fresh processes; on Linux forked children load them without problems, checked in Docker.)
 - **Linux:** builds and runs in Docker (`core/docker/Dockerfile`, linux/arm64): 304–330 wf/s on `seq 200 × 1`, 752 act/s with Fibers, graceful `docker stop`.
-- **Not done yet:** prebuilt binaries; `temporal.UpdateAPIKey` at run time; the RR KV caches of the testing package (the Functional harness still starts `rr serve` as a KV store only).
+- **Not done yet:** prebuilt binaries; `temporal.UpdateAPIKey` at run time; the RR KV caches of the testing package (the Functional harness still starts `rr serve` as a KV store only); deadlock detection (`WorkerOptions::$deadlockDetectionTimeout` has no effect, sdk-go detects it inside RoadRunner); the `TemporalChangeVersion` search attribute that sdk-go upserts for `getVersion()`.
+- **CI:** the `Core transport` workflow (`.github/workflows/core.yml`) runs the Rust checks and Unit, Functional and Acceptance on core without ext-grpc. Acceptance there excludes exactly the 7 tests above.
 
 ## 7. Next steps
 
 1. Distribution: prebuilt `libtemporal_php_bridge` for linux-x64/arm64 and macOS (GitHub release assets, downloaded by `dload` like `rr` today), or a PHP extension built from the same crate.
 2. Memory: done for Linux without ext-grpc (fork, E14).
-3. Replace the remaining RoadRunner users: `temporal.UpdateAPIKey`, the RR KV caches of the testing package. (`WorkflowReplayer` already has a core backend: `new WorkflowReplayer($coreWorkerFactory)`.)
+3. Replace the remaining RoadRunner users: `temporal.UpdateAPIKey`, the RR KV caches of the testing package. (Replay already has a core backend: `Temporal\Testing\Replay\CoreWorkflowReplayer`.)
 5. SDK hot spots that help both transports: `CarbonInterval` in the marshaller, attribute reading per workflow start.
 6. Fibers for workflows (the `sdk-php-fiber-runtime` branch) together with this transport.

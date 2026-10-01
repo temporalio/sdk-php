@@ -82,4 +82,27 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 ## Benchmarks
 
-See `bench/` (`bench/run.sh <rr|core> <scenario> <workflows> <activities> <payload>`, `bench/matrix.sh`) and `REPORT.md`.
+`bench/run.sh <rr|core> <scenario> <workflows> <activities> <param>` starts a worker, a warmup and the measured run against a Temporal server, and appends one JSON line to the results file. `bench/matrix.sh` runs the whole matrix for both transports, `bench/summary.sh <file>` prints the table. Results: `REPORT.md` §4.
+
+| scenario | workflow | `<param>` |
+|---|---|---|
+| `seq` | activities one after another | payload size, bytes |
+| `par` | activities in parallel | payload size, bytes |
+| `noact` | no activities | payload size, bytes |
+| `io` | parallel activities that wait (non-blocking in Fibers) | wait per activity, ms |
+| `cpu` | CPU-bound workflow code, one activity | CPU time per activation, ms |
+
+| variable | default | meaning |
+|---|---|---|
+| `TEMPORAL_ADDRESS` | `127.0.0.1:7557` (the `bench/server` Docker server) | server address |
+| `BENCH_RATE` | `0` (as fast as possible) | workflows started per second |
+| `BENCH_CONCURRENCY` | `8` | starter processes |
+| `BENCH_WARMUP` | `20` | warmup workflows |
+| `BENCH_TIMEOUT` | `600` | seconds for one run |
+| `BENCH_ACTIVITY_WORKERS` | `4` | activity processes (RoadRunner pool size, core activity processes) |
+| `BENCH_RESULTS` | `results.jsonl` | results file |
+| `BENCH_LABEL` | the transport | row label in the summary |
+| `BENCH_WORKER_PHP_FLAGS` | – | extra `php` flags for the core worker (for example `-dopcache.jit=tracing`) |
+| `BENCH_RUSAGE` | – | macOS: path to the `bench/rusage.c` binary (`cc -O2 -o bench/rusage bench/rusage.c`); adds instructions and cycles of the worker processes to the results |
+| `RR_BIN` | `../rr` | RoadRunner binary |
+| `BENCH_RUNS`, `BENCH_RUN_TIMEOUT` | `2`, `600` | `matrix.sh` only: repetitions and the timeout per run (needs GNU `timeout`, `brew install coreutils` on macOS) |

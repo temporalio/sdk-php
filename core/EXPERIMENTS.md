@@ -338,11 +338,11 @@ Not done:
 
 Question: the data crosses the bridge as protobuf bytes (Rust encode → PHP decode, and back), and every event moves between the tokio thread and the PHP thread. Can C structs or fewer thread hops remove this cost?
 
-Other SDKs (sources at their main branches, sdk-core at our rev):
+Other SDKs (sources at their main branches, sdk-core at the revision `2872b536` of that time):
 - Python, TypeScript, .NET and Ruby all send protobuf bytes for activations, completions, activity tasks, heartbeats and client calls. The .NET C bridge uses `#[repr(C)]` structs only for options, and only removes one copy (it parses Rust-owned memory in place). No SDK found a protobuf cost worth an issue.
 - All four run sdk-core on a multi-thread tokio runtime with one thread per core and deliver results through 4–5 thread hops (callback → language event loop → worker pool → back). The PHP bridge has 2 hops and 1 tokio thread. No SDK drives tokio from the language thread.
 - Their defaults (cache 1000–10000, 5 pollers, ratio 0.2, fixed slots, no autoscaling) match ours; ours now uses 8 workflow pollers split 4/4 (E7).
-- The per-worker `temporal-real-sysinfo` thread (E13) is fixed in sdk-core after our rev (temporalio/sdk-rust#1393, 83 commits later, coresdk protos changed on the way).
+- The per-worker `temporal-real-sysinfo` thread (E13) was fixed in sdk-core after that revision (temporalio/sdk-rust#1393); the 0.9.0 release that the bridge uses now contains the fix (E17).
 
 Protobuf vs C structs, hot loop (PHP 8.5, ext-protobuf, one `ResolveActivity` activation of 109 bytes):
 

@@ -1,4 +1,6 @@
-# Worker benchmark: RoadRunner baseline
+# Worker benchmark: RoadRunner baseline (historical)
+
+The first RoadRunner baseline, measured on the CLI dev server with 4 task-queue partitions (the cause of the ~2 s tails below). It is not comparable with the current results in `core/REPORT.md` §4, which use the `bench/server` Docker server with 1 partition.
 
 ## Environment
 

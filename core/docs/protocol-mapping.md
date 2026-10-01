@@ -4,11 +4,13 @@ Path aliases used below:
 
 | Alias | Path |
 |---|---|
-| `PHP` | `sdk-php/.claude/worktrees/temporal-php-no-roadrunner-f8db35/src` |
+| `PHP` | `src` of this repository |
 | `RRT` | `roadrunner-temporal` (commit `81aba14`) |
 | `GO` | `~/go/pkg/mod/go.temporal.io/sdk@v1.48.1-0.20260828153826-57cc5a7d6194/internal` (the version pinned in `RRT/go.mod:18`) |
-| `CP` | `sdk-typescript/packages/core-bridge/sdk-core/crates/common/protos/local/temporal/sdk/core` |
-| `CORE` | `sdk-typescript/packages/core-bridge/sdk-core/crates/sdk-core/src` |
+| `CP` | `temporalio/sdk-rust` `crates/protos/protos/local/temporal/sdk/core` |
+| `CORE` | `temporalio/sdk-rust` `crates/sdk-core/src` |
+
+The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`; the bridge now uses the `core-v0.9.0` release (`EXPERIMENTS.md` E17), where the files moved but the cited code did not change in a way that matters here.
 | `PY` | `sdk-python/temporalio/worker/_workflow_instance.py` |
 | `TS` | `sdk-typescript/packages/workflow/src` |
 
@@ -366,9 +368,9 @@ Determinism needs only a **fixed** order, because core gives the same jobs on re
 | `RR_CODEC` env | `WorkerFactory.php:353-361` | Set it, or bypass the codec |
 | RPC `temporal.RecordActivityHeartbeat` | `ActivityContext.php:123-129` | §5.3 |
 | RPC `temporal.UpdateAPIKey` (user doc) | `PHP/Worker/ServiceCredentials.php:30-45`, `RRT/rpc.go:421` | core client API key update |
-| RPC `temporal.ReplayWorkflowHistory`, `ReplayWorkflow`, `DownloadWorkflowHistory`, `ReplayFromJSON` | `testing/src/Replay/WorkflowReplayer.php:55-120`, `RRT/rpc.go:118-420` | core replayer (`temporal_core_worker_replayer_new`, `…_replay_push` in `sdk-core-c-bridge/src/worker.rs:975-1034`) |
+| RPC `temporal.ReplayWorkflowHistory`, `ReplayWorkflow`, `DownloadWorkflowHistory`, `ReplayFromJSON` | `testing/src/Replay/WorkflowReplayer.php:55-120`, `RRT/rpc.go:118-420` | core replayer (`tpb_replayer_new` in `core/bridge/src/replay.rs`, used by `PHP/Worker/Core/CoreReplayer.php`) |
 | RR KV plugin (activity/child/SA mock caches for tests) | `PHP/Worker/ActivityInvocationCache/RoadRunnerActivityInvocationCache.php`, `ChildWorkflowInvocationCache/…`, `SearchAttributeInvocationCache/…`, `testing/src/WorkerFactory.php:40-62` | Out of the protocol. It needs its own store. |
 | sdk-go features that PHP gets for free from RR | deadlock detection, `WorkflowPanicPolicy`, LA retry/backoff, `TemporalChangeVersion` upsert, default child id, SDK name `temporal-php-2` + version header (`RRT/plugin.go:43-45`, `internal.go:228-241`) | Must be done in the adapter/core config |
 | Transport of results: RR ignores string-id responses. Queries/activities need exactly one reply per frame. | `Encoder.php:65,71`, `handler.go:733`, `activity.go:141` | Keep one query / one activity per PHP cycle |
 
-C bridge entry points: `temporal_core_worker_poll_workflow_activation`, `…_complete_workflow_activation`, `…_poll_activity_task`, `…_complete_activity_task`, `…_record_activity_heartbeat`, `…_request_workflow_eviction`, `…_initiate_shutdown`, `…_finalize_shutdown` (`sdk-core-c-bridge/src/worker.rs:664-938`).
+Bridge entry points (`core/bridge/src/worker.rs`): `tpb_poll_workflow_activation`, `tpb_complete_workflow_activation`, `tpb_poll_activity_task`, `tpb_complete_activity_task`, `tpb_record_activity_heartbeat`, `tpb_worker_initiate_shutdown`, `tpb_worker_finalize_shutdown`.
