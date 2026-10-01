@@ -133,8 +133,8 @@ pub struct WorkerJson {
     namespace: String,
     task_queue: String,
     workflows: bool,
-    activities: bool,
-    no_remote_activities: bool,
+    local_activities: bool,
+    remote_activities: bool,
     deployment: Option<DeploymentJson>,
     build_id: String,
     graceful_shutdown_period_ms: u64,
@@ -175,8 +175,8 @@ impl WorkerJson {
             .maybe_max_task_queue_activities_per_second(self.max_task_queue_activities_per_second)
             .task_types(WorkerTaskTypes {
                 enable_workflows: self.workflows,
-                enable_local_activities: self.workflows && self.activities,
-                enable_remote_activities: self.activities && !self.no_remote_activities,
+                enable_local_activities: self.local_activities,
+                enable_remote_activities: self.remote_activities,
                 enable_nexus: false,
             })
             .build()
@@ -234,8 +234,8 @@ mod tests {
             "namespace": "default",
             "task_queue": "q",
             "workflows": true,
-            "activities": true,
-            "no_remote_activities": false,
+            "local_activities": true,
+            "remote_activities": false,
             "deployment": null,
             "build_id": "",
             "graceful_shutdown_period_ms": 1500,
@@ -278,6 +278,9 @@ mod tests {
             config.versioning_strategy,
             WorkerVersioningStrategy::None { .. }
         ));
+        assert!(config.task_types.enable_workflows);
+        assert!(config.task_types.enable_local_activities);
+        assert!(!config.task_types.enable_remote_activities);
     }
 
     #[test]

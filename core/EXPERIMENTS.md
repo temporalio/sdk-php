@@ -16,7 +16,7 @@ Main metric: **worker CPU seconds at the fixed rate** (noise between repetitions
 ## E1. Eager activity execution
 
 Idea: sdk-core requests eager execution for activities on the same task queue when the worker has a free activity slot, so the server returns the activity task in the workflow task response and skips one matching round trip.
-In the split layout the workflow process has `no_remote_activities`, so eager can never happen there. Tried the `all` layout (every process runs workflows and activities), with and without `system.enableActivityEagerExecution=true` on the server.
+In the split layout the workflow process has `remote_activities: false`, so eager can never happen there. Tried the `all` layout (every process runs workflows and activities), with and without `system.enableActivityEagerExecution=true` on the server.
 
 | variant | scenario | wf/s | p50 ms | p99 ms | worker CPU s | RSS MB |
 |---|---|---|---|---|---|---|

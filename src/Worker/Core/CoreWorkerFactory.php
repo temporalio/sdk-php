@@ -400,7 +400,7 @@ class CoreWorkerFactory extends WorkerFactory
         foreach ($this->queues as $worker) {
             \assert($worker instanceof WorkerInterface);
             $config = $this->config($worker, $role);
-            if (!$config['workflows'] && !$config['activities']) {
+            if (!$config['workflows'] && !$config['remote_activities']) {
                 continue;
             }
             $workers[] = [
@@ -408,7 +408,7 @@ class CoreWorkerFactory extends WorkerFactory
                 'taskQueue' => $worker->getID(),
                 'activations' => $this->activations($worker, $dispatch),
                 'workflows' => $config['workflows'],
-                'activities' => $config['activities'],
+                'activities' => $config['local_activities'] || $config['remote_activities'],
             ];
         }
         if ($workers === []) {
@@ -608,10 +608,10 @@ class CoreWorkerFactory extends WorkerFactory
             'namespace' => $this->namespace,
             'task_queue' => $worker->getID(),
             'workflows' => $workflows,
-            'activities' => $workflows || $remoteActivities,
+            'local_activities' => $workflows,
+            'remote_activities' => $remoteActivities,
             'deployment' => isset($options->deploymentOptions) ? $this->marshaller->marshal($options->deploymentOptions) : null,
             'build_id' => $options->buildID,
-            'no_remote_activities' => !$remoteActivities,
             'graceful_shutdown_period_ms' => self::gracefulShutdownMs($worker),
             'max_worker_activities_per_second' => $options->workerActivitiesPerSecond ?: null,
             'max_task_queue_activities_per_second' => $options->taskQueueActivitiesPerSecond ?: null,
