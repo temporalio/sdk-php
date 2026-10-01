@@ -61,7 +61,6 @@ final class CoreWorkerConfig
         $activityConcurrency = $role === CoreRole::Activity ? $this->options->activityConcurrency : 1;
 
         return [
-            'connection' => $this->connection($options->identity),
             'namespace' => $this->options->namespace,
             'task_queue' => $worker->getID(),
             'workflows' => $workflows,
@@ -83,23 +82,9 @@ final class CoreWorkerConfig
         ];
     }
 
-    private static function runsWorkflows(WorkerInterface $worker, CoreRole $role): bool
+    public function connection(WorkerInterface $worker): array
     {
-        return $role->runsWorkflows() && !$worker->getOptions()->disableWorkflowWorker;
-    }
-
-    private static function runsRemoteActivities(WorkerInterface $worker, CoreRole $role): bool
-    {
-        return $role->runsRemoteActivities() && !$worker->getOptions()->localActivityWorkerOnly;
-    }
-
-    private static function milliseconds(?\DateInterval $interval): ?int
-    {
-        return $interval === null ? null : (int) CarbonInterval::instance($interval)->totalMilliseconds;
-    }
-
-    private function connection(string $identity): array
-    {
+        $identity = $worker->getOptions()->identity;
         $tls = $this->options->tls;
 
         return BridgeConnection::client(
@@ -113,5 +98,20 @@ final class CoreWorkerConfig
             'connect_timeout_ms' => BridgeConnection::CONNECT_TIMEOUT_MS,
             'grpc_compression' => $this->options->grpcCompression,
         ];
+    }
+
+    private static function runsWorkflows(WorkerInterface $worker, CoreRole $role): bool
+    {
+        return $role->runsWorkflows() && !$worker->getOptions()->disableWorkflowWorker;
+    }
+
+    private static function runsRemoteActivities(WorkerInterface $worker, CoreRole $role): bool
+    {
+        return $role->runsRemoteActivities() && !$worker->getOptions()->localActivityWorkerOnly;
+    }
+
+    private static function milliseconds(?\DateInterval $interval): ?int
+    {
+        return $interval === null ? null : (int) CarbonInterval::instance($interval)->totalMilliseconds;
     }
 }

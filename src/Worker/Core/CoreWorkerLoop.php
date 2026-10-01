@@ -90,7 +90,7 @@ final class CoreWorkerLoop
             $config = $this->config->build($worker, $role);
             if ($config['workflows'] || $config['remote_activities']) {
                 $this->workers[] = new CoreWorkerHandle(
-                    $this->bridge->newWorker($config),
+                    $this->bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
                     $worker->getID(),
                     ($this->activations)($worker, $dispatch),
                     $config['workflows'],
