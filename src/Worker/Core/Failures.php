@@ -25,7 +25,7 @@ final class Failures
         } catch (\Throwable) {
             return new Failure([
                 'message' => \mb_scrub($e->getMessage(), 'UTF-8'),
-                'source' => 'PHP_SDK',
+                'source' => FailureConverter::SOURCE,
                 'stack_trace' => \mb_scrub($e->getTraceAsString(), 'UTF-8'),
                 'application_failure_info' => new ApplicationFailureInfo(['type' => $e::class]),
             ]);
