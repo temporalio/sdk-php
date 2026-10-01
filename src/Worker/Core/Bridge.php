@@ -26,6 +26,7 @@ final class Bridge
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     private const EVENT_BUFFER_SIZE = 256;
+    private const DEFAULT_THREADS = 1;
     private const RPC_WAIT_MS = 500;
 
     private static ?self $shared = null;
@@ -54,11 +55,8 @@ final class Bridge
         $header ??= $root . '/include/temporal_php_bridge.h';
 
         $this->ffi = \FFI::cdef((string) \file_get_contents($header), $library);
-        $runtime = $this->ffi->tpb_runtime_new();
-        if ($runtime === null) {
-            throw new \RuntimeException('Unable to create the sdk-core runtime, see stderr for details');
-        }
-        $this->runtime = $runtime;
+        $config = self::json(['threads' => self::threads(), 'log' => $_SERVER['TEMPORAL_CORE_LOG'] ?? null]);
+        $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
     }
 
@@ -86,17 +84,23 @@ final class Bridge
 
     public function newWorker(array $config): \FFI\CData
     {
-        return $this->createWorker('tpb_worker_new', $config);
+        $json = self::json($config);
+
+        return $this->construct('tpb_worker_new', $this->runtime, $json, \strlen($json));
     }
 
-    public function newReplayer(array $config, string $history): \FFI\CData
+    public function newReplayer(array $config, string $history, string $workflowId): \FFI\CData
     {
-        return $this->createWorker('tpb_replayer_new', $config, $history, \strlen($history));
+        $json = self::json($config);
+
+        return $this->construct('tpb_replayer_new', $this->runtime, $json, \strlen($json), $history, \strlen($history), $workflowId, \strlen($workflowId));
     }
 
     public function newClient(array $config): \FFI\CData
     {
-        return $this->createWorker('tpb_client_new', $config);
+        $json = self::json($config);
+
+        return $this->construct('tpb_client_new', $this->runtime, $json, \strlen($json));
     }
 
     public function freeClient(\FFI\CData $client): void
@@ -205,19 +209,34 @@ final class Bridge
         return $events;
     }
 
-    private function createWorker(string $function, array $config, string|int ...$args): \FFI\CData
+    private static function json(array $value): string
     {
-        $json = \json_encode($config, \JSON_THROW_ON_ERROR);
+        return \json_encode($value, \JSON_THROW_ON_ERROR);
+    }
+
+    private static function threads(): int
+    {
+        $threads = $_SERVER['TEMPORAL_CORE_THREADS'] ?? self::DEFAULT_THREADS;
+        $value = \filter_var($threads, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($value === false) {
+            throw new \InvalidArgumentException(\sprintf('TEMPORAL_CORE_THREADS must be a positive integer, "%s" given', (string) $threads));
+        }
+
+        return $value;
+    }
+
+    private function construct(string $function, \FFI\CData|string|int ...$arguments): \FFI\CData
+    {
         $err = $this->ffi->new('uint8_t*');
         $errLen = $this->ffi->new('size_t');
-        $worker = $this->ffi->$function($this->runtime, $json, \strlen($json), ...[...$args, \FFI::addr($err), \FFI::addr($errLen)]);
+        $object = $this->ffi->$function(...[...$arguments, \FFI::addr($err), \FFI::addr($errLen)]);
 
-        if ($worker === null) {
+        if ($object === null) {
             $message = \FFI::isNull($err) ? 'unknown error' : $this->take($err, $errLen->cdata);
             throw new \RuntimeException(\sprintf('%s failed: %s', $function, $message));
         }
 
-        return $worker;
+        return $object;
     }
 
     /**
