@@ -1293,9 +1293,6 @@
       <code><![CDATA[$self->buildID]]></code>
       <code><![CDATA[$self->useBuildIDForVersioning]]></code>
     </DeprecatedProperty>
-    <MissingConstructor>
-      <code><![CDATA[$deploymentOptions]]></code>
-    </MissingConstructor>
   </file>
   <file src="src/WorkerFactory.php">
     <DeprecatedClass>
