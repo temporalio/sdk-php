@@ -90,7 +90,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private const ERROR_HEADERS_TYPE = 'Received headers type must be a string, but %s given';
     private const ERROR_HEADER_NOT_STRING_TYPE = 'Header "%s" argument type must be a string, but %s given';
     private const ERROR_QUEUE_NOT_FOUND = 'Cannot find a worker for task queue "%s"';
-    private const HEADER_TASK_QUEUE = 'taskQueue';
+    public const HEADER_TASK_QUEUE = 'taskQueue';
 
     protected DataConverterInterface $converter;
     protected ReaderInterface $reader;

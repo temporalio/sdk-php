@@ -30,6 +30,8 @@ use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 {
+    public const HEARTBEAT_METHOD = 'temporal.RecordActivityHeartbeat';
+
     #[Marshal(name: 'info')]
     private ActivityInfo $info;
 
@@ -122,7 +124,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 
         try {
             $response = $this->rpc->call(
-                'temporal.RecordActivityHeartbeat',
+                self::HEARTBEAT_METHOD,
                 [
                     'taskToken' => \base64_encode($this->info->taskToken),
                     'details' => \base64_encode($details),

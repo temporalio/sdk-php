@@ -42,4 +42,17 @@ enum ValueType: string
             default => null,
         };
     }
+
+    public function metadataName(): string
+    {
+        return match ($this) {
+            self::Bool => 'Bool',
+            self::Float => 'Double',
+            self::Int => 'Int',
+            self::Keyword => 'Keyword',
+            self::KeywordList => 'KeywordList',
+            self::Text => 'Text',
+            self::Datetime => 'Datetime',
+        };
+    }
 }
