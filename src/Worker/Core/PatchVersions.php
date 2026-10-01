@@ -17,6 +17,7 @@ use Coresdk\Workflow_commands\WorkflowCommand;
 final class PatchVersions
 {
     private const DEFAULT_VERSION = -1;
+    private const PATCH_ID = '/^(.+)-(-?\d+)$/';
 
     /** @var array<string, int> */
     private array $notified = [];
@@ -26,9 +27,8 @@ final class PatchVersions
 
     public function notify(string $patchId): void
     {
-        $separator = \strrpos($patchId, '-');
-        if ($separator !== false) {
-            $this->notified[\substr($patchId, 0, $separator)] = (int) \substr($patchId, $separator + 1);
+        if (\preg_match(self::PATCH_ID, $patchId, $match) === 1) {
+            $this->notified[$match[1]] = (int) $match[2];
         }
     }
 
