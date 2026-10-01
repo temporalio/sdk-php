@@ -67,13 +67,20 @@ final class ActivityTasks implements RPCConnectionInterface
     public function handle(\FFI\CData $worker, string $taskQueue, string $bytes): ?string
     {
         $task = new ActivityTask();
-        $task->mergeFromString($bytes);
-        if ($task->getVariant() !== 'start') {
-            $this->cancel($task);
-            return null;
-        }
+        try {
+            $task->mergeFromString($bytes);
+            if ($task->getVariant() !== 'start') {
+                $this->cancel($task);
+                return null;
+            }
 
-        $result = $this->execute($worker, $taskQueue, $task->getTaskToken(), $task->getStart());
+            $result = $this->execute($worker, $taskQueue, $task->getTaskToken(), $task->getStart());
+        } catch (\Throwable $e) {
+            if ($task->getTaskToken() === '') {
+                throw $e;
+            }
+            $result = new ActivityExecutionResult(['failed' => new ActivityFailure(['failure' => $this->payloads->failure($e)])]);
+        }
 
         return (new ActivityTaskCompletion(['task_token' => $task->getTaskToken(), 'result' => $result]))->serializeToString();
     }
