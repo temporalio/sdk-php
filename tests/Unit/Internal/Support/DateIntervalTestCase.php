@@ -161,11 +161,14 @@ final class DateIntervalTestCase extends TestCase
         yield 'days' => [CarbonInterval::days(3)->hours(2)];
         yield 'months' => [CarbonInterval::months(1)];
         yield 'diff' => [CarbonInterval::diff('2026-01-01 00:00:00', '2026-01-01 05:06:07.5')];
+        yield 'negative seconds' => [CarbonInterval::seconds(-5)];
+        yield 'mixed signs' => [CarbonInterval::seconds(-5)->microseconds(250000)];
+        yield 'fraction over one second' => [CarbonInterval::milliseconds(1500)];
 
-        \mt_srand(42);
+        $random = new \Random\Randomizer(new \Random\Engine\Mt19937(42));
         for ($i = 0; $i < 50; ++$i) {
-            $interval = CarbonInterval::create(0, 0, 0, 0, \mt_rand(0, 100), \mt_rand(0, 59), \mt_rand(0, 59), \mt_rand(0, 999999));
-            yield "random $i" => [\mt_rand(0, 1) === 1 ? $interval->invert() : $interval];
+            $interval = CarbonInterval::create(0, 0, 0, 0, $random->getInt(0, 100), $random->getInt(0, 59), $random->getInt(0, 59), $random->getInt(0, 999999));
+            yield "random $i" => [$random->getInt(0, 1) === 1 ? $interval->invert() : $interval];
         }
     }
 
