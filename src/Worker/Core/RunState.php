@@ -33,7 +33,7 @@ final class RunState
     /** @var array<int, string> */
     private array $childWorkflowIds = [];
 
-    /** @var array<int, array{string, string}|\Throwable> */
+    /** @var array<int, array{string, string}> */
     private array $childExecutions = [];
 
     /** @var array<int, list<int>> */
@@ -127,18 +127,16 @@ final class RunState
      */
     public function childStarted(int $requestId, string $runId): array
     {
-        return $this->childExecutions[$requestId] = [$this->childWorkflowIds[$requestId], $runId];
-    }
+        $execution = [$this->childWorkflowIds[$requestId], $runId];
+        unset($this->childWorkflowIds[$requestId]);
 
-    public function childStartFailed(int $requestId, \Throwable $error): void
-    {
-        $this->childExecutions[$requestId] = $error;
+        return $this->childExecutions[$requestId] = $execution;
     }
 
     /**
-     * @return array{string, string}|\Throwable|null
+     * @return array{string, string}|null
      */
-    public function childExecution(int $requestId): array|\Throwable|null
+    public function childExecution(int $requestId): ?array
     {
         return $this->childExecutions[$requestId] ?? null;
     }
@@ -157,5 +155,10 @@ final class RunState
         unset($this->childWaiters[$requestId]);
 
         return $waiters;
+    }
+
+    public function forgetChild(int $requestId): void
+    {
+        unset($this->childWorkflowIds[$requestId], $this->childExecutions[$requestId]);
     }
 }

@@ -74,11 +74,11 @@ final class ResolutionMapper
                 break;
         }
 
-        if ($execution instanceof \Throwable) {
-            $run->childStartFailed($childId, $execution);
-        }
         foreach ($run->takeChildWaiters($childId) as $waiter) {
             $messages[] = $this->childExecution($waiter, $execution, $tick);
+        }
+        if ($execution instanceof \Throwable) {
+            $run->forgetChild($childId);
         }
 
         return $messages;
@@ -100,6 +100,7 @@ final class ResolutionMapper
     public function childResult(RunState $run, ResolveChildWorkflowExecution $resolve, TickInfo $tick): CommandInterface
     {
         $requestId = $run->release($resolve->getSeq());
+        $run->forgetChild($requestId);
         $result = $resolve->getResult();
 
         return match ($result->getStatus()) {
