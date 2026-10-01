@@ -58,6 +58,7 @@ use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
@@ -190,7 +191,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
-        $worker = new Worker(
+        $worker = $this->createWorker(
             $taskQueue,
             $options,
             ServiceContainer::fromWorkerFactory(
@@ -203,7 +204,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                     $taskQueue,
                 ),
             ),
-            $this->rpc,
         );
 
         // Call initializeWorker hooks (forward order)
@@ -338,6 +338,41 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new Marshaller(new AttributeMapperFactory($reader));
     }
 
+    protected function createWorker(string $taskQueue, WorkerOptions $options, ServiceContainer $services): WorkerInterface
+    {
+        return new Worker($taskQueue, $options, $services, $this->rpc);
+    }
+
+    /**
+     * @param iterable<CommandInterface> $commands
+     */
+    protected function dispatchCommands(iterable $commands, array $headers): void
+    {
+        foreach ($commands as $command) {
+            $this->env->update($command->getTickInfo());
+
+            if ($command instanceof ServerResponseInterface) {
+                $this->client->dispatch($command);
+                continue;
+            }
+
+            $this->server->dispatch($command, $headers);
+        }
+
+        $this->tick();
+    }
+
+    protected function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
+    {
+        $worker = $this->queues->find($taskQueue);
+
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
+        }
+
+        return $worker;
+    }
+
     private function boot(ServiceCredentials $credentials): void
     {
         $this->reader = $this->createReader();
@@ -366,21 +401,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function dispatch(string $messages, array $headers): string
     {
-        $commands = $this->codec->decode($messages, $headers);
-
-
-        foreach ($commands as $command) {
-            $this->env->update($command->getTickInfo());
-
-            if ($command instanceof ServerResponseInterface) {
-                $this->client->dispatch($command);
-                continue;
-            }
-
-            $this->server->dispatch($command, $headers);
-        }
-
-        $this->tick();
+        $this->dispatchCommands($this->codec->decode($messages, $headers), $headers);
 
         return $this->codec->encode($this->responses);
     }
@@ -396,17 +417,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         );
 
         return $worker->dispatch($request, $headers);
-    }
-
-    private function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
-    {
-        $worker = $this->queues->find($taskQueue);
-
-        if ($worker === null) {
-            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
-        }
-
-        return $worker;
     }
 
     private function findTaskQueueNameOrFail(array $headers): string

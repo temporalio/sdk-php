@@ -96,30 +96,20 @@ abstract class BaseClient implements GrpcClientInterface
         ?string $clientPem = null,
         ?string $overrideServerName = null,
     ): static {
-        $loadCert = static function (?string $cert): ?string {
-            return match (true) {
-                $cert === null, $cert === '' => null,
-                \is_file($cert) => false === ($content = \file_get_contents($cert))
-                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
-                    : $content,
-                default => $cert,
-            };
-        };
-
         if (!\extension_loaded('grpc')) {
             return static::createCore($address, ['tls' => (object) \array_filter([
-                'server_root_ca_cert' => $loadCert($crt),
-                'client_private_key' => $loadCert($clientKey),
-                'client_cert' => $loadCert($clientPem),
+                'server_root_ca_cert' => self::loadCertificate($crt),
+                'client_private_key' => self::loadCertificate($clientKey),
+                'client_cert' => self::loadCertificate($clientPem),
                 'domain' => $overrideServerName,
             ], static fn(?string $value): bool => $value !== null)]);
         }
 
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
-                $loadCert($crt),
-                $loadCert($clientKey),
-                $loadCert($clientPem),
+                self::loadCertificate($crt),
+                self::loadCertificate($clientKey),
+                self::loadCertificate($clientPem),
             ),
         ];
 
@@ -129,6 +119,20 @@ abstract class BaseClient implements GrpcClientInterface
         }
 
         return new static(static fn(): BaseStub => static::createGrpcStub($address, $options));
+    }
+
+    /**
+     * @internal
+     */
+    public static function loadCertificate(?string $cert): ?string
+    {
+        return match (true) {
+            $cert === null, $cert === '' => null,
+            \is_file($cert) => false === ($content = \file_get_contents($cert))
+                ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
+                : $content,
+            default => $cert,
+        };
     }
 
     public function getContext(): ContextInterface
