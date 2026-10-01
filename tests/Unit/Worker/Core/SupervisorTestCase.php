@@ -14,6 +14,7 @@ use Temporal\Worker\Core\Supervisor;
 #[CoversClass(Supervisor::class)]
 #[RequiresPhpExtension('pcntl')]
 #[RequiresPhpExtension('posix')]
+#[RequiresPhpExtension('ffi')]
 final class SupervisorTestCase extends TestCase
 {
     private const LONG_RUN_SECONDS = 30;

@@ -7,11 +7,13 @@ namespace Temporal\Tests\Unit\Worker\Core;
 use Coresdk\Activity_task\ActivityTask;
 use Coresdk\Activity_task\Start;
 use Coresdk\ActivityTaskCompletion;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Worker\Core\ActivityTasks;
 use Temporal\Internal\Bridge\Bridge;
 
+#[RequiresPhpExtension('ffi')]
 final class ActivityTasksTestCase extends TestCase
 {
     public function testActivityWithoutResultFailsOnlyItsTask(): void

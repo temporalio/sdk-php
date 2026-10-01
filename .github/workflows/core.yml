@@ -8,6 +8,7 @@ on:
       - 'tests/**'
       - 'core/**'
       - 'composer.json'
+      - 'phpunit.xml.dist'
       - '.github/workflows/core.yml'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - 'tests/**'
       - 'core/**'
       - 'composer.json'
+      - 'phpunit.xml.dist'
       - '.github/workflows/core.yml'
 
 permissions:
@@ -66,17 +68,24 @@ jobs:
           git diff --exit-code core/bridge/include
 
   php:
-    name: PHP on sdk-core, ${{ matrix.suite }}
+    name: PHP ${{ matrix.php }} on sdk-core, ${{ matrix.suite }}, activity concurrency ${{ matrix.concurrency }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        suite: [ unit, functional, acceptance ]
+        include:
+          - { suite: unit, php: '8.2', concurrency: '1' }
+          - { suite: unit, php: '8.4', concurrency: '1' }
+          - { suite: functional, php: '8.4', concurrency: '1' }
+          - { suite: functional-timeskip, php: '8.4', concurrency: '1' }
+          - { suite: acceptance, php: '8.4', concurrency: '1' }
+          - { suite: acceptance, php: '8.4', concurrency: '8' }
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TEMPORAL_HEADLESS: true
       TEMPORAL_WORKER_TRANSPORT: core
+      TEMPORAL_CORE_ACTIVITY_CONCURRENCY: ${{ matrix.concurrency }}
       XDEBUG_MODE: off
     steps:
       - name: Check Out Code
@@ -85,7 +94,7 @@ jobs:
       - name: Setup PHP without ext-grpc
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
-          php-version: 8.4
+          php-version: ${{ matrix.php }}
           extensions: dom, sockets, curl, protobuf, ffi, pcntl, posix, :grpc
 
       - name: Install dependencies with composer
@@ -121,6 +130,10 @@ jobs:
       - name: Functional
         if: matrix.suite == 'functional'
         run: composer test:func
+
+      - name: Functional with time skipping
+        if: matrix.suite == 'functional-timeskip'
+        run: composer test:func-timeskip
 
       - name: Acceptance without the core differences listed in core/REPORT.md
         if: matrix.suite == 'acceptance'
