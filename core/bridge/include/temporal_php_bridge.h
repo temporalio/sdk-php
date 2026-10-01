@@ -18,6 +18,8 @@
 
 #define CALL_OK 0
 
+#define CALL_FAILED 1
+
 typedef struct TpbClient TpbClient;
 
 typedef struct TpbRuntime TpbRuntime;
@@ -56,7 +58,10 @@ void tpb_bytes_free(uint8_t *data, size_t len);
 
 int tpb_event_fd(struct TpbRuntime *rt);
 
-size_t tpb_next_events(struct TpbRuntime *rt, int32_t timeout_ms, struct TpbEvent *out, size_t max);
+size_t tpb_next_events(struct TpbRuntime *rt,
+                       uint32_t timeout_ms,
+                       struct TpbEvent *out,
+                       size_t max);
 
 struct TpbWorker *tpb_replayer_new(struct TpbRuntime *rt,
                                    const char *config,
@@ -72,8 +77,6 @@ struct TpbRuntime *tpb_runtime_new(const char *config,
                                    size_t config_len,
                                    uint8_t **err,
                                    size_t *err_len);
-
-void tpb_runtime_free(struct TpbRuntime *rt);
 
 struct TpbWorker *tpb_worker_new(struct TpbRuntime *rt,
                                  const char *config,

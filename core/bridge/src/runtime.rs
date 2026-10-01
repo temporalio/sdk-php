@@ -1,8 +1,8 @@
 use crate::config::{RuntimeJson, parse};
-use crate::ffi::{free, guard, into_ffi, slice};
+use crate::ffi::{guard, into_ffi, slice};
 use crate::queue::Queue;
 use std::sync::Arc;
-use temporalio_common::telemetry::{CoreLog, CoreLogConsumer, Logger, TelemetryOptions};
+use temporalio_common::telemetry::{Logger, LoggerFormat, TelemetryOptions};
 use temporalio_sdk_core::{CoreRuntime, RuntimeOptions, TokioRuntimeBuilder};
 
 pub struct TpbRuntime {
@@ -10,25 +10,13 @@ pub struct TpbRuntime {
     pub queue: Arc<Queue>,
 }
 
-#[derive(Debug)]
-struct StderrLog;
-
-impl CoreLogConsumer for StderrLog {
-    fn on_log(&self, log: CoreLog) {
-        eprintln!(
-            "[temporal-core] {} {}: {} {:?}",
-            log.level, log.target, log.message, log.fields
-        );
-    }
-}
-
 fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
     let config: RuntimeJson = parse(config, "runtime config")?;
     let telemetry = match config.log {
         Some(filter) => TelemetryOptions::builder()
-            .logging(Logger::Push {
+            .logging(Logger::Console {
                 filter,
-                consumer: Arc::new(StderrLog),
+                format: Some(LoggerFormat::Compact),
             })
             .build(),
         None => TelemetryOptions::default(),
@@ -54,9 +42,4 @@ pub unsafe extern "C" fn tpb_runtime_new(
         |message| unsafe { into_ffi(Err(message), err, err_len) },
         || unsafe { into_ffi(new_runtime(slice(config, config_len)), err, err_len) },
     )
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn tpb_runtime_free(rt: *mut TpbRuntime) {
-    unsafe { free(rt) }
 }

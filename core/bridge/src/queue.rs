@@ -106,18 +106,15 @@ impl Queue {
         });
     }
 
-    fn take(&self, timeout_ms: i32, out: &mut [TpbEvent]) -> usize {
+    fn take(&self, timeout_ms: u32, out: &mut [TpbEvent]) -> usize {
         let mut events = self.events.lock().unwrap();
-        if events.is_empty() && timeout_ms != 0 {
-            events = if timeout_ms < 0 {
-                self.ready.wait_while(events, |e| e.is_empty()).unwrap()
-            } else {
-                let timeout = Duration::from_millis(timeout_ms as u64);
-                self.ready
-                    .wait_timeout_while(events, timeout, |e| e.is_empty())
-                    .unwrap()
-                    .0
-            };
+        if events.is_empty() && timeout_ms > 0 {
+            let timeout = Duration::from_millis(timeout_ms.into());
+            events = self
+                .ready
+                .wait_timeout_while(events, timeout, |e| e.is_empty())
+                .unwrap()
+                .0;
         }
         let count = events.len().min(out.len());
         for (slot, event) in out.iter_mut().zip(events.drain(..count)) {
@@ -153,7 +150,7 @@ pub unsafe extern "C" fn tpb_event_fd(rt: *mut TpbRuntime) -> libc::c_int {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_next_events(
     rt: *mut TpbRuntime,
-    timeout_ms: i32,
+    timeout_ms: u32,
     out: *mut TpbEvent,
     max: usize,
 ) -> usize {
@@ -164,4 +161,34 @@ pub unsafe extern "C" fn tpb_next_events(
             unsafe { &*rt }.queue.take(timeout_ms, out)
         },
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ffi::free;
+    use crate::testing::{events, runtime};
+
+    fn read_bytes(fd: RawFd) -> isize {
+        let mut buf = [0u8; 8];
+        unsafe { libc::read(fd, buf.as_mut_ptr().cast(), buf.len()) }
+    }
+
+    #[test]
+    fn event_fd_gets_one_byte_per_event_after_it_is_watched() {
+        let rt = runtime();
+        let queue = &unsafe { &*rt }.queue;
+        queue.push(1, 0, STATUS_OK, Vec::new());
+        assert_eq!(read_bytes(queue.read_fd.as_raw_fd()), -1);
+
+        let fd = unsafe { tpb_event_fd(rt) };
+        assert_eq!(fd, queue.read_fd.as_raw_fd());
+        queue.push(2, 0, STATUS_OK, Vec::new());
+        queue.push(3, 0, STATUS_OK, Vec::new());
+        assert_eq!(read_bytes(fd), 2);
+        assert_eq!(read_bytes(fd), -1);
+
+        assert_eq!(events(rt, 3).len(), 3);
+        unsafe { free(rt) };
+    }
 }

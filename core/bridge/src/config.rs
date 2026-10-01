@@ -1,4 +1,5 @@
 use serde::{Deserialize, de::DeserializeOwned};
+use serde_json::{Map, Value};
 use std::time::Duration;
 use temporalio_client::{ClientTlsOptions, ConnectionOptions, GrpcCompression, TlsOptions};
 use temporalio_common::{
@@ -28,23 +29,34 @@ pub struct TlsJson {
     client_private_key: Option<String>,
 }
 
+fn client_identity(
+    client_cert: Option<String>,
+    client_private_key: Option<String>,
+) -> Result<Option<(String, String)>, String> {
+    match (client_cert, client_private_key) {
+        (Some(cert), Some(key)) => Ok(Some((cert, key))),
+        (None, None) => Ok(None),
+        _ => Err("client_cert and client_private_key must be set together".into()),
+    }
+}
+
 impl TlsJson {
-    fn options(self) -> TlsOptions {
-        TlsOptions::builder()
+    fn options(self) -> Result<TlsOptions, String> {
+        let identity = client_identity(self.client_cert, self.client_private_key)?;
+        Ok(TlsOptions::builder()
             .maybe_server_root_ca_cert(self.server_root_ca_cert.map(String::into_bytes))
             .maybe_domain(self.domain)
-            .maybe_client_tls_options(self.client_cert.zip(self.client_private_key).map(
-                |(client_cert, client_private_key)| {
-                    ClientTlsOptions::builder()
-                        .client_cert(client_cert.into_bytes())
-                        .client_private_key(client_private_key.into_bytes())
-                        .build()
-                },
-            ))
-            .build()
+            .maybe_client_tls_options(identity.map(|(client_cert, client_private_key)| {
+                ClientTlsOptions::builder()
+                    .client_cert(client_cert.into_bytes())
+                    .client_private_key(client_private_key.into_bytes())
+                    .build()
+            }))
+            .build())
     }
 
     pub fn client_config(self) -> Result<(ClientTlsConfig, Option<Uri>), String> {
+        let identity = client_identity(self.client_cert, self.client_private_key)?;
         let mut config = match self.server_root_ca_cert {
             Some(ca) => ClientTlsConfig::new().ca_certificate(Certificate::from_pem(ca)),
             None => ClientTlsConfig::new().with_native_roots(),
@@ -58,7 +70,7 @@ impl TlsJson {
             );
             config = config.domain_name(domain);
         }
-        if let (Some(cert), Some(key)) = (self.client_cert, self.client_private_key) {
+        if let Some((cert, key)) = identity {
             config = config.identity(Identity::from_pem(cert, key));
         }
         Ok((config, origin))
@@ -93,7 +105,7 @@ impl ConnectionJson {
                 .client_version(self.client_version)
                 .identity(self.identity)
                 .maybe_api_key(self.api_key)
-                .maybe_tls_options(self.tls.map(TlsJson::options))
+                .maybe_tls_options(self.tls.map(TlsJson::options).transpose()?)
                 .connect_timeout(Duration::from_millis(self.connect_timeout_ms))
                 .grpc_compression(match self.grpc_compression {
                     Compression::Gzip => GrpcCompression::Gzip,
@@ -129,7 +141,6 @@ struct DeploymentJson {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkerJson {
-    pub connection: ConnectionJson,
     namespace: String,
     task_queue: String,
     workflows: bool,
@@ -151,6 +162,17 @@ pub struct WorkerJson {
 }
 
 impl WorkerJson {
+    pub fn parse_with_connection(json: &[u8]) -> Result<(ConnectionJson, Self), String> {
+        let mut fields: Map<String, Value> = parse(json, "worker config")?;
+        let connection = fields.remove("connection").unwrap_or_default();
+        Ok((
+            ConnectionJson::deserialize(connection)
+                .map_err(|e| format!("Invalid connection config JSON: {e}"))?,
+            Self::deserialize(Value::Object(fields))
+                .map_err(|e| format!("Invalid worker config JSON: {e}"))?,
+        ))
+    }
+
     pub fn worker_config(&self) -> Result<WorkerConfig, String> {
         WorkerConfig::builder()
             .namespace(self.namespace.as_str())
@@ -192,14 +214,13 @@ impl WorkerJson {
                 build_id: self.build_id.clone(),
             });
         };
-        let default_versioning_behavior = match deployment.default_versioning_behavior {
-            0 => None,
-            v => Some(
-                VersioningBehavior::try_from(v)
-                    .map_err(|e| e.to_string())?
-                    .into(),
-            ),
-        };
+        let default_versioning_behavior =
+            match VersioningBehavior::try_from(deployment.default_versioning_behavior)
+                .map_err(|e| e.to_string())?
+            {
+                VersioningBehavior::Unspecified => None,
+                behavior => Some(behavior.into()),
+            };
         Ok(WorkerVersioningStrategy::WorkerDeploymentBased(
             WorkerDeploymentOptions::new(
                 WorkerDeploymentVersion::builder()
@@ -252,13 +273,22 @@ mod tests {
         })
     }
 
-    fn parse_worker(json: &Value) -> Result<WorkerJson, String> {
-        parse(json.to_string().as_bytes(), "worker config")
+    fn parse_worker(json: &Value) -> Result<(ConnectionJson, WorkerJson), String> {
+        WorkerJson::parse_with_connection(json.to_string().as_bytes())
+    }
+
+    fn tls(client_cert: Option<&str>, client_private_key: Option<&str>) -> TlsJson {
+        TlsJson {
+            server_root_ca_cert: None,
+            domain: None,
+            client_cert: client_cert.map(str::to_owned),
+            client_private_key: client_private_key.map(str::to_owned),
+        }
     }
 
     #[test]
     fn worker_config_maps_every_key() {
-        let config = parse_worker(&worker()).unwrap().worker_config().unwrap();
+        let config = parse_worker(&worker()).unwrap().1.worker_config().unwrap();
         assert_eq!(config.namespace, "default");
         assert_eq!(config.task_queue, "q");
         assert_eq!(config.max_cached_workflows, 10000);
@@ -327,7 +357,7 @@ mod tests {
             "Version": {"DeploymentName": "app", "BuildId": "b1"},
             "DefaultVersioningBehavior": 2,
         });
-        let config = parse_worker(&json).unwrap().worker_config().unwrap();
+        let config = parse_worker(&json).unwrap().1.worker_config().unwrap();
         let WorkerVersioningStrategy::WorkerDeploymentBased(options) = config.versioning_strategy
         else {
             panic!("deployment-based versioning expected");
@@ -335,7 +365,56 @@ mod tests {
         assert!(options.use_worker_versioning);
         assert_eq!(options.version.deployment_name, "app");
         assert_eq!(options.version.build_id, "b1");
-        assert!(options.default_versioning_behavior.is_some());
+        assert_eq!(
+            options.default_versioning_behavior,
+            Some(VersioningBehavior::AutoUpgrade.into())
+        );
+
+        json["deployment"]["DefaultVersioningBehavior"] = json!(0);
+        let config = parse_worker(&json).unwrap().1.worker_config().unwrap();
+        let WorkerVersioningStrategy::WorkerDeploymentBased(options) = config.versioning_strategy
+        else {
+            panic!("deployment-based versioning expected");
+        };
+        assert_eq!(options.default_versioning_behavior, None);
+
+        json["deployment"]["DefaultVersioningBehavior"] = json!(99);
+        assert!(parse_worker(&json).unwrap().1.worker_config().is_err());
+    }
+
+    #[test]
+    fn replayer_config_is_the_worker_part_without_connection() {
+        let mut json = worker();
+        json.as_object_mut().unwrap().remove("connection");
+        let config: WorkerJson = parse(json.to_string().as_bytes(), "worker config").unwrap();
+        assert_eq!(config.worker_config().unwrap().task_queue, "q");
+        assert!(parse::<WorkerJson>(worker().to_string().as_bytes(), "worker config").is_err());
+        assert!(parse_worker(&json).err().unwrap().contains("connection"));
+    }
+
+    #[test]
+    fn client_cert_and_key_must_be_set_together() {
+        let error = "client_cert and client_private_key must be set together";
+        for (cert, key) in [(Some("cert"), None), (None, Some("key"))] {
+            assert_eq!(tls(cert, key).options().err().unwrap(), error);
+            assert_eq!(tls(cert, key).client_config().err().unwrap(), error);
+        }
+        assert!(
+            tls(None, None)
+                .options()
+                .unwrap()
+                .client_tls_options
+                .is_none()
+        );
+        assert!(
+            tls(Some("cert"), Some("key"))
+                .options()
+                .unwrap()
+                .client_tls_options
+                .is_some()
+        );
+        assert!(tls(None, None).client_config().is_ok());
+        assert!(tls(Some("cert"), Some("key")).client_config().is_ok());
     }
 
     #[test]
@@ -348,7 +427,7 @@ mod tests {
             "client_private_key": null,
         });
         json["connection"]["grpc_compression"] = json!("none");
-        let options = parse_worker(&json).unwrap().connection.options().unwrap();
+        let options = parse_worker(&json).unwrap().0.options().unwrap();
         assert_eq!(options.connect_timeout, Some(Duration::from_secs(10)));
         assert_eq!(options.grpc_compression, GrpcCompression::None);
         assert_eq!(
