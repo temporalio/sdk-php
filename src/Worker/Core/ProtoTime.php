@@ -86,11 +86,11 @@ final class ProtoTime
         return $duration === null ? 0 : $duration->getSeconds() * self::MICROS_PER_SECOND + \intdiv($duration->getNanos(), self::NANOS_PER_MICRO);
     }
 
-    public static function utcMilliseconds(int $micros): Carbon
+    public static function utc(int $micros): Carbon
     {
         return new Carbon(
             \gmdate('Y-m-d\TH:i:s', \intdiv($micros, self::MICROS_PER_SECOND))
-            . \sprintf('.%03d+00:00', \intdiv($micros % self::MICROS_PER_SECOND, self::NANOS_PER_MICRO)),
+            . \sprintf('.%06d+00:00', $micros % self::MICROS_PER_SECOND),
         );
     }
 }

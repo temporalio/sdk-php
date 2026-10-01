@@ -94,16 +94,29 @@ final class InfoFactory
         $info->type->name = $start->getActivityType();
         $info->taskQueue = $taskQueue;
         $info->heartbeatTimeout = ProtoTime::interval($start->getHeartbeatTimeout());
-        $info->scheduledTime = ProtoTime::utcMilliseconds($scheduledTime);
-        $info->startedTime = ProtoTime::utcMilliseconds($startedTime);
-        $info->deadline = ProtoTime::utcMilliseconds(
-            $startedTime + (ProtoTime::microsOf($start->getStartToCloseTimeout()) ?: ProtoTime::microsOf($start->getScheduleToCloseTimeout())),
-        );
+        $info->scheduledTime = ProtoTime::utc($scheduledTime);
+        $info->startedTime = ProtoTime::utc($startedTime);
+        $info->deadline = ProtoTime::utc(self::deadline($start, $scheduledTime, $startedTime));
         $info->attempt = $start->getAttempt();
         $info->priority = self::priorityOptions($start->getPriority());
         $info->retryOptions = self::retryOptions($start->getRetryPolicy());
 
         return $info;
+    }
+
+    private static function deadline(Start $start, int $scheduledTime, int $startedTime): int
+    {
+        $scheduleToClose = ProtoTime::microsOf($start->getScheduleToCloseTimeout());
+        $startToClose = ProtoTime::microsOf($start->getStartToCloseTimeout());
+
+        if ($scheduleToClose <= 0) {
+            return $startedTime + $startToClose;
+        }
+        if ($startToClose <= 0) {
+            return $scheduledTime + $scheduleToClose;
+        }
+
+        return \min($scheduledTime + $scheduleToClose, $startedTime + $startToClose);
     }
 
     /**
