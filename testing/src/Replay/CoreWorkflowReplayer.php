@@ -47,7 +47,9 @@ final class CoreWorkflowReplayer
 
     public function downloadHistory(string $workflowType, WorkflowExecution $execution, string $savePath): void
     {
-        \file_put_contents($savePath, $this->codec->encode($this->fetchHistory($execution)));
+        if (\file_put_contents($savePath, $this->codec->encode($this->fetchHistory($execution))) === false) {
+            throw new \RuntimeException(\sprintf('Unable to write the history to "%s"', $savePath));
+        }
     }
 
     public function replayFromJSON(string $workflowType, string|\SplFileInfo $path, int $lastEventId = 0): void

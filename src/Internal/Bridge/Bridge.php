@@ -67,7 +67,7 @@ final class Bridge
             throw new \RuntimeException(\sprintf('Unable to read the sdk-core bridge header "%s"', $header));
         }
         if (!\is_readable($library)) {
-            throw new \RuntimeException(\sprintf('Unable to read the sdk-core bridge library "%s", build it with `cargo build --release` in core/bridge or set TEMPORAL_CORE_BRIDGE_LIB', $library));
+            throw new \RuntimeException(\sprintf('Unable to read the sdk-core bridge library "%s", build it with `cargo build --release` in core/bridge or set TEMPORAL_CORE_BRIDGE_LIB; the gRPC client uses ext-grpc instead when it is installed', $library));
         }
 
         $this->ffi = \FFI::cdef($definitions, $library);

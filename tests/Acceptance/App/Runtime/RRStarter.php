@@ -73,10 +73,7 @@ final class RRStarter
         }
 
         if (CoreWorker::enabled()) {
-            $this->startCoreWorker($workerArgs, $envs + \array_filter([
-                'TEMPORAL_TLS_CLIENT_KEY_PATH' => $run->tlsKey,
-                'TEMPORAL_TLS_CLIENT_CERT_PATH' => $run->tlsCert,
-            ], static fn(?string $value): bool => $value !== null));
+            $this->startCoreWorker($workerArgs, $envs);
             return;
         }
 

@@ -386,9 +386,7 @@ final class CommandTranslator
             'search_attributes' => isset($options['SearchAttributes'])
                 ? new SearchAttributes(['indexed_fields' => $this->payloads->collection((array) $options['SearchAttributes'])])
                 : null,
-            'cancellation_type' => ($options['WaitForCancellation'] ?? false) === true
-                ? ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED
-                : ChildWorkflowCancellationType::TRY_CANCEL,
+            'cancellation_type' => ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED,
             'priority' => $this->priority($options['Priority'] ?? null),
         ]);
     }

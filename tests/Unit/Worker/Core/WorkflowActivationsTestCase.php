@@ -104,19 +104,22 @@ final class WorkflowActivationsTestCase extends TestCase
         );
     }
 
-    public static function provideChildCancellationTypes(): iterable
+    public static function provideChildWaitForCancellation(): iterable
     {
-        yield 'default' => [[], ChildWorkflowCancellationType::TRY_CANCEL];
-        yield 'try cancel' => [['WaitForCancellation' => false], ChildWorkflowCancellationType::TRY_CANCEL];
-        yield 'wait for cancellation' => [['WaitForCancellation' => true], ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED];
+        yield 'default' => [[]];
+        yield 'try cancel' => [['WaitForCancellation' => false]];
+        yield 'wait for cancellation' => [['WaitForCancellation' => true]];
     }
 
-    #[DataProvider('provideChildCancellationTypes')]
-    public function testChildCancellationTypeFollowsWaitForCancellation(array $options, int $expected): void
+    #[DataProvider('provideChildWaitForCancellation')]
+    public function testChildWaitsForCancellationCompletedLikeRoadRunner(array $options): void
     {
         $commands = $this->start([new Request('ExecuteChildWorkflow', ['name' => 'Child', 'options' => $options])]);
 
-        self::assertSame($expected, $commands[0]->getStartChildWorkflowExecution()->getCancellationType());
+        self::assertSame(
+            ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED,
+            $commands[0]->getStartChildWorkflowExecution()->getCancellationType(),
+        );
     }
 
     public function testChildStartFailureAnswersWaitersAndReleasesTheChild(): void
