@@ -57,7 +57,12 @@ final class CoreWorkflowReplayer
             throw new InvalidArgumentException($workflowType, \sprintf('History file "%s" does not exist.', $path), StatusCode::INVALID_ARGUMENT);
         }
 
-        $this->replay($workflowType, $this->codec->decode((string) \file_get_contents($path), $lastEventId), self::REPLAY_WORKFLOW_ID);
+        $json = \file_get_contents($path);
+        if ($json === false) {
+            throw new InvalidArgumentException($workflowType, \sprintf('History file "%s" cannot be read.', $path), StatusCode::INVALID_ARGUMENT);
+        }
+
+        $this->replay($workflowType, $this->codec->decode($json, $lastEventId), self::REPLAY_WORKFLOW_ID);
     }
 
     private function replay(string $workflowType, History $history, string $workflowId): void

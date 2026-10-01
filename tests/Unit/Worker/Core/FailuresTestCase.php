@@ -28,7 +28,11 @@ final class FailuresTestCase extends TestCase
         $resource = \fopen('php://memory', 'rb');
         $error = new ApplicationFailure('message', 'type', false, EncodedValues::fromValues([$resource]));
 
-        $this->expectException(DataConverterException::class);
-        Failures::fromThrowable($error, DataConverter::createDefault());
+        try {
+            $this->expectException(DataConverterException::class);
+            Failures::fromThrowable($error, DataConverter::createDefault());
+        } finally {
+            \fclose($resource);
+        }
     }
 }

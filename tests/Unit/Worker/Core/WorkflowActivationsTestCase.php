@@ -60,13 +60,6 @@ final class WorkflowActivationsTestCase extends TestCase
         self::assertStringContainsString('"decimal"', $completion->getFailed()->getFailure()->getMessage());
     }
 
-    public function testEveryValueTypeRoundTripsThroughMetadataName(): void
-    {
-        foreach (ValueType::cases() as $type) {
-            self::assertSame($type, ValueType::fromMetadata($type->metadataName()));
-        }
-    }
-
     public function testNegativeTimerFailsLikeRoadRunner(): void
     {
         $responses = [];

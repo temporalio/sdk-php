@@ -12,6 +12,8 @@ use Temporal\Api\History\V1\History;
 
 final class HistoryJsonCodec
 {
+    private const UNSPECIFIED_SUFFIX = 'UNSPECIFIED';
+
     public function encode(History $history): string
     {
         return $history->serializeToJsonString();
@@ -42,6 +44,9 @@ final class HistoryJsonCodec
         for ($i = 0; $i < $descriptor->getFieldCount(); ++$i) {
             $field = $descriptor->getField($i);
             $key = \lcfirst(\str_replace('_', '', \ucwords($field->getName(), '_')));
+            if (!isset($message->{$key})) {
+                $key = $field->getName();
+            }
             if (!isset($message->{$key}) || $field->isMap()) {
                 continue;
             }
@@ -64,11 +69,13 @@ final class HistoryJsonCodec
 
     private static function enumName(EnumDescriptor $enum, string $value): string
     {
-        $prefix = \substr($enum->getValue(0)->getName(), 0, -\strlen('UNSPECIFIED'));
-        if (\str_starts_with($value, $prefix)) {
+        $unspecified = $enum->getValue(0)->getName();
+        if (!\str_ends_with($unspecified, self::UNSPECIFIED_SUFFIX)) {
             return $value;
         }
+        $prefix = \substr($unspecified, 0, -\strlen(self::UNSPECIFIED_SUFFIX));
+        $name = \strtoupper((string) \preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', '_', $value));
 
-        return $prefix . \strtoupper((string) \preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', '_', $value));
+        return \str_starts_with($name, $prefix) ? $name : $prefix . $name;
     }
 }
