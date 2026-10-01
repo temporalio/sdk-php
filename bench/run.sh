@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ $# -lt 5 ]; then
-    echo "usage: $0 <transport> <scenario> <workflows> <activities> <payload>" >&2
+    echo "usage: $0 <transport> <scenario> <workflows> <activities> <param>" >&2
     exit 1
 fi
 
@@ -86,10 +86,10 @@ echo "warmup done" >&2
 SAMPLER_PID=$!
 
 CPU_BEFORE=$(cpu_seconds)
-RUSAGE_BEFORE=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0 0 0")
+RUSAGE_BEFORE=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0")
 RESULT=$($PHP starter.php --scenario="$SCENARIO" --workflows="$WORKFLOWS" --activities="$ACTIVITIES" --payload="$PAYLOAD" --concurrency="$CONCURRENCY" --rate="$RATE" --timeout="$TIMEOUT")
 CPU_AFTER=$(cpu_seconds)
-RUSAGE_AFTER=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0 0 0")
+RUSAGE_AFTER=$([ -n "${BENCH_RUSAGE:-}" ] && $BENCH_RUSAGE $(worker_pids | tr ',' ' ') || echo "0 0")
 RUSAGE=$(jq -nc --argjson a "[${RUSAGE_BEFORE// /,}]" --argjson b "[${RUSAGE_AFTER// /,}]" '{instructions: ($b[0] - $a[0]), cycles: ($b[1] - $a[1])}')
 WORKER_PROCESSES=$(descendants "$WORKER_PID" | wc -l | tr -d ' ')
 
@@ -97,7 +97,7 @@ kill "$SAMPLER_PID" 2>/dev/null || true
 wait "$SAMPLER_PID" 2>/dev/null || true
 SAMPLER_PID=
 
-STATS=$(awk '{c+=$1; n++; if ($2>r) r=$2} END {printf "{\"cpu_pct_avg\":%.1f,\"rss_mb_max\":%.1f,\"samples\":%d}", c/n, r/1024, n}' "$TMP/samples")
+STATS=$(awk '{c+=$1; n++; if ($2>r) r=$2} END {if (n == 0) {print "the worker exited before the first sample" > "/dev/stderr"; exit 1} printf "{\"cpu_pct_avg\":%.1f,\"rss_mb_max\":%.1f,\"samples\":%d}", c/n, r/1024, n}' "$TMP/samples")
 
 echo "$RESULT" | jq -c \
     --arg transport "$TRANSPORT" \

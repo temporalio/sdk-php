@@ -21,8 +21,10 @@ RUN apt-get update \
     && docker-php-ext-enable protobuf \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+ARG COMPOSER_ROOT_VERSION=dev-master
 WORKDIR /app
 COPY . .
-RUN COMPOSER_ROOT_VERSION=2.19.0 composer install --no-interaction --prefer-dist --no-progress
+RUN composer install --no-interaction --prefer-dist --no-progress
 COPY --from=bridge /libtemporal_php_bridge.so core/bridge/target/release/libtemporal_php_bridge.so
+ENV BENCH_TRANSPORT=core
 CMD ["php", "bench/worker.php"]

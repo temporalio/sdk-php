@@ -1,16 +1,16 @@
 version: "3"
 
 rpc:
-    listen: ${BENCH_RR_RPC:-tcp://127.0.0.1:6556}
+    listen: tcp://127.0.0.1:6556
 
 server:
     command: "php -dopcache.enable_cli=1 -dxdebug.mode=off -dpcov.enabled=0 worker.php"
 
 temporal:
-    address: ${TEMPORAL_ADDRESS:-127.0.0.1:7557}
+    address: ${TEMPORAL_ADDRESS}
     namespace: default
     activities:
-        num_workers: ${BENCH_ACTIVITY_WORKERS:-4}
+        num_workers: ${BENCH_ACTIVITY_WORKERS}
 
 logs:
     level: error

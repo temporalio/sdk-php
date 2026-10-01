@@ -23,8 +23,8 @@ $payload = (int) ($opts['payload'] ?? 100);
 $concurrency = \max(1, (int) ($opts['concurrency'] ?? 8));
 $timeout = (float) ($opts['timeout'] ?? 600);
 $rate = (float) ($opts['rate'] ?? 0);
-$address = \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7557';
-$taskQueue = \getenv('BENCH_TASK_QUEUE') ?: 'bench';
+$address = \getenv('TEMPORAL_ADDRESS') ?: BENCH_DEFAULT_ADDRESS;
+$taskQueue = \getenv('BENCH_TASK_QUEUE') ?: BENCH_DEFAULT_TASK_QUEUE;
 $workflowType = SCENARIO_WORKFLOW[$scenario] ?? throw new \InvalidArgumentException("Unknown scenario: {$scenario}");
 $prefix = $opts['prefix'] ?? \sprintf('bench-%s-%s-', $scenario, \bin2hex(\random_bytes(4)));
 
@@ -72,7 +72,7 @@ for ($part = 0; $part < \min($concurrency, $workflows); $part++) {
     $starters[] = \proc_open(
         [
             \PHP_BINARY,
-            ...\array_slice($_SERVER['argv'], 0),
+            ...$_SERVER['argv'],
             '--prefix=' . $prefix,
             '--part=' . $part,
             '--started-at=' . $startedAt,
@@ -84,7 +84,9 @@ for ($part = 0; $part < \min($concurrency, $workflows); $part++) {
 foreach ($starters as $starter) {
     while (($status = \proc_get_status($starter))['running']) {
         if (\microtime(true) - $startedAt > $timeout) {
-            \proc_terminate($starter, 9);
+            foreach ($starters as $running) {
+                \proc_terminate($running, \SIGKILL);
+            }
             throw new \RuntimeException('A starter process timed out');
         }
         \usleep(20_000);

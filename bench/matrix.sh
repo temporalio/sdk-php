@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 cd "$(dirname "$0")"
-export BENCH_ACTIVITY_WORKERS=4 BENCH_RESULTS=${BENCH_RESULTS:-$PWD/matrix.jsonl}
+export BENCH_RESULTS=${BENCH_RESULTS:-$PWD/matrix.jsonl}
 FAILED=0
 run() {
   echo "::group::${BENCH_LABEL:-$2} $3 $4 $5 $6 ${BENCH_RATE:+@${BENCH_RATE}/s}"
