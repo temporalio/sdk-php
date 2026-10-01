@@ -1480,8 +1480,8 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
         return new V1\WorkflowServiceClient($address, $options);
     }
 
-    protected static function createCoreStub(string $address, array $config): \Grpc\BaseStub
+    protected static function createCoreStub(string $address, ?array $tls): \Grpc\BaseStub
     {
-        return new Core\CoreWorkflowServiceStub($address, $config);
+        return new Core\CoreWorkflowServiceStub($address, $tls);
     }
 }

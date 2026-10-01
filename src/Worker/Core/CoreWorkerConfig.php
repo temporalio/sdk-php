@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker\Core;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\GRPC\BaseClient;
+use Temporal\Internal\Bridge\BridgeConnection;
 use Temporal\Common\SdkVersion;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Worker\WorkerInterface;
@@ -22,7 +22,6 @@ use Temporal\Worker\WorkerInterface;
  */
 final class CoreWorkerConfig
 {
-    private const CONNECT_TIMEOUT_MS = 10_000;
     private const MAX_ACTIVITY_POLLERS = 8;
     private const WORKFLOW_TASK_POLLERS = 8;
     private const DEFAULT_MAX_OUTSTANDING_WORKFLOW_TASKS = 100;
@@ -39,20 +38,24 @@ final class CoreWorkerConfig
         private readonly MarshallerInterface $marshaller,
     ) {}
 
-    public static function milliseconds(?\DateInterval $interval): ?int
+    /**
+     * @param iterable<WorkerInterface> $workers
+     */
+    public function hasWork(iterable $workers, CoreRole $role): bool
     {
-        return $interval === null ? null : (int) CarbonInterval::instance($interval)->totalMilliseconds;
-    }
+        foreach ($workers as $worker) {
+            if (self::runsWorkflows($worker, $role) || self::runsRemoteActivities($worker, $role)) {
+                return true;
+            }
+        }
 
-    public function activityPolls(CoreRole $role): int
-    {
-        return $role === CoreRole::Activity ? \min(self::MAX_ACTIVITY_POLLERS, $this->options->activityConcurrency) : 1;
+        return false;
     }
 
     public function build(WorkerInterface $worker, CoreRole $role): array
     {
         $options = $worker->getOptions();
-        $workflows = $role->runsWorkflows() && !$options->disableWorkflowWorker;
+        $workflows = self::runsWorkflows($worker, $role);
         $cachedWorkflows = $workflows ? $this->options->maxCachedWorkflows : 0;
         $minWorkflowTasks = $cachedWorkflows > 0 ? self::MIN_CACHED_WORKFLOW_TASKS : 1;
         $activityConcurrency = $role === CoreRole::Activity ? $this->options->activityConcurrency : 1;
@@ -63,7 +66,7 @@ final class CoreWorkerConfig
             'task_queue' => $worker->getID(),
             'workflows' => $workflows,
             'local_activities' => $workflows,
-            'remote_activities' => $role->runsRemoteActivities() && !$options->localActivityWorkerOnly,
+            'remote_activities' => self::runsRemoteActivities($worker, $role),
             'deployment' => isset($options->deploymentOptions) ? $this->marshaller->marshal($options->deploymentOptions) : null,
             'build_id' => $options->buildID,
             'graceful_shutdown_period_ms' => self::milliseconds($options->workerStopTimeout) ?? 0,
@@ -80,23 +83,34 @@ final class CoreWorkerConfig
         ];
     }
 
+    private static function runsWorkflows(WorkerInterface $worker, CoreRole $role): bool
+    {
+        return $role->runsWorkflows() && !$worker->getOptions()->disableWorkflowWorker;
+    }
+
+    private static function runsRemoteActivities(WorkerInterface $worker, CoreRole $role): bool
+    {
+        return $role->runsRemoteActivities() && !$worker->getOptions()->localActivityWorkerOnly;
+    }
+
+    private static function milliseconds(?\DateInterval $interval): ?int
+    {
+        return $interval === null ? null : (int) CarbonInterval::instance($interval)->totalMilliseconds;
+    }
+
     private function connection(string $identity): array
     {
         $tls = $this->options->tls;
 
-        return [
-            'target_url' => ($tls === null ? 'http://' : 'https://') . $this->options->address,
+        return BridgeConnection::client(
+            $this->options->address,
+            $tls === null ? null : BridgeConnection::tls($tls->rootCerts, $tls->serverName, $tls->certChain, $tls->privateKey),
+        ) + [
             'client_name' => SdkVersion::SDK_NAME,
             'client_version' => SdkVersion::getSdkVersion(),
             'identity' => $identity ?: \getmypid() . '@' . \gethostname(),
             'api_key' => $this->options->apiKey,
-            'tls' => $tls === null ? null : [
-                'server_root_ca_cert' => BaseClient::loadCertificate($tls->rootCerts),
-                'domain' => $tls->serverName,
-                'client_cert' => BaseClient::loadCertificate($tls->certChain),
-                'client_private_key' => BaseClient::loadCertificate($tls->privateKey),
-            ],
-            'connect_timeout_ms' => self::CONNECT_TIMEOUT_MS,
+            'connect_timeout_ms' => BridgeConnection::CONNECT_TIMEOUT_MS,
             'grpc_compression' => $this->options->grpcCompression,
         ];
     }

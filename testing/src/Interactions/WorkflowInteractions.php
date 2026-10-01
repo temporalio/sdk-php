@@ -7,6 +7,7 @@ namespace Temporal\Testing\Interactions;
 use Google\Protobuf\Duration;
 use PHPUnit\Framework\Assert;
 use Temporal\Api\Enums\V1\EventType;
+use Temporal\Worker\Core\ActivityTasks;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\History\V1\MarkerRecordedEventAttributes;
 use Temporal\Client\WorkflowClient;
@@ -143,12 +144,11 @@ final class WorkflowInteractions
                 if ($attributes === null || !\in_array($attributes->getMarkerName(), [self::MARKER_LOCAL_ACTIVITY, self::MARKER_CORE_LOCAL_ACTIVITY], true)) {
                     return null;
                 }
-                return new RecordedCall(
-                    RecordedCallKind::LocalActivity,
-                    self::localActivityType($attributes),
-                    null,
-                    null,
-                );
+                $type = self::localActivityType($attributes);
+                if ($type === ActivityTasks::SIDE_EFFECT) {
+                    return null;
+                }
+                return new RecordedCall(RecordedCallKind::LocalActivity, $type, null, null);
             default:
                 return null;
         }

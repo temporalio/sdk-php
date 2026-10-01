@@ -10,7 +10,7 @@ use Coresdk\ActivityTaskCompletion;
 use PHPUnit\Framework\TestCase;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Worker\Core\ActivityTasks;
-use Temporal\Worker\Core\Bridge;
+use Temporal\Internal\Bridge\Bridge;
 
 final class ActivityTasksTestCase extends TestCase
 {

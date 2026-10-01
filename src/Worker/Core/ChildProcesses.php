@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Temporal\Internal\Bridge\Bridge;
+use Temporal\Internal\Bridge\CoreEnvironment;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -18,7 +20,7 @@ use Psr\Log\LoggerInterface;
  */
 final class ChildProcesses
 {
-    private const ENV_ROLE = 'TEMPORAL_CORE_ROLE';
+    private const STOP_SIGNALS = [\SIGTERM, \SIGINT];
     private const INI_PROBE = 'echo json_encode([ini_get_all(null, false), get_loaded_extensions(), get_loaded_extensions(true)]);';
 
     /** @var array<int, resource> */
@@ -37,14 +39,9 @@ final class ChildProcesses
 
     public static function currentRole(): ?CoreRole
     {
-        $role = \getenv(self::ENV_ROLE);
+        $role = CoreEnvironment::string(CoreEnvironment::ROLE);
 
-        return \is_string($role) && $role !== '' ? CoreRole::from($role) : null;
-    }
-
-    public static function canFork(): bool
-    {
-        return \PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started();
+        return $role === null ? null : CoreRole::from($role);
     }
 
     public function start(CoreRole $role): int
@@ -60,6 +57,11 @@ final class ChildProcesses
         }
     }
 
+    private static function canFork(): bool
+    {
+        return \PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started();
+    }
+
     private static function exitForked(int $code): never
     {
         \fflush(\STDOUT);
@@ -69,18 +71,28 @@ final class ChildProcesses
 
     private function fork(CoreRole $role): int
     {
+        \pcntl_sigprocmask(\SIG_BLOCK, self::STOP_SIGNALS);
         $pid = \pcntl_fork();
-        if ($pid === -1) {
-            throw new \RuntimeException(\sprintf('Unable to fork a %s worker process', $role->value));
-        }
-        if ($pid > 0) {
+        if ($pid !== 0) {
+            \pcntl_sigprocmask(\SIG_UNBLOCK, self::STOP_SIGNALS);
+            if ($pid === -1) {
+                throw new \RuntimeException(\sprintf('Unable to fork a %s worker process', $role->value));
+            }
             return $pid;
         }
 
-        \pcntl_signal(\SIGTERM, \SIG_DFL);
-        \pcntl_signal(\SIGINT, \SIG_DFL);
+        foreach (self::STOP_SIGNALS as $signal) {
+            \pcntl_signal($signal, \SIG_DFL);
+        }
+        \pcntl_sigprocmask(\SIG_UNBLOCK, self::STOP_SIGNALS);
         \register_shutdown_function(static fn() => self::exitForked(1));
-        self::exitForked(($this->serve)($role));
+        try {
+            $code = ($this->serve)($role);
+        } catch (\Throwable $e) {
+            $this->logger->error(\sprintf('Worker process (%s) failed: %s', $role->value, $e->getMessage()));
+            $code = 1;
+        }
+        self::exitForked($code);
     }
 
     private function spawn(CoreRole $role): int
@@ -90,7 +102,7 @@ final class ChildProcesses
             [\STDIN, \STDOUT, \STDERR],
             $pipes,
             null,
-            [...\getenv(), self::ENV_ROLE => $role->value],
+            [...\getenv(), CoreEnvironment::ROLE => $role->value],
         );
         if ($process === false) {
             throw new \RuntimeException(\sprintf('Unable to start a %s worker process', $role->value));

@@ -13,7 +13,8 @@ namespace Temporal\Client\GRPC\Core;
 
 use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\StatusCode;
-use Temporal\Worker\Core\Bridge;
+use Temporal\Internal\Bridge\Bridge;
+use Temporal\Internal\Bridge\BridgeConnection;
 
 /**
  * @internal
@@ -22,22 +23,24 @@ use Temporal\Worker\Core\Bridge;
 trait CoreStub
 {
     private const MICROSECONDS_PER_MILLISECOND = 1000;
-    private const CONNECT_TIMEOUT_MS = 10_000;
 
     private string $address;
-    private ?object $tls;
+
+    /** @var array<string, ?string>|null */
+    private ?array $tls;
+
     private ?\FFI\CData $core = null;
-    private int $pid = 0;
+    private ?Bridge $bridge = null;
     private ConnectionState $state = ConnectionState::Idle;
     private ?int $connecting = null;
 
     /**
-     * @param array{tls?: object} $config
+     * @param array<string, ?string>|null $tls
      */
-    public function __construct(string $address, array $config = [])
+    public function __construct(string $address, ?array $tls = null)
     {
         $this->address = $address;
-        $this->tls = $config['tls'] ?? null;
+        $this->tls = $tls;
     }
 
     public function getTarget(): string
@@ -67,10 +70,18 @@ trait CoreStub
 
     public function close(): void
     {
-        if ($this->core !== null && $this->pid === (int) \getmypid()) {
-            Bridge::shared()->freeClient($this->core);
+        if ($this->bridge !== null && Bridge::isCurrent($this->bridge)) {
+            if ($this->connecting !== null) {
+                $this->bridge->forgetCall($this->connecting);
+            }
+            if ($this->core !== null) {
+                $this->bridge->freeClient($this->core);
+            }
         }
         $this->core = null;
+        $this->bridge = null;
+        $this->connecting = null;
+        $this->state = ConnectionState::Idle;
     }
 
     public function __destruct()
@@ -93,9 +104,10 @@ trait CoreStub
             }
         }
         $timeoutMs = isset($options['timeout']) ? \max(1, self::milliseconds((int) $options['timeout'])) : 0;
-        $tag = Bridge::shared()->startCall($this->client(), $method, $argument->serializeToString(), $metadata, $timeoutMs);
+        $client = $this->client();
+        $tag = $this->bridge->startCall($client, $method, $argument->serializeToString(), $metadata, $timeoutMs);
 
-        return new CoreCall(Bridge::shared(), $tag, $deserialize);
+        return new CoreCall($this->bridge, $tag, $deserialize);
     }
 
     private static function milliseconds(int $microseconds): int
@@ -105,32 +117,38 @@ trait CoreStub
 
     private function client(): \FFI\CData
     {
-        if ($this->core === null || $this->pid !== (int) \getmypid()) {
-            $this->core = Bridge::shared()->newClient([
-                'target_url' => ($this->tls === null ? 'http://' : 'https://') . $this->address,
-                'tls' => $this->tls,
-            ]);
-            $this->pid = (int) \getmypid();
+        $this->forgetForeignBridge();
+        if ($this->core === null) {
+            $this->bridge = Bridge::shared();
+            $this->core = $this->bridge->newClient(BridgeConnection::client($this->address, $this->tls));
         }
 
         return $this->core;
     }
 
+    private function forgetForeignBridge(): void
+    {
+        if ($this->bridge !== null && !Bridge::isCurrent($this->bridge)) {
+            $this->core = null;
+            $this->bridge = null;
+            $this->connecting = null;
+            $this->state = ConnectionState::Idle;
+        }
+    }
+
     private function updateState(bool $connect, int $waitMs): void
     {
-        if ($this->pid !== (int) \getmypid()) {
-            $this->state = ConnectionState::Idle;
-            $this->connecting = null;
-        }
+        $this->forgetForeignBridge();
         if ($connect && $this->connecting === null && $this->state !== ConnectionState::Ready) {
-            $this->connecting = Bridge::shared()->startConnect($this->client(), self::CONNECT_TIMEOUT_MS);
+            $client = $this->client();
+            $this->connecting = $this->bridge->startConnect($client, BridgeConnection::CONNECT_TIMEOUT_MS);
             $this->state = ConnectionState::Connecting;
         }
         if ($this->connecting === null) {
             return;
         }
 
-        $result = Bridge::shared()->pollCall($this->connecting, $waitMs);
+        $result = $this->bridge->pollCall($this->connecting, $waitMs);
         if ($result === null) {
             return;
         }

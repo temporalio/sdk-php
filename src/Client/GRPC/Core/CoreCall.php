@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC\Core;
 
 use Temporal\Client\GRPC\StatusCode;
-use Temporal\Worker\Core\Bridge;
+use Temporal\Internal\Bridge\Bridge;
 
 /**
  * @internal
@@ -54,5 +54,10 @@ final class CoreCall
         }
 
         return [null, $status];
+    }
+
+    public function __destruct()
+    {
+        $this->bridge->forgetCall($this->tag);
     }
 }

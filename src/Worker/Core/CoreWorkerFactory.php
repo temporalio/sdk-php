@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Temporal\Internal\Bridge\Bridge;
 use Carbon\CarbonInterval;
 use Psr\Log\LoggerInterface;
 use Temporal\Api\History\V1\History;
@@ -82,12 +83,15 @@ class CoreWorkerFactory extends WorkerFactory
             return $this->serve($activityProcesses === 0 ? CoreRole::All : CoreRole::Activity, false);
         }
 
+        $workflowRole = $activityProcesses === 0 ? CoreRole::All : CoreRole::Workflow;
+        $roles = [
+            ...\array_fill(0, $this->config->hasWork($this->queues, $workflowRole) ? $workflowProcesses : 0, $workflowRole),
+            ...\array_fill(0, $this->config->hasWork($this->queues, CoreRole::Activity) ? $activityProcesses : 0, CoreRole::Activity),
+        ];
         $children = new ChildProcesses(fn(CoreRole $role): int => $this->serve($role, true), $this->logger);
+        $supervisor = new Supervisor($children->start(...), $children->release(...), $this->logger, $this->stopTimeoutSeconds());
 
-        return (new Supervisor($children, $this->logger, $this->stopTimeoutSeconds()))->run([
-            ...\array_fill(0, $workflowProcesses, $activityProcesses === 0 ? CoreRole::All : CoreRole::Workflow),
-            ...\array_fill(0, $activityProcesses, CoreRole::Activity),
-        ]);
+        return $supervisor->run($roles);
     }
 
     public function replay(History $history, string $workflowId): void
@@ -99,7 +103,7 @@ class CoreWorkerFactory extends WorkerFactory
         $taskQueue = (string) $events[0]->getWorkflowExecutionStartedEventAttributes()?->getTaskQueue()?->getName();
         $worker = $this->findWorkerByTaskQueue($taskQueue);
 
-        (new CoreReplayer())->replay(
+        (new CoreReplayer(Bridge::shared()))->replay(
             $history,
             $workflowId,
             $this->config->build($worker, CoreRole::Workflow),

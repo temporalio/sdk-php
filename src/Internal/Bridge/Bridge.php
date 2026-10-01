@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Core;
+namespace Temporal\Internal\Bridge;
 
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -26,7 +26,7 @@ final class Bridge
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     public const POLL_TIMEOUT_MS = 500;
-    private const FINALIZE_TIMEOUT_SECONDS = 2;
+    private const FINALIZE_TIMEOUT_SECONDS = 15;
     private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
@@ -41,19 +41,21 @@ final class Bridge
     /** @var list<array{int, int, int, string}> */
     private array $backlog = [];
 
-    /** @var array<int, array{int, string}> */
+    /** @var array<int, array{int, string}|null> */
     private array $rpcResults = [];
 
     /** @var array<int, Suspension> */
     private array $rpcWaiters = [];
 
     private int $rpcTag = 0;
-    private bool $pumped = false;
+
+    /** @var resource|null */
+    private $eventPipe = null;
 
     public function __construct(?string $library = null, ?string $header = null)
     {
         $root = \dirname(__DIR__, 3) . '/core/bridge';
-        $library ??= $_SERVER['TEMPORAL_CORE_BRIDGE_LIB']
+        $library ??= CoreEnvironment::string(CoreEnvironment::BRIDGE_LIB)
             ?? $root . '/target/release/libtemporal_php_bridge.' . (\PHP_OS_FAMILY === 'Darwin' ? 'dylib' : 'so');
         $header ??= $root . '/include/temporal_php_bridge.h';
 
@@ -66,7 +68,10 @@ final class Bridge
         }
 
         $this->ffi = \FFI::cdef($definitions, $library);
-        $config = self::json(['threads' => self::threads(), 'log' => $_SERVER['TEMPORAL_CORE_LOG'] ?? null]);
+        $config = self::json([
+            'threads' => CoreEnvironment::integer(CoreEnvironment::THREADS, self::DEFAULT_THREADS, 1),
+            'log' => CoreEnvironment::string(CoreEnvironment::LOG),
+        ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
     }
@@ -86,19 +91,34 @@ final class Bridge
         return self::$shared !== null && self::$sharedPid === (int) \getmypid();
     }
 
+    public static function isCurrent(self $bridge): bool
+    {
+        return self::started() && self::$shared === $bridge;
+    }
+
     /**
      * @return resource
      */
-    public function eventPipe()
+    public function openEventPipe()
     {
-        $pipe = \fopen('php://fd/' . $this->ffi->tpb_event_fd($this->runtime), 'r');
-        if ($pipe === false) {
-            throw new \RuntimeException('Unable to open the sdk-core event pipe');
+        if ($this->eventPipe === null) {
+            $pipe = \fopen('php://fd/' . $this->ffi->tpb_event_fd($this->runtime), 'r');
+            if ($pipe === false) {
+                throw new \RuntimeException('Unable to open the sdk-core event pipe');
+            }
+            \stream_set_blocking($pipe, false);
+            $this->eventPipe = $pipe;
         }
-        \stream_set_blocking($pipe, false);
-        $this->pumped = true;
 
-        return $pipe;
+        return $this->eventPipe;
+    }
+
+    public function closeEventPipe(): void
+    {
+        if ($this->eventPipe !== null) {
+            \fclose($this->eventPipe);
+            $this->eventPipe = null;
+        }
     }
 
     public function newWorker(array $config): \FFI\CData
@@ -134,6 +154,7 @@ final class Bridge
     {
         $tag = ++$this->rpcTag;
         $json = $metadata === [] ? '' : \json_encode($metadata, \JSON_THROW_ON_ERROR);
+        $this->rpcResults[$tag] = null;
         $this->ffi->tpb_client_call($client, $tag, $path, \strlen($path), $request, \strlen($request), $json, \strlen($json), $timeoutMs);
 
         return $tag;
@@ -142,6 +163,7 @@ final class Bridge
     public function startConnect(\FFI\CData $client, int $timeoutMs): int
     {
         $tag = ++$this->rpcTag;
+        $this->rpcResults[$tag] = null;
         $this->ffi->tpb_client_connect($client, $tag, $timeoutMs);
 
         return $tag;
@@ -158,7 +180,9 @@ final class Bridge
             \array_push($this->backlog, ...$this->fetch(\min($left, self::POLL_TIMEOUT_MS)));
         } while (!isset($this->rpcResults[$tag]) && \hrtime(true) < $deadline);
         $result = $this->rpcResults[$tag] ?? null;
-        unset($this->rpcResults[$tag]);
+        if ($result !== null) {
+            unset($this->rpcResults[$tag]);
+        }
 
         return $result;
     }
@@ -168,7 +192,7 @@ final class Bridge
      */
     public function awaitCall(int $tag): array
     {
-        if (!isset($this->rpcResults[$tag]) && $this->pumped && \Fiber::getCurrent() !== null && EventLoop::getDriver()->isRunning()) {
+        if (!isset($this->rpcResults[$tag]) && $this->eventPipe !== null && \Fiber::getCurrent() !== null && EventLoop::getDriver()->isRunning()) {
             $this->rpcWaiters[$tag] = EventLoop::getSuspension();
             $this->rpcWaiters[$tag]->suspend();
         }
@@ -179,6 +203,11 @@ final class Bridge
         unset($this->rpcResults[$tag]);
 
         return $result;
+    }
+
+    public function forgetCall(int $tag): void
+    {
+        unset($this->rpcResults[$tag], $this->rpcWaiters[$tag]);
     }
 
     public function pollWorkflowActivation(\FFI\CData $worker, int $tag): void
@@ -230,12 +259,15 @@ final class Bridge
         $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
         while ($pending !== [] && \microtime(true) < $deadline) {
             foreach ($this->nextEvents(self::POLL_TIMEOUT_MS) as [$tag, $kind, $status, $data]) {
-                if ($kind !== self::KIND_SHUTDOWN_FINALIZED || !isset($pending[$tag])) {
+                if (!isset($workers[$tag]) || $status === self::STATUS_OK || $status === self::STATUS_SHUTDOWN) {
+                    if ($kind === self::KIND_SHUTDOWN_FINALIZED) {
+                        unset($pending[$tag]);
+                    }
                     continue;
                 }
-                unset($pending[$tag]);
-                if ($status !== self::STATUS_OK) {
-                    $errors[$tag] = $data;
+                $errors[$tag] = isset($errors[$tag]) ? $errors[$tag] . '; ' . $data : $data;
+                if ($kind === self::KIND_SHUTDOWN_FINALIZED) {
+                    unset($pending[$tag]);
                 }
             }
         }
@@ -282,17 +314,6 @@ final class Bridge
         return \json_encode($value, \JSON_THROW_ON_ERROR);
     }
 
-    private static function threads(): int
-    {
-        $threads = $_SERVER['TEMPORAL_CORE_THREADS'] ?? self::DEFAULT_THREADS;
-        $value = \filter_var($threads, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if ($value === false) {
-            throw new \InvalidArgumentException(\sprintf('TEMPORAL_CORE_THREADS must be a positive integer, "%s" given', (string) $threads));
-        }
-
-        return $value;
-    }
-
     private function construct(string $function, \FFI\CData|string|int ...$arguments): \FFI\CData
     {
         $err = $this->ffi->new('uint8_t*');
@@ -319,6 +340,9 @@ final class Bridge
             $data = $this->take($event->data, $event->len);
             if ($event->kind !== self::KIND_RPC_RESULT) {
                 $result[] = [$event->tag, $event->kind, $event->status, $data];
+                continue;
+            }
+            if (!\array_key_exists($event->tag, $this->rpcResults)) {
                 continue;
             }
             $grpcCode = $event->status;

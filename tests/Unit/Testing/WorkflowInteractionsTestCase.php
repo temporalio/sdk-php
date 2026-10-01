@@ -7,11 +7,13 @@ namespace Temporal\Tests\Unit\Testing;
 use Google\Protobuf\Duration;
 use PHPUnit\Framework\AssertionFailedError;
 use Temporal\Api\Common\V1\ActivityType;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\History\V1\ActivityTaskScheduledEventAttributes;
 use Temporal\Api\History\V1\HistoryEvent;
+use Temporal\Api\History\V1\MarkerRecordedEventAttributes;
 use Temporal\Api\History\V1\SignalExternalWorkflowExecutionInitiatedEventAttributes;
 use Temporal\Api\History\V1\StartChildWorkflowExecutionInitiatedEventAttributes;
 use Temporal\Api\History\V1\TimerStartedEventAttributes;
@@ -20,6 +22,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Testing\Interactions\WorkflowInteractions;
 use Temporal\Tests\TestCase;
+use Temporal\Worker\Core\ActivityTasks;
 
 final class WorkflowInteractionsTestCase extends TestCase
 {
@@ -42,6 +45,25 @@ final class WorkflowInteractionsTestCase extends TestCase
         $interactions->activity('Pay')->assertCalledTimes(2);
         $interactions->activity('Refund')->assertCalledOnce();
         $interactions->activity('Unknown')->assertNeverCalled();
+    }
+
+    public function testCoreLocalActivityMarkerIsALocalActivityCall(): void
+    {
+        $interactions = WorkflowInteractions::fromEvents([
+            $this->markerEvent(WorkflowInteractions::MARKER_CORE_LOCAL_ACTIVITY, ['activity_type' => 'Lookup']),
+            $this->markerEvent(WorkflowInteractions::MARKER_LOCAL_ACTIVITY, ['ActivityType' => 'Lookup']),
+        ], $this->converter);
+
+        $interactions->localActivity('Lookup')->assertCalledTimes(2);
+    }
+
+    public function testCoreSideEffectMarkerIsNotALocalActivityCall(): void
+    {
+        $interactions = WorkflowInteractions::fromEvents([
+            $this->markerEvent(WorkflowInteractions::MARKER_CORE_LOCAL_ACTIVITY, ['activity_type' => ActivityTasks::SIDE_EFFECT]),
+        ], $this->converter);
+
+        $interactions->localActivity(ActivityTasks::SIDE_EFFECT)->assertNeverCalled();
     }
 
     public function testActivityCalledOnceFailsWhenCalledTwice(): void
@@ -145,6 +167,20 @@ final class WorkflowInteractionsTestCase extends TestCase
         return (new HistoryEvent())
             ->setEventType(EventType::EVENT_TYPE_START_CHILD_WORKFLOW_EXECUTION_INITIATED)
             ->setStartChildWorkflowExecutionInitiatedEventAttributes($attributes);
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    private function markerEvent(string $name, array $data): HistoryEvent
+    {
+        $attributes = (new MarkerRecordedEventAttributes())
+            ->setMarkerName($name)
+            ->setDetails(['data' => (new Payloads())->setPayloads([(new Payload())->setData(\json_encode($data))])]);
+
+        return (new HistoryEvent())
+            ->setEventType(EventType::EVENT_TYPE_MARKER_RECORDED)
+            ->setMarkerRecordedEventAttributes($attributes);
     }
 
     private function timerEvent(int $seconds): HistoryEvent

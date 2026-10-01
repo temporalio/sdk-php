@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Temporal\Internal\Bridge\Bridge;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Temporal\Internal\Support\Facade;
@@ -22,12 +23,19 @@ use Temporal\Worker\WorkerInterface;
 final class CoreWorkerLoop
 {
     private const POLL_RETRY_DELAY_SECONDS = 1;
+    private const MAX_POLL_RETRY_DELAY_SECONDS = 30;
     private const PIPE_READ_BYTES = 65536;
+    private const STOP_SIGNALS = [\SIGTERM, \SIGINT];
 
     /** @var array<int, CoreWorkerHandle> */
     private array $workers = [];
 
     private int $open = 0;
+    private int $pollFailures = 0;
+
+    /** @var list<\Closure(): void> */
+    private array $repolls = [];
+
     private bool $stopping = false;
     private bool $shutdownRequested = false;
     private bool $crashed = false;
@@ -54,7 +62,25 @@ final class CoreWorkerLoop
      */
     public function serve(iterable $queues, CoreRole $role, bool $supervised): int
     {
-        $this->profiler = $this->options->profile ? new Profiler($this->logger, $role->value) : null;
+        \pcntl_async_signals(true);
+        foreach (self::STOP_SIGNALS as $signal) {
+            \pcntl_signal($signal, $this->requestStop(...));
+        }
+        try {
+            return $this->run($queues, $role, $supervised);
+        } finally {
+            foreach (self::STOP_SIGNALS as $signal) {
+                \pcntl_signal($signal, \SIG_DFL);
+            }
+        }
+    }
+
+    /**
+     * @param iterable<WorkerInterface> $queues
+     */
+    private function run(iterable $queues, CoreRole $role, bool $supervised): int
+    {
+        $this->profiler = $this->options->profiling ? new Profiler($this->logger, $role->value) : null;
         $this->concurrent = $role === CoreRole::Activity && $this->options->activityConcurrency > 1;
         $this->supervisorPid = $supervised ? \posix_getppid() : null;
         $dispatch = $this->profiledDispatch();
@@ -68,7 +94,7 @@ final class CoreWorkerLoop
                     $worker->getID(),
                     ($this->activations)($worker, $dispatch),
                     $config['workflows'],
-                    $config['local_activities'] || $config['remote_activities'],
+                    $config['local_activities'] || $config['remote_activities'] ? $config['max_concurrent_activity_task_polls'] : 0,
                 );
             }
         }
@@ -77,10 +103,10 @@ final class CoreWorkerLoop
             return 0;
         }
 
-        $this->startPolling($this->config->activityPolls($role));
-        \pcntl_async_signals(true);
-        \pcntl_signal(\SIGTERM, $this->requestStop(...));
-        \pcntl_signal(\SIGINT, $this->requestStop(...));
+        $this->startPolling();
+        if ($this->stopping) {
+            $this->initiateShutdown();
+        }
 
         if ($this->concurrent) {
             $this->runEventLoop();
@@ -91,6 +117,7 @@ final class CoreWorkerLoop
             $events = $this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS);
             $this->profiler?->add('wait', $waitedAt);
             $this->handle($events);
+            $this->repollFailed();
         }
 
         $this->profiler?->report();
@@ -125,14 +152,14 @@ final class CoreWorkerLoop
         return $this->profiler === null ? 0 : (int) \hrtime(true);
     }
 
-    private function startPolling(int $activityPolls): void
+    private function startPolling(): void
     {
         foreach ($this->workers as $tag => $worker) {
             if ($worker->workflows) {
                 $this->bridge->pollWorkflowActivation($worker->core, $tag);
                 ++$this->open;
             }
-            for ($i = 0; $worker->activities && $i < $activityPolls; ++$i) {
+            for ($i = 0; $i < $worker->activityPolls; ++$i) {
                 $this->bridge->pollActivityTask($worker->core, $tag);
                 ++$this->open;
             }
@@ -142,7 +169,12 @@ final class CoreWorkerLoop
     private function requestStop(): void
     {
         $this->stopping = true;
-        if ($this->shutdownRequested) {
+        $this->initiateShutdown();
+    }
+
+    private function initiateShutdown(): void
+    {
+        if ($this->shutdownRequested || $this->workers === []) {
             return;
         }
         $this->shutdownRequested = true;
@@ -178,13 +210,13 @@ final class CoreWorkerLoop
 
     private function onActivation(CoreWorkerHandle $worker, int $tag, int $status, string $data, int $startedAt): void
     {
-        $repoll = fn() => $this->bridge->pollWorkflowActivation($worker->core, $tag);
         if ($status !== Bridge::STATUS_OK) {
-            $this->onPollFailure($status, $data, $repoll);
+            $this->onPollFailure($status, $data, fn() => $this->bridge->pollWorkflowActivation($worker->core, $tag));
             return;
         }
+        $this->pollFailures = 0;
         $this->bridge->completeWorkflowActivation($worker->core, $tag, $worker->activations->handle($data));
-        $repoll();
+        $this->bridge->pollWorkflowActivation($worker->core, $tag);
         $this->profiler?->add('workflow-activation', $startedAt);
     }
 
@@ -194,6 +226,7 @@ final class CoreWorkerLoop
             $this->onPollFailure($status, $data, fn() => $this->bridge->pollActivityTask($worker->core, $tag));
             return;
         }
+        $this->pollFailures = 0;
         $this->bridge->pollActivityTask($worker->core, $tag);
         $run = function () use ($worker, $tag, $data, $startedAt): void {
             $completion = $this->activityTasks->handle($worker->core, $worker->taskQueue, $data);
@@ -225,21 +258,41 @@ final class CoreWorkerLoop
             return;
         }
 
-        $this->logger->error(\sprintf('sdk-core poll failed, retrying in %d s: %s', self::POLL_RETRY_DELAY_SECONDS, $error));
-        if ($this->concurrent) {
-            EventLoop::delay(self::POLL_RETRY_DELAY_SECONDS, $repoll);
+        $this->logger->error('sdk-core poll failed: ' . $error);
+        $this->repolls[] = $repoll;
+    }
+
+    private function repollFailed(): void
+    {
+        if ($this->repolls === []) {
             return;
         }
-        \sleep(self::POLL_RETRY_DELAY_SECONDS);
-        $repoll();
+        $repolls = $this->repolls;
+        $this->repolls = [];
+        $delay = \min(self::MAX_POLL_RETRY_DELAY_SECONDS, self::POLL_RETRY_DELAY_SECONDS * 2 ** $this->pollFailures++);
+        $this->logger->warning(\sprintf('Retrying %d failed sdk-core polls in %d s', \count($repolls), $delay));
+        $repollAll = static function () use ($repolls): void {
+            foreach ($repolls as $repoll) {
+                $repoll();
+            }
+        };
+        if ($this->concurrent) {
+            EventLoop::delay($delay, $repollAll);
+            return;
+        }
+        \sleep($delay);
+        $repollAll();
     }
 
     private function runEventLoop(): void
     {
-        $pipe = $this->bridge->eventPipe();
+        $pipe = $this->bridge->openEventPipe();
         $pump = function () use ($pipe): void {
             \fread($pipe, self::PIPE_READ_BYTES);
-            $this->handle($this->bridge->nextEvents(0));
+            while (($events = $this->bridge->nextEvents(0)) !== []) {
+                $this->handle($events);
+            }
+            $this->repollFailed();
         };
         $readable = EventLoop::onReadable($pipe, $pump);
         $timer = EventLoop::repeat(Bridge::POLL_TIMEOUT_MS / 1000, function () use ($pump, &$readable, &$timer): void {
@@ -248,6 +301,7 @@ final class CoreWorkerLoop
             if ($this->open === 0) {
                 EventLoop::cancel($readable);
                 EventLoop::cancel($timer);
+                $this->bridge->closeEventPipe();
             }
         });
         $pump();

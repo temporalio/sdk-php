@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Temporal\Internal\Bridge\Bridge;
 use Coresdk\Activity_result\ActivityExecutionResult;
 use Coresdk\Activity_result\Cancellation;
 use Coresdk\Activity_result\Failure as ActivityFailure;

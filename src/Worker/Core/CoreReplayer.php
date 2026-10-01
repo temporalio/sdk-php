@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Temporal\Internal\Bridge\Bridge;
 use Coresdk\Workflow_activation\RemoveFromCache\EvictionReason;
 use Coresdk\Workflow_activation\WorkflowActivation;
 use Temporal\Api\History\V1\History;
@@ -20,7 +21,7 @@ use Temporal\Api\History\V1\History;
  */
 final class CoreReplayer
 {
-    private const TIMEOUT_SECONDS = 60;
+    private const IDLE_TIMEOUT_SECONDS = 60;
     private const EXPECTED_EVICTIONS = [
         EvictionReason::CACHE_FULL,
         EvictionReason::LANG_REQUESTED,
@@ -29,20 +30,26 @@ final class CoreReplayer
 
     private static int $tag = 0;
 
+    public function __construct(
+        private readonly Bridge $bridge,
+    ) {}
+
     public function replay(History $history, string $workflowId, array $config, WorkflowActivations $activations): void
     {
-        $bridge = Bridge::shared();
-        $core = $bridge->newReplayer($config, $history->serializeToString(), $workflowId);
+        $core = $this->bridge->newReplayer($config, $history->serializeToString(), $workflowId);
         $tag = ++self::$tag;
         try {
-            $failure = $this->drain($bridge, $core, $tag, $activations);
+            $failure = $this->drain($core, $tag, $activations);
         } finally {
-            $bridge->finalizeWorkers([$tag => $core]);
-            $bridge->freeWorker($core);
+            $errors = $this->bridge->finalizeWorkers([$tag => $core]);
+            $this->bridge->freeWorker($core);
         }
 
         if ($failure !== null) {
             throw $failure;
+        }
+        if ($errors !== []) {
+            throw new ReplayFailedException('The replay worker did not finalize: ' . \implode('; ', $errors), false);
         }
     }
 
@@ -61,16 +68,17 @@ final class CoreReplayer
         return $failure;
     }
 
-    private function drain(Bridge $bridge, \FFI\CData $core, int $tag, WorkflowActivations $activations): ?ReplayFailedException
+    private function drain(\FFI\CData $core, int $tag, WorkflowActivations $activations): ?ReplayFailedException
     {
         $failure = null;
-        $deadline = \microtime(true) + self::TIMEOUT_SECONDS;
-        $bridge->pollWorkflowActivation($core, $tag);
+        $deadline = \microtime(true) + self::IDLE_TIMEOUT_SECONDS;
+        $this->bridge->pollWorkflowActivation($core, $tag);
         while (\microtime(true) < $deadline) {
-            foreach ($bridge->nextEvents(Bridge::POLL_TIMEOUT_MS) as [$eventTag, $kind, $status, $data]) {
+            foreach ($this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS) as [$eventTag, $kind, $status, $data]) {
                 if ($eventTag !== $tag) {
                     continue;
                 }
+                $deadline = \microtime(true) + self::IDLE_TIMEOUT_SECONDS;
                 if ($kind === Bridge::KIND_WORKFLOW_COMPLETED) {
                     throw new \RuntimeException('sdk-core completion failed: ' . $data);
                 }
@@ -85,11 +93,11 @@ final class CoreReplayer
                 }
 
                 $failure = self::evictionFailure($data) ?? $failure;
-                $bridge->completeWorkflowActivation($core, $tag, $activations->handle($data));
-                $bridge->pollWorkflowActivation($core, $tag);
+                $this->bridge->completeWorkflowActivation($core, $tag, $activations->handle($data));
+                $this->bridge->pollWorkflowActivation($core, $tag);
             }
         }
 
-        return new ReplayFailedException(\sprintf('The replay did not finish in %d seconds', self::TIMEOUT_SECONDS), false);
+        return $failure ?? new ReplayFailedException(\sprintf('The replay got no activation for %d seconds', self::IDLE_TIMEOUT_SECONDS), false);
     }
 }

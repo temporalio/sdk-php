@@ -19,9 +19,9 @@ use Psr\Log\LoggerInterface;
 final class Supervisor
 {
     private const POLL_INTERVAL_US = 100_000;
-    private const MIN_CHILD_UPTIME_SECONDS = 1;
+    private const STARTUP_CRASH_SECONDS = 1;
+    private const HEALTHY_UPTIME_SECONDS = 60;
     private const MAX_RESTART_DELAY_SECONDS = 30;
-    private const MAX_RESTART_DELAY_EXPONENT = 5;
     private const SIGNAL_EXIT_CODE_BASE = 128;
 
     /** @var array<int, array{CoreRole, float, int, bool}> */
@@ -32,9 +32,15 @@ final class Supervisor
 
     private ?float $killAt = null;
     private int $exitCode = 0;
+    private ?\Throwable $startFailure = null;
 
+    /**
+     * @param \Closure(CoreRole): int $start
+     * @param \Closure(int): void $release
+     */
     public function __construct(
-        private readonly ChildProcesses $processes,
+        private readonly \Closure $start,
+        private readonly \Closure $release,
         private readonly LoggerInterface $logger,
         private readonly float $stopTimeoutSeconds,
     ) {}
@@ -44,14 +50,31 @@ final class Supervisor
      */
     public function run(array $roles): int
     {
-        foreach ($roles as $role) {
-            $this->start($role, 0, true);
-        }
-
         \pcntl_async_signals(true);
         \pcntl_signal(\SIGTERM, $this->stop(...), false);
         \pcntl_signal(\SIGINT, $this->stop(...), false);
 
+        try {
+            foreach ($roles as $role) {
+                if (!$this->tryStart($role, 0, true)) {
+                    break;
+                }
+            }
+            $this->wait();
+        } finally {
+            \pcntl_signal(\SIGTERM, \SIG_DFL);
+            \pcntl_signal(\SIGINT, \SIG_DFL);
+        }
+
+        if ($this->startFailure !== null) {
+            throw $this->startFailure;
+        }
+
+        return $this->exitCode;
+    }
+
+    private function wait(): void
+    {
         while ($this->children !== [] || ($this->killAt === null && $this->restarts !== [])) {
             $pid = \pcntl_wait($status, \WNOHANG);
             if ($pid > 0) {
@@ -64,8 +87,6 @@ final class Supervisor
             }
             \usleep(self::POLL_INTERVAL_US);
         }
-
-        return $this->exitCode;
     }
 
     private function stop(): void
@@ -82,36 +103,50 @@ final class Supervisor
         }
     }
 
-    private function start(CoreRole $role, int $failedStarts, bool $initial): void
+    private function tryStart(CoreRole $role, int $failedStarts, bool $initial): bool
     {
-        $this->children[$this->processes->start($role)] = [$role, \microtime(true), $failedStarts, $initial];
+        try {
+            $pid = ($this->start)($role);
+        } catch (\Throwable $e) {
+            $this->logger->error(\sprintf('Unable to start a worker process (%s): %s', $role->value, $e->getMessage()));
+            $this->startFailure = $e;
+            $this->stop();
+            return false;
+        }
+
+        $this->children[$pid] = [$role, \microtime(true), $failedStarts, $initial];
+        if ($this->killAt !== null) {
+            \posix_kill($pid, \SIGTERM);
+        }
+
+        return true;
     }
 
     private function onExit(int $pid, int $status): void
     {
-        $this->processes->release($pid);
+        ($this->release)($pid);
         if (!isset($this->children[$pid])) {
             return;
         }
         [$role, $startedAt, $failedStarts, $initial] = $this->children[$pid];
         unset($this->children[$pid]);
         $code = \pcntl_wifsignaled($status) ? self::SIGNAL_EXIT_CODE_BASE + \pcntl_wtermsig($status) : \pcntl_wexitstatus($status);
+        $this->exitCode = \max($this->exitCode, $code);
         if ($this->killAt !== null) {
-            $this->exitCode = \max($this->exitCode, $code);
             return;
         }
 
         $this->logger->error(\sprintf('Worker process (%s) exited with code %d', $role->value, $code));
-        $crashedAtStart = \microtime(true) - $startedAt < self::MIN_CHILD_UPTIME_SECONDS;
-        if ($crashedAtStart && $initial) {
+        $uptime = \microtime(true) - $startedAt;
+        if ($initial && $uptime < self::STARTUP_CRASH_SECONDS) {
             $this->logger->error(\sprintf('Worker process (%s) exited during startup, stopping', $role->value));
-            $this->exitCode = \max($this->exitCode, $code, 1);
+            $this->exitCode = \max($this->exitCode, 1);
             $this->stop();
             return;
         }
 
-        $failedStarts = $crashedAtStart ? $failedStarts + 1 : 0;
-        $delay = $failedStarts === 0 ? 0 : \min(self::MAX_RESTART_DELAY_SECONDS, 2 ** \min($failedStarts, self::MAX_RESTART_DELAY_EXPONENT));
+        $failedStarts = $uptime < self::HEALTHY_UPTIME_SECONDS ? $failedStarts + 1 : 0;
+        $delay = $failedStarts === 0 ? 0 : \min(self::MAX_RESTART_DELAY_SECONDS, 2 ** ($failedStarts - 1));
         $this->restarts[] = [$role, \microtime(true) + $delay, $failedStarts];
     }
 
@@ -119,10 +154,14 @@ final class Supervisor
     {
         $now = \microtime(true);
         foreach ($this->restarts as $i => [$role, $at, $failedStarts]) {
-            if ($at <= $now) {
-                unset($this->restarts[$i]);
-                $this->start($role, $failedStarts, false);
+            if ($this->killAt !== null) {
+                return;
             }
+            if ($at > $now) {
+                continue;
+            }
+            unset($this->restarts[$i]);
+            $this->tryStart($role, $failedStarts, false);
         }
         $this->restarts = \array_values($this->restarts);
     }

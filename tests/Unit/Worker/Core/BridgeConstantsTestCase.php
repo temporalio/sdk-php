@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Worker\Core;
 
 use PHPUnit\Framework\TestCase;
-use Temporal\Worker\Core\Bridge;
+use Temporal\Internal\Bridge\Bridge;
 
 final class BridgeConstantsTestCase extends TestCase
 {
