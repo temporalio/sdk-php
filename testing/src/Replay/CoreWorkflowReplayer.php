@@ -29,8 +29,13 @@ final class CoreWorkflowReplayer
 
     public function replayHistory(History $history): void
     {
-        $workflowType = $history->getEvents()[0]?->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName()
-            ?? throw new \LogicException('History is empty or broken.');
+        $events = $history->getEvents();
+        $workflowType = \count($events) === 0
+            ? null
+            : $events[0]->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName();
+        if ($workflowType === null) {
+            throw new \LogicException('History is empty or broken.');
+        }
 
         $this->replay($workflowType, $history, self::REPLAY_WORKFLOW_ID);
     }

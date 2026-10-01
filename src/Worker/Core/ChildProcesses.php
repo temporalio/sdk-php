@@ -128,7 +128,7 @@ final class ChildProcesses
         foreach (\array_diff(\get_loaded_extensions(true), $zendExtensions) as $extension) {
             \array_push($arguments, '-d', 'zend_extension=' . $this->extensionFile($extension));
         }
-        foreach (\ini_get_all(null, false) as $name => $value) {
+        foreach (\ini_get_all(null, false) ?: [] as $name => $value) {
             if ($value !== null && ($defaults[$name] ?? null) !== $value) {
                 \array_push($arguments, '-d', $name . '="' . \addcslashes((string) $value, '"\\') . '"');
             }
@@ -140,7 +140,7 @@ final class ChildProcesses
     private function extensionFile(string $name): string
     {
         $file = \strtolower((string) \preg_replace('/^Zend\s+/i', '', $name));
-        if (!\is_file(\ini_get('extension_dir') . \DIRECTORY_SEPARATOR . $file . '.' . \PHP_SHLIB_SUFFIX)) {
+        if (!\is_file((string) \ini_get('extension_dir') . \DIRECTORY_SEPARATOR . $file . '.' . \PHP_SHLIB_SUFFIX)) {
             $this->logger->warning(\sprintf('The worker processes may not load the extension "%s": %s is not in extension_dir', $name, $file));
         }
 
