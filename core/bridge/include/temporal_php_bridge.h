@@ -48,6 +48,8 @@ void tpb_client_call(struct TpbClient *c,
                      size_t metadata_len,
                      uint64_t timeout_ms);
 
+void tpb_client_connect(struct TpbClient *c, uint64_t tag, uint64_t timeout_ms);
+
 void tpb_client_free(struct TpbClient *c);
 
 void tpb_bytes_free(uint8_t *data, size_t len);

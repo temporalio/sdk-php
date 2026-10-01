@@ -4,7 +4,12 @@ use crate::queue::Queue;
 use crate::runtime::TpbRuntime;
 use base64::{Engine, prelude::BASE64_STANDARD};
 use prost::bytes::{Buf, BufMut};
-use std::{collections::HashMap, future::Future, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    future::Future,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tonic::{
     Code, Request, Status, TimeoutExpired,
     client::Grpc,
@@ -15,7 +20,8 @@ use tonic::{
 };
 
 pub struct TpbClient {
-    channel: Channel,
+    endpoint: Endpoint,
+    channel: Arc<Mutex<Channel>>,
     queue: Arc<Queue>,
 }
 
@@ -78,7 +84,8 @@ fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
         endpoint.connect_lazy()
     };
     Ok(TpbClient {
-        channel,
+        endpoint,
+        channel: Arc::new(Mutex::new(channel)),
         queue: rt.queue.clone(),
     })
 }
@@ -125,6 +132,13 @@ async fn call(
         .await
         .map_err(|e| Status::unavailable(e.to_string()))?;
     Ok(grpc.unary(request, path, RawCodec).await?.into_inner())
+}
+
+async fn connect(endpoint: Endpoint, timeout: Duration) -> Result<Channel, Status> {
+    match tokio::time::timeout(timeout, endpoint.connect()).await {
+        Err(_) => Err(Status::deadline_exceeded("Connection timeout expired")),
+        Ok(result) => result.map_err(|e| Status::from_error(e.into())),
+    }
 }
 
 async fn with_deadline(
@@ -220,13 +234,38 @@ pub unsafe extern "C" fn tpb_client_call(
                 Ok(prepared) => prepared,
                 Err(status) => return push(grpc_result(Err(status))),
             };
-            let channel = c.channel.clone();
+            let channel = c.channel.lock().unwrap().clone();
             let queue = c.queue.clone();
             c.queue
                 .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
                     let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
                     let (grpc_code, data) =
                         grpc_result(with_deadline(call(channel, path, request), timeout).await);
+                    queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+                });
+        },
+    )
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout_ms: u64) {
+    let c = unsafe { &*c };
+    guard(
+        |message| {
+            let (grpc_code, data) = internal_error(message);
+            c.queue.push(tag, KIND_RPC_RESULT, grpc_code, data)
+        },
+        || {
+            let endpoint = c.endpoint.clone();
+            let channel = c.channel.clone();
+            let queue = c.queue.clone();
+            c.queue
+                .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                    let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
+                    let (grpc_code, data) = grpc_result(connected.map(|connected| {
+                        *channel.lock().unwrap() = connected;
+                        Vec::new()
+                    }));
                     queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
                 });
         },
@@ -281,6 +320,20 @@ mod tests {
             timeout,
         ));
         assert_eq!(cancelled.unwrap_err().code(), Code::Cancelled);
+    }
+
+    #[test]
+    fn connect_reports_unavailable_and_timeout() {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let closed = Endpoint::from_static("http://127.0.0.1:1");
+        let refused = rt.block_on(connect(closed, Duration::from_secs(5)));
+        assert_eq!(refused.unwrap_err().code(), Code::Unavailable);
+        let unreachable = Endpoint::from_static("http://192.0.2.1:7233");
+        let timeout = rt.block_on(connect(unreachable, Duration::ZERO));
+        assert_eq!(timeout.unwrap_err().code(), Code::DeadlineExceeded);
     }
 
     #[test]

@@ -67,7 +67,7 @@ abstract class BaseClient implements GrpcClientInterface
     public static function create(string $address): static
     {
         if (!\extension_loaded('grpc')) {
-            return static::createCore($address, ['target_url' => 'http://' . $address]);
+            return static::createCore($address, []);
         }
 
         return new static(
@@ -107,7 +107,7 @@ abstract class BaseClient implements GrpcClientInterface
         };
 
         if (!\extension_loaded('grpc')) {
-            return static::createCore($address, ['target_url' => 'https://' . $address, 'tls' => (object) \array_filter([
+            return static::createCore($address, ['tls' => (object) \array_filter([
                 'server_root_ca_cert' => $loadCert($crt),
                 'client_private_key' => $loadCert($clientKey),
                 'client_cert' => $loadCert($clientPem),
@@ -190,7 +190,7 @@ abstract class BaseClient implements GrpcClientInterface
 
     /**
      * @param non-empty-string $address
-     * @param array{target_url: string, tls?: object} $config
+     * @param array{tls?: object} $config
      */
     protected static function createCoreStub(string $address, array $config): BaseStub
     {
@@ -235,7 +235,7 @@ abstract class BaseClient implements GrpcClientInterface
 
     /**
      * @param non-empty-string $address
-     * @param array{target_url: string, tls?: object} $config
+     * @param array{tls?: object} $config
      */
     private static function createCore(string $address, array $config): static
     {

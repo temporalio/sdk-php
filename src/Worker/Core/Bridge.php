@@ -29,6 +29,7 @@ final class Bridge
     private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
+    private const NANOSECONDS_PER_MILLISECOND = 1_000_000;
 
     private static ?self $shared = null;
     private static int $sharedPid = 0;
@@ -127,6 +128,30 @@ final class Bridge
         $this->ffi->tpb_client_call($client, $tag, $path, \strlen($path), $request, \strlen($request), $json, \strlen($json), $timeoutMs);
 
         return $tag;
+    }
+
+    public function startConnect(\FFI\CData $client, int $timeoutMs): int
+    {
+        $tag = ++$this->rpcTag;
+        $this->ffi->tpb_client_connect($client, $tag, $timeoutMs);
+
+        return $tag;
+    }
+
+    /**
+     * @return array{int, string}|null
+     */
+    public function pollCall(int $tag, int $timeoutMs): ?array
+    {
+        $deadline = \hrtime(true) + $timeoutMs * self::NANOSECONDS_PER_MILLISECOND;
+        do {
+            $left = \max(0, \intdiv($deadline - \hrtime(true), self::NANOSECONDS_PER_MILLISECOND));
+            \array_push($this->backlog, ...$this->fetch(\min($left, self::POLL_TIMEOUT_MS)));
+        } while (!isset($this->rpcResults[$tag]) && \hrtime(true) < $deadline);
+        $result = $this->rpcResults[$tag] ?? null;
+        unset($this->rpcResults[$tag]);
+
+        return $result;
     }
 
     /**

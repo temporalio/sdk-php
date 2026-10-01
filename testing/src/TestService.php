@@ -30,7 +30,7 @@ final class TestService
     public static function create(string $host): self
     {
         if (!\extension_loaded('grpc')) {
-            return new self(new CoreTestServiceStub($host, ['target_url' => 'http://' . $host]));
+            return new self(new CoreTestServiceStub($host));
         }
 
         return new self(

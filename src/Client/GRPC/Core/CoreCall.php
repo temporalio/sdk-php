@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Client\GRPC\Core;
@@ -23,24 +30,23 @@ final class CoreCall
 
     /**
      * @return array{\Google\Protobuf\Internal\Message|null, \stdClass}
-     * @psalm-suppress UnsafeInstantiation
+     * @psalm-suppress UnsafeInstantiation, PossiblyInvalidArrayAccess
      */
     public function wait(): array
     {
-        [$code, $data] = $this->bridge->awaitCall($this->tag);
+        [$grpcCode, $data] = $this->bridge->awaitCall($this->tag);
         $status = new \stdClass();
-        $status->code = $code;
+        $status->code = $grpcCode;
         $status->details = '';
         $status->metadata = [];
-        if ($code === StatusCode::OK) {
+        if ($grpcCode === StatusCode::OK) {
             $response = new ($this->deserialize[0])();
             $response->mergeFromString($data);
 
             return [$response, $status];
         }
 
-        $header = \unpack('Vlength', $data);
-        $length = \is_array($header) && isset($header['length']) ? (int) $header['length'] : 0;
+        $length = \unpack('V', $data)[1];
         $status->details = \substr($data, 4, $length);
         $details = \substr($data, 4 + $length);
         if ($details !== '') {
