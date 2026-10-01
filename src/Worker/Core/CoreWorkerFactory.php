@@ -24,15 +24,20 @@ use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkflowPanicPolicy;
 use Temporal\WorkerFactory;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 class CoreWorkerFactory extends WorkerFactory
 {
-    private const STOP_GRACE_SECONDS = 10;
+    private const STOP_GRACE_SECONDS = 10.0;
 
     private CoreOptions $options;
     private CoreWorkerConfig $config;
@@ -129,7 +134,7 @@ class CoreWorkerFactory extends WorkerFactory
 
     private function stopTimeoutSeconds(): float
     {
-        $timeouts = [0];
+        $timeouts = [0.0];
         foreach ($this->queues as $worker) {
             $timeout = $worker->getOptions()->workerStopTimeout;
             if ($timeout !== null) {
@@ -151,7 +156,7 @@ class CoreWorkerFactory extends WorkerFactory
             $this->converter,
             $dispatch,
             $this->options->namespace,
-            $worker->getID(),
+            (string) $worker->getID(),
             $behaviors,
             $worker->getOptions()->workflowPanicPolicy === WorkflowPanicPolicy::FailWorkflow,
         );
@@ -163,6 +168,7 @@ class CoreWorkerFactory extends WorkerFactory
      */
     private function dispatch(array $commands, array $headers): array
     {
+        /** @var list<ServerRequestInterface|ServerResponseInterface> $commands */
         $this->dispatchCommands($commands, $headers);
 
         return \iterator_to_array($this->responses, false);

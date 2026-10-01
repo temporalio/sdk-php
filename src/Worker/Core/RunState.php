@@ -47,6 +47,9 @@ final class RunState
 
     private int $seq = 0;
 
+    /**
+     * @param non-empty-string $runId
+     */
     public function __construct(
         public readonly string $runId,
     ) {

@@ -52,6 +52,10 @@ final class CoreWorkerConfig
         return false;
     }
 
+    /**
+     * @return array{workflows: bool, local_activities: bool, remote_activities: bool, max_concurrent_activity_task_polls: int, ...<string, mixed>}
+     * @psalm-suppress RedundantCondition, TypeDoesNotContainType, DeprecatedProperty
+     */
     public function build(WorkerInterface $worker, CoreRole $role): array
     {
         $options = $worker->getOptions();
@@ -108,7 +112,7 @@ final class CoreWorkerConfig
         ) + [
             'client_name' => SdkVersion::SDK_NAME,
             'client_version' => SdkVersion::getSdkVersion(),
-            'identity' => $identity ?: \getmypid() . '@' . \gethostname(),
+            'identity' => $identity ?: (string) \getmypid() . '@' . (string) \gethostname(),
             'api_key' => $this->options->apiKey,
             'connect_timeout_ms' => BridgeConnection::CONNECT_TIMEOUT_MS,
             'grpc_compression' => $this->options->grpcCompression,

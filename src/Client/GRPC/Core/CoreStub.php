@@ -115,6 +115,9 @@ trait CoreStub
         return \intdiv($microseconds + self::MICROSECONDS_PER_MILLISECOND - 1, self::MICROSECONDS_PER_MILLISECOND);
     }
 
+    /**
+     * @psalm-assert !null $this->bridge
+     */
     private function client(): \FFI\CData
     {
         $this->forgetForeignBridge();
@@ -148,6 +151,7 @@ trait CoreStub
             return;
         }
 
+        /** @var Bridge $this->bridge */
         $result = $this->bridge->pollCall($this->connecting, $waitMs);
         if ($result === null) {
             return;

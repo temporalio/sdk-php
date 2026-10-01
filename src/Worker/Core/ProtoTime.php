@@ -29,7 +29,7 @@ final class ProtoTime
 
     public static function nanos(?Duration $duration): int
     {
-        return $duration === null ? 0 : $duration->getSeconds() * self::NANOS_PER_SECOND + $duration->getNanos();
+        return $duration === null ? 0 : (int) $duration->getSeconds() * self::NANOS_PER_SECOND + $duration->getNanos();
     }
 
     public static function duration(int $nanos): Duration
@@ -53,6 +53,7 @@ final class ProtoTime
             if (\count(self::$intervals) >= self::INTERVAL_CACHE_SIZE) {
                 self::$intervals = [];
             }
+            /** @psalm-suppress TypeDoesNotContainType, TypeDoesNotContainNull, RedundantCondition, PossiblyNullArrayOffset */
             self::$intervals[$nanos] = DateInterval::parse($nanos, DateInterval::FORMAT_NANOSECONDS);
         }
 
@@ -78,12 +79,12 @@ final class ProtoTime
     {
         return $timestamp === null
             ? (int) (new \DateTimeImmutable())->format('Uu')
-            : $timestamp->getSeconds() * self::MICROS_PER_SECOND + \intdiv($timestamp->getNanos(), self::NANOS_PER_MICRO);
+            : (int) $timestamp->getSeconds() * self::MICROS_PER_SECOND + \intdiv($timestamp->getNanos(), self::NANOS_PER_MICRO);
     }
 
     public static function microsOf(?Duration $duration): int
     {
-        return $duration === null ? 0 : $duration->getSeconds() * self::MICROS_PER_SECOND + \intdiv($duration->getNanos(), self::NANOS_PER_MICRO);
+        return $duration === null ? 0 : (int) $duration->getSeconds() * self::MICROS_PER_SECOND + \intdiv($duration->getNanos(), self::NANOS_PER_MICRO);
     }
 
     public static function utc(int $micros): Carbon

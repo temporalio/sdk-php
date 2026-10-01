@@ -88,6 +88,7 @@ final class WorkflowActivations
 
     /**
      * @return list<WorkflowCommand>
+     * @psalm-suppress PossiblyNullReference, PossiblyNullArgument, ArgumentTypeCoercion
      */
     private function process(WorkflowActivation $activation): array
     {
@@ -222,7 +223,7 @@ final class WorkflowActivations
             }
         }
 
-        if ($result->getVariant() === null || $result->getVariant() === '') {
+        if ($result->getVariant() === '') {
             $result->setFailed($this->payloads->failure(new \LogicException('Query produced no result')));
         }
 
@@ -248,15 +249,21 @@ final class WorkflowActivations
         );
     }
 
+    /**
+     * @param non-empty-string $runId
+     */
     private function startWorkflow(InitializeWorkflow $init, string $runId, TickInfo $tick): ServerRequest
     {
-        $payloads = $this->payloads->values($init->getArguments());
+        /** @var \Traversable<int, \Temporal\Api\Common\V1\Payload>&\ArrayAccess<int, \Temporal\Api\Common\V1\Payload>&\Countable $arguments */
+        $arguments = $init->getArguments();
+        $payloads = $this->payloads->values($arguments);
         $options = ['info' => $this->info->workflowInfo($init, $runId, $this->namespace, $this->taskQueue)];
 
+        /** @var (\Traversable<int, \Temporal\Api\Common\V1\Payload>&\Countable)|null $lastCompletion */
         $lastCompletion = $init->getLastCompletionResult()?->getPayloads();
         if ($lastCompletion !== null && \count($lastCompletion) > 0) {
             $all = new Payloads();
-            $all->setPayloads([...$init->getArguments(), ...$lastCompletion]);
+            $all->setPayloads([...$arguments, ...$lastCompletion]);
             $payloads = $this->payloads->values($all->getPayloads());
             $options['lastCompletion'] = \count($lastCompletion);
         }

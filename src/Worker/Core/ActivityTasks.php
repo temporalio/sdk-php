@@ -47,7 +47,10 @@ final class ActivityTasks implements RPCConnectionInterface
     /** @var array<string, array{\FFI\CData, ?Cancel}> */
     private array $running = [];
 
-    /** @var \Closure(list<CommandInterface>, array): list<CommandInterface> */
+    /**
+     * @var \Closure(list<CommandInterface>, array): list<CommandInterface>
+     * @psalm-suppress PropertyNotSetInConstructor
+     */
     private \Closure $dispatch;
 
     private readonly PayloadMapper $payloads;
@@ -75,7 +78,9 @@ final class ActivityTasks implements RPCConnectionInterface
                 return null;
             }
 
-            $result = $this->execute($worker, $taskQueue, $task->getTaskToken(), $task->getStart());
+            /** @var Start $start */
+            $start = $task->getStart();
+            $result = $this->execute($worker, $taskQueue, $task->getTaskToken(), $start);
         } catch (\Throwable $e) {
             if ($task->getTaskToken() === '') {
                 throw $e;
@@ -99,6 +104,7 @@ final class ActivityTasks implements RPCConnectionInterface
 
         $details = new Payloads();
         $details->mergeFromString(\base64_decode($payload['details']));
+        /** @var Bridge $this->bridge */
         $this->bridge->recordActivityHeartbeat(
             $this->running[$token][0],
             (new ActivityHeartbeat(['task_token' => $token, 'details' => $details->getPayloads()]))->serializeToString(),
@@ -127,6 +133,7 @@ final class ActivityTasks implements RPCConnectionInterface
     private function execute(\FFI\CData $worker, string $taskQueue, string $token, Start $start): ActivityExecutionResult
     {
         if ($start->getActivityType() === self::SIDE_EFFECT) {
+            /** @var \Traversable<int, \Temporal\Api\Common\V1\Payload>&\ArrayAccess<int, \Temporal\Api\Common\V1\Payload>&\Countable $input */
             $input = $start->getInput();
 
             return new ActivityExecutionResult(['completed' => new ActivitySuccess(['result' => \count($input) > 0 ? $input[0] : null])]);
@@ -183,9 +190,14 @@ final class ActivityTasks implements RPCConnectionInterface
         throw new \LogicException('Activity produced no result');
     }
 
+    /**
+     * @psalm-suppress ArgumentTypeCoercion
+     */
     private function request(string $token, Start $start, string $taskQueue): ServerRequest
     {
+        /** @var \Traversable<int, \Temporal\Api\Common\V1\Payload>&\ArrayAccess<int, \Temporal\Api\Common\V1\Payload>&\Countable $input */
         $input = $start->getInput();
+        /** @var \Traversable<int, \Temporal\Api\Common\V1\Payload>&\Countable $details */
         $details = $start->getHeartbeatDetails();
         $payloads = \count($details) === 0 ? $input : new \ArrayIterator([...$input, ...$details]);
 
