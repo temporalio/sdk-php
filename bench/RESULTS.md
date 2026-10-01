@@ -45,7 +45,7 @@ Temporal 1.29.3 (`auto-setup`) + PostgreSQL 16 on tmpfs (`fsync=off`), 512 histo
 The dynamic config sets `matching.numTaskqueueReadPartitions=1` and `matching.numTaskqueueWritePartitions=1`.
 With the default 4 partitions and few pollers, tasks wait on partitions that no poller reads. This caused the 2 s tails in the table above.
 Docker Desktop has 4 CPUs and 6 GB. Start: `docker compose -f bench/server/compose.yaml up -d`. Stop: `docker compose -f bench/server/compose.yaml down`.
-`run.sh`, `starter.php` and `.rr.yaml` use `127.0.0.1:7557` by default. Measure both transports on this server.
+`run.sh` uses `127.0.0.1:7557` by default and passes it to the worker, the starter and `.rr.yaml`. Measure both transports on this server.
 
 `rr seq 1000x1`, burst:
 
