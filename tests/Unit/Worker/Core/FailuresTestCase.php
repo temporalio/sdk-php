@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Worker\Core;
 
 use PHPUnit\Framework\TestCase;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DataConverterException;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -34,5 +36,24 @@ final class FailuresTestCase extends TestCase
         } finally {
             \fclose($resource);
         }
+    }
+
+    public function testPlainExceptionFromTheConverterIsNotHidden(): void
+    {
+        $converter = new class implements DataConverterInterface {
+            public function fromPayload(Payload $payload, mixed $type): mixed
+            {
+                return null;
+            }
+
+            public function toPayload(mixed $value): Payload
+            {
+                throw new \Exception('converter broke');
+            }
+        };
+        $error = new ApplicationFailure('message', 'type', false, EncodedValues::fromValues(['detail']));
+
+        $this->expectExceptionMessage('converter broke');
+        Failures::fromThrowable($error, $converter);
     }
 }

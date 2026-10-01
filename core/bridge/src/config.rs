@@ -121,6 +121,7 @@ impl ConnectionJson {
 pub struct ClientJson {
     pub target_url: String,
     pub tls: Option<TlsJson>,
+    pub connect_timeout_ms: u64,
 }
 
 #[derive(Deserialize)]

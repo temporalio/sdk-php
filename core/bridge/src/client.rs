@@ -1,5 +1,5 @@
 use crate::config::{ClientJson, parse};
-use crate::ffi::{KIND_RPC_RESULT, free, guard, into_ffi, slice};
+use crate::ffi::{KIND_RPC_RESULT, construct, free, guard, slice};
 use crate::queue::Queue;
 use crate::runtime::TpbRuntime;
 use base64::{Engine, prelude::BASE64_STANDARD};
@@ -10,6 +10,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use temporalio_client::ClientKeepAliveOptions;
 use tonic::{
     Code, Request, Status, TimeoutExpired,
     client::Grpc,
@@ -23,6 +24,12 @@ pub struct TpbClient {
     endpoint: Endpoint,
     channel: Arc<Mutex<Channel>>,
     queue: Arc<Queue>,
+}
+
+impl TpbClient {
+    fn push(&self, tag: u64, (grpc_code, data): (i32, Vec<u8>)) {
+        self.queue.push(tag, KIND_RPC_RESULT, grpc_code, data)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -65,7 +72,13 @@ impl Decoder for RawCodec {
 }
 
 fn endpoint(config: ClientJson) -> Result<Endpoint, String> {
-    let endpoint = Endpoint::from_shared(config.target_url).map_err(|e| e.to_string())?;
+    let keep_alive = ClientKeepAliveOptions::default();
+    let endpoint = Endpoint::from_shared(config.target_url)
+        .map_err(|e| e.to_string())?
+        .connect_timeout(Duration::from_millis(config.connect_timeout_ms))
+        .keep_alive_while_idle(true)
+        .http2_keep_alive_interval(keep_alive.interval)
+        .keep_alive_timeout(keep_alive.timeout);
     let Some(tls) = config.tls else {
         return Ok(endpoint);
     };
@@ -196,10 +209,7 @@ pub unsafe extern "C" fn tpb_client_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbClient {
-    guard(
-        |message| unsafe { into_ffi(Err(message), err, err_len) },
-        || unsafe { into_ffi(new_client(&*rt, slice(config, config_len)), err, err_len) },
-    )
+    unsafe { construct(err, err_len, || new_client(&*rt, slice(config, config_len))) }
 }
 
 #[unsafe(no_mangle)]
@@ -215,10 +225,8 @@ pub unsafe extern "C" fn tpb_client_call(
     timeout_ms: u64,
 ) {
     let c = unsafe { &*c };
-    let push =
-        |(grpc_code, data): (i32, Vec<u8>)| c.queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
     guard(
-        |message| push(internal_error(message)),
+        |message| c.push(tag, internal_error(message)),
         || {
             let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
                 .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
@@ -232,7 +240,7 @@ pub unsafe extern "C" fn tpb_client_call(
                 });
             let (path, request) = match prepared {
                 Ok(prepared) => prepared,
-                Err(status) => return push(grpc_result(Err(status))),
+                Err(status) => return c.push(tag, grpc_result(Err(status))),
             };
             let channel = c.channel.lock().unwrap().clone();
             let queue = c.queue.clone();
@@ -251,10 +259,7 @@ pub unsafe extern "C" fn tpb_client_call(
 pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout_ms: u64) {
     let c = unsafe { &*c };
     guard(
-        |message| {
-            let (grpc_code, data) = internal_error(message);
-            c.queue.push(tag, KIND_RPC_RESULT, grpc_code, data)
-        },
+        |message| c.push(tag, internal_error(message)),
         || {
             let endpoint = c.endpoint.clone();
             let channel = c.channel.clone();
@@ -285,7 +290,7 @@ mod tests {
     #[test]
     fn call_with_an_invalid_path_reports_invalid_argument() {
         let rt = runtime();
-        let config = br#"{"target_url":"http://127.0.0.1:1","tls":null}"#;
+        let config = br#"{"target_url":"http://127.0.0.1:1","tls":null,"connect_timeout_ms":1000}"#;
         let c = unsafe {
             tpb_client_new(
                 rt,

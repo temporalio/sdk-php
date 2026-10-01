@@ -38,6 +38,6 @@ final class Failures
 
     private static function isInvalidUtf8(\Exception $error): bool
     {
-        return $error::class === \Exception::class;
+        return $error::class === \Exception::class && \stripos($error->getMessage(), 'utf-8') !== false;
     }
 }

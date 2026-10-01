@@ -42,9 +42,9 @@ final class ActivityTasksTestCase extends TestCase
 
     private function handle(\Closure $dispatch, string $type): ActivityTaskCompletion
     {
-        $tasks = new ActivityTasks(DataConverter::createDefault());
+        $tasks = new ActivityTasks();
         $bridge = (new \ReflectionClass(Bridge::class))->newInstanceWithoutConstructor();
-        $tasks->bind($bridge, $dispatch);
+        $tasks->bind($bridge, $dispatch, DataConverter::createDefault());
         $task = new ActivityTask(['task_token' => 'token', 'start' => new Start([
             'activity_id' => '1',
             'activity_type' => $type,

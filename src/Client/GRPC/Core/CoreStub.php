@@ -120,7 +120,7 @@ trait CoreStub
      */
     private function client(): \FFI\CData
     {
-        $this->forgetForeignBridge();
+        $this->assertSameProcess();
         if ($this->core === null) {
             $this->bridge = Bridge::shared();
             $this->core = $this->bridge->newClient(BridgeConnection::client($this->address, $this->tls));
@@ -129,19 +129,16 @@ trait CoreStub
         return $this->core;
     }
 
-    private function forgetForeignBridge(): void
+    private function assertSameProcess(): void
     {
         if ($this->bridge !== null && !Bridge::isCurrent($this->bridge)) {
-            $this->core = null;
-            $this->bridge = null;
-            $this->connecting = null;
-            $this->state = ConnectionState::Idle;
+            throw new \LogicException(Bridge::FORKED_AFTER_START);
         }
     }
 
     private function updateState(bool $connect, int $waitMs): void
     {
-        $this->forgetForeignBridge();
+        $this->assertSameProcess();
         if ($connect && $this->connecting === null && $this->state !== ConnectionState::Ready) {
             $client = $this->client();
             $this->connecting = $this->bridge->startConnect($client, BridgeConnection::CONNECT_TIMEOUT_MS);

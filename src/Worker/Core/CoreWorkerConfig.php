@@ -99,7 +99,6 @@ final class CoreWorkerConfig
             'client_version' => SdkVersion::getSdkVersion(),
             'identity' => $identity ?: (string) \getmypid() . '@' . (string) \gethostname(),
             'api_key' => $this->options->apiKey,
-            'connect_timeout_ms' => BridgeConnection::CONNECT_TIMEOUT_MS,
             'grpc_compression' => $this->options->grpcCompression,
         ];
     }

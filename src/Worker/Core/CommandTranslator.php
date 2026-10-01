@@ -386,7 +386,9 @@ final class CommandTranslator
             'search_attributes' => isset($options['SearchAttributes'])
                 ? new SearchAttributes(['indexed_fields' => $this->payloads->collection((array) $options['SearchAttributes'])])
                 : null,
-            'cancellation_type' => ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED,
+            'cancellation_type' => ($options['WaitForCancellation'] ?? false) === true
+                ? ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED
+                : ChildWorkflowCancellationType::TRY_CANCEL,
             'priority' => $this->priority($options['Priority'] ?? null),
         ]);
     }
@@ -516,10 +518,8 @@ final class CommandTranslator
 
     private function cancellationType(mixed $waitForCancellation): int
     {
-        return match (true) {
-            $waitForCancellation === true => ActivityCancellationType::WAIT_CANCELLATION_COMPLETED,
-            \is_int($waitForCancellation) => $waitForCancellation,
-            default => ActivityCancellationType::TRY_CANCEL,
-        };
+        return $waitForCancellation === true
+            ? ActivityCancellationType::WAIT_CANCELLATION_COMPLETED
+            : ActivityCancellationType::TRY_CANCEL;
     }
 }

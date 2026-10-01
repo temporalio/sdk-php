@@ -13,6 +13,7 @@ namespace Temporal\Worker\Core;
 
 use Temporal\Internal\Bridge\Bridge;
 use Psr\Log\LoggerInterface;
+use Temporal\DataConverter\DataConverterInterface;
 use Revolt\EventLoop;
 use Temporal\Internal\Support\Facade;
 use Temporal\Worker\WorkerInterface;
@@ -54,6 +55,7 @@ final class CoreWorkerLoop
         private readonly ActivityTasks $activityTasks,
         private readonly \Closure $dispatch,
         private readonly \Closure $activations,
+        private readonly DataConverterInterface $converter,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -84,7 +86,7 @@ final class CoreWorkerLoop
         $this->concurrent = $role === CoreRole::Activity && $this->options->activityConcurrency > 1;
         $this->supervisorPid = $supervised ? \posix_getppid() : null;
         $dispatch = $this->profiledDispatch();
-        $this->activityTasks->bind($this->bridge, $dispatch);
+        $this->activityTasks->bind($this->bridge, $dispatch, $this->converter);
 
         foreach ($queues as $worker) {
             $config = $this->config->build($worker, $role);
@@ -123,6 +125,9 @@ final class CoreWorkerLoop
         $this->profiler?->report();
         foreach ($this->bridge->finalizeWorkers(\array_map(static fn(CoreWorkerHandle $worker): \FFI\CData => $worker->core, $this->workers)) as $tag => $error) {
             $this->logger->error(\sprintf('sdk-core worker for task queue "%s" did not finalize: %s', $this->workers[$tag]->taskQueue, $error));
+        }
+        foreach ($this->workers as $worker) {
+            $this->bridge->freeWorker($worker->core);
         }
 
         return $this->crashed ? 1 : 0;
@@ -174,7 +179,7 @@ final class CoreWorkerLoop
 
     private function initiateShutdown(): void
     {
-        if ($this->shutdownRequested || $this->workers === []) {
+        if ($this->shutdownRequested || $this->open === 0) {
             return;
         }
         $this->shutdownRequested = true;

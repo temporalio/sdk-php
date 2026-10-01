@@ -53,19 +53,18 @@ final class ActivityTasks implements RPCConnectionInterface
      */
     private \Closure $dispatch;
 
-    private readonly PayloadMapper $payloads;
-    private readonly InfoFactory $info;
+    /** @psalm-suppress PropertyNotSetInConstructor */
+    private PayloadMapper $payloads;
 
-    public function __construct(DataConverterInterface $converter)
-    {
-        $this->payloads = new PayloadMapper($converter);
-        $this->info = new InfoFactory($this->payloads);
-    }
+    /** @psalm-suppress PropertyNotSetInConstructor */
+    private InfoFactory $info;
 
-    public function bind(Bridge $bridge, \Closure $dispatch): void
+    public function bind(Bridge $bridge, \Closure $dispatch, DataConverterInterface $converter): void
     {
         $this->bridge = $bridge;
         $this->dispatch = $dispatch;
+        $this->payloads = new PayloadMapper($converter);
+        $this->info = new InfoFactory($this->payloads);
     }
 
     public function handle(\FFI\CData $worker, string $taskQueue, string $bytes): ?string

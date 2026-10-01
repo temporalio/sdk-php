@@ -1,8 +1,8 @@
 use crate::config::WorkerJson;
 use crate::ffi::{
     CALL_FAILED, CALL_OK, KIND_ACTIVITY_COMPLETED, KIND_ACTIVITY_TASK, KIND_SHUTDOWN_FINALIZED,
-    KIND_WORKFLOW_ACTIVATION, KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, free, guard,
-    into_ffi, slice,
+    KIND_WORKFLOW_ACTIVATION, KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, construct, free,
+    guard, slice,
 };
 use crate::queue::{Queue, error_status};
 use crate::runtime::TpbRuntime;
@@ -150,10 +150,7 @@ pub unsafe extern "C" fn tpb_worker_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbWorker {
-    guard(
-        |message| unsafe { into_ffi(Err(message), err, err_len) },
-        || unsafe { into_ffi(new_worker(&*rt, slice(config, config_len)), err, err_len) },
-    )
+    unsafe { construct(err, err_len, || new_worker(&*rt, slice(config, config_len))) }
 }
 
 #[unsafe(no_mangle)]

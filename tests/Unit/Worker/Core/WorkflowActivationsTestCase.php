@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Worker\Core;
 
+use Coresdk\Child_workflow\ChildWorkflowCancellationType;
 use Coresdk\Child_workflow\ChildWorkflowResult;
 use Coresdk\Child_workflow\Success as ChildSuccess;
 use Coresdk\Workflow_activation\InitializeWorkflow;
@@ -16,6 +17,7 @@ use Coresdk\Workflow_activation\WorkflowActivationJob;
 use Coresdk\Workflow_commands\ActivityCancellationType;
 use Coresdk\Workflow_commands\WorkflowCommand;
 use Coresdk\Workflow_completion\WorkflowActivationCompletion;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\DataConverter\DataConverter;
@@ -100,6 +102,21 @@ final class WorkflowActivationsTestCase extends TestCase
             ActivityCancellationType::WAIT_CANCELLATION_COMPLETED,
             $commands[0]->getScheduleLocalActivity()->getCancellationType(),
         );
+    }
+
+    public static function provideChildCancellationTypes(): iterable
+    {
+        yield 'default' => [[], ChildWorkflowCancellationType::TRY_CANCEL];
+        yield 'try cancel' => [['WaitForCancellation' => false], ChildWorkflowCancellationType::TRY_CANCEL];
+        yield 'wait for cancellation' => [['WaitForCancellation' => true], ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED];
+    }
+
+    #[DataProvider('provideChildCancellationTypes')]
+    public function testChildCancellationTypeFollowsWaitForCancellation(array $options, int $expected): void
+    {
+        $commands = $this->start([new Request('ExecuteChildWorkflow', ['name' => 'Child', 'options' => $options])]);
+
+        self::assertSame($expected, $commands[0]->getStartChildWorkflowExecution()->getCancellationType());
     }
 
     public function testChildStartFailureAnswersWaitersAndReleasesTheChild(): void

@@ -1,5 +1,5 @@
 use crate::config::{RuntimeJson, parse};
-use crate::ffi::{guard, into_ffi, slice};
+use crate::ffi::{construct, slice};
 use crate::queue::Queue;
 use std::sync::Arc;
 use temporalio_common::telemetry::{CoreLog, CoreLogConsumer, Logger, TelemetryOptions};
@@ -50,8 +50,5 @@ pub unsafe extern "C" fn tpb_runtime_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbRuntime {
-    guard(
-        |message| unsafe { into_ffi(Err(message), err, err_len) },
-        || unsafe { into_ffi(new_runtime(slice(config, config_len)), err, err_len) },
-    )
+    unsafe { construct(err, err_len, || new_runtime(slice(config, config_len))) }
 }

@@ -54,11 +54,17 @@ pub fn guard<T>(fallback: impl FnOnce(String) -> T, body: impl FnOnce() -> T) ->
     catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|panic| fallback(panic_message(panic)))
 }
 
-pub unsafe fn into_ffi<T>(
-    result: Result<T, String>,
+pub unsafe fn construct<T>(
     err: *mut *mut u8,
     err_len: *mut usize,
+    body: impl FnOnce() -> Result<T, String>,
 ) -> *mut T {
+    let result =
+        catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|panic| Err(panic_message(panic)));
+    unsafe { into_ffi(result, err, err_len) }
+}
+
+unsafe fn into_ffi<T>(result: Result<T, String>, err: *mut *mut u8, err_len: *mut usize) -> *mut T {
     let message = match result {
         Ok(value) => return Box::into_raw(Box::new(value)),
         Err(message) => message,

@@ -55,7 +55,7 @@ final class InfoFactory
         $info->cronSchedule = $init->getCronSchedule() ?: null;
         $info->continuedExecutionRunId = $init->getContinuedFromExecutionRunId();
         $info->firstExecutionRunId = $init->getFirstExecutionRunId();
-        $info->originalExecutionRunId = $runId;
+        $info->originalExecutionRunId = $init->getOriginalExecutionRunId() ?: $runId;
         $info->parentNamespace = $parent?->getNamespace() ?? '';
         $info->parentExecution = self::execution($parent?->getWorkflowId(), $parent?->getRunId());
         $info->rootExecution = self::execution($root?->getWorkflowId(), $root?->getRunId());

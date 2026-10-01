@@ -57,7 +57,7 @@ class CoreWorkerFactory extends WorkerFactory
         ?LoggerInterface $logger = null,
     ): static {
         $converter ??= DataConverter::createDefault();
-        $rpc ??= new ActivityTasks($converter);
+        $rpc ??= new ActivityTasks();
         if (!$rpc instanceof ActivityTasks) {
             throw new \InvalidArgumentException(\sprintf('The sdk-core transport needs %s as the RPC connection', ActivityTasks::class));
         }
@@ -125,6 +125,7 @@ class CoreWorkerFactory extends WorkerFactory
             $this->activityTasks,
             $this->dispatch(...),
             $this->activations(...),
+            $this->converter,
             $this->logger,
         );
 

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Revolt\EventLoop;
 use Temporal\Internal\Bridge\CoreEnvironment;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\EnvConfig\Client\ConfigTls;
@@ -51,6 +52,10 @@ final class CoreOptions
         ?int $workflowProcesses,
         ?int $activityProcesses,
     ): self {
+        $activityConcurrency = CoreEnvironment::integer(CoreEnvironment::ACTIVITY_CONCURRENCY, self::DEFAULT_ACTIVITY_CONCURRENCY, 1);
+        if ($activityConcurrency > 1 && !\class_exists(EventLoop::class)) {
+            throw new \InvalidArgumentException(\sprintf('%s > 1 needs the revolt/event-loop package', CoreEnvironment::ACTIVITY_CONCURRENCY));
+        }
         $configProfile = ConfigClient::load();
         $apiKey = ($credentials?->apiKey ?? '') ?: $configProfile->apiKey;
         $tls = $configProfile->tlsConfig;
@@ -62,7 +67,7 @@ final class CoreOptions
             tls: $tls === null || $tls->disabled ? null : $tls,
             workflowProcesses: self::processes(CoreEnvironment::WORKFLOW_PROCESSES, $workflowProcesses),
             activityProcesses: self::processes(CoreEnvironment::ACTIVITY_PROCESSES, $activityProcesses),
-            activityConcurrency: CoreEnvironment::integer(CoreEnvironment::ACTIVITY_CONCURRENCY, self::DEFAULT_ACTIVITY_CONCURRENCY, 1),
+            activityConcurrency: $activityConcurrency,
             maxCachedWorkflows: CoreEnvironment::integer(CoreEnvironment::MAX_CACHED_WORKFLOWS, self::DEFAULT_MAX_CACHED_WORKFLOWS, 0),
             grpcCompression: CoreEnvironment::string(CoreEnvironment::GRPC_COMPRESSION) ?? self::DEFAULT_GRPC_COMPRESSION,
             profiling: CoreEnvironment::flag(CoreEnvironment::PROFILE),

@@ -26,9 +26,9 @@ final class Bridge
     public const KIND_SHUTDOWN_FINALIZED = 5;
     public const KIND_RPC_RESULT = 6;
     public const STATUS_OK = 0;
-    public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     public const POLL_TIMEOUT_MS = 500;
+    public const FORKED_AFTER_START = 'The sdk-core runtime started before fork() and cannot be used in the forked process';
     private const FINALIZE_TIMEOUT_SECONDS = 15.0;
     private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
@@ -83,7 +83,10 @@ final class Bridge
 
     public static function shared(): self
     {
-        if (self::$shared === null || self::$sharedPid !== (int) \getmypid()) {
+        if (self::$shared !== null && self::$sharedPid !== (int) \getmypid()) {
+            throw new \LogicException(self::FORKED_AFTER_START);
+        }
+        if (self::$shared === null) {
             self::$shared = new self();
             self::$sharedPid = (int) \getmypid();
         }

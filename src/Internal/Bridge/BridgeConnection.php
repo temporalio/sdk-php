@@ -20,11 +20,15 @@ final class BridgeConnection
 
     /**
      * @param array<string, ?string>|null $tls
-     * @return array{target_url: string, tls: array<string, ?string>|null}
+     * @return array{target_url: string, tls: array<string, ?string>|null, connect_timeout_ms: int}
      */
     public static function client(string $address, ?array $tls): array
     {
-        return ['target_url' => ($tls === null ? 'http://' : 'https://') . $address, 'tls' => $tls];
+        return [
+            'target_url' => ($tls === null ? 'http://' : 'https://') . $address,
+            'tls' => $tls,
+            'connect_timeout_ms' => self::CONNECT_TIMEOUT_MS,
+        ];
     }
 
     /**

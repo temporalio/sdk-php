@@ -1,5 +1,5 @@
 use crate::config::{WorkerJson, parse};
-use crate::ffi::{guard, into_ffi, slice};
+use crate::ffi::{construct, slice};
 use crate::runtime::TpbRuntime;
 use crate::worker::TpbWorker;
 use prost::Message;
@@ -41,21 +41,16 @@ pub unsafe extern "C" fn tpb_replayer_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbWorker {
-    guard(
-        |message| unsafe { into_ffi(Err(message), err, err_len) },
-        || unsafe {
-            into_ffi(
-                new_replayer(
-                    &*rt,
-                    slice(config, config_len),
-                    slice(history, history_len),
-                    slice(workflow_id, workflow_id_len),
-                ),
-                err,
-                err_len,
+    unsafe {
+        construct(err, err_len, || {
+            new_replayer(
+                &*rt,
+                slice(config, config_len),
+                slice(history, history_len),
+                slice(workflow_id, workflow_id_len),
             )
-        },
-    )
+        })
+    }
 }
 
 #[cfg(test)]
