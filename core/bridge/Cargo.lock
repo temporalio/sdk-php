@@ -2182,6 +2182,7 @@ dependencies = [
  "libc",
  "mimalloc",
  "prost",
+ "serde",
  "serde_json",
  "temporalio-client",
  "temporalio-common",

@@ -43,7 +43,9 @@ class CoreWorkerFactory extends WorkerFactory
     private const ROLE_ALL = 'all';
     private const ROLE_WORKFLOW = 'workflow';
     private const ROLE_ACTIVITY = 'activity';
-    private const POLL_TIMEOUT_MS = 500;
+    private const POLL_TIMEOUT_MS = Bridge::POLL_TIMEOUT_MS;
+    private const CONNECT_TIMEOUT_MS = 10_000;
+    private const DEFAULT_GRPC_COMPRESSION = 'gzip';
     private const FINALIZE_TIMEOUT_SECONDS = 2;
     private const MAX_ACTIVITY_POLLERS = 8;
     private const WORKFLOW_TASK_POLLERS = 8;
@@ -62,7 +64,6 @@ class CoreWorkerFactory extends WorkerFactory
     private int $workflowProcesses;
     private int $activityProcesses;
     private int $activityConcurrency;
-    private static ?Bridge $replayBridge = null;
     private LoggerInterface $logger;
     private bool $stopping = false;
     private bool $crashed = false;
@@ -138,11 +139,8 @@ class CoreWorkerFactory extends WorkerFactory
             throw new \OutOfRangeException(\sprintf('Cannot find a worker for task queue "%s"', $taskQueue));
         }
 
-        $bridge = self::$replayBridge ??= new Bridge();
-        $core = $bridge->newReplayer(
-            ['workflow_id' => $workflowId] + $this->config($worker, self::ROLE_WORKFLOW),
-            $history->serializeToString(),
-        );
+        $bridge = Bridge::shared();
+        $core = $bridge->newReplayer($this->config($worker, self::ROLE_WORKFLOW), $history->serializeToString(), $workflowId);
         $tag = ++self::$replayTag;
         try {
             $failure = $this->drainReplay($bridge, $core, $tag, $this->activations($worker, $this->dispatchCommands(...)));
@@ -402,7 +400,7 @@ class CoreWorkerFactory extends WorkerFactory
         foreach ($this->queues as $worker) {
             \assert($worker instanceof WorkerInterface);
             $config = $this->config($worker, $role);
-            if (!$config['workflows'] && !$config['activities']) {
+            if (!$config['workflows'] && !$config['remote_activities']) {
                 continue;
             }
             $workers[] = [
@@ -410,7 +408,7 @@ class CoreWorkerFactory extends WorkerFactory
                 'taskQueue' => $worker->getID(),
                 'activations' => $this->activations($worker, $dispatch),
                 'workflows' => $config['workflows'],
-                'activities' => $config['activities'],
+                'activities' => $config['local_activities'] || $config['remote_activities'],
             ];
         }
         if ($workers === []) {
@@ -522,7 +520,7 @@ class CoreWorkerFactory extends WorkerFactory
         $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
         while ($finalized < \count($cores) && \microtime(true) < $deadline) {
             foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind]) {
-                if ($kind === Bridge::KIND_SHUTDOWN) {
+                if ($kind === Bridge::KIND_SHUTDOWN_FINALIZED) {
                     ++$finalized;
                 }
             }
@@ -592,24 +590,28 @@ class CoreWorkerFactory extends WorkerFactory
         }
 
         return [
-            'target_url' => ($tls === null ? 'http://' : 'https://') . $this->address,
-            'client_name' => SdkVersion::SDK_NAME,
-            'client_version' => SdkVersion::getSdkVersion(),
-            'api_key' => $this->connection->apiKey === null ? null : (string) $this->connection->apiKey,
-            'tls' => $tls === null ? null : [
-                'server_root_ca_cert' => self::pem($tls->rootCerts),
-                'domain' => $tls->serverName,
-                'client_cert' => self::pem($tls->certChain),
-                'client_private_key' => self::pem($tls->privateKey),
+            'connection' => [
+                'target_url' => ($tls === null ? 'http://' : 'https://') . $this->address,
+                'client_name' => SdkVersion::SDK_NAME,
+                'client_version' => SdkVersion::getSdkVersion(),
+                'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),
+                'api_key' => $this->connection->apiKey === null ? null : (string) $this->connection->apiKey,
+                'tls' => $tls === null ? null : [
+                    'server_root_ca_cert' => self::pem($tls->rootCerts),
+                    'domain' => $tls->serverName,
+                    'client_cert' => self::pem($tls->certChain),
+                    'client_private_key' => self::pem($tls->privateKey),
+                ],
+                'connect_timeout_ms' => self::CONNECT_TIMEOUT_MS,
+                'grpc_compression' => $_SERVER['TEMPORAL_CORE_GRPC_COMPRESSION'] ?? self::DEFAULT_GRPC_COMPRESSION,
             ],
             'namespace' => $this->namespace,
             'task_queue' => $worker->getID(),
-            'identity' => $options->identity ?: \getmypid() . '@' . \gethostname(),
             'workflows' => $workflows,
-            'activities' => $workflows || $remoteActivities,
+            'local_activities' => $workflows,
+            'remote_activities' => $remoteActivities,
             'deployment' => isset($options->deploymentOptions) ? $this->marshaller->marshal($options->deploymentOptions) : null,
             'build_id' => $options->buildID,
-            'no_remote_activities' => !$remoteActivities,
             'graceful_shutdown_period_ms' => self::gracefulShutdownMs($worker),
             'max_worker_activities_per_second' => $options->workerActivitiesPerSecond ?: null,
             'max_task_queue_activities_per_second' => $options->taskQueueActivitiesPerSecond ?: null,

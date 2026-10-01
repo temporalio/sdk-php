@@ -1,25 +1,27 @@
-use crate::{KIND_RPC_RESULT, Queue, TpbRuntime, guard, into_raw_bytes, slice};
+use crate::config::{ClientJson, parse};
+use crate::ffi::{KIND_RPC_RESULT, free, guard, into_ffi, slice};
+use crate::queue::Queue;
+use crate::runtime::TpbRuntime;
 use base64::{Engine, prelude::BASE64_STANDARD};
 use prost::bytes::{Buf, BufMut};
-use serde_json::Value;
 use std::{
+    collections::HashMap,
     future::Future,
-    sync::Arc,
-    time::{Duration, Instant},
+    sync::{Arc, Mutex},
+    time::Duration,
 };
-use tokio::runtime::Handle;
 use tonic::{
-    Code, Request, Status,
+    Code, Request, Status, TimeoutExpired,
     client::Grpc,
     codec::{Codec, DecodeBuf, Decoder, EncodeBuf, Encoder},
-    codegen::http::uri::{PathAndQuery, Uri},
+    codegen::http::uri::PathAndQuery,
     metadata::{AsciiMetadataKey, AsciiMetadataValue, BinaryMetadataKey, BinaryMetadataValue},
-    transport::{Certificate, Channel, ClientTlsConfig, Endpoint, Identity},
+    transport::{Channel, Endpoint},
 };
 
 pub struct TpbClient {
-    channel: Channel,
-    handle: Handle,
+    endpoint: Endpoint,
+    channel: Arc<Mutex<Channel>>,
     queue: Arc<Queue>,
 }
 
@@ -62,44 +64,28 @@ impl Decoder for RawCodec {
     }
 }
 
-fn endpoint(config: &Value) -> Result<Endpoint, String> {
-    let target = config
-        .get("target_url")
-        .and_then(Value::as_str)
-        .unwrap_or("http://127.0.0.1:7233");
-    let mut endpoint = Endpoint::from_shared(target.to_owned()).map_err(|e| e.to_string())?;
-    let Some(tls) = config.get("tls").and_then(Value::as_object) else {
+fn endpoint(config: ClientJson) -> Result<Endpoint, String> {
+    let endpoint = Endpoint::from_shared(config.target_url).map_err(|e| e.to_string())?;
+    let Some(tls) = config.tls else {
         return Ok(endpoint);
     };
-    let text = |key: &str| tls.get(key).and_then(Value::as_str);
-    let mut tls_config = match text("server_root_ca_cert") {
-        Some(ca) => ClientTlsConfig::new().ca_certificate(Certificate::from_pem(ca)),
-        None => ClientTlsConfig::new().with_native_roots(),
+    let (tls, origin) = tls.client_config()?;
+    let endpoint = match origin {
+        Some(origin) => endpoint.origin(origin),
+        None => endpoint,
     };
-    if let Some(domain) = text("domain") {
-        tls_config = tls_config.domain_name(domain);
-        let origin: Uri = format!("https://{domain}")
-            .parse()
-            .map_err(|e| format!("{e}"))?;
-        endpoint = endpoint.origin(origin);
-    }
-    if let (Some(cert), Some(key)) = (text("client_cert"), text("client_private_key")) {
-        tls_config = tls_config.identity(Identity::from_pem(cert, key));
-    }
-    endpoint.tls_config(tls_config).map_err(|e| e.to_string())
+    endpoint.tls_config(tls).map_err(|e| e.to_string())
 }
 
 fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
-    let config: Value =
-        serde_json::from_slice(config).map_err(|e| format!("Invalid client config JSON: {e}"))?;
-    let handle = rt.core.tokio_handle();
+    let endpoint = endpoint(parse(config, "client config")?)?;
     let channel = {
-        let _guard = handle.enter();
-        endpoint(&config)?.connect_lazy()
+        let _guard = rt.queue.handle.enter();
+        endpoint.connect_lazy()
     };
     Ok(TpbClient {
-        channel,
-        handle,
+        endpoint,
+        channel: Arc::new(Mutex::new(channel)),
         queue: rt.queue.clone(),
     })
 }
@@ -112,18 +98,13 @@ fn request(body: Vec<u8>, metadata: &[u8], timeout_ms: u64) -> Result<Request<Ve
     if metadata.is_empty() {
         return Ok(request);
     }
-    let metadata: serde_json::Map<String, Value> = serde_json::from_slice(metadata)
-        .map_err(|e| Status::invalid_argument(format!("Invalid metadata JSON: {e}")))?;
+    let metadata: HashMap<String, Vec<String>> =
+        parse(metadata, "metadata").map_err(Status::invalid_argument)?;
     let invalid =
         |e: &dyn std::fmt::Display| Status::invalid_argument(format!("Invalid metadata: {e}"));
     for (key, values) in metadata {
         let key = key.to_ascii_lowercase();
-        for value in values
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter_map(Value::as_str)
-        {
+        for value in values {
             if key.ends_with("-bin") {
                 let name =
                     BinaryMetadataKey::from_bytes(key.as_bytes()).map_err(|e| invalid(&e))?;
@@ -153,6 +134,13 @@ async fn call(
     Ok(grpc.unary(request, path, RawCodec).await?.into_inner())
 }
 
+async fn connect(endpoint: Endpoint, timeout: Duration) -> Result<Channel, Status> {
+    match tokio::time::timeout(timeout, endpoint.connect()).await {
+        Err(_) => Err(Status::deadline_exceeded("Connection timeout expired")),
+        Ok(result) => result.map_err(|e| Status::from_error(e.into())),
+    }
+}
+
 async fn with_deadline(
     call: impl Future<Output = Result<Vec<u8>, Status>>,
     timeout: Option<Duration>,
@@ -160,14 +148,24 @@ async fn with_deadline(
     let Some(timeout) = timeout else {
         return call.await;
     };
-    let started = Instant::now();
     match tokio::time::timeout(timeout, call).await {
         Err(_) => Err(Status::deadline_exceeded("Deadline Exceeded")),
-        Ok(Err(status)) if status.code() == Code::Cancelled && started.elapsed() >= timeout => {
+        Ok(Err(status)) if status.code() == Code::Cancelled && timed_out(&status) => {
             Err(Status::deadline_exceeded(status.message()))
         }
         Ok(result) => result,
     }
+}
+
+fn timed_out(status: &Status) -> bool {
+    let mut source = std::error::Error::source(status);
+    while let Some(error) = source {
+        if error.is::<TimeoutExpired>() {
+            return true;
+        }
+        source = error.source();
+    }
+    false
 }
 
 fn status_bytes(status: &Status) -> Vec<u8> {
@@ -179,35 +177,33 @@ fn status_bytes(status: &Status) -> Vec<u8> {
     bytes
 }
 
+fn grpc_result(result: Result<Vec<u8>, Status>) -> (i32, Vec<u8>) {
+    match result {
+        Ok(bytes) => (Code::Ok as i32, bytes),
+        Err(status) => (status.code() as i32, status_bytes(&status)),
+    }
+}
+
+fn internal_error(message: String) -> (i32, Vec<u8>) {
+    grpc_result(Err(Status::internal(message)))
+}
+
 #[unsafe(no_mangle)]
-pub extern "C" fn tpb_client_new(
+pub unsafe extern "C" fn tpb_client_new(
     rt: *mut TpbRuntime,
     config: *const libc::c_char,
     config_len: usize,
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbClient {
-    match guard(Err, || {
-        new_client(unsafe { &*rt }, slice(config, config_len))
-    }) {
-        Ok(client) => Box::into_raw(Box::new(client)),
-        Err(message) => {
-            let (data, len) = into_raw_bytes(message.into_bytes());
-            unsafe {
-                if !err.is_null() {
-                    *err = data;
-                }
-                if !err_len.is_null() {
-                    *err_len = len;
-                }
-            }
-            std::ptr::null_mut()
-        }
-    }
+    guard(
+        |message| unsafe { into_ffi(Err(message), err, err_len) },
+        || unsafe { into_ffi(new_client(&*rt, slice(config, config_len)), err, err_len) },
+    )
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn tpb_client_call(
+pub unsafe extern "C" fn tpb_client_call(
     c: *mut TpbClient,
     tag: u64,
     path: *const libc::c_char,
@@ -219,51 +215,66 @@ pub extern "C" fn tpb_client_call(
     timeout_ms: u64,
 ) {
     let c = unsafe { &*c };
-    let queue = c.queue.clone();
-    let prepared = guard(
-        |message| Err(Status::internal(message)),
+    let push =
+        |(grpc_code, data): (i32, Vec<u8>)| c.queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+    guard(
+        |message| push(internal_error(message)),
         || {
-            let path = PathAndQuery::try_from(slice(path, path_len).to_vec())
-                .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))?;
-            let request = request(
-                slice(body, body_len).to_vec(),
-                slice(metadata, metadata_len),
-                timeout_ms,
-            )?;
-            Ok((path, request))
+            let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
+                .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
+                .and_then(|path| {
+                    let request = request(
+                        unsafe { slice(body, body_len) }.to_vec(),
+                        unsafe { slice(metadata, metadata_len) },
+                        timeout_ms,
+                    )?;
+                    Ok((path, request))
+                });
+            let (path, request) = match prepared {
+                Ok(prepared) => prepared,
+                Err(status) => return push(grpc_result(Err(status))),
+            };
+            let channel = c.channel.lock().unwrap().clone();
+            let queue = c.queue.clone();
+            c.queue
+                .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                    let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
+                    let (grpc_code, data) =
+                        grpc_result(with_deadline(call(channel, path, request), timeout).await);
+                    queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+                });
         },
-    );
-    let (path, request) = match prepared {
-        Ok(prepared) => prepared,
-        Err(status) => {
-            return queue.push(
-                tag,
-                KIND_RPC_RESULT,
-                status.code() as i32,
-                status_bytes(&status),
-            );
-        }
-    };
-    let channel = c.channel.clone();
-    c.handle.spawn(async move {
-        let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
-        match with_deadline(call(channel, path, request), timeout).await {
-            Ok(bytes) => queue.push(tag, KIND_RPC_RESULT, Code::Ok as i32, bytes),
-            Err(status) => queue.push(
-                tag,
-                KIND_RPC_RESULT,
-                status.code() as i32,
-                status_bytes(&status),
-            ),
-        }
-    });
+    )
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn tpb_client_free(c: *mut TpbClient) {
-    if !c.is_null() {
-        guard(|_| (), || drop(unsafe { Box::from_raw(c) }));
-    }
+pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout_ms: u64) {
+    let c = unsafe { &*c };
+    guard(
+        |message| {
+            let (grpc_code, data) = internal_error(message);
+            c.queue.push(tag, KIND_RPC_RESULT, grpc_code, data)
+        },
+        || {
+            let endpoint = c.endpoint.clone();
+            let channel = c.channel.clone();
+            let queue = c.queue.clone();
+            c.queue
+                .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                    let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
+                    let (grpc_code, data) = grpc_result(connected.map(|connected| {
+                        *channel.lock().unwrap() = connected;
+                        Vec::new()
+                    }));
+                    queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+                });
+        },
+    )
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn tpb_client_free(c: *mut TpbClient) {
+    unsafe { free(c) }
 }
 
 #[cfg(test)]
@@ -286,6 +297,8 @@ mod tests {
             &[0, 1, 2]
         );
         assert!(request(vec![], br#"{"bad key":["x"]}"#, 0).is_err());
+        assert!(request(vec![], br#"{"key":"x"}"#, 0).is_err());
+        assert!(request(vec![], br#"{"key":[1]}"#, 0).is_err());
     }
 
     #[test]
@@ -297,22 +310,30 @@ mod tests {
         let timeout = Some(Duration::from_millis(10));
         let pending = rt.block_on(with_deadline(std::future::pending(), timeout));
         assert_eq!(pending.unwrap_err().code(), Code::DeadlineExceeded);
+        let expired = rt.block_on(with_deadline(
+            async { Err(Status::from_error(Box::new(TimeoutExpired(())))) },
+            timeout,
+        ));
+        assert_eq!(expired.unwrap_err().code(), Code::DeadlineExceeded);
         let cancelled = rt.block_on(with_deadline(
-            async {
-                tokio::time::sleep(Duration::from_millis(20)).await;
-                Err(Status::cancelled("Timeout expired"))
-            },
-            Some(Duration::from_millis(30)),
+            async { Err(Status::cancelled("cancelled by the server")) },
+            timeout,
         ));
         assert_eq!(cancelled.unwrap_err().code(), Code::Cancelled);
-        let late = rt.block_on(with_deadline(
-            async {
-                tokio::time::sleep(Duration::from_millis(20)).await;
-                Err(Status::cancelled("Timeout expired"))
-            },
-            Some(Duration::from_millis(20)),
-        ));
-        assert!(matches!(late.unwrap_err().code(), Code::DeadlineExceeded));
+    }
+
+    #[test]
+    fn connect_reports_unavailable_and_timeout() {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let closed = Endpoint::from_static("http://127.0.0.1:1");
+        let refused = rt.block_on(connect(closed, Duration::from_secs(5)));
+        assert_eq!(refused.unwrap_err().code(), Code::Unavailable);
+        let unreachable = Endpoint::from_static("http://192.0.2.1:7233");
+        let timeout = rt.block_on(connect(unreachable, Duration::ZERO));
+        assert_eq!(timeout.unwrap_err().code(), Code::DeadlineExceeded);
     }
 
     #[test]
