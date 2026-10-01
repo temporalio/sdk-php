@@ -40,6 +40,7 @@ use Temporal\Api\Common\V1\Priority;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Sdk\V1\UserMetadata;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\Request;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
@@ -55,6 +56,8 @@ final class CommandTranslator
 {
     private const NANOS_PER_MILLISECOND = 1_000_000;
     private const SIDE_EFFECT_TIMEOUT_SECONDS = 60;
+    private const NEGATIVE_TIMER_MESSAGE = 'negative duration provided %dms';
+    private const NEGATIVE_TIMER_TYPE = 'errorString';
     private const SEARCH_ATTRIBUTE_SET = 'set';
     private const SEARCH_ATTRIBUTE_TYPES = [
         'bool' => 'Bool',
@@ -120,7 +123,14 @@ final class CommandTranslator
 
             case Request\NewTimer::NAME:
                 $ms = (int) ($options['ms'] ?? 0);
-                if ($ms <= 0) {
+                if ($ms < 0) {
+                    return [new FailureResponse(
+                        new ApplicationFailure(\sprintf(self::NEGATIVE_TIMER_MESSAGE, $ms), self::NEGATIVE_TIMER_TYPE, false),
+                        $id,
+                        $tick,
+                    )];
+                }
+                if ($ms === 0) {
                     return [new SuccessResponse(null, $id, $tick)];
                 }
                 $commands[] = new WorkflowCommand([
@@ -331,6 +341,7 @@ final class CommandTranslator
             'schedule_to_close_timeout' => ProtoTime::optionalDuration($options['ScheduleToCloseTimeout'] ?? 0),
             'start_to_close_timeout' => ProtoTime::optionalDuration($options['StartToCloseTimeout'] ?? 0),
             'retry_policy' => $this->retryPolicy($options['RetryPolicy'] ?? null),
+            'cancellation_type' => ActivityCancellationType::WAIT_CANCELLATION_COMPLETED,
         ]);
     }
 

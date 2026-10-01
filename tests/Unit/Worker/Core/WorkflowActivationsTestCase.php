@@ -6,21 +6,75 @@ namespace Temporal\Tests\Unit\Worker\Core;
 
 use Coresdk\Child_workflow\ChildWorkflowResult;
 use Coresdk\Child_workflow\Success as ChildSuccess;
+use Coresdk\Workflow_activation\InitializeWorkflow;
 use Coresdk\Workflow_activation\ResolveChildWorkflowExecution;
 use Coresdk\Workflow_activation\ResolveChildWorkflowExecutionStart;
 use Coresdk\Workflow_activation\ResolveChildWorkflowExecutionStartFailure;
 use Coresdk\Workflow_activation\ResolveChildWorkflowExecutionStartSuccess;
+use Coresdk\Workflow_activation\WorkflowActivation;
+use Coresdk\Workflow_activation\WorkflowActivationJob;
+use Coresdk\Workflow_commands\ActivityCancellationType;
+use Coresdk\Workflow_commands\WorkflowCommand;
+use Coresdk\Workflow_completion\WorkflowActivationCompletion;
 use PHPUnit\Framework\TestCase;
 use Temporal\DataConverter\DataConverter;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Worker\Core\PayloadMapper;
 use Temporal\Worker\Core\ResolutionMapper;
 use Temporal\Worker\Core\RunState;
+use Temporal\Worker\Core\WorkflowActivations;
+use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\Server\FailureResponse;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\SuccessResponse;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 final class WorkflowActivationsTestCase extends TestCase
 {
+    public function testNegativeTimerFailsLikeRoadRunner(): void
+    {
+        $responses = [];
+        $this->complete($this->activations(static function (array $messages) use (&$responses): array {
+            if ($messages[0] instanceof ServerRequest) {
+                return [new Request('NewTimer', ['ms' => -5])];
+            }
+            \array_push($responses, ...$messages);
+            return [];
+        }), [self::initialize()]);
+
+        self::assertCount(1, $responses);
+        self::assertInstanceOf(FailureResponse::class, $responses[0]);
+        self::assertInstanceOf(ApplicationFailure::class, $responses[0]->getFailure());
+        self::assertSame('negative duration provided -5ms', $responses[0]->getFailure()->getOriginalMessage());
+    }
+
+    public function testZeroTimerResolvesWithoutCommand(): void
+    {
+        $responses = [];
+        $completion = $this->complete($this->activations(static function (array $messages) use (&$responses): array {
+            if ($messages[0] instanceof ServerRequest) {
+                return [new Request('NewTimer', ['ms' => 0])];
+            }
+            \array_push($responses, ...$messages);
+            return [];
+        }), [self::initialize()]);
+
+        self::assertCount(0, $completion->getSuccessful()->getCommands());
+        self::assertInstanceOf(SuccessResponse::class, $responses[0]);
+    }
+
+    public function testLocalActivityWaitsForCancellationCompleted(): void
+    {
+        $commands = $this->start([new Request('ExecuteLocalActivity', ['name' => 'Act', 'options' => []])]);
+
+        self::assertSame(
+            ActivityCancellationType::WAIT_CANCELLATION_COMPLETED,
+            $commands[0]->getScheduleLocalActivity()->getCancellationType(),
+        );
+    }
+
     public function testChildStartFailureAnswersWaitersAndReleasesTheChild(): void
     {
         $run = new RunState('run');
@@ -58,6 +112,46 @@ final class WorkflowActivationsTestCase extends TestCase
         ]), $tick);
 
         self::assertSame([[], [], []], $this->childState($run));
+    }
+
+    private static function initialize(): WorkflowActivationJob
+    {
+        return new WorkflowActivationJob(['initialize_workflow' => new InitializeWorkflow([
+            'workflow_type' => 'Wf',
+            'workflow_id' => 'wf-id',
+            'attempt' => 1,
+        ])]);
+    }
+
+    /**
+     * @param list<CommandInterface> $commands
+     * @return list<WorkflowCommand>
+     */
+    private function start(array $commands): array
+    {
+        $completion = $this->complete($this->activations(
+            static fn(array $messages): array => $messages[0] instanceof ServerRequest ? $commands : [],
+        ), [self::initialize()]);
+        self::assertSame('successful', $completion->getStatus(), $completion->serializeToJsonString());
+
+        return \iterator_to_array($completion->getSuccessful()->getCommands());
+    }
+
+    /**
+     * @param list<WorkflowActivationJob> $jobs
+     */
+    private function complete(WorkflowActivations $activations, array $jobs): WorkflowActivationCompletion
+    {
+        $activation = new WorkflowActivation(['run_id' => 'run-id', 'jobs' => $jobs]);
+        $completion = new WorkflowActivationCompletion();
+        $completion->mergeFromString($activations->handle($activation->serializeToString()));
+
+        return $completion;
+    }
+
+    private function activations(\Closure $dispatch): WorkflowActivations
+    {
+        return new WorkflowActivations(DataConverter::createDefault(), $dispatch, 'ns', 'queue', []);
     }
 
     private function resolutions(): ResolutionMapper
