@@ -26,6 +26,7 @@ final class Bridge
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     public const POLL_TIMEOUT_MS = 500;
+    private const FINALIZE_TIMEOUT_SECONDS = 2;
     private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
@@ -85,11 +86,19 @@ final class Bridge
         return self::$shared !== null && self::$sharedPid === (int) \getmypid();
     }
 
-    public function eventFd(): int
+    /**
+     * @return resource
+     */
+    public function eventPipe()
     {
+        $pipe = \fopen('php://fd/' . $this->ffi->tpb_event_fd($this->runtime), 'r');
+        if ($pipe === false) {
+            throw new \RuntimeException('Unable to open the sdk-core event pipe');
+        }
+        \stream_set_blocking($pipe, false);
         $this->pumped = true;
 
-        return $this->ffi->tpb_event_fd($this->runtime);
+        return $pipe;
     }
 
     public function newWorker(array $config): \FFI\CData
@@ -199,13 +208,6 @@ final class Bridge
         }
     }
 
-    public function requestWorkflowEviction(\FFI\CData $worker, string $runId): void
-    {
-        if ($this->ffi->tpb_request_workflow_eviction($worker, $runId, \strlen($runId)) !== self::CALL_OK) {
-            throw new \RuntimeException('Unable to request the workflow eviction: the sdk-core worker is finalized');
-        }
-    }
-
     public function initiateShutdown(\FFI\CData $worker): void
     {
         if ($this->ffi->tpb_worker_initiate_shutdown($worker) !== self::CALL_OK) {
@@ -213,9 +215,35 @@ final class Bridge
         }
     }
 
-    public function finalizeShutdown(\FFI\CData $worker, int $tag): void
+    /**
+     * @param array<int, \FFI\CData> $workers
+     * @return array<int, string>
+     */
+    public function finalizeWorkers(array $workers): array
     {
-        $this->ffi->tpb_worker_finalize_shutdown($worker, $tag);
+        foreach ($workers as $tag => $worker) {
+            $this->ffi->tpb_worker_finalize_shutdown($worker, $tag);
+        }
+
+        $pending = $workers;
+        $errors = [];
+        $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
+        while ($pending !== [] && \microtime(true) < $deadline) {
+            foreach ($this->nextEvents(self::POLL_TIMEOUT_MS) as [$tag, $kind, $status, $data]) {
+                if ($kind !== self::KIND_SHUTDOWN_FINALIZED || !isset($pending[$tag])) {
+                    continue;
+                }
+                unset($pending[$tag]);
+                if ($status !== self::STATUS_OK) {
+                    $errors[$tag] = $data;
+                }
+            }
+        }
+        foreach (\array_keys($pending) as $tag) {
+            $errors[$tag] = 'The sdk-core worker did not finalize in time';
+        }
+
+        return $errors;
     }
 
     public function freeWorker(\FFI\CData $worker): void

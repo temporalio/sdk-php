@@ -228,21 +228,6 @@ pub unsafe extern "C" fn tpb_record_activity_heartbeat(
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn tpb_request_workflow_eviction(
-    w: *mut TpbWorker,
-    run_id: *const libc::c_char,
-    len: usize,
-) -> i32 {
-    guard(
-        |_| CALL_FAILED,
-        || {
-            let run_id = String::from_utf8_lossy(unsafe { slice(run_id, len) });
-            unsafe { &*w }.call(|core| core.request_workflow_eviction(&run_id))
-        },
-    )
-}
-
-#[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_worker_initiate_shutdown(w: *mut TpbWorker) -> i32 {
     guard(
         |_| CALL_FAILED,
@@ -305,10 +290,6 @@ mod tests {
             tpb_complete_activity_task(w, 2, std::ptr::null(), 0);
             tpb_worker_finalize_shutdown(w, 3);
             assert_eq!(tpb_worker_initiate_shutdown(w), CALL_FAILED);
-            assert_eq!(
-                tpb_request_workflow_eviction(w, std::ptr::null(), 0),
-                CALL_FAILED
-            );
             assert_eq!(
                 tpb_record_activity_heartbeat(w, std::ptr::null(), 0),
                 CALL_FAILED
