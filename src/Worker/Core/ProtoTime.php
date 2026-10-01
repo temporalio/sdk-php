@@ -62,7 +62,7 @@ final class ProtoTime
     public static function timestamp(\DateTimeInterface $time): Timestamp
     {
         $timestamp = new Timestamp();
-        $timestamp->fromDateTime($time);
+        $timestamp->fromDateTime(\DateTime::createFromInterface($time));
 
         return $timestamp;
     }
