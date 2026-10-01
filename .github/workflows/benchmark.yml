@@ -90,7 +90,7 @@ jobs:
           {
             echo "## Worker benchmark: RoadRunner vs sdk-core"
             echo
-            echo "Runner: $(nproc) CPU, $(free -g | awk '/Mem/ {print $2}') GB. The Temporal server runs on the same runner, compare the rows with each other only."
+            echo "Runner: $(nproc) CPU, $(free -g | awk '/Mem/ {print $2}') GB, PHP $(php -r 'echo PHP_VERSION;'). The Temporal server runs on the same runner, compare the rows with each other only."
             echo
             bench/summary.sh bench/matrix.jsonl
           } | tee -a "$GITHUB_STEP_SUMMARY"
