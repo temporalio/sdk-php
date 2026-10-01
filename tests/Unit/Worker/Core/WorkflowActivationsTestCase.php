@@ -17,6 +17,7 @@ use Coresdk\Workflow_commands\ActivityCancellationType;
 use Coresdk\Workflow_commands\WorkflowCommand;
 use Coresdk\Workflow_completion\WorkflowActivationCompletion;
 use PHPUnit\Framework\TestCase;
+use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
@@ -33,6 +34,39 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 final class WorkflowActivationsTestCase extends TestCase
 {
+    public function testTypedSearchAttributesUseMetadataNames(): void
+    {
+        $commands = $this->start([new Request('UpsertWorkflowTypedSearchAttributes', ['search_attributes' => [
+            'Kw' => ['type' => ValueType::Keyword->value, 'operation' => 'set', 'value' => 'v'],
+            'Num' => ['type' => ValueType::Float->value, 'operation' => 'set', 'value' => 1.5],
+            'Gone' => ['type' => ValueType::Int->value, 'operation' => 'unset'],
+        ]])]);
+
+        $fields = $commands[0]->getUpsertWorkflowSearchAttributes()->getSearchAttributes()->getIndexedFields();
+        self::assertSame('Keyword', $fields['Kw']->getMetadata()['type']);
+        self::assertSame('Double', $fields['Num']->getMetadata()['type']);
+        self::assertFalse(isset($fields['Gone']->getMetadata()['type']));
+    }
+
+    public function testUnknownSearchAttributeTypeFailsTheActivation(): void
+    {
+        $completion = $this->complete($this->activations(static fn(array $messages): array => $messages[0] instanceof ServerRequest
+            ? [new Request('UpsertWorkflowTypedSearchAttributes', ['search_attributes' => [
+                'Bad' => ['type' => 'decimal', 'operation' => 'set', 'value' => 1],
+            ]])]
+            : []), [self::initialize()]);
+
+        self::assertSame('failed', $completion->getStatus());
+        self::assertStringContainsString('"decimal"', $completion->getFailed()->getFailure()->getMessage());
+    }
+
+    public function testEveryValueTypeRoundTripsThroughMetadataName(): void
+    {
+        foreach (ValueType::cases() as $type) {
+            self::assertSame($type, ValueType::fromMetadata($type->metadataName()));
+        }
+    }
+
     public function testNegativeTimerFailsLikeRoadRunner(): void
     {
         $responses = [];

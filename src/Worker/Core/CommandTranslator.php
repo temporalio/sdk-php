@@ -40,6 +40,7 @@ use Temporal\Api\Common\V1\Priority;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Sdk\V1\UserMetadata;
+use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\Request;
@@ -59,15 +60,6 @@ final class CommandTranslator
     private const NEGATIVE_TIMER_MESSAGE = 'negative duration provided %dms';
     private const NEGATIVE_TIMER_TYPE = 'errorString';
     private const SEARCH_ATTRIBUTE_SET = 'set';
-    private const SEARCH_ATTRIBUTE_TYPES = [
-        'bool' => 'Bool',
-        'float64' => 'Double',
-        'int64' => 'Int',
-        'keyword' => 'Keyword',
-        'keyword_list' => 'KeywordList',
-        'string' => 'Text',
-        'datetime' => 'Datetime',
-    ];
 
     public function __construct(
         private readonly PayloadMapper $payloads,
@@ -455,7 +447,7 @@ final class CommandTranslator
             }
 
             $payload = $this->payloads->payload($attribute['value']);
-            $payload->getMetadata()['type'] = self::SEARCH_ATTRIBUTE_TYPES[$attribute['type']];
+            $payload->getMetadata()['type'] = ValueType::from($attribute['type'])->metadataName();
             $result[$name] = $payload;
         }
 
