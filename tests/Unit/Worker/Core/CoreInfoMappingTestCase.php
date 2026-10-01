@@ -9,6 +9,7 @@ use Coresdk\Common\NamespacedWorkflowExecution;
 use Coresdk\Workflow_activation\InitializeWorkflow;
 use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Activity\ActivityInfo;
@@ -23,16 +24,20 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Workflow\Input;
-use Temporal\Worker\Core\ActivityTasks;
-use Temporal\Worker\Core\WorkflowActivations;
-use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Core\InfoFactory;
+use Temporal\Worker\Core\PayloadMapper;
 use Temporal\Workflow\WorkflowInfo;
 
 final class CoreInfoMappingTestCase extends TestCase
 {
+    private const NANOS_PER_SECOND = 1_000_000_000;
+    private const WORKFLOW_INFO_TICK_FIELDS = ['HistoryLength', 'HistorySize', 'ShouldContinueAsNew', 'BinaryChecksum'];
+
     private DataConverterInterface $converter;
     private Marshaller $marshaller;
+    private InfoFactory $info;
 
     public static function provideStarts(): iterable
     {
@@ -66,6 +71,25 @@ final class CoreInfoMappingTestCase extends TestCase
             'attempt' => 1,
             'schedule_to_close_timeout' => new Duration(['seconds' => 10]),
         ])];
+        yield 'retry started late, schedule-to-close binds' => [new Start([
+            'workflow_type' => 'WfType',
+            'activity_id' => '2',
+            'activity_type' => 'Act.echo',
+            'scheduled_time' => new Timestamp(['seconds' => 1_790_000_000, 'nanos' => 250_000]),
+            'started_time' => new Timestamp(['seconds' => 1_790_000_050, 'nanos' => 999_999_999]),
+            'attempt' => 4,
+            'schedule_to_close_timeout' => new Duration(['seconds' => 60]),
+            'start_to_close_timeout' => new Duration(['seconds' => 30]),
+        ])];
+        yield 'start-to-close only' => [new Start([
+            'workflow_type' => 'WfType',
+            'activity_id' => '3',
+            'activity_type' => 'Act.echo',
+            'scheduled_time' => new Timestamp(['seconds' => 1_790_000_000]),
+            'started_time' => new Timestamp(['seconds' => 1_790_000_020, 'nanos' => 1_000]),
+            'attempt' => 1,
+            'start_to_close_timeout' => new Duration(['seconds' => 5]),
+        ])];
     }
 
     public static function provideInits(): iterable
@@ -93,18 +117,49 @@ final class CoreInfoMappingTestCase extends TestCase
         ])];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideStarts')]
+    #[DataProvider('provideStarts')]
     public function testActivityInfoEqualsMarshalledRoadRunnerShape(Start $start): void
     {
         $token = "token\x00bytes";
-        $request = (fn(): ServerRequest => $this->request($token, $start, 'queue'))->call(new ActivityTasks($this->converter));
+        $actual = $this->info->activityInfo($token, $start, 'queue');
 
         $expected = $this->marshaller->unmarshal($this->activityInfoArray($token, $start, 'queue'), new ActivityInfo());
 
-        self::assertEquals($expected, $request->getOptions()['info']);
+        self::assertEquals($expected, $actual);
+        self::assertSame($expected->deadline->format('Y-m-d\TH:i:s.uP'), $actual->deadline->format('Y-m-d\TH:i:s.uP'));
+        self::assertSame($expected->startedTime->format('Y-m-d\TH:i:s.uP'), $actual->startedTime->format('Y-m-d\TH:i:s.uP'));
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideInits')]
+    public function testActivityDeadlineIsScheduleToCloseWhenItEndsFirst(): void
+    {
+        [$start] = \iterator_to_array(self::provideStarts())['retry started late, schedule-to-close binds'];
+
+        $info = $this->info->activityInfo('token', $start, 'queue');
+
+        self::assertSame('2026-09-21T14:14:20.000250+00:00', $info->deadline->format('Y-m-d\TH:i:s.uP'));
+    }
+
+    public function testRoadRunnerActivityShapeCoversEveryActivityInfoField(): void
+    {
+        [$start] = \iterator_to_array(self::provideStarts())['full'];
+
+        self::assertEqualsCanonicalizing(
+            self::marshalledNames(ActivityInfo::class),
+            \array_keys($this->activityInfoArray('token', $start, 'queue')),
+        );
+    }
+
+    public function testRoadRunnerWorkflowShapeCoversEveryWorkflowInfoField(): void
+    {
+        [$init] = \iterator_to_array(self::provideInits())['full'];
+
+        self::assertEqualsCanonicalizing(
+            self::marshalledNames(WorkflowInfo::class),
+            [...\array_keys($this->workflowInfoArray($init, 'run-id')), ...self::WORKFLOW_INFO_TICK_FIELDS],
+        );
+    }
+
+    #[DataProvider('provideInits')]
     public function testWorkflowInfoEqualsMarshalledRoadRunnerShape(InitializeWorkflow $init): void
     {
         $this->assertWorkflowInfo($init);
@@ -134,15 +189,30 @@ final class CoreInfoMappingTestCase extends TestCase
     {
         $this->converter = DataConverter::createDefault();
         $this->marshaller = new Marshaller(new AttributeMapperFactory(new AttributeReader()));
+        $this->info = new InfoFactory(new PayloadMapper($this->converter));
+    }
+
+    /**
+     * @param class-string $class
+     * @return list<string>
+     */
+    private static function marshalledNames(string $class): array
+    {
+        $names = [];
+        foreach ((new \ReflectionClass($class))->getProperties() as $property) {
+            foreach ($property->getAttributes(Marshal::class) as $attribute) {
+                $names[] = $attribute->newInstance()->name;
+            }
+        }
+
+        return $names;
     }
 
     private function assertWorkflowInfo(InitializeWorkflow $init): void
     {
-        $activations = new WorkflowActivations($this->converter, static fn(): array => [], 'ns', 'queue', []);
-        $request = (fn(): ServerRequest => $this->startWorkflow($init, 'run-id', new \Temporal\Worker\Transport\Command\Server\TickInfo(new \DateTimeImmutable())))->call($activations);
-        $actual = $request->getOptions()['info'];
+        $actual = $this->info->workflowInfo($init, 'run-id', 'ns', 'queue');
 
-        $expected = $this->workflowInfoFromRoadRunnerShape($init, 'run-id');
+        $expected = $this->marshaller->unmarshal(['info' => $this->workflowInfoArray($init, 'run-id')], new Input())->info;
 
         self::assertSame(\iterator_to_array($this->typed($expected->typedSearchAttributes)), \iterator_to_array($this->typed($actual->typedSearchAttributes)));
         $expected->typedSearchAttributes = $actual->typedSearchAttributes;
@@ -156,7 +226,7 @@ final class CoreInfoMappingTestCase extends TestCase
         }
     }
 
-    private function workflowInfoFromRoadRunnerShape(InitializeWorkflow $init, string $runId): WorkflowInfo
+    private function workflowInfoArray(InitializeWorkflow $init, string $runId): array
     {
         $execution = static fn(?string $id, ?string $run): ?array => $id ? ['ID' => $id, 'RunID' => (string) $run] : null;
         $typed = [];
@@ -169,7 +239,7 @@ final class CoreInfoMappingTestCase extends TestCase
             }
         }
 
-        $info = [
+        return [
             'WorkflowExecution' => ['ID' => $init->getWorkflowId(), 'RunID' => $runId],
             'WorkflowType' => ['Name' => $init->getWorkflowType()],
             'TaskQueueName' => 'queue',
@@ -191,8 +261,6 @@ final class CoreInfoMappingTestCase extends TestCase
             'Priority' => $this->priorityArray($init->getPriority()),
             'TypedSearchAttributes' => $init->hasSearchAttributes() ? TypedSearchAttributes::fromJsonArray($typed) : TypedSearchAttributes::empty(),
         ];
-
-        return $this->marshaller->unmarshal(['info' => $info], new Input())->info;
     }
 
     private function jsonCollection(SearchAttributes|Memo $message, string $json, string $getter): array
@@ -204,8 +272,14 @@ final class CoreInfoMappingTestCase extends TestCase
 
     private function activityInfoArray(string $token, Start $start, string $taskQueue): array
     {
-        $startedTime = \DateTimeImmutable::createFromInterface($start->getStartedTime()->toDateTime());
-        $timeout = $this->nanos($start->getStartToCloseTimeout()) ?: $this->nanos($start->getScheduleToCloseTimeout());
+        $scheduled = $this->timestampNanos($start->getScheduledTime());
+        $started = $this->timestampNanos($start->getStartedTime());
+        $scheduleToClose = $this->nanos($start->getScheduleToCloseTimeout());
+        $startToClose = $this->nanos($start->getStartToCloseTimeout());
+        $deadlines = \array_filter([
+            $scheduleToClose > 0 ? $scheduled + $scheduleToClose : null,
+            $startToClose > 0 ? $started + $startToClose : null,
+        ]);
 
         return [
             'TaskToken' => $token,
@@ -219,13 +293,25 @@ final class CoreInfoMappingTestCase extends TestCase
             'ActivityType' => ['Name' => $start->getActivityType()],
             'TaskQueue' => $taskQueue,
             'HeartbeatTimeout' => $this->nanos($start->getHeartbeatTimeout()),
-            'ScheduledTime' => \DateTimeImmutable::createFromInterface($start->getScheduledTime()->toDateTime())->format(\DATE_RFC3339_EXTENDED),
-            'StartedTime' => $startedTime->format(\DATE_RFC3339_EXTENDED),
-            'Deadline' => $startedTime->modify(\sprintf('+%d microseconds', \intdiv($timeout, 1000)))->format(\DATE_RFC3339_EXTENDED),
+            'ScheduledTime' => $this->rfc3339Nano($scheduled),
+            'StartedTime' => $this->rfc3339Nano($started),
+            'Deadline' => $this->rfc3339Nano($deadlines === [] ? $started : \min($deadlines)),
             'Attempt' => $start->getAttempt(),
             'RetryPolicy' => $this->retryArray($start->getRetryPolicy()),
             'Priority' => $this->priorityArray($start->getPriority()),
         ];
+    }
+
+    private function rfc3339Nano(int $nanos): string
+    {
+        $fraction = \rtrim(\sprintf('%09d', $nanos % self::NANOS_PER_SECOND), '0');
+
+        return \gmdate('Y-m-d\TH:i:s', \intdiv($nanos, self::NANOS_PER_SECOND)) . ($fraction === '' ? '' : '.' . $fraction) . 'Z';
+    }
+
+    private function timestampNanos(Timestamp $timestamp): int
+    {
+        return $timestamp->getSeconds() * self::NANOS_PER_SECOND + $timestamp->getNanos();
     }
 
     private function retryArray(?RetryPolicy $retry): ?array
@@ -250,6 +336,6 @@ final class CoreInfoMappingTestCase extends TestCase
 
     private function nanos(?Duration $duration): int
     {
-        return $duration === null ? 0 : $duration->getSeconds() * 1_000_000_000 + $duration->getNanos();
+        return $duration === null ? 0 : $duration->getSeconds() * self::NANOS_PER_SECOND + $duration->getNanos();
     }
 }

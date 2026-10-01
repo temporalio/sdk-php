@@ -22,13 +22,22 @@ final class Failures
     {
         try {
             return FailureConverter::mapExceptionToFailure($e, $converter);
-        } catch (\Throwable) {
+        } catch (\Exception $error) {
+            if (!self::isInvalidUtf8($error)) {
+                throw $error;
+            }
+
             return new Failure([
                 'message' => \mb_scrub($e->getMessage(), 'UTF-8'),
-                'source' => 'PHP_SDK',
+                'source' => FailureConverter::SOURCE,
                 'stack_trace' => \mb_scrub($e->getTraceAsString(), 'UTF-8'),
                 'application_failure_info' => new ApplicationFailureInfo(['type' => $e::class]),
             ]);
         }
+    }
+
+    private static function isInvalidUtf8(\Exception $error): bool
+    {
+        return $error::class === \Exception::class;
     }
 }
