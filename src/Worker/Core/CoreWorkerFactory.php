@@ -43,7 +43,7 @@ class CoreWorkerFactory extends WorkerFactory
     private const ROLE_ALL = 'all';
     private const ROLE_WORKFLOW = 'workflow';
     private const ROLE_ACTIVITY = 'activity';
-    private const POLL_TIMEOUT_MS = 500;
+    private const POLL_TIMEOUT_MS = Bridge::POLL_TIMEOUT_MS;
     private const CONNECT_TIMEOUT_MS = 10_000;
     private const DEFAULT_GRPC_COMPRESSION = 'gzip';
     private const FINALIZE_TIMEOUT_SECONDS = 2;
@@ -64,7 +64,6 @@ class CoreWorkerFactory extends WorkerFactory
     private int $workflowProcesses;
     private int $activityProcesses;
     private int $activityConcurrency;
-    private static ?Bridge $replayBridge = null;
     private LoggerInterface $logger;
     private bool $stopping = false;
     private bool $crashed = false;
@@ -140,7 +139,7 @@ class CoreWorkerFactory extends WorkerFactory
             throw new \OutOfRangeException(\sprintf('Cannot find a worker for task queue "%s"', $taskQueue));
         }
 
-        $bridge = self::$replayBridge ??= new Bridge();
+        $bridge = Bridge::shared();
         $core = $bridge->newReplayer($this->config($worker, self::ROLE_WORKFLOW), $history->serializeToString(), $workflowId);
         $tag = ++self::$replayTag;
         try {
@@ -521,7 +520,7 @@ class CoreWorkerFactory extends WorkerFactory
         $deadline = \microtime(true) + self::FINALIZE_TIMEOUT_SECONDS;
         while ($finalized < \count($cores) && \microtime(true) < $deadline) {
             foreach ($bridge->nextEvents(self::POLL_TIMEOUT_MS) as [, $kind]) {
-                if ($kind === Bridge::KIND_SHUTDOWN) {
+                if ($kind === Bridge::KIND_SHUTDOWN_FINALIZED) {
                     ++$finalized;
                 }
             }

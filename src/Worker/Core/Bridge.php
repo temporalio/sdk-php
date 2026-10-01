@@ -20,14 +20,15 @@ final class Bridge
     public const KIND_ACTIVITY_TASK = 2;
     public const KIND_WORKFLOW_COMPLETED = 3;
     public const KIND_ACTIVITY_COMPLETED = 4;
-    public const KIND_SHUTDOWN = 5;
+    public const KIND_SHUTDOWN_FINALIZED = 5;
     public const KIND_RPC_RESULT = 6;
     public const STATUS_OK = 0;
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
+    public const POLL_TIMEOUT_MS = 500;
+    private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
-    private const RPC_WAIT_MS = 500;
 
     private static ?self $shared = null;
     private static int $sharedPid = 0;
@@ -54,7 +55,15 @@ final class Bridge
             ?? $root . '/target/release/libtemporal_php_bridge.' . (\PHP_OS_FAMILY === 'Darwin' ? 'dylib' : 'so');
         $header ??= $root . '/include/temporal_php_bridge.h';
 
-        $this->ffi = \FFI::cdef((string) \file_get_contents($header), $library);
+        $definitions = \is_readable($header) ? \file_get_contents($header) : false;
+        if ($definitions === false) {
+            throw new \RuntimeException(\sprintf('Unable to read the sdk-core bridge header "%s"', $header));
+        }
+        if (!\is_readable($library)) {
+            throw new \RuntimeException(\sprintf('Unable to read the sdk-core bridge library "%s", build it with `cargo build --release` in core/bridge or set TEMPORAL_CORE_BRIDGE_LIB', $library));
+        }
+
+        $this->ffi = \FFI::cdef($definitions, $library);
         $config = self::json(['threads' => self::threads(), 'log' => $_SERVER['TEMPORAL_CORE_LOG'] ?? null]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
@@ -125,12 +134,12 @@ final class Bridge
      */
     public function awaitCall(int $tag): array
     {
-        if (!isset($this->rpcResults[$tag]) && $this->pumped && \Fiber::getCurrent() !== null) {
+        if (!isset($this->rpcResults[$tag]) && $this->pumped && \Fiber::getCurrent() !== null && EventLoop::getDriver()->isRunning()) {
             $this->rpcWaiters[$tag] = EventLoop::getSuspension();
             $this->rpcWaiters[$tag]->suspend();
         }
         while (!isset($this->rpcResults[$tag])) {
-            \array_push($this->backlog, ...$this->fetch(self::RPC_WAIT_MS));
+            \array_push($this->backlog, ...$this->fetch(self::POLL_TIMEOUT_MS));
         }
         $result = $this->rpcResults[$tag];
         unset($this->rpcResults[$tag]);
@@ -160,17 +169,23 @@ final class Bridge
 
     public function recordActivityHeartbeat(\FFI\CData $worker, string $heartbeat): void
     {
-        $this->ffi->tpb_record_activity_heartbeat($worker, $heartbeat, \strlen($heartbeat));
+        if ($this->ffi->tpb_record_activity_heartbeat($worker, $heartbeat, \strlen($heartbeat)) !== self::CALL_OK) {
+            throw new \RuntimeException('Unable to record the activity heartbeat: the sdk-core worker is finalized or the heartbeat is invalid');
+        }
     }
 
     public function requestWorkflowEviction(\FFI\CData $worker, string $runId): void
     {
-        $this->ffi->tpb_request_workflow_eviction($worker, $runId, \strlen($runId));
+        if ($this->ffi->tpb_request_workflow_eviction($worker, $runId, \strlen($runId)) !== self::CALL_OK) {
+            throw new \RuntimeException('Unable to request the workflow eviction: the sdk-core worker is finalized');
+        }
     }
 
     public function initiateShutdown(\FFI\CData $worker): void
     {
-        $this->ffi->tpb_worker_initiate_shutdown($worker);
+        if ($this->ffi->tpb_worker_initiate_shutdown($worker) !== self::CALL_OK) {
+            throw new \RuntimeException('Unable to initiate the worker shutdown: the sdk-core worker is finalized');
+        }
     }
 
     public function finalizeShutdown(\FFI\CData $worker, int $tag): void
@@ -188,14 +203,14 @@ final class Bridge
      */
     public function nextEvents(int $timeoutMs): array
     {
-        if ($this->backlog !== []) {
-            $events = $this->backlog;
-            $this->backlog = [];
-
-            return $events;
+        if ($this->backlog === []) {
+            return $this->fetch($timeoutMs);
         }
 
-        return $this->fetch($timeoutMs);
+        $events = [...$this->backlog, ...$this->fetch(0)];
+        $this->backlog = [];
+
+        return $events;
     }
 
     /**
@@ -253,7 +268,8 @@ final class Bridge
                 $result[] = [$event->tag, $event->kind, $event->status, $data];
                 continue;
             }
-            $this->rpcResults[$event->tag] = [$event->status, $data];
+            $grpcCode = $event->status;
+            $this->rpcResults[$event->tag] = [$grpcCode, $data];
             if (isset($this->rpcWaiters[$event->tag])) {
                 $waiter = $this->rpcWaiters[$event->tag];
                 unset($this->rpcWaiters[$event->tag]);

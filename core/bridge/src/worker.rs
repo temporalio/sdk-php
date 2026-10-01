@@ -1,7 +1,8 @@
 use crate::config::{WorkerJson, parse};
 use crate::ffi::{
-    KIND_ACTIVITY_COMPLETED, KIND_ACTIVITY_TASK, KIND_SHUTDOWN_FINALIZED, KIND_WORKFLOW_ACTIVATION,
-    KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, free, guard, into_ffi, slice,
+    CALL_OK, KIND_ACTIVITY_COMPLETED, KIND_ACTIVITY_TASK, KIND_SHUTDOWN_FINALIZED,
+    KIND_WORKFLOW_ACTIVATION, KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, free, guard,
+    into_ffi, slice,
 };
 use crate::queue::{Queue, error_status};
 use crate::runtime::TpbRuntime;
@@ -15,7 +16,6 @@ use temporalio_sdk_core::Worker;
 use tokio::sync::{OwnedRwLockReadGuard, RwLock};
 
 const FINALIZED: &str = "Worker is already finalized";
-const CALL_OK: i32 = 0;
 const CALL_FAILED: i32 = 1;
 
 pub struct TpbWorker {

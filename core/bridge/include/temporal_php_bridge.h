@@ -16,6 +16,8 @@
 
 #define STATUS_SHUTDOWN 2
 
+#define CALL_OK 0
+
 typedef struct TpbClient TpbClient;
 
 typedef struct TpbRuntime TpbRuntime;

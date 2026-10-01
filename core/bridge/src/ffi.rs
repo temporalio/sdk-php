@@ -14,6 +14,8 @@ pub const STATUS_OK: i32 = 0;
 pub const STATUS_ERROR: i32 = 1;
 pub const STATUS_SHUTDOWN: i32 = 2;
 
+pub const CALL_OK: i32 = 0;
+
 #[repr(C)]
 pub struct TpbEvent {
     pub tag: u64,
