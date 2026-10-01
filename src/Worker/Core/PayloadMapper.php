@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
@@ -29,7 +29,7 @@ final class PayloadMapper
     ) {}
 
     /**
-     * @param \Traversable<Payload> $payloads
+     * @param \Traversable<Payload>&\ArrayAccess&\Countable $payloads
      */
     public function values(\Traversable $payloads): ValuesInterface
     {
@@ -50,7 +50,7 @@ final class PayloadMapper
     }
 
     /**
-     * @param \Traversable<string, Payload> $fields
+     * @param \Traversable<string, Payload>&\ArrayAccess<array-key, mixed>&\Countable $fields
      */
     public function header(\Traversable $fields): Header
     {
@@ -82,6 +82,7 @@ final class PayloadMapper
             return null;
         }
 
+        /** @var \Traversable<int, Payload>&\ArrayAccess<int, Payload>&\Countable $payloads */
         $payloads = $this->payloads($values);
 
         return \count($payloads) > 0 ? $payloads[0] : null;
@@ -100,6 +101,9 @@ final class PayloadMapper
         return EncodedCollection::fromValues($values, $this->converter)->toPayloadArray();
     }
 
+    /**
+     * @param \Traversable&\ArrayAccess<array-key, mixed>&\Countable $payloads
+     */
     public function decodeCollection(\ArrayAccess $payloads): array
     {
         return EncodedCollection::fromPayloadCollection($payloads, $this->converter)->getValues();

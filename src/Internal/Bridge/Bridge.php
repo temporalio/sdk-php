@@ -14,6 +14,9 @@ namespace Temporal\Internal\Bridge;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
+/**
+ * @psalm-suppress UndefinedMethod
+ */
 final class Bridge
 {
     public const KIND_WORKFLOW_ACTIVATION = 1;
@@ -26,7 +29,7 @@ final class Bridge
     public const STATUS_ERROR = 1;
     public const STATUS_SHUTDOWN = 2;
     public const POLL_TIMEOUT_MS = 500;
-    private const FINALIZE_TIMEOUT_SECONDS = 15;
+    private const FINALIZE_TIMEOUT_SECONDS = 15.0;
     private const CALL_OK = 0;
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
@@ -73,7 +76,9 @@ final class Bridge
             'log' => CoreEnvironment::string(CoreEnvironment::LOG),
         ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
-        $this->events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
+        /** @var \FFI\CData $events */
+        $events = $this->ffi->new(\sprintf('TpbEvent[%d]', self::EVENT_BUFFER_SIZE));
+        $this->events = $events;
     }
 
     public static function shared(): self
@@ -116,7 +121,8 @@ final class Bridge
     public function closeEventPipe(): void
     {
         if ($this->eventPipe !== null) {
-            \fclose($this->eventPipe);
+            $pipe = $this->eventPipe;
+            \fclose($pipe);
             $this->eventPipe = null;
         }
     }
@@ -199,6 +205,7 @@ final class Bridge
         while (!isset($this->rpcResults[$tag])) {
             \array_push($this->backlog, ...$this->fetch(self::POLL_TIMEOUT_MS));
         }
+        /** @var array{int, string} $result */
         $result = $this->rpcResults[$tag];
         unset($this->rpcResults[$tag]);
 
@@ -314,9 +321,14 @@ final class Bridge
         return \json_encode($value, \JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * @psalm-suppress UndefinedPropertyFetch
+     */
     private function construct(string $function, \FFI\CData|string|int ...$arguments): \FFI\CData
     {
+        /** @var \FFI\CData $err */
         $err = $this->ffi->new('uint8_t*');
+        /** @var \FFI\CData $errLen */
         $errLen = $this->ffi->new('size_t');
         $object = $this->ffi->$function(...[...$arguments, \FFI::addr($err), \FFI::addr($errLen)]);
 

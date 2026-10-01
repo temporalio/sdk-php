@@ -29,6 +29,7 @@ final class CoreEnvironment
 
     public static function string(string $name): ?string
     {
+        /** @var scalar|null $value */
         $value = $_SERVER[$name] ?? null;
 
         return $value === null || $value === '' ? null : (string) $value;

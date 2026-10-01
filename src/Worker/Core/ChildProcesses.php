@@ -62,6 +62,9 @@ final class ChildProcesses
         return \PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started();
     }
 
+    /**
+     * @psalm-suppress UndefinedMethod, InvalidReturnType
+     */
     private static function exitForked(int $code): never
     {
         \fflush(\STDOUT);
@@ -69,6 +72,9 @@ final class ChildProcesses
         \FFI::cdef('void _exit(int status);')->_exit($code);
     }
 
+    /**
+     * @psalm-suppress UnusedFunctionCall
+     */
     private function fork(CoreRole $role): int
     {
         \pcntl_sigprocmask(\SIG_BLOCK, self::STOP_SIGNALS);
@@ -115,6 +121,7 @@ final class ChildProcesses
 
     /**
      * @return list<string>
+     * @psalm-suppress ForbiddenCode
      */
     private function iniArguments(): array
     {
@@ -140,7 +147,8 @@ final class ChildProcesses
         foreach (\array_diff(\get_loaded_extensions(true), $zendExtensions) as $extension) {
             \array_push($arguments, '-d', 'zend_extension=' . $this->extensionFile($extension));
         }
-        foreach (\ini_get_all(null, false) ?: [] as $name => $value) {
+        $ini = \ini_get_all(null, false);
+        foreach ($ini === false ? [] : $ini as $name => $value) {
             if ($value !== null && ($defaults[$name] ?? null) !== $value) {
                 \array_push($arguments, '-d', $name . '="' . \addcslashes((string) $value, '"\\') . '"');
             }

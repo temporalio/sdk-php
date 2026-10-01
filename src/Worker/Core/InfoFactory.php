@@ -15,6 +15,7 @@ use Coresdk\Activity_task\Start;
 use Coresdk\Workflow_activation\InitializeWorkflow;
 use Temporal\Activity\ActivityInfo;
 use Temporal\Activity\ActivityType;
+use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Priority;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -60,11 +61,15 @@ final class InfoFactory
         $info->rootExecution = self::execution($root?->getWorkflowId(), $root?->getRunId());
         $info->typedSearchAttributes = TypedSearchAttributes::empty();
         if ($init->hasSearchAttributes()) {
-            $info->searchAttributes = $this->payloads->decodeCollection($init->getSearchAttributes()->getIndexedFields());
-            $info->typedSearchAttributes = TypedSearchAttributes::fromJsonArray($this->typedSearchAttributes($init->getSearchAttributes()));
+            /** @var SearchAttributes $searchAttributes */
+            $searchAttributes = $init->getSearchAttributes();
+            $info->searchAttributes = $this->payloads->decodeCollection($searchAttributes->getIndexedFields());
+            $info->typedSearchAttributes = TypedSearchAttributes::fromJsonArray($this->typedSearchAttributes($searchAttributes));
         }
         if ($init->hasMemo()) {
-            $info->memo = $this->payloads->decodeCollection($init->getMemo()->getFields());
+            /** @var Memo $memo */
+            $memo = $init->getMemo();
+            $info->memo = $this->payloads->decodeCollection($memo->getFields());
         }
         $info->retryOptions = self::retryOptions($init->getRetryPolicy());
         $info->priority = self::priorityOptions($init->getPriority());
@@ -157,7 +162,7 @@ final class InfoFactory
      */
     private static function execution(?string $workflowId, ?string $runId): ?WorkflowExecution
     {
-        return $workflowId ? new WorkflowExecution($workflowId, (string) $runId) : null;
+        return ($workflowId ?? '') ? new WorkflowExecution($workflowId, (string) $runId) : null;
     }
 
     private function typedSearchAttributes(SearchAttributes $attributes): array

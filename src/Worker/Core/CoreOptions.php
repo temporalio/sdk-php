@@ -41,6 +41,9 @@ final class CoreOptions
         public readonly bool $profiling,
     ) {}
 
+    /**
+     * @psalm-suppress InternalClass, InternalMethod, InternalProperty
+     */
     public static function create(
         ?string $address,
         ?string $namespace,
@@ -49,7 +52,7 @@ final class CoreOptions
         ?int $activityProcesses,
     ): self {
         $configProfile = ConfigClient::load();
-        $apiKey = $credentials?->apiKey ?: $configProfile->apiKey;
+        $apiKey = ($credentials?->apiKey ?? '') ?: $configProfile->apiKey;
         $tls = $configProfile->tlsConfig;
 
         return new self(

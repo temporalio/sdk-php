@@ -147,10 +147,11 @@ final class CommandTranslator
                 return [...$this->cancel($run, $options['ids'] ?? [], $tick, $commands), new SuccessResponse(null, $id, $tick)];
 
             case Request\GetVersion::NAME:
+                /** @var array{changeID: string, minSupported: int, maxSupported: int} $options */
                 $version = $run->patches->version(
                     $options['changeID'],
-                    (int) $options['minSupported'],
-                    (int) $options['maxSupported'],
+                    $options['minSupported'],
+                    $options['maxSupported'],
                     $tick->isReplaying,
                     $commands,
                 );
@@ -175,7 +176,8 @@ final class CommandTranslator
                 return [];
 
             case Request\GetChildWorkflowExecution::NAME:
-                $childId = (int) $options['id'];
+                /** @var array{id: int} $options */
+                $childId = $options['id'];
                 $execution = $run->childExecution($childId);
                 if ($execution !== null) {
                     return [$this->resolutions->childExecution($id, $execution, $tick)];
@@ -188,6 +190,7 @@ final class CommandTranslator
                 return [];
 
             case Request\CancelExternalWorkflow::NAME:
+                /** @var array{namespace: string, workflowID: string, runID: ?string} $options */
                 $commands[] = new WorkflowCommand(['request_cancel_external_workflow_execution' => new RequestCancelExternalWorkflowExecution([
                     'seq' => $run->bind($id, RunState::CANCEL_EXTERNAL),
                     'workflow_execution' => new NamespacedWorkflowExecution([
@@ -199,6 +202,7 @@ final class CommandTranslator
                 return [];
 
             case Request\UpsertSearchAttributes::NAME:
+                /** @var array{searchAttributes: object} $options */
                 $commands[] = new WorkflowCommand(['upsert_workflow_search_attributes' => new UpsertWorkflowSearchAttributes([
                     'search_attributes' => new SearchAttributes([
                         'indexed_fields' => $this->payloads->collection((array) $options['searchAttributes']),
@@ -207,6 +211,7 @@ final class CommandTranslator
                 return [];
 
             case Request\UpsertTypedSearchAttributes::NAME:
+                /** @var array{search_attributes: object} $options */
                 $commands[] = new WorkflowCommand(['upsert_workflow_search_attributes' => new UpsertWorkflowSearchAttributes([
                     'search_attributes' => new SearchAttributes([
                         'indexed_fields' => $this->typedSearchAttributePayloads((array) $options['search_attributes']),
@@ -215,6 +220,7 @@ final class CommandTranslator
                 return [];
 
             case Request\UpsertMemo::NAME:
+                /** @var array{memo: object} $options */
                 $commands[] = new WorkflowCommand(['modify_workflow_properties' => new ModifyWorkflowProperties([
                     'upserted_memo' => new Memo([
                         'fields' => $this->payloads->collection((array) $options['memo']),
@@ -296,7 +302,9 @@ final class CommandTranslator
 
     private function scheduleActivity(RunState $run, int $seq, RequestInterface $command): ScheduleActivity
     {
-        $options = $command->getOptions()['options'];
+        /** @var array{name: string, options: array{ActivityID?: string, TaskQueueName?: string|null, ...<string, mixed>}} $request */
+        $request = $command->getOptions();
+        $options = $request['options'];
         $cancellationType = $this->cancellationType($options['WaitForCancellation'] ?? false);
         if ($cancellationType === ActivityCancellationType::TRY_CANCEL) {
             $run->markTryCancel($seq);
@@ -305,7 +313,7 @@ final class CommandTranslator
         return new ScheduleActivity([
             'seq' => $seq,
             'activity_id' => (string) (($options['ActivityID'] ?? '') ?: $seq),
-            'activity_type' => $command->getOptions()['name'],
+            'activity_type' => $request['name'],
             'task_queue' => ($options['TaskQueueName'] ?? '') ?: $this->taskQueue,
             'headers' => $this->payloads->headerFields($command),
             'arguments' => $this->payloads->payloads($command->getPayloads()),
@@ -321,9 +329,11 @@ final class CommandTranslator
 
     private function scheduleLocalActivity(int $seq, RequestInterface $command, TickInfo $tick): ScheduleLocalActivity
     {
-        $options = $command->getOptions()['options'];
+        /** @var array{name: string, options: array<string, mixed>} $request */
+        $request = $command->getOptions();
+        $options = $request['options'];
 
-        return $this->localActivity($seq, $command->getOptions()['name'], $command, $tick, [
+        return $this->localActivity($seq, $request['name'], $command, $tick, [
             'headers' => $this->payloads->headerFields($command),
             'schedule_to_close_timeout' => ProtoTime::optionalDuration($options['ScheduleToCloseTimeout'] ?? 0),
             'start_to_close_timeout' => ProtoTime::optionalDuration($options['StartToCloseTimeout'] ?? 0),
@@ -353,13 +363,15 @@ final class CommandTranslator
 
     private function startChild(RunState $run, int $seq, RequestInterface $command): StartChildWorkflowExecution
     {
-        $options = $command->getOptions()['options'];
+        /** @var array{name: string, options: array{Namespace?: string, WorkflowID?: string|null, TaskQueueName?: string, ...<string, mixed>}} $request */
+        $request = $command->getOptions();
+        $options = $request['options'];
 
         return new StartChildWorkflowExecution([
             'seq' => $seq,
             'namespace' => ($options['Namespace'] ?? '') ?: $this->namespace,
             'workflow_id' => ($options['WorkflowID'] ?? '') ?: $run->runId . '_' . $seq,
-            'workflow_type' => $command->getOptions()['name'],
+            'workflow_type' => $request['name'],
             'task_queue' => ($options['TaskQueueName'] ?? '') ?: $this->taskQueue,
             'input' => $this->payloads->payloads($command->getPayloads()),
             'workflow_execution_timeout' => ProtoTime::optionalDuration($options['WorkflowExecutionTimeout'] ?? 0),
@@ -381,6 +393,7 @@ final class CommandTranslator
 
     private function signalExternal(int $seq, RequestInterface $command): SignalExternalWorkflowExecution
     {
+        /** @var array{namespace: string, workflowID: string, runID: ?string, signal: string, childWorkflowOnly: bool} $options */
         $options = $command->getOptions();
         $signal = new SignalExternalWorkflowExecution([
             'seq' => $seq,
@@ -404,10 +417,12 @@ final class CommandTranslator
 
     private function continueAsNew(RequestInterface $command): ContinueAsNewWorkflowExecution
     {
-        $options = $command->getOptions()['options'] ?? [];
+        /** @var array{name: string, options?: array{TaskQueueName?: string, ...<string, mixed>}} $request */
+        $request = $command->getOptions();
+        $options = $request['options'] ?? [];
 
         return new ContinueAsNewWorkflowExecution([
-            'workflow_type' => $command->getOptions()['name'],
+            'workflow_type' => $request['name'],
             'task_queue' => ($options['TaskQueueName'] ?? '') ?: $this->taskQueue,
             'arguments' => $this->payloads->payloads($command->getPayloads()),
             'workflow_run_timeout' => ProtoTime::optionalDuration($options['WorkflowRunTimeout'] ?? 0),
@@ -418,7 +433,9 @@ final class CommandTranslator
 
     private function updateResponse(RunState $run, UpdateResponse $response): WorkflowCommand
     {
-        $updateId = (string) $response->getOptions()['id'];
+        /** @var array{id: int|string} $options */
+        $options = $response->getOptions();
+        $updateId = (string) $options['id'];
         $result = new CoreUpdateResponse(['protocol_instance_id' => $run->updateProtocolInstanceId($updateId)]);
         $failure = $response->getFailure();
 
@@ -448,14 +465,16 @@ final class CommandTranslator
             }
 
             $payload = $this->payloads->payload($attribute['value']);
-            $payload->getMetadata()['type'] = ValueType::from($attribute['type'])->metadataName();
+            /** @var \ArrayAccess<string, string> $metadata */
+            $metadata = $payload->getMetadata();
+            $metadata['type'] = ValueType::from($attribute['type'])->metadataName();
             $result[$name] = $payload;
         }
 
         return $result;
     }
 
-    private function userMetadata(?string $summary, ?string $details = null): ?UserMetadata
+    private function userMetadata(string $summary, string $details = ''): ?UserMetadata
     {
         if (!$summary && !$details) {
             return null;

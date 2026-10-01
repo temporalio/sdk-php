@@ -36,6 +36,9 @@ final class ResolutionMapper
         private readonly string $namespace,
     ) {}
 
+    /**
+     * @psalm-suppress PossiblyNullReference, PossiblyNullArgument
+     */
     public function activity(RunState $run, int $seq, ActivityResolution $result, TickInfo $tick): CommandInterface
     {
         $requestId = $run->release($seq);
@@ -51,6 +54,7 @@ final class ResolutionMapper
 
     /**
      * @return list<CommandInterface>
+     * @psalm-suppress PossiblyNullReference, PossiblyNullArgument
      */
     public function childStarted(RunState $run, ResolveChildWorkflowExecutionStart $start, TickInfo $tick): array
     {
@@ -97,6 +101,9 @@ final class ResolutionMapper
         return new SuccessResponse($this->payloads->encode([new WorkflowExecution($execution[0], $execution[1])]), $requestId, $tick);
     }
 
+    /**
+     * @psalm-suppress PossiblyNullReference, PossiblyNullArgument
+     */
     public function childResult(RunState $run, ResolveChildWorkflowExecution $resolve, TickInfo $tick): CommandInterface
     {
         $requestId = $run->release($resolve->getSeq());
@@ -117,6 +124,9 @@ final class ResolutionMapper
             : new FailureResponse($this->payloads->exception($failure), $requestId, $tick);
     }
 
+    /**
+     * @psalm-suppress ArgumentTypeCoercion
+     */
     private function childAlreadyStarted(string $workflowType, string $workflowId): ChildWorkflowFailure
     {
         return new ChildWorkflowFailure(

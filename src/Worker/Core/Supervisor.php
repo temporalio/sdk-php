@@ -147,7 +147,7 @@ final class Supervisor
 
         $failedStarts = $uptime < self::HEALTHY_UPTIME_SECONDS ? $failedStarts + 1 : 0;
         $delay = $failedStarts === 0 ? 0 : \min(self::MAX_RESTART_DELAY_SECONDS, 2 ** ($failedStarts - 1));
-        $this->restarts[] = [$role, \microtime(true) + $delay, $failedStarts];
+        $this->restarts[] = [$role, \microtime(true) + (float) $delay, $failedStarts];
     }
 
     private function restartDue(): void

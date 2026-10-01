@@ -21,7 +21,7 @@ use Temporal\Api\History\V1\History;
  */
 final class CoreReplayer
 {
-    private const IDLE_TIMEOUT_SECONDS = 60;
+    private const IDLE_TIMEOUT_SECONDS = 60.0;
     private const EXPECTED_EVICTIONS = [
         EvictionReason::CACHE_FULL,
         EvictionReason::LANG_REQUESTED,

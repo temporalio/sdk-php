@@ -91,7 +91,7 @@ final class CoreWorkerLoop
             if ($config['workflows'] || $config['remote_activities']) {
                 $this->workers[] = new CoreWorkerHandle(
                     $this->bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
-                    $worker->getID(),
+                    (string) $worker->getID(),
                     ($this->activations)($worker, $dispatch),
                     $config['workflows'],
                     $config['local_activities'] || $config['remote_activities'] ? $config['max_concurrent_activity_task_polls'] : 0,
@@ -137,7 +137,7 @@ final class CoreWorkerLoop
 
         $dispatch = $this->dispatch;
 
-        return static function (array $commands, array $headers) use ($dispatch, $profiler): array {
+        return /** @param list<\Temporal\Worker\Transport\Command\CommandInterface> $commands */ static function (array $commands, array $headers) use ($dispatch, $profiler): array {
             $startedAt = \hrtime(true);
             try {
                 return $dispatch($commands, $headers);
@@ -284,6 +284,9 @@ final class CoreWorkerLoop
         $repollAll();
     }
 
+    /**
+     * @psalm-suppress UnusedVariable, UndefinedVariable
+     */
     private function runEventLoop(): void
     {
         $pipe = $this->bridge->openEventPipe();
