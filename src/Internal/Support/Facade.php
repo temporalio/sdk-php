@@ -56,7 +56,9 @@ abstract class Facade
             return self::$ctx;
         }
 
-        return (self::$fiberCtx[$fiber] ?? [null])[0];
+        $context = self::$fiberCtx[$fiber] ?? null;
+
+        return $context === null ? null : $context[0];
     }
 
     /**
