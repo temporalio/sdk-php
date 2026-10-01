@@ -62,6 +62,7 @@
         ]
     },
     "require-dev": {
+        "amphp/amp": "^3",
         "ext-simplexml": "*",
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
@@ -91,6 +92,10 @@
     },
     "suggest": {
         "ext-grpc": "For Client calls",
+        "ext-ffi": "For the worker without RoadRunner (sdk-core bridge) and for Client calls without ext-grpc",
+        "ext-pcntl": "For the worker without RoadRunner",
+        "ext-posix": "For the worker without RoadRunner",
+        "revolt/event-loop": "For concurrent activities in the worker without RoadRunner",
         "ext-protobuf": "For better performance",
         "buggregator/trap": "For better debugging",
         "roadrunner/psr-logger": "RoadRunner PSR-3 logger integration",
