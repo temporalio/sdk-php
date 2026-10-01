@@ -26,6 +26,6 @@ temporalio-common = { version = "1.0.0", features = ["core-based-sdk"] }
 cbindgen = { version = "0.29", default-features = false }
 
 [profile.release]
-strip = false
+strip = "debuginfo"
 lto = "fat"
 codegen-units = 1
