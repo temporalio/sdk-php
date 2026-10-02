@@ -74,29 +74,15 @@ class WorkflowReader extends Reader
         'but another validator with was already registered for that handler.'
     ;
 
+    /** @var array<class-string, WorkflowPrototype> */
+    private array $prototypes = [];
+
     /**
      * @throws \ReflectionException
      */
     public function fromClass(string $class): WorkflowPrototype
     {
-        $reflection = new \ReflectionClass($class);
-        $graph = new ClassNode($reflection);
-
-        $this->assertWorkflowInterface($graph);
-
-        $prototypes = \iterator_to_array($this->getWorkflowPrototypes($graph), false);
-
-        switch (\count($prototypes)) {
-            case 0:
-                return $this->withMethods($graph, $this->getDefaultPrototype($graph));
-
-            case 1:
-                return $this->withMethods($graph, \reset($prototypes));
-
-            default:
-                $message = \sprintf(self::ERROR_HANDLER_DUPLICATE, $graph, WorkflowMethod::class, \count($prototypes));
-                throw new \LogicException($message);
-        }
+        return $this->prototypes[$class] ??= $this->readClass($class);
     }
 
     public function fromObject(object $object): WorkflowPrototype
@@ -118,6 +104,32 @@ class WorkflowReader extends Reader
             if ($prototype = $this->getPrototype($graph, $reflection)) {
                 yield $prototype;
             }
+        }
+    }
+
+    /**
+     * @param class-string $class
+     * @throws \ReflectionException
+     */
+    private function readClass(string $class): WorkflowPrototype
+    {
+        $reflection = new \ReflectionClass($class);
+        $graph = new ClassNode($reflection);
+
+        $this->assertWorkflowInterface($graph);
+
+        $prototypes = \iterator_to_array($this->getWorkflowPrototypes($graph), false);
+
+        switch (\count($prototypes)) {
+            case 0:
+                return $this->withMethods($graph, $this->getDefaultPrototype($graph));
+
+            case 1:
+                return $this->withMethods($graph, \reset($prototypes));
+
+            default:
+                $message = \sprintf(self::ERROR_HANDLER_DUPLICATE, $graph, WorkflowMethod::class, \count($prototypes));
+                throw new \LogicException($message);
         }
     }
 
