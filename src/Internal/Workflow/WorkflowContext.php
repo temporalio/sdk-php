@@ -504,7 +504,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         string $class,
         ?ActivityOptionsInterface $options = null,
     ): ActivityProxy {
-        $activities = $this->services->activitiesReader->fromClass($class);
+        $activities = $this->services->activityStubPrototypes($class);
 
         if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
             throw new \RuntimeException("Local activity can be used only with LocalActivityOptions");

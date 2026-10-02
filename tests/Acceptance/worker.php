@@ -34,6 +34,8 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
+use Temporal\Worker\Core\CoreWorkerFactory;
+use Temporal\Tests\CoreWorker;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -98,12 +100,20 @@ try {
     $container->bindSingleton(DataConverter::class, $converter);
 
     $plugins = [new TranscriptPlugin($workerTranscript)];
+    $coreTransport = CoreWorker::enabled();
     $container->bindSingleton(
         WorkerFactoryInterface::class,
-        WorkerFactory::create(
-            converter: $converter,
-            pluginRegistry: new PluginRegistry($plugins),
-        )
+        $coreTransport
+            ? CoreWorkerFactory::create(
+                converter: $converter,
+                pluginRegistry: new PluginRegistry($plugins),
+                address: $runtime->address,
+                namespace: $runtime->namespace,
+            )
+            : WorkerFactory::create(
+                converter: $converter,
+                pluginRegistry: new PluginRegistry($plugins),
+            )
     );
 
     $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
@@ -141,7 +151,7 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $host = new RecordingHost(RoadRunner::create(), $workerTranscript);
+    $host = $coreTransport ? null : new RecordingHost(RoadRunner::create(), $workerTranscript);
     $container->get(WorkerFactoryInterface::class)->run($host);
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);

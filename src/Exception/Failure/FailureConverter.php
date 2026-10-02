@@ -29,6 +29,8 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
+    public const SOURCE = 'PHP_SDK';
+
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $e = self::createFailureException($failure, $converter);
@@ -59,7 +61,7 @@ final class FailureConverter
 
         $failure->setMessage($e->getMessage());
 
-        $failure->setSource('PHP_SDK')->setStackTrace(self::generateStackTraceString($e));
+        $failure->setSource(self::SOURCE)->setStackTrace(self::generateStackTraceString($e));
 
         if ($e->getPrevious() !== null) {
             $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $converter));

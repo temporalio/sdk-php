@@ -24,6 +24,9 @@ abstract class Facade
 
     private static ?object $ctx = null;
 
+    /** @var \WeakMap<\Fiber, list{?object}>|null */
+    private static ?\WeakMap $fiberCtx = null;
+
     /**
      * Facade constructor.
      */
@@ -37,12 +40,36 @@ abstract class Facade
      */
     public static function setCurrentContext(?object $ctx): void
     {
-        self::$ctx = $ctx;
+        $fiber = self::isolatedFiber();
+        if ($fiber === null || self::$fiberCtx === null) {
+            self::$ctx = $ctx;
+            return;
+        }
+
+        self::$fiberCtx[$fiber] = [$ctx];
     }
 
     public static function getCurrentContext(): ?object
     {
-        return self::$ctx;
+        $fiber = self::isolatedFiber();
+        if ($fiber === null || self::$fiberCtx === null) {
+            return self::$ctx;
+        }
+
+        $context = self::$fiberCtx[$fiber] ?? null;
+
+        return $context === null ? null : $context[0];
+    }
+
+    /**
+     * @internal
+     */
+    public static function isolateFiber(\Fiber $fiber): void
+    {
+        /** @var \WeakMap<\Fiber, list{?object}> $contexts */
+        $contexts = self::$fiberCtx ?? new \WeakMap();
+        $contexts[$fiber] = [null];
+        self::$fiberCtx = $contexts;
     }
 
     /**
@@ -56,13 +83,13 @@ abstract class Facade
      */
     public static function usingContext(?object $ctx, callable $callback): mixed
     {
-        $saved = self::$ctx;
-        self::$ctx = $ctx;
+        $saved = self::getCurrentContext();
+        self::setCurrentContext($ctx);
 
         try {
             return $callback();
         } finally {
-            self::$ctx = $saved;
+            self::setCurrentContext($saved);
         }
     }
 
@@ -87,5 +114,12 @@ abstract class Facade
         $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
+    }
+
+    private static function isolatedFiber(): ?\Fiber
+    {
+        $fiber = \Fiber::getCurrent();
+
+        return $fiber !== null && self::$fiberCtx?->offsetExists($fiber) ? $fiber : null;
     }
 }

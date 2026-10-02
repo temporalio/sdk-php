@@ -17,6 +17,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
@@ -39,6 +40,9 @@ final class ServiceContainer
     public readonly ActivityCollection $activities;
     public readonly WorkflowReader $workflowsReader;
     public readonly ActivityReader $activitiesReader;
+
+    /** @var array<class-string, array<ActivityPrototype>> */
+    private array $activityStubPrototypes = [];
 
     /**
      * @param MarshallerInterface<array> $marshaller
@@ -80,5 +84,14 @@ final class ServiceContainer
             $interceptorProvider,
             $logger,
         );
+    }
+
+    /**
+     * @param class-string $class
+     * @return array<ActivityPrototype>
+     */
+    public function activityStubPrototypes(string $class): array
+    {
+        return $this->activityStubPrototypes[$class] ??= $this->activitiesReader->fromClass($class);
     }
 }
