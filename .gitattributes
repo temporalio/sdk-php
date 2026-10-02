@@ -11,3 +11,4 @@
 /*.xml.dist            export-ignore
 Makefile               export-ignore
 patches.lock.json      export-ignore
+/phpbench.json          export-ignore
