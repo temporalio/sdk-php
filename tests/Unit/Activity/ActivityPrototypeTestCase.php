@@ -34,7 +34,7 @@ final class ActivityPrototypeTestCase extends AbstractUnit
         $refInstanceHandler = \WeakReference::create($proto->getInstance()->getHandler());
         $refActivity = \WeakReference::create($proto->getInstance()->getContext());
 
-        unset($proto, $instance);
+        unset($proto, $instance, $this->activityReader);
 
         $this->assertNull($refInstanceHandler->get());
         $this->assertNull($refActivity->get());
@@ -57,7 +57,7 @@ final class ActivityPrototypeTestCase extends AbstractUnit
         $this->assertNotSame($proto, $newProto);
 
         // There is no leaks after scope destroying
-        unset($proto, $newProto);
+        unset($proto, $newProto, $this->activityReader);
         $this->assertNull($refProto->get());
         $this->assertNull($refNewProto->get());
     }

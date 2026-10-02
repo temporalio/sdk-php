@@ -36,6 +36,9 @@ class ActivityReader extends Reader
         'An Activity method %s::%s() with the same name "%s" has already ' .
         'been previously registered in %s:%d';
 
+    /** @var array<class-string, array<ActivityPrototype>> */
+    private array $prototypes = [];
+
     /**
      * @param class-string $class
      * @return array<ActivityPrototype>
@@ -43,7 +46,7 @@ class ActivityReader extends Reader
      */
     public function fromClass(string $class): array
     {
-        return $this->getActivityPrototypes(new \ReflectionClass($class));
+        return $this->prototypes[$class] ??= $this->getActivityPrototypes(new \ReflectionClass($class));
     }
 
     /**
