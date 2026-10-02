@@ -29,6 +29,13 @@ final class TestService
 
     public static function create(string $host): self
     {
+        if (!\extension_loaded('grpc')) {
+            if (!\extension_loaded('ffi')) {
+                throw new \RuntimeException('The gRPC or FFI extension is required to use the test service.');
+            }
+            return new self(new CoreTestServiceStub($host));
+        }
+
         return new self(
             new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()]),
         );

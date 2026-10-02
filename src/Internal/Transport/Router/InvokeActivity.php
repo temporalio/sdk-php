@@ -53,9 +53,13 @@ class InvokeActivity extends Route
         $header = $request->getHeader();
         $heartbeatDetails = null;
 
-        // always in binary format
-        $taskToken = $options['info']['TaskToken'] ?? '';
-        $options['info']['TaskToken'] = \base64_decode($taskToken);
+        $info = $options['info'] ?? null;
+        if (!$info instanceof ActivityInfo) {
+            $info = null;
+            // always in binary format
+            $taskToken = $options['info']['TaskToken'] ?? '';
+            $options['info']['TaskToken'] = \base64_decode($taskToken);
+        }
 
         if (($options['heartbeatDetails'] ?? 0) !== 0) {
             $offset = \count($payloads) - ($options['heartbeatDetails'] ?? 0);
@@ -70,9 +74,12 @@ class InvokeActivity extends Route
             $payloads,
             $header,
             $heartbeatDetails,
+            $info,
         );
-        /** @var ActivityContext $context */
-        $context = $this->services->marshaller->unmarshal($options, $context);
+        if ($info === null) {
+            /** @var ActivityContext $context */
+            $context = $this->services->marshaller->unmarshal($options, $context);
+        }
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 

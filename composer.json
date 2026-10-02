@@ -32,7 +32,7 @@
         "nesbot/carbon": "^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
-        "roadrunner-php/roadrunner-api-dto": "^1.15.0",
+        "roadrunner-php/roadrunner-api-dto": "dev-feature/coresdk-protos as 1.18.0",
         "roadrunner-php/version-checker": "^1.0.2",
         "spiral/attributes": "^3.1.8",
         "spiral/roadrunner": "^2025.1.5",
@@ -44,6 +44,12 @@
         "symfony/polyfill-php83": "^1.31.0",
         "symfony/process": "^6.4.33 || ^7.0 || ^8.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/xepozz/roadrunner-api-dto"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
@@ -67,6 +73,7 @@
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "10.5.63",
+        "revolt/event-loop": "^1.0.6",
         "spiral/code-style": "~2.3.0",
         "spiral/core": "^3.14.9",
         "ta-tikoma/phpunit-architecture-test": "^0.8.5",
@@ -85,6 +92,10 @@
     },
     "suggest": {
         "ext-grpc": "For Client calls",
+        "ext-ffi": "For the worker without RoadRunner (sdk-core bridge) and for Client calls without ext-grpc",
+        "ext-pcntl": "For the worker without RoadRunner",
+        "ext-posix": "For the worker without RoadRunner",
+        "revolt/event-loop": "For concurrent activities in the worker without RoadRunner",
         "ext-protobuf": "For better performance",
         "buggregator/trap": "For better debugging",
         "roadrunner/psr-logger": "RoadRunner PSR-3 logger integration",

@@ -24,6 +24,7 @@ use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
+use Temporal\Internal\Bridge\BridgeConnection;
 use Temporal\Internal\Client\PayloadSizeChecker;
 use Temporal\Internal\Interceptor\Pipeline;
 
@@ -72,7 +73,7 @@ abstract class BaseClient implements GrpcClientInterface
     public static function create(string $address): static
     {
         if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+            return static::createCore($address, null);
         }
 
         return new static(
@@ -102,24 +103,14 @@ abstract class BaseClient implements GrpcClientInterface
         ?string $overrideServerName = null,
     ): static {
         if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+            return static::createCore($address, BridgeConnection::tls($crt, $overrideServerName, $clientPem, $clientKey));
         }
-
-        $loadCert = static function (?string $cert): ?string {
-            return match (true) {
-                $cert === null, $cert === '' => null,
-                \is_file($cert) => false === ($content = \file_get_contents($cert))
-                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
-                    : $content,
-                default => $cert,
-            };
-        };
 
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
-                $loadCert($crt),
-                $loadCert($clientKey),
-                $loadCert($clientPem),
+                BridgeConnection::certificate($crt),
+                BridgeConnection::certificate($clientKey),
+                BridgeConnection::certificate($clientPem),
             ),
         ];
 
@@ -217,6 +208,15 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
+     * @param non-empty-string $address
+     * @param array<string, ?string>|null $tls
+     */
+    protected static function createCoreStub(string $address, ?array $tls): BaseStub
+    {
+        throw new \RuntimeException(\sprintf('%s has no sdk-core stub, install ext-grpc to use it.', static::class));
+    }
+
+    /**
      * @internal
      */
     final protected function getInternalConnection(): Connection
@@ -253,6 +253,19 @@ abstract class BaseClient implements GrpcClientInterface
      * @param array<array-key, mixed> $options
      */
     abstract protected static function createGrpcStub(string $address, array $options): BaseStub;
+
+    /**
+     * @param non-empty-string $address
+     * @param array<string, ?string>|null $tls
+     */
+    private static function createCore(string $address, ?array $tls): static
+    {
+        if (!\extension_loaded('ffi')) {
+            throw new \RuntimeException('The gRPC or FFI extension is required to use Temporal Client.');
+        }
+
+        return new static(static fn(): BaseStub => static::createCoreStub($address, $tls));
+    }
 
     /**
      * Call a gRPC method.

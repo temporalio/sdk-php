@@ -90,7 +90,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private const ERROR_HEADERS_TYPE = 'Received headers type must be a string, but %s given';
     private const ERROR_HEADER_NOT_STRING_TYPE = 'Header "%s" argument type must be a string, but %s given';
     private const ERROR_QUEUE_NOT_FOUND = 'Cannot find a worker for task queue "%s"';
-    private const HEADER_TASK_QUEUE = 'taskQueue';
+    public const HEADER_TASK_QUEUE = 'taskQueue';
 
     protected DataConverterInterface $converter;
     protected ReaderInterface $reader;
@@ -190,7 +190,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $interceptorProvider ?? new SimplePipelineProvider(),
         );
 
-        $worker = new Worker(
+        $worker = $this->createWorker(
             $taskQueue,
             $options,
             ServiceContainer::fromWorkerFactory(
@@ -203,7 +203,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                     $taskQueue,
                 ),
             ),
-            $this->rpc,
         );
 
         // Call initializeWorker hooks (forward order)
@@ -338,6 +337,41 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new Marshaller(new AttributeMapperFactory($reader));
     }
 
+    protected function createWorker(string $taskQueue, WorkerOptions $options, ServiceContainer $services): WorkerInterface
+    {
+        return new Worker($taskQueue, $options, $services, $this->rpc);
+    }
+
+    /**
+     * @param iterable<ServerRequestInterface|ServerResponseInterface> $commands
+     */
+    protected function dispatchCommands(iterable $commands, array $headers): void
+    {
+        foreach ($commands as $command) {
+            $this->env->update($command->getTickInfo());
+
+            if ($command instanceof ServerResponseInterface) {
+                $this->client->dispatch($command);
+                continue;
+            }
+
+            $this->server->dispatch($command, $headers);
+        }
+
+        $this->tick();
+    }
+
+    protected function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
+    {
+        $worker = $this->queues->find($taskQueue);
+
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
+        }
+
+        return $worker;
+    }
+
     private function boot(ServiceCredentials $credentials): void
     {
         $this->reader = $this->createReader();
@@ -366,21 +400,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function dispatch(string $messages, array $headers): string
     {
-        $commands = $this->codec->decode($messages, $headers);
-
-
-        foreach ($commands as $command) {
-            $this->env->update($command->getTickInfo());
-
-            if ($command instanceof ServerResponseInterface) {
-                $this->client->dispatch($command);
-                continue;
-            }
-
-            $this->server->dispatch($command, $headers);
-        }
-
-        $this->tick();
+        $this->dispatchCommands($this->codec->decode($messages, $headers), $headers);
 
         return $this->codec->encode($this->responses);
     }
@@ -396,17 +416,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         );
 
         return $worker->dispatch($request, $headers);
-    }
-
-    private function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
-    {
-        $worker = $this->queues->find($taskQueue);
-
-        if ($worker === null) {
-            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
-        }
-
-        return $worker;
     }
 
     private function findTaskQueueNameOrFail(array $headers): string

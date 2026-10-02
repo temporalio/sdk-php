@@ -1,0 +1,13 @@
+version: "3"
+# Key-value storage for the test mocks when the worker runs on sdk-core (TEMPORAL_WORKER_TRANSPORT=core)
+rpc:
+    listen: ${ROADRUNNER_ADDRESS:-tcp://127.0.0.1:6001}
+
+logs:
+    mode: none
+
+kv:
+    test:
+        driver: memory
+        config:
+            interval: 10

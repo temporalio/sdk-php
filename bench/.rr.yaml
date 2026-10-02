@@ -1,0 +1,16 @@
+version: "3"
+
+rpc:
+    listen: tcp://127.0.0.1:6556
+
+server:
+    command: "php -dopcache.enable_cli=1 -dxdebug.mode=off -dpcov.enabled=0 worker.php"
+
+temporal:
+    address: ${TEMPORAL_ADDRESS}
+    namespace: default
+    activities:
+        num_workers: ${BENCH_ACTIVITY_WORKERS}
+
+logs:
+    level: error
