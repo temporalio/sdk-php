@@ -44,9 +44,6 @@
         "symfony/polyfill-php83": "^1.31.0",
         "symfony/process": "^6.4.33 || ^7.0 || ^8.0"
     },
-    "bin": [
-        "bin/lambda"
-    ],
     "autoload": {
         "psr-4": {
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
