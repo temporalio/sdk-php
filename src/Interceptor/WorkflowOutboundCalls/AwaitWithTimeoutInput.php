@@ -13,6 +13,7 @@ namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use React\Promise\PromiseInterface;
 use Temporal\Workflow\Mutex;
+use Temporal\Workflow\TimerOptions;
 
 /**
  * @psalm-immutable
@@ -28,6 +29,7 @@ final class AwaitWithTimeoutInput
     public function __construct(
         public readonly \DateInterval $interval,
         public readonly array $conditions,
+        public readonly ?TimerOptions $timerOptions = null,
     ) {}
 
     /**
@@ -40,6 +42,7 @@ final class AwaitWithTimeoutInput
         return new self(
             $interval ?? $this->interval,
             $conditions ?? $this->conditions,
+            $this->timerOptions,
         );
     }
 }

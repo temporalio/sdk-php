@@ -219,6 +219,42 @@ class UserMetadataTest extends TestCase
         }
     }
 
+    #[Test]
+    public function awaitWithTimeoutMetadata(
+        #[Stub('Extra_Workflow_UserMetadata')]
+        WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+        DataConverterInterface $dataConverter,
+    ): void {
+        try {
+            /** @see TestWorkflow::awaitWithTimeout() */
+            $timedOut = $stub->update('await_with_timeout', 'await timer summary')->getValue(0);
+            self::assertFalse($timedOut);
+
+            # Check that the timer created by awaitWithTimeout() carries the summary
+            $found = false;
+            foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
+                if (!$event->hasTimerStartedEventAttributes()) {
+                    continue;
+                }
+
+                $payload = $event->getUserMetadata()?->getSummary();
+                if (!$payload instanceof Payload) {
+                    continue;
+                }
+
+                if ($dataConverter->fromPayload($payload, 'string') === 'await timer summary') {
+                    $found = true;
+                    break;
+                }
+            }
+
+            self::assertTrue($found, 'Await timer metadata not found in workflow history');
+        } finally {
+            self::terminate($stub);
+        }
+    }
+
     private static function terminate(WorkflowStubInterface $stub): void
     {
         try {
@@ -247,6 +283,17 @@ class TestWorkflow
     public function ping(): string
     {
         return 'pong';
+    }
+
+    #[Workflow\UpdateMethod('await_with_timeout')]
+    public function awaitWithTimeout(string $summary)
+    {
+        return yield Workflow::awaitWithTimeout(
+            Workflow\AwaitOptions::new(1)->withTimerOptions(
+                Workflow\TimerOptions::new()->withSummary($summary),
+            ),
+            fn(): bool => $this->exit,
+        );
     }
 
     #[Workflow\UpdateMethod('start_child')]
