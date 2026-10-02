@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
@@ -162,9 +161,9 @@ final class WorkflowInfo
         $this->execution = new WorkflowExecution();
         $this->type = new WorkflowType();
 
-        $this->executionTimeout = CarbonInterval::years(10);
-        $this->runTimeout = CarbonInterval::years(10);
-        $this->taskTimeout = CarbonInterval::years(10);
+        $this->executionTimeout = new \DateInterval('P10Y');
+        $this->runTimeout = new \DateInterval('P10Y');
+        $this->taskTimeout = new \DateInterval('P10Y');
         $this->typedSearchAttributes = TypedSearchAttributes::empty();
 
         $this->priority = Priority::new();
