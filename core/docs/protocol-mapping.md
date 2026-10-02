@@ -16,12 +16,12 @@ The `CP` and `CORE` line numbers were taken at the sdk-core revision `2872b536`;
 
 ---
 
-## 0. The two PHP seams for the adapter
+## 0. The two PHP entry points for the adapter
 
-| Seam | Where | What the adapter must do |
+| Entry point | Where | What the adapter must do |
 |---|---|---|
 | Host connection | `PHP/WorkerFactory.php:256-275` (`run(?HostConnectionInterface $host)`, loop `waitBatch()` → `dispatch()` → `send()`) | Implement `HostConnectionInterface` (`waitBatch(): ?CommandBatch`, `send(string)`, `error()`). `CommandBatch{messages: string, context: array}`. The frame is decoded by `ProtoCodec` only when `$_SERVER['RR_CODEC']` is `proto`/`protobuf` (`WorkerFactory.php:387-396`). Otherwise `JsonCodec` is used. |
-| Direct objects | `WorkerFactory::dispatchCommands()` `PHP/WorkerFactory.php:348-362` | Build `ServerRequest`/`SuccessResponse`/`FailureResponse` with a `TickInfo` and pass them to `dispatchCommands()` (`env->update()`, `client->dispatch()` / `server->dispatch($cmd, $headers)`, then `tick()`), then read the `ArrayQueue`. The method was private code inside `dispatch()`; this work made it protected, and `CoreWorkerFactory` uses this seam. |
+| Direct objects | `WorkerFactory::dispatchCommands()` `PHP/WorkerFactory.php:348-362` | Build `ServerRequest`/`SuccessResponse`/`FailureResponse` with a `TickInfo` and pass them to `dispatchCommands()` (`env->update()`, `client->dispatch()` / `server->dispatch($cmd, $headers)`, then `tick()`), then read the `ArrayQueue`. The method was private code inside `dispatch()`; this work made it protected, and `CoreWorkerFactory` uses it. |
 | RPC | `PHP/Worker/Transport/RPCConnectionInterface.php` (`call(string $method, $payload)`), injected by `WorkerFactory::create(rpc:)` `WorkerFactory.php:149-163` | Implement `call('temporal.RecordActivityHeartbeat', …)`. |
 
 `WorkerFactory::dispatch()` semantics (`PHP/WorkerFactory.php:401-406` and `dispatchCommands()` `:348-362`):
