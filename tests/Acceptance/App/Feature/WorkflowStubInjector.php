@@ -66,7 +66,7 @@ final class WorkflowStubInjector implements InjectorInterface
                     \sprintf(
                         'Workflow %s did not start. WorkflowOptions: %s. WorkflowInfo: %s',
                         $attribute->type,
-                        \json_encode($options, JSON_PRETTY_PRINT),
+                        \print_r($options, true),
                         \print_r($description->info, true),
                     ),
                 );

@@ -1,0 +1,26 @@
+<?php
+
+namespace Carbon {
+    class CarbonInterval extends \DateInterval
+    {
+        /**
+         * @psalm-pure
+         */
+        public static function instance(\DateInterval $interval, array $skip = [], bool $skipCopy = false): static {}
+
+        /**
+         * @psalm-mutation-free
+         */
+        public function spec(bool $microseconds = false): string {}
+    }
+}
+
+namespace {
+    interface DateTimeInterface
+    {
+        /**
+         * @psalm-mutation-free
+         */
+        public function format(string $format): string;
+    }
+}

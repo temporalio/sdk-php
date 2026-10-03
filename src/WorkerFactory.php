@@ -113,6 +113,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected EnvironmentInterface $env;
     protected PluginRegistry $pluginRegistry;
+    protected ?WorkflowClient $workflowClient = null;
 
     public function __construct(
         DataConverterInterface $dataConverter,
@@ -121,6 +122,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ) {
+        $this->workflowClient = $client;
         $this->pluginRegistry = new PluginRegistry();
         // Propagate worker plugins from the client first
         if ($client !== null) {
@@ -202,6 +204,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                     $options->enableLoggingInReplay,
                     $taskQueue,
                 ),
+                $this->workflowClient,
             ),
             $this->rpc,
         );

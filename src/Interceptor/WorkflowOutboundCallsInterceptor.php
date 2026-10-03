@@ -21,6 +21,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
@@ -141,4 +142,9 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @param callable(AwaitWithTimeoutInput): PromiseInterface $next
      */
     public function awaitWithTimeout(AwaitWithTimeoutInput $input, callable $next): PromiseInterface;
+
+    /**
+     * @param callable(ExecuteNexusOperationInput): PromiseInterface $next
+     */
+    public function executeNexusOperation(ExecuteNexusOperationInput $input, callable $next): PromiseInterface;
 }
