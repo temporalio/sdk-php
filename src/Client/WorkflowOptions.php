@@ -25,6 +25,7 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Client\OnConflictOptions;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -187,6 +188,9 @@ final class WorkflowOptions extends Options
      */
     #[Marshal(name: 'VersioningOverride')]
     public ?VersioningOverride $versioningOverride = null;
+
+    /** @internal */
+    public ?OnConflictOptions $onConflictOptions = null;
 
     /**
      * @throws \Exception
@@ -601,6 +605,18 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
         $self->priority = $priority;
+        return $self;
+    }
+
+    /**
+     * @internal
+     * @return $this
+     */
+    #[Pure]
+    public function withOnConflictOptionsInternal(?OnConflictOptions $options): self
+    {
+        $self = clone $this;
+        $self->onConflictOptions = $options;
         return $self;
     }
 }
