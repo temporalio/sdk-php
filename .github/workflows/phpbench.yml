@@ -67,9 +67,13 @@ jobs:
         working-directory: head
         run: |
           cp -R ../base/.phpbench .phpbench
-          vendor/bin/phpbench run --ref=base --progress=none --report=aggregate | tee phpbench.txt
+          status=0
+          vendor/bin/phpbench run --ref=base --progress=dots --report=aggregate \
+            --assert='mode(variant.time.avg) <= mode(baseline.time.avg) +/- 10%' > phpbench.txt || status=$?
+          cat phpbench.txt
           {
             echo '```'
             cat phpbench.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
