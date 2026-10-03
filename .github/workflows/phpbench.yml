@@ -1,0 +1,79 @@
+name: PHPBench
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/Benchmark/**'
+      - 'phpbench.json'
+      - 'composer.json'
+      - '.github/workflows/phpbench.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  cancel-in-progress: true
+  group: phpbench-${{ github.ref }}
+
+jobs:
+  phpbench:
+    permissions:
+      contents: read
+    name: Benchmarks against the base branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          path: head
+
+      - name: Check Out the Base Branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
+          path: base
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: 8.4
+          extensions: dom, protobuf
+          coverage: none
+
+      - name: Install dependencies of the branch
+        uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
+        with:
+          working-directory: head
+
+      - name: Install dependencies of the base branch
+        uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
+        with:
+          working-directory: base
+
+      - name: Run the benchmarks on the base branch
+        working-directory: base
+        run: |
+          rm -rf tests/Benchmark
+          cp -R ../head/tests/Benchmark tests/Benchmark
+          cp ../head/phpbench.json phpbench.json
+          ../head/vendor/bin/phpbench run --tag=base --progress=none
+
+      - name: Compare the branch with the base branch
+        working-directory: head
+        run: |
+          cp -R ../base/.phpbench .phpbench
+          status=0
+          vendor/bin/phpbench run --ref=base --progress=dots --report=aggregate \
+            --assert='mode(variant.time.avg) <= mode(baseline.time.avg) +/- 10%' > phpbench.txt || status=$?
+          cat phpbench.txt
+          {
+            echo '```'
+            cat phpbench.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
