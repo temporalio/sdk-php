@@ -14,4 +14,10 @@ namespace Temporal\Internal\Transport\Router;
 /**
  * For cases if we would like to have different logic for local activity.
  */
-final class InvokeLocalActivity extends InvokeActivity {}
+final class InvokeLocalActivity extends InvokeActivity
+{
+    protected function isLocal(): bool
+    {
+        return true;
+    }
+}

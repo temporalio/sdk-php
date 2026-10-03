@@ -27,13 +27,24 @@ final class ExecuteChildWorkflow extends Request
     /** @var non-empty-string */
     private string $workflowType;
 
+    private string $namespace;
+    private ?string $workflowId;
+
     /**
      * @param non-empty-string $name Workflow name
      * @param RequestOptions $options
      */
-    public function __construct(string $name, ValuesInterface $input, array $options, HeaderInterface $header)
-    {
+    public function __construct(
+        string $name,
+        ValuesInterface $input,
+        array $options,
+        HeaderInterface $header,
+        string $namespace = '',
+        ?string $workflowId = null,
+    ) {
         $this->workflowType = $name;
+        $this->namespace = $namespace;
+        $this->workflowId = $workflowId;
         parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $input, header: $header);
     }
 
@@ -43,5 +54,15 @@ final class ExecuteChildWorkflow extends Request
     public function getWorkflowType(): string
     {
         return $this->workflowType;
+    }
+
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    public function getWorkflowId(): ?string
+    {
+        return $this->workflowId;
     }
 }

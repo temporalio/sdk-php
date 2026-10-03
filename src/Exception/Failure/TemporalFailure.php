@@ -15,6 +15,7 @@ use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Exception\TemporalException;
 
 /**
@@ -34,6 +35,7 @@ class TemporalFailure extends TemporalException implements \Stringable
     private ?Failure $failure = null;
     private string $originalMessage;
     private ?string $originalStackTrace = null;
+    private ?SerializationContext $serializationContext = null;
 
     public function __construct(string $message, ?string $originalMessage = null, ?\Throwable $previous = null)
     {
@@ -79,7 +81,35 @@ class TemporalFailure extends TemporalException implements \Stringable
 
     public function setDataConverter(DataConverterInterface $converter): void
     {
-        // typically handled by children
+        $previous = $this->getPrevious();
+        while ($previous !== null) {
+            if ($previous instanceof self) {
+                $previous->setDataConverter($converter);
+                return;
+            }
+
+            $previous = $previous->getPrevious();
+        }
+    }
+
+    public function getSerializationContext(): ?SerializationContext
+    {
+        return $this->serializationContext;
+    }
+
+    public function setSerializationContext(?SerializationContext $context): void
+    {
+        $this->serializationContext = $context;
+
+        $previous = $this->getPrevious();
+        while ($previous !== null) {
+            if ($previous instanceof self) {
+                $previous->setSerializationContext($context);
+                return;
+            }
+
+            $previous = $previous->getPrevious();
+        }
     }
 
     public function __toString(): string
