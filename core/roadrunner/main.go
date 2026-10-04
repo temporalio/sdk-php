@@ -79,10 +79,10 @@ func run(args []string) error {
 		&metrics.Plugin{},
 		&status.Plugin{},
 	)
-	if err != nil {
-		return err
+	if err == nil {
+		err = container.Init()
 	}
-	if err = container.Init(); err != nil {
+	if err != nil {
 		return err
 	}
 	errCh, err := container.Serve()
