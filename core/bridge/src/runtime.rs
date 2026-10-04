@@ -158,6 +158,14 @@ mod tests {
     }
 
     #[test]
+    fn log_consumer_debug_output_has_no_queue_contents() {
+        assert_eq!(
+            format!("{:?}", QueueLog(Arc::new(OnceLock::new()))),
+            "QueueLog"
+        );
+    }
+
+    #[test]
     fn prometheus_exporter_moves_to_the_next_free_port_and_logs_it() {
         let taken = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = taken.local_addr().unwrap().port();
