@@ -85,7 +85,7 @@ impl TlsJson {
 }
 
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 enum Compression {
     Gzip,
     None,

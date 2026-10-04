@@ -60,15 +60,10 @@ pub unsafe fn construct<T>(
     err_len: *mut usize,
     body: impl FnOnce() -> Result<T, String>,
 ) -> *mut T {
-    let result =
-        catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|panic| Err(panic_message(panic)));
-    unsafe { into_ffi(result, err, err_len) }
-}
-
-unsafe fn into_ffi<T>(result: Result<T, String>, err: *mut *mut u8, err_len: *mut usize) -> *mut T {
-    let message = match result {
-        Ok(value) => return Box::into_raw(Box::new(value)),
-        Err(message) => message,
+    let message = match catch_unwind(AssertUnwindSafe(body)) {
+        Ok(Ok(value)) => return Box::into_raw(Box::new(value)),
+        Ok(Err(message)) => message,
+        Err(panic) => panic_message(panic),
     };
     if let (Some(err), Some(err_len)) = unsafe { (err.as_mut(), err_len.as_mut()) } {
         (*err, *err_len) = into_raw_bytes(message.into_bytes().into_boxed_slice());
