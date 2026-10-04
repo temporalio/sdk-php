@@ -2179,6 +2179,7 @@ dependencies = [
  "base64 0.22.1",
  "cbindgen",
  "futures-util",
+ "h2",
  "libc",
  "mimalloc",
  "prost",

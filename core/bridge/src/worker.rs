@@ -288,7 +288,166 @@ pub unsafe extern "C" fn tpb_worker_free(w: *mut TpbWorker) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{events, runtime};
+    use crate::ffi::STATUS_SHUTDOWN;
+    use crate::testing::{events, grpc_server, pending_events, replayer, runtime, worker_json};
+    use temporalio_common::protos::coresdk::{
+        activity_result::ActivityExecutionResult,
+        workflow_activation::WorkflowActivation,
+        workflow_completion::{Success, workflow_activation_completion::Status},
+    };
+
+    fn worker(rt: *mut TpbRuntime, json: serde_json::Value) -> *mut TpbWorker {
+        let config = json.to_string();
+        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
+        let w = unsafe {
+            tpb_worker_new(
+                rt,
+                config.as_ptr().cast(),
+                config.len(),
+                &mut err,
+                &mut err_len,
+            )
+        };
+        assert_eq!(unsafe { slice(err.cast(), err_len) }, b"");
+        w
+    }
+
+    fn text(data: &[u8]) -> String {
+        String::from_utf8_lossy(data).into_owned()
+    }
+
+    #[test]
+    fn workers_with_the_same_connection_share_one_connection() {
+        let rt = runtime();
+        let server = grpc_server();
+        let first = worker(rt, worker_json(&server));
+        let mut another_queue = worker_json(&server);
+        another_queue["task_queue"] = "another".into();
+        let second = worker(rt, another_queue);
+
+        assert_eq!(unsafe { &*rt }.connections.lock().unwrap().len(), 1);
+        unsafe {
+            tpb_worker_finalize_shutdown(first, 1);
+            tpb_worker_finalize_shutdown(second, 2);
+        }
+        assert_eq!(
+            events(rt, 2),
+            vec![
+                (1, KIND_SHUTDOWN_FINALIZED, STATUS_OK, vec![]),
+                (2, KIND_SHUTDOWN_FINALIZED, STATUS_OK, vec![]),
+            ]
+        );
+        unsafe {
+            tpb_worker_free(first);
+            tpb_worker_free(second);
+            free(rt);
+        }
+    }
+
+    #[test]
+    fn replayer_polls_and_completes_workflow_activations() {
+        let rt = runtime();
+        let w = replayer(rt, true);
+
+        unsafe { tpb_poll_workflow_activation(w, 1) };
+        let [(tag, kind, status, activation)] = events(rt, 1).try_into().unwrap();
+        assert_eq!(
+            (tag, kind, status),
+            (1, KIND_WORKFLOW_ACTIVATION, STATUS_OK)
+        );
+        let run_id = WorkflowActivation::decode(&activation[..]).unwrap().run_id;
+        assert_eq!(run_id, "run");
+
+        let completion = WorkflowActivationCompletion {
+            run_id,
+            status: Some(Status::Successful(Success::default())),
+            ..Default::default()
+        }
+        .encode_to_vec();
+        let undecodable = b"\xff";
+        unsafe {
+            tpb_complete_workflow_activation(w, 2, completion.as_ptr().cast(), completion.len());
+            tpb_complete_workflow_activation(w, 3, undecodable.as_ptr().cast(), 1);
+        }
+        let [(tag, kind, status, error)] = events(rt, 1).try_into().unwrap();
+        assert_eq!(
+            (tag, kind, status),
+            (3, KIND_WORKFLOW_COMPLETED, STATUS_ERROR)
+        );
+        assert!(text(&error).starts_with("Decode failure: "));
+        assert_eq!(pending_events(rt), 0);
+        unsafe {
+            tpb_worker_free(w);
+            free(rt);
+        }
+    }
+
+    #[test]
+    fn replayer_has_no_activities_but_accepts_heartbeats() {
+        let rt = runtime();
+        let w = replayer(rt, false);
+        let completion = ActivityTaskCompletion {
+            task_token: vec![1],
+            result: Some(ActivityExecutionResult::ok(Default::default())),
+        }
+        .encode_to_vec();
+        let heartbeat = ActivityHeartbeat {
+            task_token: vec![1],
+            details: vec![],
+        }
+        .encode_to_vec();
+        let undecodable = b"\xff";
+
+        unsafe {
+            tpb_poll_activity_task(w, 1);
+            tpb_complete_activity_task(w, 2, completion.as_ptr().cast(), completion.len());
+            assert_eq!(
+                tpb_record_activity_heartbeat(w, heartbeat.as_ptr().cast(), heartbeat.len()),
+                CALL_OK
+            );
+            assert_eq!(
+                tpb_record_activity_heartbeat(w, undecodable.as_ptr().cast(), 1),
+                CALL_FAILED
+            );
+        }
+
+        let [poll, (tag, kind, status, error)] = events(rt, 2).try_into().unwrap();
+        assert_eq!(poll, (1, KIND_ACTIVITY_TASK, STATUS_SHUTDOWN, vec![]));
+        assert_eq!(
+            (tag, kind, status),
+            (2, KIND_ACTIVITY_COMPLETED, STATUS_ERROR)
+        );
+        assert_eq!(text(&error), "Activities are not enabled on this worker");
+        unsafe {
+            tpb_worker_free(w);
+            free(rt);
+        }
+    }
+
+    #[test]
+    fn calls_fail_while_finalize_holds_the_worker_and_shutdown_is_idempotent() {
+        let rt = runtime();
+        let w = replayer(rt, false);
+        let held = unsafe { &*w }.worker.clone().try_write_owned().unwrap();
+        assert_eq!(
+            unsafe { tpb_record_activity_heartbeat(w, std::ptr::null(), 0) },
+            CALL_FAILED
+        );
+        assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_FAILED);
+        drop(held);
+        assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_OK);
+        assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_OK);
+
+        unsafe { tpb_worker_finalize_shutdown(w, 1) };
+        assert_eq!(
+            events(rt, 1),
+            vec![(1, KIND_SHUTDOWN_FINALIZED, STATUS_OK, vec![])]
+        );
+        unsafe {
+            tpb_worker_free(w);
+            free(rt);
+        }
+    }
 
     #[test]
     fn finalized_worker_and_panicking_task_report_error_events() {

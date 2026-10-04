@@ -23,6 +23,7 @@ temporalio-client = "1.0.0"
 temporalio-common = { version = "1.0.0", features = ["core-based-sdk"] }
 
 [dev-dependencies]
+h2 = "0.4"
 tracing = "0.1"
 
 [build-dependencies]

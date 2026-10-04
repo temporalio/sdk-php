@@ -146,12 +146,10 @@ mod tests {
     }
 
     fn log_entry(runtime: &TpbRuntime) -> Value {
-        let [(0, KIND_LOG, STATUS_OK, ref data)] =
-            events(std::ptr::from_ref(runtime).cast_mut(), 1)[..]
-        else {
-            panic!("one log event expected");
-        };
-        serde_json::from_slice(data).unwrap()
+        let rt = std::ptr::from_ref(runtime).cast_mut();
+        let [(tag, kind, status, data)] = events(rt, 1).try_into().unwrap();
+        assert_eq!((tag, kind, status), (0, KIND_LOG, STATUS_OK));
+        serde_json::from_slice(&data).unwrap()
     }
 
     #[test]
@@ -162,18 +160,20 @@ mod tests {
 
         let runtime = new_runtime(config.as_bytes()).unwrap();
 
-        assert!(scrape(port + 1).starts_with("HTTP/1.1 200"));
         let entry = log_entry(&runtime);
         assert_eq!(entry["level"], "INFO");
         assert_eq!(entry["target"], "temporal_php_bridge");
-        assert_eq!(
-            entry["message"],
-            format!(
-                "Prometheus metrics on http://127.0.0.1:{}/metrics",
-                port + 1
-            )
-        );
         assert_eq!(entry["fields"], serde_json::json!({}));
+        let exporter_port: u16 = entry["message"]
+            .as_str()
+            .unwrap()
+            .strip_prefix("Prometheus metrics on http://127.0.0.1:")
+            .and_then(|rest| rest.strip_suffix("/metrics"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert!(exporter_port > port);
+        assert!(scrape(exporter_port).starts_with("HTTP/1.1 200"));
     }
 
     #[test]

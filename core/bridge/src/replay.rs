@@ -55,121 +55,22 @@ pub unsafe extern "C" fn tpb_replayer_new(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ffi::{
         CALL_OK, KIND_SHUTDOWN_FINALIZED, KIND_WORKFLOW_ACTIVATION, STATUS_ERROR, STATUS_OK,
-        STATUS_SHUTDOWN, free, tpb_bytes_free,
+        STATUS_SHUTDOWN, free,
     };
-    use crate::testing::{events, pending_events, runtime};
+    use crate::testing::{
+        events, history, new_replayer, pending_events, replay_config, replayer, runtime,
+    };
     use crate::worker::{
         tpb_poll_workflow_activation, tpb_worker_finalize_shutdown, tpb_worker_free,
         tpb_worker_initiate_shutdown,
     };
-    use temporalio_common::protos::temporal::api::{
-        common::v1::WorkflowType,
-        enums::v1::EventType,
-        history::v1::{
-            HistoryEvent, WorkflowExecutionStartedEventAttributes, history_event::Attributes,
-        },
-        taskqueue::v1::TaskQueue,
-    };
-
-    const CONFIG: &str = r#"{
-        "namespace": "default",
-        "task_queue": "replay",
-        "workflows": true,
-        "local_activities": false,
-        "remote_activities": false,
-        "deployment": null,
-        "build_id": "",
-        "graceful_shutdown_period_ms": 0,
-        "max_worker_activities_per_second": null,
-        "max_task_queue_activities_per_second": null,
-        "max_cached_workflows": 1,
-        "max_outstanding_workflow_tasks": 2,
-        "max_outstanding_activities": 1,
-        "max_outstanding_local_activities": 1,
-        "max_concurrent_workflow_task_polls": 2,
-        "max_concurrent_activity_task_polls": 1,
-        "nonsticky_to_sticky_poll_ratio": 1.0,
-        "sticky_queue_schedule_to_start_timeout_ms": 5000,
-        "nondeterminism_fails_workflow": false,
-        "max_heartbeat_throttle_interval_ms": null,
-        "poller_autoscaling": false
-    }"#;
-
-    fn history() -> Vec<u8> {
-        History {
-            events: vec![HistoryEvent {
-                event_id: 1,
-                event_type: EventType::WorkflowExecutionStarted as i32,
-                attributes: Some(Attributes::WorkflowExecutionStartedEventAttributes(
-                    WorkflowExecutionStartedEventAttributes {
-                        workflow_type: Some(WorkflowType {
-                            name: "Replayed".into(),
-                        }),
-                        original_execution_run_id: "run".into(),
-                        task_queue: Some(TaskQueue {
-                            name: "replay".into(),
-                            ..Default::default()
-                        }),
-                        ..Default::default()
-                    },
-                )),
-                ..Default::default()
-            }],
-        }
-        .encode_to_vec()
-    }
-
-    fn replayer(
-        rt: *mut TpbRuntime,
-        history: &[u8],
-        workflow_id: &[u8],
-        err: *mut *mut u8,
-        err_len: *mut usize,
-    ) -> *mut TpbWorker {
-        unsafe {
-            tpb_replayer_new(
-                rt,
-                CONFIG.as_ptr().cast(),
-                CONFIG.len(),
-                history.as_ptr().cast(),
-                history.len(),
-                workflow_id.as_ptr().cast(),
-                workflow_id.len(),
-                err,
-                err_len,
-            )
-        }
-    }
-
-    fn replay_worker(
-        rt: *mut TpbRuntime,
-        history: &[u8],
-        workflow_id: &[u8],
-    ) -> Result<*mut TpbWorker, String> {
-        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
-        let w = replayer(rt, history, workflow_id, &mut err, &mut err_len);
-        if !w.is_null() {
-            return Ok(w);
-        }
-        let message = String::from_utf8(unsafe { slice(err.cast(), err_len) }.to_vec()).unwrap();
-        unsafe { tpb_bytes_free(err, err_len) };
-        Err(message)
-    }
-
-    fn replayer_error(history: &[u8], workflow_id: &[u8]) -> String {
-        let rt = runtime();
-        let message = replay_worker(rt, history, workflow_id).unwrap_err();
-        unsafe { free(rt) };
-        message
-    }
 
     #[test]
     fn finalize_shuts_down_a_replayer_with_a_poll_in_flight() {
         let rt = runtime();
-        let w = replay_worker(rt, &history(), b"wf").unwrap();
+        let w = replayer(rt, false);
         unsafe { tpb_poll_workflow_activation(w, 1) };
         assert_eq!(pending_events(rt), 0);
         unsafe {
@@ -200,18 +101,17 @@ mod tests {
     }
 
     #[test]
-    fn invalid_history_and_workflow_id_return_an_error() {
-        assert!(replayer_error(b"\xff", b"wf").starts_with("Invalid history: "));
-        assert!(replayer_error(&history(), b"\xff").starts_with("Invalid workflow ID: "));
+    fn invalid_config_history_and_workflow_id_return_an_error() {
         let rt = runtime();
-        let w = replayer(
-            rt,
-            b"\xff",
-            b"wf",
-            std::ptr::null_mut(),
-            std::ptr::null_mut(),
+        let error = |config: &str, history: &[u8], workflow_id: &[u8]| {
+            new_replayer(rt, config, history, workflow_id).unwrap_err()
+        };
+
+        assert!(error("{}", &history(false), b"wf").starts_with("Invalid worker config JSON: "));
+        assert!(error(&replay_config(), b"\xff", b"wf").starts_with("Invalid history: "));
+        assert!(
+            error(&replay_config(), &history(false), b"\xff").starts_with("Invalid workflow ID: ")
         );
-        assert!(w.is_null());
         unsafe { free(rt) };
     }
 }

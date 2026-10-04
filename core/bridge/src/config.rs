@@ -271,47 +271,20 @@ impl WorkerJson {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testing::worker_json;
     use serde_json::{Value, json};
 
     fn worker() -> Value {
-        json!({
-            "connection": {
-                "target_url": "http://127.0.0.1:7233",
-                "client_name": "temporal-php-2",
-                "client_version": "2.0.0",
-                "identity": "1@host",
-                "api_key": null,
-                "tls": null,
-                "connect_timeout_ms": 10000,
-                "grpc_compression": "gzip",
-            },
-            "namespace": "default",
-            "task_queue": "q",
-            "workflows": true,
-            "local_activities": true,
-            "remote_activities": false,
-            "deployment": null,
-            "build_id": "",
-            "graceful_shutdown_period_ms": 1500,
-            "max_worker_activities_per_second": 2.5,
-            "max_task_queue_activities_per_second": null,
-            "max_cached_workflows": 10000,
-            "max_outstanding_workflow_tasks": 100,
-            "max_outstanding_activities": 1,
-            "max_outstanding_local_activities": 1,
-            "max_concurrent_workflow_task_polls": 8,
-            "max_concurrent_activity_task_polls": 1,
-            "nonsticky_to_sticky_poll_ratio": 0.5,
-            "sticky_queue_schedule_to_start_timeout_ms": 5000,
-            "nondeterminism_fails_workflow": false,
-            "max_heartbeat_throttle_interval_ms": null,
-            "poller_autoscaling": false,
-        })
+        worker_json("http://127.0.0.1:7233")
     }
 
     fn parse_worker(json: &Value) -> Result<(ConnectionJson, WorkerJson), String> {
         WorkerJson::parse_with_connection(json.to_string().as_bytes())
             .map(|(_, connection, worker)| (connection, worker))
+    }
+
+    fn worker_config(json: &Value) -> Result<WorkerConfig, String> {
+        parse_worker(json)?.1.worker_config()
     }
 
     #[test]
@@ -343,7 +316,7 @@ mod tests {
 
     #[test]
     fn worker_config_maps_every_key() {
-        let config = parse_worker(&worker()).unwrap().1.worker_config().unwrap();
+        let config = worker_config(&worker()).unwrap();
         assert_eq!(config.namespace, "default");
         assert_eq!(config.task_queue, "q");
         assert_eq!(config.max_cached_workflows, 10000);
@@ -359,6 +332,11 @@ mod tests {
         );
         assert_eq!(config.max_worker_activities_per_second, Some(2.5));
         assert_eq!(config.max_task_queue_activities_per_second, None);
+        assert!(config.workflow_failure_errors.is_empty());
+        assert!(matches!(
+            config.workflow_task_poller_behavior,
+            Some(PollerBehavior::SimpleMaximum(8))
+        ));
         assert!(matches!(
             config.versioning_strategy,
             WorkerVersioningStrategy::None { .. }
@@ -366,6 +344,41 @@ mod tests {
         assert!(config.task_types.enable_workflows);
         assert!(config.task_types.enable_local_activities);
         assert!(!config.task_types.enable_remote_activities);
+    }
+
+    #[test]
+    fn worker_config_maps_autoscaling_heartbeat_throttle_and_nondeterminism() {
+        let mut json = worker();
+        json["poller_autoscaling"] = json!(true);
+        json["max_heartbeat_throttle_interval_ms"] = json!(60000);
+        json["nondeterminism_fails_workflow"] = json!(true);
+
+        let config = worker_config(&json).unwrap();
+
+        assert!(matches!(
+            config.workflow_task_poller_behavior,
+            Some(PollerBehavior::Autoscaling {
+                minimum: 1,
+                maximum: 8,
+                initial: 5
+            })
+        ));
+        assert!(matches!(
+            config.activity_task_poller_behavior,
+            Some(PollerBehavior::Autoscaling {
+                minimum: 1,
+                maximum: 1,
+                initial: 1
+            })
+        ));
+        assert_eq!(
+            config.max_heartbeat_throttle_interval,
+            Duration::from_secs(60)
+        );
+        assert_eq!(
+            config.workflow_failure_errors,
+            HashSet::from([WorkflowErrorType::Nondeterminism])
+        );
     }
 
     #[test]
@@ -412,29 +425,25 @@ mod tests {
             "Version": {"DeploymentName": "app", "BuildId": "b1"},
             "DefaultVersioningBehavior": 2,
         });
-        let config = parse_worker(&json).unwrap().1.worker_config().unwrap();
-        let WorkerVersioningStrategy::WorkerDeploymentBased(options) = config.versioning_strategy
-        else {
-            panic!("deployment-based versioning expected");
-        };
-        assert!(options.use_worker_versioning);
-        assert_eq!(options.version.deployment_name, "app");
-        assert_eq!(options.version.build_id, "b1");
-        assert_eq!(
-            options.default_versioning_behavior,
-            Some(VersioningBehavior::AutoUpgrade.into())
-        );
+        let auto_upgrade = Some(VersioningBehavior::AutoUpgrade.into());
+        assert!(matches!(
+            worker_config(&json).unwrap().versioning_strategy,
+            WorkerVersioningStrategy::WorkerDeploymentBased(options)
+                if options.use_worker_versioning
+                    && options.version.deployment_name == "app"
+                    && options.version.build_id == "b1"
+                    && options.default_versioning_behavior == auto_upgrade
+        ));
 
         json["deployment"]["DefaultVersioningBehavior"] = json!(0);
-        let config = parse_worker(&json).unwrap().1.worker_config().unwrap();
-        let WorkerVersioningStrategy::WorkerDeploymentBased(options) = config.versioning_strategy
-        else {
-            panic!("deployment-based versioning expected");
-        };
-        assert_eq!(options.default_versioning_behavior, None);
+        assert!(matches!(
+            worker_config(&json).unwrap().versioning_strategy,
+            WorkerVersioningStrategy::WorkerDeploymentBased(options)
+                if options.default_versioning_behavior.is_none()
+        ));
 
         json["deployment"]["DefaultVersioningBehavior"] = json!(99);
-        assert!(parse_worker(&json).unwrap().1.worker_config().is_err());
+        assert!(worker_config(&json).is_err());
     }
 
     #[test]
@@ -470,6 +479,26 @@ mod tests {
         );
         assert!(tls(None, None).client_config().is_ok());
         assert!(tls(Some("cert"), Some("key")).client_config().is_ok());
+    }
+
+    #[test]
+    fn client_tls_config_reads_the_ca_and_the_domain() {
+        let with_domain = |domain: &str| TlsJson {
+            server_root_ca_cert: Some("ca".into()),
+            domain: Some(domain.into()),
+            ..tls(Some("cert"), Some("key"))
+        };
+
+        let (_, origin) = with_domain("example.com").client_config().unwrap();
+
+        assert_eq!(origin.unwrap(), "https://example.com/");
+        assert!(
+            with_domain("bad domain")
+                .client_config()
+                .err()
+                .unwrap()
+                .starts_with("Invalid TLS domain: ")
+        );
     }
 
     #[test]

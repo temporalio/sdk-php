@@ -30,6 +30,10 @@ impl TpbClient {
     fn push(&self, tag: u64, (grpc_code, data): (i32, Vec<u8>)) {
         self.queue.push(tag, KIND_RPC_RESULT, grpc_code, data)
     }
+
+    fn push_panic(&self, tag: u64) -> impl FnOnce(String) + '_ {
+        move |message| self.push(tag, internal_error(message))
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -225,56 +229,50 @@ pub unsafe extern "C" fn tpb_client_call(
     timeout_ms: u64,
 ) {
     let c = unsafe { &*c };
-    guard(
-        |message| c.push(tag, internal_error(message)),
-        || {
-            let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
-                .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
-                .and_then(|path| {
-                    let request = request(
-                        unsafe { slice(body, body_len) }.to_vec(),
-                        unsafe { slice(metadata, metadata_len) },
-                        timeout_ms,
-                    )?;
-                    Ok((path, request))
-                });
-            let (path, request) = match prepared {
-                Ok(prepared) => prepared,
-                Err(status) => return c.push(tag, grpc_result(Err(status))),
-            };
-            let channel = c.channel.lock().unwrap().clone();
-            let queue = c.queue.clone();
-            c.queue
-                .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                    let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
-                    let (grpc_code, data) =
-                        grpc_result(with_deadline(call(channel, path, request), timeout).await);
-                    queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-                });
-        },
-    )
+    guard(c.push_panic(tag), || {
+        let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
+            .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
+            .and_then(|path| {
+                let request = request(
+                    unsafe { slice(body, body_len) }.to_vec(),
+                    unsafe { slice(metadata, metadata_len) },
+                    timeout_ms,
+                )?;
+                Ok((path, request))
+            });
+        let (path, request) = match prepared {
+            Ok(prepared) => prepared,
+            Err(status) => return c.push(tag, grpc_result(Err(status))),
+        };
+        let channel = c.channel.lock().unwrap().clone();
+        let queue = c.queue.clone();
+        c.queue
+            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
+                let (grpc_code, data) =
+                    grpc_result(with_deadline(call(channel, path, request), timeout).await);
+                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+            });
+    })
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout_ms: u64) {
     let c = unsafe { &*c };
-    guard(
-        |message| c.push(tag, internal_error(message)),
-        || {
-            let endpoint = c.endpoint.clone();
-            let channel = c.channel.clone();
-            let queue = c.queue.clone();
-            c.queue
-                .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                    let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
-                    let (grpc_code, data) = grpc_result(connected.map(|connected| {
-                        *channel.lock().unwrap() = connected;
-                        Vec::new()
-                    }));
-                    queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-                });
-        },
-    )
+    guard(c.push_panic(tag), || {
+        let endpoint = c.endpoint.clone();
+        let channel = c.channel.clone();
+        let queue = c.queue.clone();
+        c.queue
+            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
+                let (grpc_code, data) = grpc_result(connected.map(|connected| {
+                    *channel.lock().unwrap() = connected;
+                    Vec::new()
+                }));
+                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+            });
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -285,12 +283,14 @@ pub unsafe extern "C" fn tpb_client_free(c: *mut TpbClient) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{events, runtime};
+    use crate::testing::{Event, events, grpc_server, runtime};
 
-    #[test]
-    fn call_with_an_invalid_path_reports_invalid_argument() {
-        let rt = runtime();
-        let config = br#"{"target_url":"http://127.0.0.1:1","tls":null,"connect_timeout_ms":1000}"#;
+    const GET_SYSTEM_INFO: &[u8] =
+        b"/temporal.api.workflowservice.v1.WorkflowService/GetSystemInfo";
+
+    fn client(rt: *mut TpbRuntime, target_url: &str) -> *mut TpbClient {
+        let config =
+            format!(r#"{{"target_url":"{target_url}","tls":null,"connect_timeout_ms":1000}}"#);
         let c = unsafe {
             tpb_client_new(
                 rt,
@@ -301,31 +301,120 @@ mod tests {
             )
         };
         assert!(!c.is_null());
-        let path = b"no path";
+        c
+    }
+
+    fn call(c: *mut TpbClient, tag: u64, path: &[u8], metadata: &[u8], timeout_ms: u64) {
         unsafe {
             tpb_client_call(
                 c,
-                7,
+                tag,
                 path.as_ptr().cast(),
                 path.len(),
                 std::ptr::null(),
                 0,
-                std::ptr::null(),
-                0,
-                0,
+                metadata.as_ptr().cast(),
+                metadata.len(),
+                timeout_ms,
             )
-        };
-        let [(7, KIND_RPC_RESULT, grpc_code, ref data)] = events(rt, 1)[..] else {
-            panic!("one RPC result expected");
-        };
-        assert_eq!(grpc_code, Code::InvalidArgument as i32);
+        }
+    }
+
+    fn message(data: &[u8]) -> &[u8] {
         let length = u32::from_le_bytes(data[..4].try_into().unwrap()) as usize;
         assert_eq!(data.len(), 4 + length);
-        assert!(data[4..].starts_with(b"Invalid RPC path: "));
+        &data[4..]
+    }
+
+    #[test]
+    fn call_and_connect_succeed_against_a_grpc_server() {
+        let rt = runtime();
+        let c = client(rt, &grpc_server());
+
+        call(c, 1, GET_SYSTEM_INFO, b"", 0);
+        call(c, 2, GET_SYSTEM_INFO, br#"{"client-name":["php"]}"#, 5_000);
+        unsafe { tpb_client_connect(c, 3, 5_000) };
+
+        let ok = Code::Ok as i32;
+        assert_eq!(
+            events(rt, 3),
+            vec![
+                (1, KIND_RPC_RESULT, ok, vec![]),
+                (2, KIND_RPC_RESULT, ok, vec![]),
+                (3, KIND_RPC_RESULT, ok, vec![]),
+            ]
+        );
         unsafe {
             tpb_client_free(c);
             free(rt);
         }
+    }
+
+    #[test]
+    fn call_with_an_invalid_path_or_metadata_reports_invalid_argument() {
+        let rt = runtime();
+        let c = client(rt, "http://127.0.0.1:1");
+
+        call(c, 7, b"no path", b"", 0);
+        call(c, 8, GET_SYSTEM_INFO, br#"{"bad key":["x"]}"#, 0);
+
+        let invalid = |(tag, kind, grpc_code, data): Event, expected_tag: u64, prefix: &[u8]| {
+            let expected = (expected_tag, KIND_RPC_RESULT, Code::InvalidArgument as i32);
+            assert_eq!((tag, kind, grpc_code), expected);
+            assert!(message(&data).starts_with(prefix));
+        };
+        let [path, metadata] = events(rt, 2).try_into().unwrap();
+        invalid(path, 7, b"Invalid RPC path: ");
+        invalid(metadata, 8, b"Invalid metadata: ");
+        unsafe {
+            tpb_client_free(c);
+            free(rt);
+        }
+    }
+
+    #[test]
+    fn panics_in_call_and_connect_become_internal_results() {
+        let rt = runtime();
+        let c = client(rt, &grpc_server());
+        let channel = unsafe { &*c }.channel.clone();
+        let poisoner = std::thread::spawn(move || {
+            let _locked = channel.lock().unwrap();
+            panic!("poisoned");
+        });
+        assert!(poisoner.join().is_err());
+
+        call(c, 1, GET_SYSTEM_INFO, b"", 0);
+        unsafe { tpb_client_connect(c, 2, 5_000) };
+
+        for (tag, (event_tag, kind, grpc_code, data)) in [1, 2].into_iter().zip(events(rt, 2)) {
+            assert_eq!(
+                (event_tag, kind, grpc_code),
+                (tag, KIND_RPC_RESULT, Code::Internal as i32)
+            );
+            assert!(message(&data).starts_with(b"Panic in temporal-php-bridge: "));
+        }
+        unsafe {
+            tpb_client_free(c);
+            free(rt);
+        }
+    }
+
+    #[test]
+    fn endpoint_reads_tls_and_rejects_an_invalid_url() {
+        let endpoint_of = |target_url: &str, tls: &str| {
+            let json =
+                format!(r#"{{"target_url":"{target_url}","tls":{tls},"connect_timeout_ms":1}}"#);
+            endpoint(parse(json.as_bytes(), "client config").unwrap())
+        };
+        let tls = |domain: &str| {
+            format!(
+                r#"{{"server_root_ca_cert":null,"domain":{domain},"client_cert":null,"client_private_key":null}}"#
+            )
+        };
+
+        assert!(endpoint_of("https://127.0.0.1:7233", &tls(r#""example.com""#)).is_ok());
+        assert!(endpoint_of("https://127.0.0.1:7233", &tls("null")).is_ok());
+        assert!(endpoint_of("not a url", "null").is_err());
     }
 
     #[test]
@@ -357,8 +446,10 @@ mod tests {
         let timeout = Some(Duration::from_millis(10));
         let pending = rt.block_on(with_deadline(std::future::pending(), timeout));
         assert_eq!(pending.unwrap_err().code(), Code::DeadlineExceeded);
+        let expired_status = Status::from_error(Box::new(TimeoutExpired(())));
+        let transport_error = std::io::Error::other(expired_status);
         let expired = rt.block_on(with_deadline(
-            async { Err(Status::from_error(Box::new(TimeoutExpired(())))) },
+            async { Err(Status::from_error(Box::new(transport_error))) },
             timeout,
         ));
         assert_eq!(expired.unwrap_err().code(), Code::DeadlineExceeded);
