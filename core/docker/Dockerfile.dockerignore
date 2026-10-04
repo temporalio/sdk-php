@@ -1,9 +1,0 @@
-.git
-.idea
-.claude
-vendor
-runtime
-rr
-temporal
-temporal-test-server
-core/bridge/target
