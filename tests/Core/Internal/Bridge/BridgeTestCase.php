@@ -8,19 +8,12 @@ use Coresdk\ActivityHeartbeat;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Revolt\EventLoop;
-use Spiral\Attributes\AttributeReader;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Internal\Bridge\Bridge;
 use Temporal\Internal\Bridge\BridgeConnection;
 use Temporal\Internal\Bridge\CoreEnvironment;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
-use Temporal\Testing\Replay\HistoryJsonCodec;
 use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
-use Temporal\Worker\Core\CoreOptions;
-use Temporal\Worker\Core\CoreRole;
-use Temporal\Worker\Core\CoreWorkerConfig;
-use Temporal\Worker\Core\CoreWorkerFactory;
+use Temporal\Tests\Core\Replayers;
 
 final class BridgeTestCase extends TestCase
 {
@@ -64,7 +57,7 @@ final class BridgeTestCase extends TestCase
         $logger = new LoggerSpy();
         $bridge->useLogger($logger);
 
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
         $bridge->nextEvents(0);
         $bridge->shutdownWorkers([1 => $core]);
 
@@ -150,7 +143,7 @@ final class BridgeTestCase extends TestCase
     public function testWorkerCallsReportFailuresAsEvents(): void
     {
         $bridge = Bridge::shared();
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
 
         $bridge->pollActivityTask($core, 7);
         $bridge->completeWorkflowActivation($core, 8, 'x');
@@ -171,7 +164,7 @@ final class BridgeTestCase extends TestCase
     public function testHeartbeatIsValidated(): void
     {
         $bridge = Bridge::shared();
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
 
         $bridge->recordActivityHeartbeat($core, (new ActivityHeartbeat(['task_token' => 'unknown']))->serializeToString());
         try {
@@ -185,7 +178,7 @@ final class BridgeTestCase extends TestCase
     public function testShutdownEndsThePolls(): void
     {
         $bridge = Bridge::shared();
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
 
         $bridge->initiateShutdown($core);
         $bridge->initiateShutdown($core);
@@ -202,7 +195,7 @@ final class BridgeTestCase extends TestCase
     public function testPeekedEventsAreReturnedAgain(): void
     {
         $bridge = Bridge::shared();
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
 
         $bridge->completeWorkflowActivation($core, 1, 'x');
         $peeked = $bridge->peekEvents();
@@ -217,7 +210,7 @@ final class BridgeTestCase extends TestCase
     public function testOneFetchDrainsTheWholeQueue(): void
     {
         $bridge = Bridge::shared();
-        $core = self::replayer($bridge, self::STARTED_EVENT_ID);
+        $core = Replayers::create($bridge, self::STARTED_EVENT_ID);
 
         for ($i = 0; $i < self::MORE_EVENTS_THAN_ONE_FETCH; ++$i) {
             $bridge->completeWorkflowActivation($core, 1, 'x');
@@ -243,12 +236,4 @@ final class BridgeTestCase extends TestCase
         }
     }
 
-    private static function replayer(Bridge $bridge, int $lastEventId): \FFI\CData
-    {
-        $factory = CoreWorkerFactory::create();
-        $config = new CoreWorkerConfig(CoreOptions::create(null, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
-        $history = (new HistoryJsonCodec())->decode((string) \file_get_contents(__DIR__ . '/../../../Fixtures/history/squence-workflow-damaged.json'), $lastEventId);
-
-        return $bridge->newReplayer($config->build($factory->newWorker('default'), CoreRole::Workflow), $history->serializeToString(), 'replay');
-    }
 }

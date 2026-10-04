@@ -145,7 +145,18 @@ final class CoreWorkerConfigTestCase extends TestCase
     {
         $construct = \Closure::bind(static fn(mixed ...$arguments): CoreOptions => new CoreOptions(...$arguments), null, CoreOptions::class);
 
-        return $construct('host:7233', 'ns', 'key', $tls, 1, 1, $activityConcurrency, self::MAX_CACHED_WORKFLOWS, 'gzip', true);
+        return $construct(
+            address: 'host:7233',
+            namespace: 'ns',
+            apiKey: 'key',
+            tls: $tls,
+            workflowProcesses: 1,
+            activityProcesses: 1,
+            activityConcurrency: $activityConcurrency,
+            maxCachedWorkflows: self::MAX_CACHED_WORKFLOWS,
+            grpcCompression: 'gzip',
+            pollerAutoscaling: true,
+        );
     }
 
     private static function config(CoreOptions $options): CoreWorkerConfig

@@ -6,21 +6,14 @@ namespace Temporal\Tests\Core\Worker;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Spiral\Attributes\AttributeReader;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Bridge\Bridge;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
-use Temporal\Testing\Replay\HistoryJsonCodec;
 use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
 use Temporal\Worker\Core\ActivityTasks;
-use Temporal\Worker\Core\CoreOptions;
-use Temporal\Worker\Core\CoreRole;
-use Temporal\Worker\Core\CoreWorkerConfig;
-use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\Core\CoreWorkerHandle;
 use Temporal\Worker\Core\CoreWorkerLoop;
 use Temporal\Worker\Core\WorkflowActivations;
+use Temporal\Tests\Core\Replayers;
 
 final class CoreWorkerLoopTestCase extends TestCase
 {
@@ -147,11 +140,8 @@ final class CoreWorkerLoopTestCase extends TestCase
 
     private static function handle(\Closure $dispatch, bool $workflows = true, bool $activities = false): CoreWorkerHandle
     {
-        $config = new CoreWorkerConfig(CoreOptions::create(null, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
-        $history = (new HistoryJsonCodec())->decode((string) \file_get_contents(__DIR__ . '/../../Fixtures/history/squence-workflow-damaged.json'), self::FIRST_TASK_EVENT_ID);
-
         return new CoreWorkerHandle(
-            Bridge::shared()->newReplayer($config->build(CoreWorkerFactory::create()->newWorker('default'), CoreRole::Workflow), $history->serializeToString(), 'replay'),
+            Replayers::create(Bridge::shared(), self::FIRST_TASK_EVENT_ID),
             'default',
             new WorkflowActivations(DataConverter::createDefault(), $dispatch, 'default', 'default', [], false),
             $workflows,

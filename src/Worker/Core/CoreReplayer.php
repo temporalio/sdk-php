@@ -98,6 +98,6 @@ final class CoreReplayer
             }
         }
 
-        return $failure ?? new ReplayFailedException(\sprintf('The replay got no activation for %d seconds', $this->idleTimeoutSeconds), false);
+        return $failure ?? new ReplayFailedException(\sprintf('The replay got no activation for %g seconds', $this->idleTimeoutSeconds), false);
     }
 }

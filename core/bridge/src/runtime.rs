@@ -20,8 +20,13 @@ pub struct TpbRuntime {
     pub connections: Mutex<HashMap<String, Connection>>,
 }
 
-#[derive(Debug)]
 struct QueueLog(Arc<OnceLock<Arc<Queue>>>);
+
+impl std::fmt::Debug for QueueLog {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("QueueLog")
+    }
+}
 
 fn push_log(
     queue: &Queue,

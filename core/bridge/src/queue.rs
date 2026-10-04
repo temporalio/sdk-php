@@ -18,7 +18,6 @@ use std::{
 use temporalio_sdk_core::PollError;
 use tokio::runtime::Handle;
 
-#[derive(Debug)]
 struct Event {
     tag: u64,
     kind: i32,
@@ -26,7 +25,6 @@ struct Event {
     data: Box<[u8]>,
 }
 
-#[derive(Debug)]
 pub struct Queue {
     pub handle: Handle,
     events: Mutex<VecDeque<Event>>,

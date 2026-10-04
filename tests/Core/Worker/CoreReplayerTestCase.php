@@ -5,20 +5,14 @@ declare(strict_types=1);
 namespace Temporal\Tests\Core\Worker;
 
 use PHPUnit\Framework\TestCase;
-use Spiral\Attributes\AttributeReader;
 use Temporal\Api\History\V1\History;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Bridge\Bridge;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
-use Temporal\Testing\Replay\HistoryJsonCodec;
-use Temporal\Worker\Core\CoreOptions;
 use Temporal\Worker\Core\CoreReplayer;
-use Temporal\Worker\Core\CoreRole;
-use Temporal\Worker\Core\CoreWorkerConfig;
 use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\Core\ReplayFailedException;
 use Temporal\Worker\Core\WorkflowActivations;
+use Temporal\Tests\Core\Replayers;
 
 final class CoreReplayerTestCase extends TestCase
 {
@@ -36,7 +30,7 @@ final class CoreReplayerTestCase extends TestCase
     public function testHistoryOfAnUnknownTaskQueueIsRejected(): void
     {
         $this->expectException(\OutOfRangeException::class);
-        CoreWorkerFactory::create()->replay(self::history(self::FULL_HISTORY), 'replay');
+        CoreWorkerFactory::create()->replay(Replayers::history(self::FULL_HISTORY), 'replay');
     }
 
     public function testReplayWithoutActivationTimesOut(): void
@@ -44,7 +38,7 @@ final class CoreReplayerTestCase extends TestCase
         $replayer = new CoreReplayer(Bridge::shared(), self::SHORT_IDLE_TIMEOUT_SECONDS);
 
         try {
-            $replayer->replay(self::history(self::STARTED_EVENT_ID), 'replay', self::config(), self::activations(static fn(): array => []));
+            $replayer->replay(Replayers::history(self::STARTED_EVENT_ID), 'replay', Replayers::config(), self::activations(static fn(): array => []));
             self::fail('The replay must time out');
         } catch (ReplayFailedException $e) {
             self::assertSame('The replay got no activation for 1 seconds', $e->getMessage());
@@ -55,7 +49,7 @@ final class CoreReplayerTestCase extends TestCase
     public function testRejectedCompletionFailsTheReplayAndForeignEventsAreSkipped(): void
     {
         $bridge = Bridge::shared();
-        $other = $bridge->newReplayer(self::config(), self::history(self::STARTED_EVENT_ID)->serializeToString(), 'other');
+        $other = $bridge->newReplayer(Replayers::config(), Replayers::history(self::STARTED_EVENT_ID)->serializeToString(), 'other');
         $replayTag = (int) (new \ReflectionClass(CoreReplayer::class))->getStaticPropertyValue('tag') + 1;
         $evicted = false;
         $activations = self::activations(static function (array $messages) use ($bridge, $other, $replayTag, &$evicted): array {
@@ -71,7 +65,7 @@ final class CoreReplayerTestCase extends TestCase
         });
 
         try {
-            (new CoreReplayer($bridge))->replay(self::history(self::FIRST_TASK_EVENT_ID), 'replay', self::config(), $activations);
+            (new CoreReplayer($bridge))->replay(Replayers::history(self::FIRST_TASK_EVENT_ID), 'replay', Replayers::config(), $activations);
             self::fail('The rejected completion must fail the replay');
         } catch (\RuntimeException $e) {
             self::assertStringStartsWith('sdk-core completion failed: Decode failure', $e->getMessage());
@@ -81,17 +75,7 @@ final class CoreReplayerTestCase extends TestCase
         self::assertTrue($evicted);
     }
 
-    private static function history(int $lastEventId): History
-    {
-        return (new HistoryJsonCodec())->decode((string) \file_get_contents(__DIR__ . '/../../Fixtures/history/squence-workflow-damaged.json'), $lastEventId);
-    }
 
-    private static function config(): array
-    {
-        $config = new CoreWorkerConfig(CoreOptions::create(null, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
-
-        return $config->build(CoreWorkerFactory::create()->newWorker('default'), CoreRole::Workflow);
-    }
 
     private static function activations(\Closure $dispatch): WorkflowActivations
     {

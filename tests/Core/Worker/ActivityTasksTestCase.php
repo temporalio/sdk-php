@@ -11,7 +11,6 @@ use Coresdk\Activity_task\Start;
 use Coresdk\ActivityTaskCompletion;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
@@ -20,17 +19,11 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\TransportException;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Bridge\Bridge;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
-use Temporal\Testing\Replay\HistoryJsonCodec;
 use Temporal\Worker\Core\ActivityTasks;
-use Temporal\Worker\Core\CoreOptions;
-use Temporal\Worker\Core\CoreRole;
-use Temporal\Worker\Core\CoreWorkerConfig;
-use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Tests\Core\Replayers;
 
 final class ActivityTasksTestCase extends TestCase
 {
@@ -121,7 +114,7 @@ final class ActivityTasksTestCase extends TestCase
     public function testHeartbeatReportsTheCancelReason(int $reason, array $expected): void
     {
         $bridge = Bridge::shared();
-        $worker = self::replayer($bridge);
+        $worker = Replayers::create($bridge, self::STARTED_EVENT_ID);
         $tasks = new ActivityTasks();
         $heartbeats = [];
         $tasks->bind($bridge, static function (array $commands) use ($tasks, $worker, $reason, &$heartbeats): array {
@@ -168,11 +161,4 @@ final class ActivityTasksTestCase extends TestCase
         return ['taskToken' => \base64_encode(self::TOKEN), 'details' => \base64_encode((new Payloads())->serializeToString())];
     }
 
-    private static function replayer(Bridge $bridge): \FFI\CData
-    {
-        $config = new CoreWorkerConfig(CoreOptions::create(null, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
-        $history = (new HistoryJsonCodec())->decode((string) \file_get_contents(__DIR__ . '/../../Fixtures/history/squence-workflow-damaged.json'), self::STARTED_EVENT_ID);
-
-        return $bridge->newReplayer($config->build(CoreWorkerFactory::create()->newWorker('default'), CoreRole::Workflow), $history->serializeToString(), 'replay');
-    }
 }
