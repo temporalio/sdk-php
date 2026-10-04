@@ -28,7 +28,10 @@ $timeout = (float) ($opts['timeout'] ?? 600);
 $rate = (float) ($opts['rate'] ?? 0);
 $address = benchEnv('TEMPORAL_ADDRESS');
 $taskQueue = benchEnv('BENCH_TASK_QUEUE');
-$workflowType = SCENARIO_WORKFLOW[$scenario] ?? throw new \InvalidArgumentException("Unknown scenario: {$scenario}");
+if (!isset(SCENARIO_WORKFLOW[$scenario])) {
+    throw new \InvalidArgumentException("Unknown scenario: {$scenario}");
+}
+$workflowType = SCENARIO_WORKFLOW[$scenario];
 $prefix = $opts['prefix'] ?? \sprintf('bench-%s-%s-', $scenario, \bin2hex(\random_bytes(4)));
 
 function startWorkflows(string $address, string $taskQueue, string $workflowType, string $prefix, array $indexes, int $activities, int $param, float $rate, float $startedAt): void
