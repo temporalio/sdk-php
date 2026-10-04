@@ -18,14 +18,10 @@ final class CoreWorkflowReplayer
 {
     private const REPLAY_WORKFLOW_ID = 'replay';
 
-    private readonly HistoryJsonCodec $codec;
-
     public function __construct(
         private readonly CoreWorkerFactory $factory,
         private readonly ?WorkflowClientInterface $client = null,
-    ) {
-        $this->codec = new HistoryJsonCodec();
-    }
+    ) {}
 
     public function replayHistory(History $history): void
     {
@@ -47,7 +43,7 @@ final class CoreWorkflowReplayer
 
     public function downloadHistory(string $workflowType, WorkflowExecution $execution, string $savePath): void
     {
-        if (\file_put_contents($savePath, $this->codec->encode($this->fetchHistory($execution))) === false) {
+        if (\file_put_contents($savePath, $this->fetchHistory($execution)->serializeToJsonString()) === false) {
             throw new \RuntimeException(\sprintf('Unable to write the history to "%s"', $savePath));
         }
     }
@@ -64,7 +60,7 @@ final class CoreWorkflowReplayer
             throw new InvalidArgumentException($workflowType, \sprintf('History file "%s" cannot be read.', $path), StatusCode::INVALID_ARGUMENT);
         }
 
-        $this->replay($workflowType, $this->codec->decode($json, $lastEventId), self::REPLAY_WORKFLOW_ID);
+        $this->replay($workflowType, HistoryJsonCodec::decode($json, $lastEventId), self::REPLAY_WORKFLOW_ID);
     }
 
     private function replay(string $workflowType, History $history, string $workflowId): void
@@ -80,8 +76,10 @@ final class CoreWorkflowReplayer
 
     private function fetchHistory(WorkflowExecution $execution): History
     {
-        $client = $this->client ?? throw new \LogicException('A workflow client is required to fetch a history.');
+        if ($this->client === null) {
+            throw new \LogicException('A workflow client is required to fetch a history.');
+        }
 
-        return $client->getWorkflowHistory($execution)->getHistory();
+        return $this->client->getWorkflowHistory($execution)->getHistory();
     }
 }

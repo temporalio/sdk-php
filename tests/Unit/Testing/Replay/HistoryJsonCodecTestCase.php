@@ -23,14 +23,14 @@ final class HistoryJsonCodecTestCase extends TestCase
     #[DataProvider('provideEventTypeNames')]
     public function testEventTypeNamesDecode(string $name): void
     {
-        $history = (new HistoryJsonCodec())->decode(\json_encode(['events' => [['eventId' => '1', 'eventType' => $name]]]));
+        $history = HistoryJsonCodec::decode(\json_encode(['events' => [['eventId' => '1', 'eventType' => $name]]]));
 
         $this->assertSame(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED, $history->getEvents()[0]->getEventType());
     }
 
     public function testSnakeCaseKeysDecode(): void
     {
-        $history = (new HistoryJsonCodec())->decode(\json_encode(['events' => [['event_id' => '1', 'event_type' => 'WorkflowExecutionStarted']]]));
+        $history = HistoryJsonCodec::decode(\json_encode(['events' => [['event_id' => '1', 'event_type' => 'WorkflowExecutionStarted']]]));
 
         $this->assertSame(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED, $history->getEvents()[0]->getEventType());
     }
@@ -42,17 +42,14 @@ final class HistoryJsonCodecTestCase extends TestCase
             ['eventId' => '2', 'eventType' => 'WorkflowTaskScheduled'],
             ['eventId' => '3', 'eventType' => 'WorkflowTaskStarted'],
         ]]);
-        $codec = new HistoryJsonCodec();
-
-        $this->assertCount(2, $codec->decode($json, 2)->getEvents());
-        $this->assertCount(3, $codec->decode($json)->getEvents());
+        $this->assertCount(2, HistoryJsonCodec::decode($json, 2)->getEvents());
+        $this->assertCount(3, HistoryJsonCodec::decode($json)->getEvents());
     }
 
     public function testEncodeDecodeRoundTrip(): void
     {
-        $codec = new HistoryJsonCodec();
-        $history = $codec->decode(\json_encode(['events' => [['eventId' => '1', 'eventType' => 'WorkflowExecutionStarted']]]));
+        $history = HistoryJsonCodec::decode(\json_encode(['events' => [['eventId' => '1', 'eventType' => 'WorkflowExecutionStarted']]]));
 
-        $this->assertSame($history->serializeToString(), $codec->decode($codec->encode($history))->serializeToString());
+        $this->assertSame($history->serializeToString(), HistoryJsonCodec::decode($history->serializeToJsonString())->serializeToString());
     }
 }
