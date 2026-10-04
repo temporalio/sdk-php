@@ -12,5 +12,10 @@ temporal:
     activities:
         num_workers: ${BENCH_ACTIVITY_WORKERS}
 
+kv:
+    bench:
+        driver: memory
+        config: {}
+
 logs:
     level: error

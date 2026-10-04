@@ -13,7 +13,7 @@ use Temporal\Client\WorkflowOptions;
 require __DIR__ . '/autoload.php';
 
 const TEMPORAL_NAMESPACE = 'default';
-const SCENARIO_WORKFLOW = ['seq' => 'BenchWorkflow', 'par' => 'BenchParallelWorkflow', 'noact' => 'BenchWorkflow', 'io' => 'BenchIoWorkflow', 'cpu' => 'BenchCpuWorkflow'];
+const SCENARIO_WORKFLOW = ['seq' => 'BenchWorkflow', 'par' => 'BenchParallelWorkflow', 'noact' => 'BenchWorkflow', 'io' => 'BenchIoWorkflow', 'cpu' => 'BenchCpuWorkflow', 'kv' => 'BenchKvWorkflow'];
 
 $opts = \getopt('', ['scenario:', 'workflows:', 'activities:', 'param:', 'concurrency:', 'timeout:', 'rate:', 'prefix:', 'part:', 'started-at:']);
 $scenario = $opts['scenario'] ?? 'seq';

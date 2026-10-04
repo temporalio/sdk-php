@@ -11,6 +11,7 @@ BENCH_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$BENCH_DIR"
 
 RR_BIN=${RR_BIN:-$BENCH_DIR/../rr}
+RR_CORE_BIN=${RR_CORE_BIN:-$BENCH_DIR/../core/roadrunner/rr}
 CONCURRENCY=${BENCH_CONCURRENCY:-8}
 WARMUP=${BENCH_WARMUP:-20}
 RATE=${BENCH_RATE:-0}
@@ -23,9 +24,11 @@ export TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-127.0.0.1:7557}
 export BENCH_TRANSPORT=$TRANSPORT
 export BENCH_ACTIVITY_WORKERS=${BENCH_ACTIVITY_WORKERS:-4}
 export BENCH_TASK_QUEUE="bench-$(date +%s)-$$"
+export RR_RPC=tcp://127.0.0.1:6556
 
 TMP=$(mktemp -d)
 WORKER_PID=
+KV_PID=
 SAMPLER_PID=
 
 cleanup() {
@@ -35,10 +38,10 @@ cleanup() {
         tail -40 "$TMP/worker.log" >&2
     fi
     [ -n "$SAMPLER_PID" ] && kill "$SAMPLER_PID" 2>/dev/null || true
-    if [ -n "$WORKER_PID" ]; then
-        kill -TERM "$WORKER_PID" 2>/dev/null || true
-        wait "$WORKER_PID" 2>/dev/null || true
-    fi
+    for pid in $WORKER_PID $KV_PID; do
+        kill -TERM "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+    done
     rm -rf "$TMP"
 }
 trap cleanup EXIT
@@ -46,7 +49,13 @@ trap 'exit 143' TERM INT
 
 case "$TRANSPORT" in
     rr) "$RR_BIN" serve -c .rr.yaml > "$TMP/worker.log" 2>&1 & ;;
-    core) $PHP -dopcache.enable_cli=1 ${BENCH_WORKER_PHP_FLAGS:-} worker.php > "$TMP/worker.log" 2>&1 & ;;
+    rr-core) "$RR_CORE_BIN" serve -c .rr.core.yaml > "$TMP/worker.log" 2>&1 & ;;
+    core)
+        if [ "$SCENARIO" = kv ]; then
+            "$RR_CORE_BIN" serve -c .rr.kv.yaml > "$TMP/kv.log" 2>&1 &
+            KV_PID=$!
+        fi
+        $PHP -dopcache.enable_cli=1 ${BENCH_WORKER_PHP_FLAGS:-} worker.php > "$TMP/worker.log" 2>&1 & ;;
     *) echo "unknown transport: $TRANSPORT" >&2; exit 1 ;;
 esac
 WORKER_PID=$!
@@ -60,7 +69,7 @@ descendants() {
 }
 
 worker_pids() {
-    echo "$WORKER_PID" $(descendants "$WORKER_PID") | tr ' ' ','
+    echo "$WORKER_PID" $(descendants "$WORKER_PID") $KV_PID | tr ' ' ','
 }
 
 cpu_seconds() {

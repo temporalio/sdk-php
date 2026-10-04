@@ -6,6 +6,7 @@ This directory holds the native part of the RoadRunner-free worker transport.
 |---|---|
 | `bridge/` | Rust `cdylib` over Temporal sdk-core (`temporalio-sdk-core` 0.9.0 from crates.io). Completion-queue C API, no callbacks into PHP. |
 | `bridge/include/temporal_php_bridge.h` | The header that `FFI::cdef()` loads. |
+| `roadrunner/` | A RoadRunner build without the Temporal plugin: service, server, rpc, kv, jobs, lock, metrics, logger. |
 
 The PHP side is in `src/Worker/Core/` (worker, supervisor, adapter), `src/Internal/Bridge/` (FFI bridge, `TEMPORAL_CORE_*` env, connection options) and `src/Client/GRPC/Core/` (gRPC client without ext-grpc).
 
@@ -74,6 +75,46 @@ Mapped `WorkerOptions`: workflow/activity pollers and concurrency, `workerActivi
 - On Linux without ext-grpc, it forks them. The children share the compiled code, opcache and the objects created before `run()` (copy-on-write): 35 % less memory on Linux (PSS). A client created before `run()` connects again in each child.
 - Otherwise (ext-grpc loaded, macOS, or a client call before `run()` that started the sdk-core runtime), it starts each child as a fresh `php` process with the same script, arguments and changed ini settings, like RoadRunner starts its workers. The script runs again in every child. ext-grpc cannot be used after `fork()`, and on macOS TLS with the system roots crashes a forked child.
 
+## Run under RoadRunner
+
+RoadRunner can manage the worker processes instead of `run()`. Temporal still goes through sdk-core; RoadRunner starts and restarts the processes and serves KV, jobs, locks and metrics over RPC as before.
+
+```bash
+cd core/roadrunner && GOWORK=off CGO_ENABLED=0 go build -trimpath -o rr .
+```
+
+```yaml
+version: "3"
+
+rpc:
+    listen: tcp://127.0.0.1:6001
+
+kv:
+    cache:
+        driver: memory
+        config: {}
+
+service:
+    temporal-workflow:
+        command: "php worker.php"
+        process_num: 1
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: workflow
+            RR_RPC: tcp://127.0.0.1:6001
+    temporal-activity:
+        command: "php worker.php"
+        process_num: 4
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: activity
+            RR_RPC: tcp://127.0.0.1:6001
+```
+
+`worker.php` is the same script as above. With `TEMPORAL_CORE_ROLE` set, `run()` serves only that role in the current process and stops when RoadRunner is gone. `remain_after_exit` restarts a process that exits. `rr serve` sends SIGINT on stop, and the worker shuts down gracefully within `timeout_stop_sec` (5 s by default). The RoadRunner PHP clients (`spiral/roadrunner-kv`, `spiral/roadrunner-jobs`, `roadrunner/psr-logger`) connect to `RR_RPC` from any of these processes.
+
 ## gRPC client without ext-grpc
 
 When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` and the testing `TestService` send their calls through the sdk-core bridge (tonic, rustls with the system roots). `create()` and `createSSL()` work as before; the SDK retries, deadlines, metadata and API key are unchanged. Inside a Fibers activity process a call suspends only its own Fiber.
@@ -84,7 +125,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 ## Benchmarks
 
-`bench/run.sh <rr|core> <scenario> <workflows> <activities> <param>` starts a worker, a warmup and the measured run against a Temporal server, and appends one JSON line to the results file. `bench/matrix.sh` runs the whole matrix for both transports, `bench/summary.sh <file>` prints the table.
+`bench/run.sh <rr|core|rr-core> <scenario> <workflows> <activities> <param>` starts a worker (`rr`: RoadRunner with the Temporal plugin, `core`: `run()` supervises the processes, `rr-core`: the `core/roadrunner` build starts them), a warmup and the measured run against a Temporal server, and appends one JSON line to the results file. `bench/matrix.sh` runs the whole matrix for both transports, `bench/summary.sh <file>` prints the table.
 
 | scenario | workflow | `<param>` |
 |---|---|---|
@@ -93,6 +134,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 | `noact` | no activities | payload size, bytes |
 | `io` | parallel activities that wait (non-blocking in Fibers) | wait per activity, ms |
 | `cpu` | CPU-bound workflow code, one activity | CPU time per activation, ms |
+| `kv` | activities that set and get RoadRunner KV keys over RPC (`core` also starts a KV-only `core/roadrunner` process and counts it) | KV set + get pairs per activity |
 
 | variable | default | meaning |
 |---|---|---|
@@ -107,6 +149,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 | `BENCH_WORKER_PHP_FLAGS` | – | extra `php` flags for the core worker (for example `-dopcache.jit=tracing`) |
 | `BENCH_RUSAGE` | – | macOS: path to the `bench/rusage.c` binary (`cc -O2 -o bench/rusage bench/rusage.c`); adds instructions and cycles of the worker processes to the results |
 | `RR_BIN` | `../rr` | RoadRunner binary |
+| `RR_CORE_BIN` | `../core/roadrunner/rr` | RoadRunner build without the Temporal plugin |
 | `BENCH_RUNS`, `BENCH_RUN_TIMEOUT` | `2`, `600` | `matrix.sh` only: repetitions and the timeout per run (needs GNU `timeout`, `brew install coreutils` on macOS) |
 
 ## Limitations and differences to RoadRunner
