@@ -18,7 +18,7 @@ pub fn runtime() -> *mut TpbRuntime {
     rt
 }
 
-fn empty_events<const N: usize>() -> [TpbEvent; N] {
+pub fn empty_events<const N: usize>() -> [TpbEvent; N] {
     std::array::from_fn(|_| TpbEvent {
         tag: 0,
         kind: 0,

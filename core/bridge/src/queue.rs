@@ -61,14 +61,17 @@ impl Queue {
     }
 
     pub fn push(&self, tag: u64, kind: i32, status: i32, data: Vec<u8>) {
-        self.events.lock().unwrap().push_back(Event {
+        let mut events = self.events.lock().unwrap();
+        let was_empty = events.is_empty();
+        events.push_back(Event {
             tag,
             kind,
             status,
             data: data.into_boxed_slice(),
         });
+        drop(events);
         self.ready.notify_one();
-        if self.fd_watched.load(Ordering::Relaxed) {
+        if was_empty && self.fd_watched.load(Ordering::Relaxed) {
             unsafe { libc::write(self.write_fd.as_raw_fd(), [1u8].as_ptr().cast(), 1) };
         }
     }
@@ -164,8 +167,9 @@ pub unsafe extern "C" fn tpb_next_events(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ffi::free;
-    use crate::testing::{events, runtime};
+    use crate::ffi::{KIND_ACTIVITY_TASK, free};
+    use crate::testing::{empty_events, events, runtime};
+    use temporalio_common::protos::coresdk::activity_task::ActivityTask;
 
     fn read_bytes(fd: libc::c_int) -> isize {
         let mut buf = [0u8; 8];
@@ -173,7 +177,7 @@ mod tests {
     }
 
     #[test]
-    fn event_fd_gets_one_byte_per_event_after_it_is_watched() {
+    fn event_fd_gets_one_byte_per_wake_up_after_it_is_watched() {
         let rt = runtime();
         let queue = &unsafe { &*rt }.queue;
         queue.push(1, 0, STATUS_OK, Vec::new());
@@ -182,11 +186,47 @@ mod tests {
         let fd = unsafe { tpb_event_fd(rt) };
         assert_eq!(fd, queue.read_fd.as_raw_fd());
         queue.push(2, 0, STATUS_OK, Vec::new());
-        queue.push(3, 0, STATUS_OK, Vec::new());
-        assert_eq!(read_bytes(fd), 2);
         assert_eq!(read_bytes(fd), -1);
+        assert_eq!(events(rt, 2).len(), 2);
 
-        assert_eq!(events(rt, 3).len(), 3);
+        queue.push(3, 0, STATUS_OK, Vec::new());
+        queue.push(4, 0, STATUS_OK, Vec::new());
+        assert_eq!(read_bytes(fd), 1);
+        assert_eq!(read_bytes(fd), -1);
+        assert_eq!(events(rt, 2).len(), 2);
+        unsafe { free(rt) };
+    }
+
+    #[test]
+    fn take_fills_at_most_the_buffer_and_returns_at_once_without_timeout() {
+        let rt = runtime();
+        let queue = &unsafe { &*rt }.queue;
+        let mut out: [TpbEvent; 2] = empty_events();
+        assert_eq!(queue.take(0, &mut out), 0);
+
+        for tag in 1..=3 {
+            queue.push(tag, 0, STATUS_OK, Vec::new());
+        }
+        assert_eq!(queue.take(0, &mut out), 2);
+        assert_eq!([out[0].tag, out[1].tag], [1, 2]);
+        assert_eq!(queue.take(0, &mut out), 1);
+        assert_eq!(out[0].tag, 3);
+        unsafe { free(rt) };
+    }
+
+    #[test]
+    fn poll_error_is_an_error_event() {
+        let rt = runtime();
+        let queue = &unsafe { &*rt }.queue;
+        let failed: Result<ActivityTask, _> = Err(PollError::TonicError(
+            tonic::Status::unavailable("server down"),
+        ));
+
+        queue.push_poll(5, KIND_ACTIVITY_TASK, failed);
+
+        let [(tag, kind, status, message)] = events(rt, 1).try_into().unwrap();
+        assert_eq!((tag, kind, status), (5, KIND_ACTIVITY_TASK, STATUS_ERROR));
+        assert!(String::from_utf8_lossy(&message).contains("server down"));
         unsafe { free(rt) };
     }
 }
