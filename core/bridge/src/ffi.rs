@@ -93,3 +93,55 @@ pub unsafe extern "C" fn tpb_bytes_free(data: *mut u8, len: usize) {
         },
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn construct_returns_errors_and_panics_through_the_error_pointers() {
+        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
+        let failed: Result<u8, String> = Err("no worker".into());
+        assert!(unsafe { construct(&mut err, &mut err_len, || failed) }.is_null());
+        assert_eq!(unsafe { slice(err.cast(), err_len) }, b"no worker");
+        unsafe { tpb_bytes_free(err, err_len) };
+
+        let panicked = unsafe {
+            construct(&mut err, &mut err_len, || -> Result<u8, String> {
+                panic!("boom")
+            })
+        };
+        assert!(panicked.is_null());
+        assert_eq!(
+            unsafe { slice(err.cast(), err_len) },
+            b"Panic in temporal-php-bridge: boom"
+        );
+        unsafe { tpb_bytes_free(err, err_len) };
+
+        let unreported: Result<u8, String> = Err("lost".into());
+        let null = std::ptr::null_mut();
+        assert!(unsafe { construct(null, std::ptr::null_mut(), || unreported) }.is_null());
+    }
+
+    #[test]
+    fn panic_message_reads_str_and_string_payloads() {
+        let message = |payload: Box<dyn Any + Send>| panic_message(payload);
+        assert_eq!(message(Box::new("a")), "Panic in temporal-php-bridge: a");
+        assert_eq!(
+            message(Box::new(String::from("b"))),
+            "Panic in temporal-php-bridge: b"
+        );
+        assert_eq!(
+            message(Box::new(42)),
+            "Panic in temporal-php-bridge: unknown panic"
+        );
+    }
+
+    #[test]
+    fn freeing_null_does_nothing() {
+        unsafe {
+            tpb_bytes_free(std::ptr::null_mut(), 0);
+            free(std::ptr::null_mut::<u8>());
+        }
+    }
+}
