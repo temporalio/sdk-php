@@ -19,10 +19,13 @@ use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\HistoryJsonCodec;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 use Temporal\Tests\Workflow\WorkflowWithSequence;
+use Temporal\Worker\Core\CoreReplayer;
 use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Workflow\WorkflowExecution;
 
 #[CoversClass(CoreWorkflowReplayer::class)]
+#[CoversClass(CoreWorkerFactory::class)]
+#[CoversClass(CoreReplayer::class)]
 final class CoreWorkflowReplayerTestCase extends TestCase
 {
     private const FIXTURE = __DIR__ . '/../../Fixtures/history/squence-workflow-damaged.json';
