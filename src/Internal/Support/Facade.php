@@ -40,8 +40,13 @@ abstract class Facade
      */
     public static function setCurrentContext(?object $ctx): void
     {
-        $fiber = self::isolatedFiber();
-        if ($fiber === null || self::$fiberCtx === null) {
+        if (self::$fiberCtx === null) {
+            self::$ctx = $ctx;
+            return;
+        }
+
+        $fiber = \Fiber::getCurrent();
+        if ($fiber === null || !isset(self::$fiberCtx[$fiber])) {
             self::$ctx = $ctx;
             return;
         }
@@ -51,14 +56,14 @@ abstract class Facade
 
     public static function getCurrentContext(): ?object
     {
-        $fiber = self::isolatedFiber();
-        if ($fiber === null || self::$fiberCtx === null) {
+        if (self::$fiberCtx === null) {
             return self::$ctx;
         }
 
-        $context = self::$fiberCtx[$fiber] ?? null;
+        $fiber = \Fiber::getCurrent();
+        $context = $fiber === null ? null : self::$fiberCtx[$fiber] ?? null;
 
-        return $context === null ? null : $context[0];
+        return $context === null ? self::$ctx : $context[0];
     }
 
     /**
@@ -114,12 +119,5 @@ abstract class Facade
         $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
-    }
-
-    private static function isolatedFiber(): ?\Fiber
-    {
-        $fiber = \Fiber::getCurrent();
-
-        return $fiber !== null && self::$fiberCtx?->offsetExists($fiber) ? $fiber : null;
     }
 }

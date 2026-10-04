@@ -11,6 +11,13 @@ use Temporal\Internal\Support\Facade;
 #[CoversClass(Facade::class)]
 final class FiberContextTestCase extends TestCase
 {
+    protected function setUp(): void
+    {
+        \Closure::bind(static function (): void {
+            Facade::$fiberCtx = null;
+        }, null, Facade::class)();
+    }
+
     protected function tearDown(): void
     {
         Facade::setCurrentContext(null);
@@ -44,8 +51,24 @@ final class FiberContextTestCase extends TestCase
         $this->assertNull(Facade::getCurrentContext());
     }
 
+    public function testWithoutIsolatedFibersEveryFiberSharesTheGlobalContext(): void
+    {
+        $global = new \stdClass();
+        $seen = null;
+
+        (new \Fiber(static function () use ($global, &$seen): void {
+            Facade::setCurrentContext($global);
+            $seen = Facade::getCurrentContext();
+        }))->start();
+
+        $this->assertSame($global, $seen);
+        $this->assertSame($global, Facade::getCurrentContext());
+    }
+
     public function testFiberThatIsNotIsolatedSharesTheGlobalContext(): void
     {
+        $isolated = new \Fiber(static fn() => null);
+        Facade::isolateFiber($isolated);
         $global = new \stdClass();
         Facade::setCurrentContext($global);
         $seen = null;
