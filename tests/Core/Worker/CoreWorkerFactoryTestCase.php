@@ -1,0 +1,193 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Core\Worker;
+
+use PHPUnit\Framework\TestCase;
+use Temporal\Activity;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Api\Common\V1\WorkflowExecution;
+use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
+use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Common\RetryOptions;
+use Temporal\Exception\Client\ActivityPausedException;
+use Temporal\Internal\Bridge\CoreEnvironment;
+use Temporal\Tests\Core\DevServer;
+use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
+use Temporal\Worker\Core\CoreWorkerFactory;
+use Temporal\Worker\Transport\HostConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\WorkerOptions;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
+
+final class CoreWorkerFactoryTestCase extends TestCase
+{
+    private const SAFETY_TIMEOUT_SECONDS = 60;
+
+    public static string $address = '';
+    public static bool $stopInWorkflow = false;
+
+    /** @var list<class-string<\Throwable>> */
+    public static array $heartbeatErrors = [];
+
+    public function testOnlyActivityTasksCanBeTheRpcConnection(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        CoreWorkerFactory::create(rpc: $this->createStub(RPCConnectionInterface::class));
+    }
+
+    public function testHostConnectionIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        CoreWorkerFactory::create()->run($this->createStub(HostConnectionInterface::class));
+    }
+
+    public function testChildRoleWithoutWorkReturns(): void
+    {
+        $logger = new LoggerSpy();
+        $_SERVER[CoreEnvironment::ROLE] = 'activity';
+        try {
+            $code = CoreWorkerFactory::create(logger: $logger)->run();
+        } finally {
+            unset($_SERVER[CoreEnvironment::ROLE]);
+        }
+
+        self::assertSame(0, $code);
+        self::assertSame('No task queue needs a activity process, exiting', $logger->records[0]['message']);
+    }
+
+    public function testSingleProcessWithoutWorkReturns(): void
+    {
+        $logger = new LoggerSpy();
+
+        $code = CoreWorkerFactory::create(workflowProcesses: 1, activityProcesses: 0, logger: $logger)->run();
+
+        self::assertSame(0, $code);
+        self::assertSame('No task queue needs a all process, exiting', $logger->records[0]['message']);
+    }
+
+    public function testSupervisorWithoutWorkReturns(): void
+    {
+        $factory = CoreWorkerFactory::create(workflowProcesses: 2, activityProcesses: 1);
+        $factory->newWorker('idle', WorkerOptions::new()
+            ->withDisableWorkflowWorker(true)
+            ->withLocalActivityWorkerOnly(true)
+            ->withWorkerStopTimeout(1));
+
+        self::assertSame(0, $factory->run());
+    }
+
+    public function testWorkerRunsWorkflowsAndActivities(): void
+    {
+        $queue = self::startWorkflow();
+        $factory = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        $factory->newWorker($queue)
+            ->registerWorkflowTypes(CoreHeartbeatWorkflow::class)
+            ->registerActivityImplementations(new CoreHeartbeatActivity());
+
+        self::assertSame(0, self::runWithTimeout($factory));
+        self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
+    }
+
+    public function testConcurrentActivityProcessRunsActivitiesInFibers(): void
+    {
+        $queue = self::startWorkflow();
+        $workflows = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        $workflows->newWorker($queue, WorkerOptions::new()->withLocalActivityWorkerOnly(true))->registerWorkflowTypes(CoreHeartbeatWorkflow::class);
+        self::$stopInWorkflow = true;
+        try {
+            self::assertSame(0, self::runWithTimeout($workflows));
+        } finally {
+            self::$stopInWorkflow = false;
+        }
+
+        $_SERVER[CoreEnvironment::ACTIVITY_CONCURRENCY] = '2';
+        try {
+            $activities = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 0, activityProcesses: 1, logger: new LoggerSpy());
+        } finally {
+            unset($_SERVER[CoreEnvironment::ACTIVITY_CONCURRENCY]);
+        }
+        $activities->newWorker($queue)->registerActivityImplementations(new CoreHeartbeatActivity());
+
+        self::assertSame(0, self::runWithTimeout($activities));
+        self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
+    }
+
+    private static function startWorkflow(): string
+    {
+        self::$address = DevServer::address();
+        self::$heartbeatErrors = [];
+        $queue = \uniqid('core-worker-', true);
+        $client = WorkflowClient::create(ServiceClient::create(self::$address));
+        $client->start($client->newUntypedWorkflowStub('CoreHeartbeatWorkflow', WorkflowOptions::new()->withTaskQueue($queue)));
+
+        return $queue;
+    }
+
+    private static function runWithTimeout(CoreWorkerFactory $factory): int
+    {
+        \pcntl_signal(\SIGALRM, static fn() => \posix_kill(\getmypid(), \SIGTERM));
+        \pcntl_alarm(self::SAFETY_TIMEOUT_SECONDS);
+        try {
+            return $factory->run();
+        } finally {
+            \pcntl_alarm(0);
+            \pcntl_signal(\SIGALRM, \SIG_DFL);
+        }
+    }
+}
+
+#[WorkflowInterface]
+final class CoreHeartbeatWorkflow
+{
+    #[WorkflowMethod(name: 'CoreHeartbeatWorkflow')]
+    public function run(): \Generator
+    {
+        if (CoreWorkerFactoryTestCase::$stopInWorkflow) {
+            \posix_kill(\getmypid(), \SIGTERM);
+        }
+
+        return yield Workflow::newActivityStub(CoreHeartbeatActivity::class, ActivityOptions::new()
+            ->withStartToCloseTimeout(30)
+            ->withHeartbeatTimeout(2)
+            ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1)))->beat();
+    }
+}
+
+#[ActivityInterface(prefix: 'CoreHeartbeat.')]
+final class CoreHeartbeatActivity
+{
+    private const HEARTBEATS = 100;
+    private const HEARTBEAT_INTERVAL_US = 100_000;
+
+    #[ActivityMethod]
+    public function beat(): string
+    {
+        $info = Activity::getInfo();
+        ServiceClient::create(CoreWorkerFactoryTestCase::$address)->PauseActivity(new PauseActivityRequest([
+            'namespace' => $info->workflowNamespace,
+            'execution' => new WorkflowExecution(['workflow_id' => $info->workflowExecution->getID()]),
+            'id' => $info->id,
+        ]));
+        try {
+            for ($i = 0; $i < self::HEARTBEATS; ++$i) {
+                Activity::heartbeat($i);
+                \usleep(self::HEARTBEAT_INTERVAL_US);
+            }
+        } catch (\Throwable $e) {
+            CoreWorkerFactoryTestCase::$heartbeatErrors[] = $e::class;
+            throw $e;
+        } finally {
+            \posix_kill(\getmypid(), \SIGTERM);
+        }
+
+        return 'not paused';
+    }
+}

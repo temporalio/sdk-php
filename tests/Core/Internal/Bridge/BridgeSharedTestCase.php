@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Internal\Bridge;
+namespace Temporal\Tests\Core\Internal\Bridge;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +16,8 @@ final class BridgeSharedTestCase extends TestCase
     public function testRuntimeStartedBeforeForkIsRejectedInTheChild(): void
     {
         $class = new \ReflectionClass(Bridge::class);
+        $shared = $class->getStaticPropertyValue('shared');
+        $sharedPid = $class->getStaticPropertyValue('sharedPid');
         $class->setStaticPropertyValue('shared', $class->newInstanceWithoutConstructor());
         $class->setStaticPropertyValue('sharedPid', self::PARENT_PID);
 
@@ -23,8 +25,8 @@ final class BridgeSharedTestCase extends TestCase
             $this->expectExceptionObject(new \LogicException(Bridge::FORKED_AFTER_START));
             Bridge::shared();
         } finally {
-            $class->setStaticPropertyValue('shared', null);
-            $class->setStaticPropertyValue('sharedPid', 0);
+            $class->setStaticPropertyValue('shared', $shared);
+            $class->setStaticPropertyValue('sharedPid', $sharedPid);
         }
     }
 }

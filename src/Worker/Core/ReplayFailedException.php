@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+/**
+ * @internal
+ */
 final class ReplayFailedException extends \RuntimeException
 {
     public function __construct(

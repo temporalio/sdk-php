@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Worker\Core;
 
 use Temporal\Internal\Bridge\Bridge;
-use Carbon\CarbonInterval;
 use Psr\Log\LoggerInterface;
 use Temporal\Api\History\V1\History;
 use Temporal\Client\WorkflowClient;
@@ -37,8 +36,6 @@ use Temporal\WorkerFactory;
  */
 class CoreWorkerFactory extends WorkerFactory
 {
-    private const STOP_GRACE_SECONDS = 10.0;
-
     private CoreOptions $options;
     private CoreWorkerConfig $config;
     private ActivityTasks $activityTasks;
@@ -79,7 +76,7 @@ class CoreWorkerFactory extends WorkerFactory
 
         $role = ChildProcesses::currentRole();
         if ($role !== null) {
-            exit($this->serve($role, true));
+            return $this->serve($role, true);
         }
 
         $workflowProcesses = $this->options->workflowProcesses;
@@ -93,8 +90,13 @@ class CoreWorkerFactory extends WorkerFactory
             ...\array_fill(0, $this->config->hasWork($this->queues, $workflowRole) ? $workflowProcesses : 0, $workflowRole),
             ...\array_fill(0, $this->config->hasWork($this->queues, CoreRole::Activity) ? $activityProcesses : 0, CoreRole::Activity),
         ];
-        $children = new ChildProcesses(fn(CoreRole $role): int => $this->serve($role, true), $this->logger);
-        $supervisor = new Supervisor($children->start(...), $children->release(...), $this->logger, $this->stopTimeoutSeconds());
+        $children = new ChildProcesses(
+            fn(CoreRole $role): int => $this->serve($role, true),
+            $this->logger,
+            ChildProcesses::canFork(),
+            [\get_included_files()[0], ...\array_slice($_SERVER['argv'] ?? [], 1)],
+        );
+        $supervisor = new Supervisor($children->start(...), $children->release(...), $this->logger, $this->config->stopTimeoutSeconds($this->queues));
 
         return $supervisor->run($roles);
     }
@@ -122,32 +124,42 @@ class CoreWorkerFactory extends WorkerFactory
     {
         $bridge = Bridge::shared();
         $bridge->useLogger($this->logger);
+        $this->activityTasks->bind($bridge, $this->dispatch(...), $this->converter);
         $loop = new CoreWorkerLoop(
             $bridge,
-            $this->options,
-            $this->config,
             $this->activityTasks,
-            $this->dispatch(...),
-            $this->activations(...),
-            $this->converter,
             $this->logger,
+            $role === CoreRole::Activity && $this->options->activityConcurrency > 1,
+            $supervised ? \posix_getppid() : null,
         );
 
         return Pipeline::prepare($this->pluginRegistry->getPlugins(WorkerPluginInterface::class))
-            ->with(fn(): int => $loop->serve($this->queues, $role, $supervised), 'run')($this);
+            ->with(fn(): int => $loop->serve(fn(): array => $this->workerHandles($bridge, $role)), 'run')($this);
     }
 
-    private function stopTimeoutSeconds(): float
+    /**
+     * @return list<CoreWorkerHandle>
+     */
+    private function workerHandles(Bridge $bridge, CoreRole $role): array
     {
-        $timeouts = [0.0];
+        $handles = [];
         foreach ($this->queues as $worker) {
-            $timeout = $worker->getOptions()->workerStopTimeout;
-            if ($timeout !== null) {
-                $timeouts[] = CarbonInterval::instance($timeout)->totalSeconds;
+            $config = $this->config->build($worker, $role);
+            if ($config['workflows'] || $config['remote_activities']) {
+                $handles[] = new CoreWorkerHandle(
+                    $bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
+                    (string) $worker->getID(),
+                    $this->activations($worker, $this->dispatch(...)),
+                    $config['workflows'],
+                    $config['local_activities'] || $config['remote_activities'],
+                );
             }
         }
+        if ($handles === []) {
+            $this->logger->info(\sprintf('No task queue needs a %s process, exiting', $role->value));
+        }
 
-        return \max($timeouts) + self::STOP_GRACE_SECONDS;
+        return $handles;
     }
 
     private function activations(WorkerInterface $worker, \Closure $dispatch): WorkflowActivations

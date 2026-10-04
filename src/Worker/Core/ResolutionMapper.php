@@ -25,6 +25,9 @@ use Temporal\Worker\Transport\Command\Server\SuccessResponse;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * @internal
+ */
 final class ResolutionMapper
 {
     private const UNKNOWN_EVENT_ID = 0;

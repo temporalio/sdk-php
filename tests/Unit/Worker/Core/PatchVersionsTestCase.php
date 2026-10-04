@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Worker\Core;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Worker\Core\PatchVersions;
 
@@ -41,13 +42,20 @@ final class PatchVersionsTestCase extends TestCase
         self::assertCount(1, $commands);
     }
 
-    public function testVersionOutsideSupportedRangeFails(): void
+    public static function provideUnsupportedVersions(): iterable
+    {
+        yield 'removed version' => ['change-1', 'Workflow code removed support of version 1 for "change" changeID. The oldest supported version is 2'];
+        yield 'too new version' => ['change-4', 'Workflow code is too old to support version 4 for "change" changeID. The maximum supported version is 3'];
+    }
+
+    #[DataProvider('provideUnsupportedVersions')]
+    public function testVersionOutsideSupportedRangeFails(string $notified, string $message): void
     {
         $patches = new PatchVersions();
-        $patches->notify('change-1');
+        $patches->notify($notified);
         $commands = [];
 
-        $this->expectException(\LogicException::class);
+        $this->expectExceptionObject(new \LogicException($message));
         $patches->version('change', 2, 3, true, $commands);
     }
 }

@@ -25,7 +25,6 @@ final class CoreEnvironment
     public const ACTIVITY_CONCURRENCY = 'TEMPORAL_CORE_ACTIVITY_CONCURRENCY';
     public const MAX_CACHED_WORKFLOWS = 'TEMPORAL_CORE_MAX_CACHED_WORKFLOWS';
     public const GRPC_COMPRESSION = 'TEMPORAL_CORE_GRPC_COMPRESSION';
-    public const PROFILE = 'TEMPORAL_CORE_PROFILE';
     public const PROMETHEUS = 'TEMPORAL_CORE_PROMETHEUS_ADDRESS';
     public const POLLER_AUTOSCALING = 'TEMPORAL_CORE_POLLER_AUTOSCALING';
 
@@ -54,7 +53,7 @@ final class CoreEnvironment
         return $integer;
     }
 
-    public static function flag(string $name, bool $default = false): bool
+    public static function flag(string $name, bool $default): bool
     {
         $value = self::string($name);
         if ($value === null) {

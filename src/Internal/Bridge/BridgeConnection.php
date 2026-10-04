@@ -46,12 +46,17 @@ final class BridgeConnection
 
     public static function certificate(?string $fileOrPem): ?string
     {
-        return match (true) {
-            $fileOrPem === null, $fileOrPem === '' => null,
-            \is_file($fileOrPem) => false === ($content = \file_get_contents($fileOrPem))
-                ? throw new \InvalidArgumentException("Failed to load certificate from file `$fileOrPem`.")
-                : $content,
-            default => $fileOrPem,
-        };
+        if ($fileOrPem === null || $fileOrPem === '') {
+            return null;
+        }
+        if (!\is_file($fileOrPem)) {
+            return $fileOrPem;
+        }
+        $content = \file_get_contents($fileOrPem);
+        if ($content === false) {
+            throw new \InvalidArgumentException("Failed to load certificate from file `$fileOrPem`.");
+        }
+
+        return $content;
     }
 }

@@ -30,6 +30,7 @@ final class CoreWorkerConfig
     private const NONSTICKY_TO_STICKY_POLL_RATIO = 0.5;
     private const STICKY_SCHEDULE_TO_START_TIMEOUT_MS = 5000;
     private const MIN_CACHED_WORKFLOW_TASKS = 2;
+    private const STOP_GRACE_SECONDS = 10.0;
 
     /**
      * @param MarshallerInterface<array> $marshaller
@@ -51,6 +52,22 @@ final class CoreWorkerConfig
         }
 
         return false;
+    }
+
+    /**
+     * @param iterable<WorkerInterface> $workers
+     */
+    public function stopTimeoutSeconds(iterable $workers): float
+    {
+        $timeouts = [0.0];
+        foreach ($workers as $worker) {
+            $timeout = $worker->getOptions()->workerStopTimeout;
+            if ($timeout !== null) {
+                $timeouts[] = CarbonInterval::instance($timeout)->totalSeconds;
+            }
+        }
+
+        return \max($timeouts) + self::STOP_GRACE_SECONDS;
     }
 
     /**

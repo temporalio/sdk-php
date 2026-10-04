@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Unit\Worker\Core;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use Temporal\Internal\Bridge\CoreEnvironment;
+use Temporal\Worker\Core\CoreOptions;
+use Temporal\Worker\ServiceCredentials;
+
+final class CoreOptionsTestCase extends TestCase
+{
+    private const NO_DEFAULT_PROFILE = "[profile.other]\naddress = \"other:7233\"";
+    private const PROFILE_ENVIRONMENT = ['TEMPORAL_ADDRESS' => 'profile:7233', 'TEMPORAL_NAMESPACE' => 'profile-ns', 'TEMPORAL_API_KEY' => 'profile-key'];
+
+    public static function provideOptions(): iterable
+    {
+        yield 'defaults' => [[], [], [], [
+            'address' => '127.0.0.1:7233',
+            'namespace' => 'default',
+            'apiKey' => null,
+            'tls' => null,
+            'workflowProcesses' => 1,
+            'activityProcesses' => 1,
+            'activityConcurrency' => 1,
+            'maxCachedWorkflows' => 10_000,
+            'grpcCompression' => 'gzip',
+            'pollerAutoscaling' => true,
+        ]];
+        yield 'arguments' => [[], [], [
+            'address' => 'arg:7233',
+            'namespace' => 'arg-ns',
+            'credentials' => ServiceCredentials::create()->withApiKey('own-key'),
+            'workflowProcesses' => 2,
+            'activityProcesses' => 0,
+        ], ['address' => 'arg:7233', 'namespace' => 'arg-ns', 'apiKey' => 'own-key', 'workflowProcesses' => 2, 'activityProcesses' => 0]];
+        yield 'core environment' => [[], [
+            CoreEnvironment::WORKFLOW_PROCESSES => '3',
+            CoreEnvironment::ACTIVITY_PROCESSES => '4',
+            CoreEnvironment::ACTIVITY_CONCURRENCY => '5',
+            CoreEnvironment::MAX_CACHED_WORKFLOWS => '0',
+            CoreEnvironment::GRPC_COMPRESSION => 'none',
+            CoreEnvironment::POLLER_AUTOSCALING => 'false',
+        ], [], [
+            'workflowProcesses' => 3,
+            'activityProcesses' => 4,
+            'activityConcurrency' => 5,
+            'maxCachedWorkflows' => 0,
+            'grpcCompression' => 'none',
+            'pollerAutoscaling' => false,
+        ]];
+        yield 'profile' => [self::PROFILE_ENVIRONMENT, [], [], [
+            'address' => 'profile:7233',
+            'namespace' => 'profile-ns',
+            'apiKey' => 'profile-key',
+        ]];
+        yield 'credentials key wins over the profile key' => [self::PROFILE_ENVIRONMENT, [], ['credentials' => ServiceCredentials::create()->withApiKey('own-key')], ['apiKey' => 'own-key']];
+        yield 'empty credentials key keeps the profile key' => [self::PROFILE_ENVIRONMENT, [], ['credentials' => ServiceCredentials::create()], ['apiKey' => 'profile-key']];
+        yield 'disabled tls' => [self::PROFILE_ENVIRONMENT + ['TEMPORAL_TLS' => 'false'], [], [], ['tls' => null]];
+    }
+
+    #[DataProvider('provideOptions')]
+    public function testCreate(array $environment, array $server, array $arguments, array $expected): void
+    {
+        $options = $this->create($environment, $server, $arguments);
+
+        self::assertSame($expected, \array_intersect_key(\get_object_vars($options), $expected));
+    }
+
+    public function testProfileTlsIsKept(): void
+    {
+        $options = $this->create(self::PROFILE_ENVIRONMENT + ['TEMPORAL_TLS_SERVER_NAME' => 'server'], [], []);
+
+        self::assertSame('server', $options->tls?->serverName);
+    }
+
+    public function testNegativeProcessCountIsRejected(): void
+    {
+        $this->expectExceptionObject(new \InvalidArgumentException(CoreEnvironment::ACTIVITY_PROCESSES . ' must be an integer not less than 0, "-1" given'));
+        $this->create([], [], ['activityProcesses' => -1]);
+    }
+
+    private function create(array $environment, array $server, array $arguments): CoreOptions
+    {
+        $environment += ['TEMPORAL_CONFIG_FILE' => self::NO_DEFAULT_PROFILE];
+        $previous = [];
+        foreach ($environment as $name => $value) {
+            $previous[$name] = \getenv($name);
+            \putenv("$name=$value");
+        }
+        $_SERVER = $server + $_SERVER;
+        try {
+            return CoreOptions::create(
+                $arguments['address'] ?? null,
+                $arguments['namespace'] ?? null,
+                $arguments['credentials'] ?? null,
+                $arguments['workflowProcesses'] ?? null,
+                $arguments['activityProcesses'] ?? null,
+            );
+        } finally {
+            foreach ($previous as $name => $value) {
+                \putenv($value === false ? $name : "$name=$value");
+            }
+            foreach (\array_keys($server) as $name) {
+                unset($_SERVER[$name]);
+            }
+        }
+    }
+}
