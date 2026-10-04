@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Unit\Internal\Bridge;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use Temporal\Internal\Bridge\CoreEnvironment;
+
+final class CoreEnvironmentTestCase extends TestCase
+{
+    private const NAME = 'TEMPORAL_CORE_TEST_VALUE';
+
+    public static function provideValues(): iterable
+    {
+        yield 'string unset' => [null, static fn(): ?string => CoreEnvironment::string(self::NAME), null];
+        yield 'string empty' => ['', static fn(): ?string => CoreEnvironment::string(self::NAME), null];
+        yield 'string set' => ['value', static fn(): ?string => CoreEnvironment::string(self::NAME), 'value'];
+        yield 'integer default' => [null, static fn(): int => CoreEnvironment::integer(self::NAME, 7, 1), 7];
+        yield 'integer set' => ['3', static fn(): int => CoreEnvironment::integer(self::NAME, 7, 1), 3];
+        yield 'integer below minimum' => ['0', static fn(): int => CoreEnvironment::integer(self::NAME, 7, 1), new \InvalidArgumentException(self::NAME . ' must be an integer not less than 1, "0" given')];
+        yield 'integer not a number' => ['many', static fn(): int => CoreEnvironment::integer(self::NAME, 7, 1), new \InvalidArgumentException(self::NAME . ' must be an integer not less than 1, "many" given')];
+        yield 'argument at least' => [null, static fn(): int => CoreEnvironment::atLeast(self::NAME, 2, 0), 2];
+        yield 'flag default' => [null, static fn(): bool => CoreEnvironment::flag(self::NAME, true), true];
+        yield 'flag off' => ['off', static fn(): bool => CoreEnvironment::flag(self::NAME, true), false];
+        yield 'flag on' => ['1', static fn(): bool => CoreEnvironment::flag(self::NAME, false), true];
+        yield 'flag invalid' => ['maybe', static fn(): bool => CoreEnvironment::flag(self::NAME, true), new \InvalidArgumentException(self::NAME . ' must be a boolean, "maybe" given')];
+    }
+
+    #[DataProvider('provideValues')]
+    public function testRead(?string $value, \Closure $read, mixed $expected): void
+    {
+        $_SERVER[self::NAME] = $value;
+        try {
+            if ($expected instanceof \Throwable) {
+                $this->expectExceptionObject($expected);
+            }
+            self::assertSame($expected, $read());
+        } finally {
+            unset($_SERVER[self::NAME]);
+        }
+    }
+}

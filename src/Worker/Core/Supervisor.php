@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
  */
 final class Supervisor
 {
+    public const STOP_SIGNALS = [\SIGTERM, \SIGINT];
     private const POLL_INTERVAL_US = 100_000;
     private const STARTUP_CRASH_SECONDS = 1;
     private const HEALTHY_UPTIME_SECONDS = 60;
@@ -51,8 +52,9 @@ final class Supervisor
     public function run(array $roles): int
     {
         \pcntl_async_signals(true);
-        \pcntl_signal(\SIGTERM, $this->stop(...), false);
-        \pcntl_signal(\SIGINT, $this->stop(...), false);
+        foreach (self::STOP_SIGNALS as $signal) {
+            \pcntl_signal($signal, $this->stop(...), false);
+        }
 
         try {
             foreach ($roles as $role) {
@@ -62,8 +64,9 @@ final class Supervisor
             }
             $this->wait();
         } finally {
-            \pcntl_signal(\SIGTERM, \SIG_DFL);
-            \pcntl_signal(\SIGINT, \SIG_DFL);
+            foreach (self::STOP_SIGNALS as $signal) {
+                \pcntl_signal($signal, \SIG_DFL);
+            }
         }
 
         if ($this->startFailure !== null) {

@@ -20,7 +20,6 @@ use Psr\Log\LoggerInterface;
  */
 final class ChildProcesses
 {
-    private const STOP_SIGNALS = [\SIGTERM, \SIGINT];
     private const INI_PROBE = 'echo json_encode([ini_get_all(null, false), get_loaded_extensions(), get_loaded_extensions(true)]);';
 
     /** @var array<int, resource> */
@@ -31,10 +30,13 @@ final class ChildProcesses
 
     /**
      * @param \Closure(CoreRole): int $serve
+     * @param list<string> $script
      */
     public function __construct(
         private readonly \Closure $serve,
         private readonly LoggerInterface $logger,
+        private readonly bool $fork,
+        private readonly array $script,
     ) {}
 
     public static function currentRole(): ?CoreRole
@@ -44,9 +46,14 @@ final class ChildProcesses
         return $role === null ? null : CoreRole::from($role);
     }
 
+    public static function canFork(): bool
+    {
+        return \PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started();
+    }
+
     public function start(CoreRole $role): int
     {
-        return self::canFork() ? $this->fork($role) : $this->spawn($role);
+        return $this->fork ? $this->fork($role) : $this->spawn($role);
     }
 
     public function release(int $pid): void
@@ -55,11 +62,6 @@ final class ChildProcesses
             \proc_close($this->processes[$pid]);
             unset($this->processes[$pid]);
         }
-    }
-
-    private static function canFork(): bool
-    {
-        return \PHP_OS_FAMILY === 'Linux' && !\extension_loaded('grpc') && !Bridge::started();
     }
 
     /**
@@ -77,20 +79,20 @@ final class ChildProcesses
      */
     private function fork(CoreRole $role): int
     {
-        \pcntl_sigprocmask(\SIG_BLOCK, self::STOP_SIGNALS);
+        \pcntl_sigprocmask(\SIG_BLOCK, Supervisor::STOP_SIGNALS);
         $pid = \pcntl_fork();
         if ($pid !== 0) {
-            \pcntl_sigprocmask(\SIG_UNBLOCK, self::STOP_SIGNALS);
+            \pcntl_sigprocmask(\SIG_UNBLOCK, Supervisor::STOP_SIGNALS);
             if ($pid === -1) {
                 throw new \RuntimeException(\sprintf('Unable to fork a %s worker process', $role->value));
             }
             return $pid;
         }
 
-        foreach (self::STOP_SIGNALS as $signal) {
+        foreach (Supervisor::STOP_SIGNALS as $signal) {
             \pcntl_signal($signal, \SIG_DFL);
         }
-        \pcntl_sigprocmask(\SIG_UNBLOCK, self::STOP_SIGNALS);
+        \pcntl_sigprocmask(\SIG_UNBLOCK, Supervisor::STOP_SIGNALS);
         \register_shutdown_function(static fn() => self::exitForked(1));
         try {
             $code = ($this->serve)($role);
@@ -104,7 +106,7 @@ final class ChildProcesses
     private function spawn(CoreRole $role): int
     {
         $process = \proc_open(
-            [\PHP_BINARY, ...$this->iniArguments(), \get_included_files()[0], ...\array_slice($_SERVER['argv'] ?? [], 1)],
+            [\PHP_BINARY, ...$this->iniArguments(), ...$this->script],
             [\STDIN, \STDOUT, \STDERR],
             $pipes,
             null,

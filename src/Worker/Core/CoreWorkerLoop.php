@@ -11,12 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
-use Temporal\Internal\Bridge\Bridge;
 use Psr\Log\LoggerInterface;
-use Temporal\DataConverter\DataConverterInterface;
 use Revolt\EventLoop;
+use Temporal\Internal\Bridge\Bridge;
 use Temporal\Internal\Support\Facade;
-use Temporal\Worker\WorkerInterface;
 
 /**
  * @internal
@@ -24,80 +22,45 @@ use Temporal\Worker\WorkerInterface;
 final class CoreWorkerLoop
 {
     private const PIPE_READ_BYTES = 65536;
-    private const STOP_SIGNALS = [\SIGTERM, \SIGINT];
 
-    /** @var array<int, CoreWorkerHandle> */
+    /** @var list<CoreWorkerHandle> */
     private array $workers = [];
 
     private int $open = 0;
     private bool $stopping = false;
     private bool $shutdownRequested = false;
     private bool $crashed = false;
-    private bool $concurrent = false;
-    private ?int $supervisorPid = null;
-    private ?Profiler $profiler = null;
 
-    /**
-     * @param \Closure(list<\Temporal\Worker\Transport\Command\CommandInterface>, array): list<\Temporal\Worker\Transport\Command\CommandInterface> $dispatch
-     * @param \Closure(WorkerInterface, \Closure): WorkflowActivations $activations
-     */
     public function __construct(
         private readonly Bridge $bridge,
-        private readonly CoreOptions $options,
-        private readonly CoreWorkerConfig $config,
         private readonly ActivityTasks $activityTasks,
-        private readonly \Closure $dispatch,
-        private readonly \Closure $activations,
-        private readonly DataConverterInterface $converter,
         private readonly LoggerInterface $logger,
+        private readonly bool $concurrent,
+        private readonly ?int $supervisorPid,
     ) {}
 
     /**
-     * @param iterable<WorkerInterface> $queues
+     * @param \Closure(): list<CoreWorkerHandle> $workers
      */
-    public function serve(iterable $queues, CoreRole $role, bool $supervised): int
+    public function serve(\Closure $workers): int
     {
         \pcntl_async_signals(true);
-        foreach (self::STOP_SIGNALS as $signal) {
+        foreach (Supervisor::STOP_SIGNALS as $signal) {
             \pcntl_signal($signal, $this->requestStop(...));
         }
         try {
-            return $this->run($queues, $role, $supervised);
+            $this->workers = $workers();
+
+            return $this->workers === [] ? 0 : $this->run();
         } finally {
-            foreach (self::STOP_SIGNALS as $signal) {
+            foreach (Supervisor::STOP_SIGNALS as $signal) {
                 \pcntl_signal($signal, \SIG_DFL);
             }
         }
     }
 
-    /**
-     * @param iterable<WorkerInterface> $queues
-     */
-    private function run(iterable $queues, CoreRole $role, bool $supervised): int
+    private function run(): int
     {
-        $this->profiler = $this->options->profiling ? new Profiler($this->logger, $role->value) : null;
-        $this->concurrent = $role === CoreRole::Activity && $this->options->activityConcurrency > 1;
-        $this->supervisorPid = $supervised ? \posix_getppid() : null;
-        $dispatch = $this->profiledDispatch();
-        $this->activityTasks->bind($this->bridge, $dispatch, $this->converter);
-
-        foreach ($queues as $worker) {
-            $config = $this->config->build($worker, $role);
-            if ($config['workflows'] || $config['remote_activities']) {
-                $this->workers[] = new CoreWorkerHandle(
-                    $this->bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
-                    (string) $worker->getID(),
-                    ($this->activations)($worker, $dispatch),
-                    $config['workflows'],
-                    $config['local_activities'] || $config['remote_activities'],
-                );
-            }
-        }
-        if ($this->workers === []) {
-            $this->logger->info(\sprintf('No task queue needs a %s process, exiting', $role->value));
-            return 0;
-        }
-
         $this->startPolling();
         if ($this->stopping) {
             $this->initiateShutdown();
@@ -108,42 +71,15 @@ final class CoreWorkerLoop
         }
         while ($this->open > 0) {
             $this->checkSupervisor();
-            $waitedAt = $this->startTimer();
-            $events = $this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS);
-            $this->profiler?->add('wait', $waitedAt);
-            $this->handle($events);
+            $this->handle($this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS));
         }
 
-        $this->profiler?->report();
-        foreach ($this->bridge->shutdownWorkers(\array_map(static fn(CoreWorkerHandle $worker): \FFI\CData => $worker->core, $this->workers)) as $tag => $error) {
+        $cores = \array_map(static fn(CoreWorkerHandle $worker): \FFI\CData => $worker->core, $this->workers);
+        foreach ($this->bridge->shutdownWorkers($cores) as $tag => $error) {
             $this->logger->error(\sprintf('sdk-core worker for task queue "%s" did not finalize: %s', $this->workers[$tag]->taskQueue, $error));
         }
 
         return $this->crashed ? 1 : 0;
-    }
-
-    private function profiledDispatch(): \Closure
-    {
-        $profiler = $this->profiler;
-        if ($profiler === null) {
-            return $this->dispatch;
-        }
-
-        $dispatch = $this->dispatch;
-
-        return /** @param list<\Temporal\Worker\Transport\Command\CommandInterface> $commands */ static function (array $commands, array $headers) use ($dispatch, $profiler): array {
-            $startedAt = \hrtime(true);
-            try {
-                return $dispatch($commands, $headers);
-            } finally {
-                $profiler->add('php-sdk-dispatch', $startedAt);
-            }
-        };
-    }
-
-    private function startTimer(): int
-    {
-        return $this->profiler === null ? 0 : (int) \hrtime(true);
     }
 
     private function startPolling(): void
@@ -192,17 +128,16 @@ final class CoreWorkerLoop
     {
         foreach ($events as [$tag, $kind, $status, $data]) {
             $worker = $this->workers[$tag];
-            $startedAt = $this->startTimer();
             match ($kind) {
-                Bridge::KIND_WORKFLOW_ACTIVATION => $this->onActivation($worker, $tag, $status, $data, $startedAt),
-                Bridge::KIND_ACTIVITY_TASK => $this->onActivityTask($worker, $tag, $status, $data, $startedAt),
+                Bridge::KIND_WORKFLOW_ACTIVATION => $this->onActivation($worker, $tag, $status, $data),
+                Bridge::KIND_ACTIVITY_TASK => $this->onActivityTask($worker, $tag, $status, $data),
                 Bridge::KIND_WORKFLOW_COMPLETED, Bridge::KIND_ACTIVITY_COMPLETED => $this->logger->error('sdk-core completion failed: ' . $data),
                 default => null,
             };
         }
     }
 
-    private function onActivation(CoreWorkerHandle $worker, int $tag, int $status, string $data, int $startedAt): void
+    private function onActivation(CoreWorkerHandle $worker, int $tag, int $status, string $data): void
     {
         if ($status !== Bridge::STATUS_OK) {
             $this->onPollFailure($status, $data);
@@ -210,22 +145,20 @@ final class CoreWorkerLoop
         }
         $this->bridge->completeWorkflowActivation($worker->core, $tag, $worker->activations->handle($data));
         $this->bridge->pollWorkflowActivation($worker->core, $tag);
-        $this->profiler?->add('workflow-activation', $startedAt);
     }
 
-    private function onActivityTask(CoreWorkerHandle $worker, int $tag, int $status, string $data, int $startedAt): void
+    private function onActivityTask(CoreWorkerHandle $worker, int $tag, int $status, string $data): void
     {
         if ($status !== Bridge::STATUS_OK) {
             $this->onPollFailure($status, $data);
             return;
         }
         $this->bridge->pollActivityTask($worker->core, $tag);
-        $run = function () use ($worker, $tag, $data, $startedAt): void {
+        $run = function () use ($worker, $tag, $data): void {
             $completion = $this->activityTasks->handle($worker->core, $worker->taskQueue, $data);
             if ($completion !== null) {
                 $this->bridge->completeActivityTask($worker->core, $tag, $completion);
             }
-            $this->profiler?->add('activity-task', $startedAt);
         };
         if (!$this->concurrent) {
             $run();

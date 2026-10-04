@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Worker\Core;
+namespace Temporal\Tests\Core\Worker;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Temporal\Worker\Core\CoreRole;
 use Temporal\Worker\Core\Supervisor;
 
 #[CoversClass(Supervisor::class)]
-#[RequiresPhpExtension('pcntl')]
-#[RequiresPhpExtension('posix')]
-#[RequiresPhpExtension('ffi')]
 final class SupervisorTestCase extends TestCase
 {
     private const LONG_RUN_SECONDS = 30;
@@ -79,6 +75,44 @@ final class SupervisorTestCase extends TestCase
 
         $this->expectExceptionMessage('no more processes');
         $supervisor->run([CoreRole::Workflow, CoreRole::Activity]);
+    }
+
+    public function testStrangerChildIsOnlyReleased(): void
+    {
+        $released = [];
+        $stranger = 0;
+        $supervisor = new Supervisor(function () use (&$stranger): int {
+            $stranger = $this->child(0, 0.0);
+
+            return $this->child(0, 0.5);
+        }, static function (int $pid) use (&$released): void {
+            $released[] = $pid;
+        }, new NullLogger(), 5.0);
+
+        $code = $supervisor->run([CoreRole::Activity]);
+
+        self::assertContains($stranger, $released);
+        self::assertSame(1, $code);
+    }
+
+    public function testRestartFailureStopsThePendingRestarts(): void
+    {
+        $started = 0;
+        $supervisor = $this->supervisor(function () use (&$started): int {
+            if (++$started > 2) {
+                throw new \RuntimeException('no more restarts');
+            }
+
+            return $this->child(5, 1.2);
+        });
+
+        try {
+            $supervisor->run([CoreRole::Workflow, CoreRole::Activity]);
+            self::fail('The restart failure must be rethrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('no more restarts', $e->getMessage());
+        }
+        self::assertSame(3, $started);
     }
 
     /**
