@@ -18,6 +18,7 @@ pub fn parse<T: DeserializeOwned>(json: &[u8], what: &str) -> Result<T, String> 
 pub struct RuntimeJson {
     pub threads: usize,
     pub log: Option<String>,
+    pub prometheus: Option<String>,
 }
 
 #[derive(Deserialize)]

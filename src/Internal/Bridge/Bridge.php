@@ -74,6 +74,7 @@ final class Bridge
         $config = self::json([
             'threads' => CoreEnvironment::integer(CoreEnvironment::THREADS, self::DEFAULT_THREADS, 1),
             'log' => CoreEnvironment::string(CoreEnvironment::LOG),
+            'prometheus' => CoreEnvironment::string(CoreEnvironment::PROMETHEUS),
         ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         /** @var \FFI\CData $events */
