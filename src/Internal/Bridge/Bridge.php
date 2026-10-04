@@ -11,8 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Bridge;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
+use Temporal\Worker\Logger\StderrLogger;
 
 /**
  * @psalm-suppress UndefinedMethod
@@ -25,6 +28,7 @@ final class Bridge
     public const KIND_ACTIVITY_COMPLETED = 4;
     public const KIND_SHUTDOWN_FINALIZED = 5;
     public const KIND_RPC_RESULT = 6;
+    public const KIND_LOG = 7;
     public const STATUS_OK = 0;
     public const STATUS_SHUTDOWN = 2;
     public const POLL_TIMEOUT_MS = 500;
@@ -34,6 +38,8 @@ final class Bridge
     private const EVENT_BUFFER_SIZE = 256;
     private const DEFAULT_THREADS = 1;
     private const NANOSECONDS_PER_MILLISECOND = 1_000_000;
+    private const DEFAULT_LOG_FILTER = 'warn';
+    private const LOG_LEVELS = ['ERROR' => LogLevel::ERROR, 'WARN' => LogLevel::WARNING, 'INFO' => LogLevel::INFO];
 
     private static ?self $shared = null;
     private static int $sharedPid = 0;
@@ -51,12 +57,14 @@ final class Bridge
     private array $rpcWaiters = [];
 
     private int $rpcTag = 0;
+    private LoggerInterface $logger;
 
     /** @var resource|null */
     private $eventPipe = null;
 
     public function __construct(?string $library = null, ?string $header = null)
     {
+        $this->logger = new StderrLogger();
         $root = \dirname(__DIR__, 3) . '/core/bridge';
         $library ??= CoreEnvironment::string(CoreEnvironment::BRIDGE_LIB)
             ?? $root . '/target/release/libtemporal_php_bridge.' . (\PHP_OS_FAMILY === 'Darwin' ? 'dylib' : 'so');
@@ -73,7 +81,7 @@ final class Bridge
         $this->ffi = \FFI::cdef($definitions, $library);
         $config = self::json([
             'threads' => CoreEnvironment::integer(CoreEnvironment::THREADS, self::DEFAULT_THREADS, 1),
-            'log' => CoreEnvironment::string(CoreEnvironment::LOG),
+            'log' => CoreEnvironment::string(CoreEnvironment::LOG) ?? self::DEFAULT_LOG_FILTER,
             'prometheus' => CoreEnvironment::string(CoreEnvironment::PROMETHEUS),
         ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
@@ -103,6 +111,11 @@ final class Bridge
     public static function isCurrent(self $bridge): bool
     {
         return self::started() && self::$shared === $bridge;
+    }
+
+    public function useLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
     }
 
     /**
@@ -354,6 +367,10 @@ final class Bridge
         for ($i = 0; $i < $count; ++$i) {
             $event = $this->events[$i];
             $data = $this->take($event->data, $event->len);
+            if ($event->kind === self::KIND_LOG) {
+                $this->log($data);
+                continue;
+            }
             if ($event->kind !== self::KIND_RPC_RESULT) {
                 $result[] = [$event->tag, $event->kind, $event->status, $data];
                 continue;
@@ -371,6 +388,17 @@ final class Bridge
         }
 
         return $result;
+    }
+
+    private function log(string $json): void
+    {
+        /** @var array{level: string, target: string, message: string, fields: array<string, mixed>} $entry */
+        $entry = \json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
+        $this->logger->log(
+            self::LOG_LEVELS[$entry['level']] ?? LogLevel::DEBUG,
+            $entry['message'],
+            ['target' => $entry['target']] + $entry['fields'],
+        );
     }
 
     private function take(?\FFI\CData $data, int $len): string

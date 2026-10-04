@@ -108,7 +108,9 @@ class CoreWorkerFactory extends WorkerFactory
         $taskQueue = (string) $events[0]->getWorkflowExecutionStartedEventAttributes()?->getTaskQueue()?->getName();
         $worker = $this->findWorkerByTaskQueue($taskQueue);
 
-        (new CoreReplayer(Bridge::shared()))->replay(
+        $bridge = Bridge::shared();
+        $bridge->useLogger($this->logger);
+        (new CoreReplayer($bridge))->replay(
             $history,
             $workflowId,
             ['nondeterminism_fails_workflow' => false] + $this->config->build($worker, CoreRole::Workflow),
@@ -118,8 +120,10 @@ class CoreWorkerFactory extends WorkerFactory
 
     private function serve(CoreRole $role, bool $supervised): int
     {
+        $bridge = Bridge::shared();
+        $bridge->useLogger($this->logger);
         $loop = new CoreWorkerLoop(
-            Bridge::shared(),
+            $bridge,
             $this->options,
             $this->config,
             $this->activityTasks,

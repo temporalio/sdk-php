@@ -9,6 +9,7 @@ pub const KIND_WORKFLOW_COMPLETED: i32 = 3;
 pub const KIND_ACTIVITY_COMPLETED: i32 = 4;
 pub const KIND_SHUTDOWN_FINALIZED: i32 = 5;
 pub const KIND_RPC_RESULT: i32 = 6;
+pub const KIND_LOG: i32 = 7;
 
 pub const STATUS_OK: i32 = 0;
 pub const STATUS_ERROR: i32 = 1;

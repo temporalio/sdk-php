@@ -5,7 +5,7 @@ use crate::runtime::{TpbRuntime, tpb_runtime_new};
 pub type Event = (u64, i32, i32, Vec<u8>);
 
 pub fn runtime() -> *mut TpbRuntime {
-    let config = br#"{"threads":1,"log":null}"#;
+    let config = br#"{"threads":1,"log":"off"}"#;
     let rt = unsafe {
         tpb_runtime_new(
             config.as_ptr().cast(),

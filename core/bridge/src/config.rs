@@ -20,7 +20,7 @@ pub fn parse<T: DeserializeOwned>(json: &[u8], what: &str) -> Result<T, String> 
 #[serde(deny_unknown_fields)]
 pub struct RuntimeJson {
     pub threads: usize,
-    pub log: Option<String>,
+    pub log: String,
     pub prometheus: Option<String>,
 }
 
@@ -450,9 +450,9 @@ mod tests {
 
     #[test]
     fn runtime_config_needs_threads() {
-        let runtime: RuntimeJson = parse(br#"{"threads":2,"log":null}"#, "runtime").unwrap();
+        let runtime: RuntimeJson = parse(br#"{"threads":2,"log":"off"}"#, "runtime").unwrap();
         assert_eq!(runtime.threads, 2);
         assert!(parse::<RuntimeJson>(br#"{"log":"info"}"#, "runtime").is_err());
-        assert!(parse::<RuntimeJson>(br#"{"threads":"2","log":null}"#, "runtime").is_err());
+        assert!(parse::<RuntimeJson>(br#"{"threads":"2","log":"off"}"#, "runtime").is_err());
     }
 }

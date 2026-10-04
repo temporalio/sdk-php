@@ -10,6 +10,8 @@
 
 #define KIND_RPC_RESULT 6
 
+#define KIND_LOG 7
+
 #define STATUS_OK 0
 
 #define STATUS_ERROR 1

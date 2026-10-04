@@ -2189,6 +2189,7 @@ dependencies = [
  "temporalio-sdk-core",
  "tokio",
  "tonic",
+ "tracing",
 ]
 
 [[package]]
