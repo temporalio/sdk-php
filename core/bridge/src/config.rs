@@ -173,10 +173,11 @@ pub struct WorkerJson {
 }
 
 impl WorkerJson {
-    pub fn parse_with_connection(json: &[u8]) -> Result<(ConnectionJson, Self), String> {
+    pub fn parse_with_connection(json: &[u8]) -> Result<(String, ConnectionJson, Self), String> {
         let mut fields: Map<String, Value> = parse(json, "worker config")?;
         let connection = fields.remove("connection").unwrap_or_default();
         Ok((
+            connection.to_string(),
             ConnectionJson::deserialize(connection)
                 .map_err(|e| format!("Invalid connection config JSON: {e}"))?,
             Self::deserialize(Value::Object(fields))
@@ -310,6 +311,25 @@ mod tests {
 
     fn parse_worker(json: &Value) -> Result<(ConnectionJson, WorkerJson), String> {
         WorkerJson::parse_with_connection(json.to_string().as_bytes())
+            .map(|(_, connection, worker)| (connection, worker))
+    }
+
+    #[test]
+    fn workers_with_the_same_connection_share_the_connection_key() {
+        let first = worker();
+        let mut second = worker();
+        second["task_queue"] = json!("another-queue");
+        let mut other = worker();
+        other["connection"]["identity"] = json!("2@host");
+
+        let key = |json: &Value| {
+            WorkerJson::parse_with_connection(json.to_string().as_bytes())
+                .unwrap()
+                .0
+        };
+
+        assert_eq!(key(&first), key(&second));
+        assert_ne!(key(&first), key(&other));
     }
 
     fn tls(client_cert: Option<&str>, client_private_key: Option<&str>) -> TlsJson {

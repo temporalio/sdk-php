@@ -1,8 +1,10 @@
 use crate::config::{RuntimeJson, parse};
 use crate::ffi::{KIND_LOG, STATUS_OK, construct, slice};
 use crate::queue::Queue;
+use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
+use temporalio_client::Connection;
 use temporalio_common::telemetry::{
     CoreLog, CoreLogConsumer, Logger, PrometheusExporterOptions, TelemetryOptions,
     metrics::CoreMeter, start_prometheus_metric_exporter,
@@ -14,6 +16,7 @@ const PROMETHEUS_PORT_ATTEMPTS: u16 = 64;
 pub struct TpbRuntime {
     pub core: CoreRuntime,
     pub queue: Arc<Queue>,
+    pub connections: Mutex<HashMap<String, Connection>>,
 }
 
 struct QueueLog(Arc<OnceLock<Arc<Queue>>>);
@@ -89,7 +92,11 @@ fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
     }
     let queue = Arc::new(Queue::new(core.tokio_handle())?);
     let _ = log_queue.set(queue.clone());
-    Ok(TpbRuntime { core, queue })
+    Ok(TpbRuntime {
+        core,
+        queue,
+        connections: Mutex::new(HashMap::new()),
+    })
 }
 
 #[unsafe(no_mangle)]

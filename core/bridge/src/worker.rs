@@ -124,13 +124,24 @@ impl TpbWorker {
 }
 
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
-    let (connection, config) = WorkerJson::parse_with_connection(config)?;
+    let (connection_key, connection, config) = WorkerJson::parse_with_connection(config)?;
     let worker_config = config.worker_config()?;
     let options = connection.options()?;
     let worker = rt.queue.handle.block_on(async {
-        let connection = Connection::connect(options)
-            .await
-            .map_err(|e| format!("Connection failed: {e}"))?;
+        let cached = rt.connections.lock().unwrap().get(&connection_key).cloned();
+        let connection = match cached {
+            Some(connection) => connection,
+            None => {
+                let connection = Connection::connect(options)
+                    .await
+                    .map_err(|e| format!("Connection failed: {e}"))?;
+                rt.connections
+                    .lock()
+                    .unwrap()
+                    .insert(connection_key, connection.clone());
+                connection
+            }
+        };
         let worker = temporalio_sdk_core::init_worker(&rt.core, worker_config, connection)
             .map_err(|e| format!("Worker start failed: {e}"))?;
         worker
