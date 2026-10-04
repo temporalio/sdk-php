@@ -32,6 +32,7 @@ final class CoreReplayer
 
     public function __construct(
         private readonly Bridge $bridge,
+        private readonly float $idleTimeoutSeconds = self::IDLE_TIMEOUT_SECONDS,
     ) {}
 
     public function replay(History $history, string $workflowId, array $config, WorkflowActivations $activations): void
@@ -41,8 +42,7 @@ final class CoreReplayer
         try {
             $failure = $this->drain($core, $tag, $activations);
         } finally {
-            $errors = $this->bridge->finalizeWorkers([$tag => $core]);
-            $this->bridge->freeWorker($core);
+            $errors = $this->bridge->shutdownWorkers([$tag => $core]);
         }
 
         if ($failure !== null) {
@@ -71,14 +71,13 @@ final class CoreReplayer
     private function drain(\FFI\CData $core, int $tag, WorkflowActivations $activations): ?ReplayFailedException
     {
         $failure = null;
-        $deadline = \microtime(true) + self::IDLE_TIMEOUT_SECONDS;
+        $deadline = \microtime(true) + $this->idleTimeoutSeconds;
         $this->bridge->pollWorkflowActivation($core, $tag);
         while (\microtime(true) < $deadline) {
             foreach ($this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS) as [$eventTag, $kind, $status, $data]) {
                 if ($eventTag !== $tag) {
                     continue;
                 }
-                $deadline = \microtime(true) + self::IDLE_TIMEOUT_SECONDS;
                 if ($kind === Bridge::KIND_WORKFLOW_COMPLETED) {
                     throw new \RuntimeException('sdk-core completion failed: ' . $data);
                 }
@@ -94,10 +93,11 @@ final class CoreReplayer
 
                 $failure = self::evictionFailure($data) ?? $failure;
                 $this->bridge->completeWorkflowActivation($core, $tag, $activations->handle($data));
+                $deadline = \microtime(true) + $this->idleTimeoutSeconds;
                 $this->bridge->pollWorkflowActivation($core, $tag);
             }
         }
 
-        return $failure ?? new ReplayFailedException(\sprintf('The replay got no activation for %d seconds', self::IDLE_TIMEOUT_SECONDS), false);
+        return $failure ?? new ReplayFailedException(\sprintf('The replay got no activation for %d seconds', $this->idleTimeoutSeconds), false);
     }
 }

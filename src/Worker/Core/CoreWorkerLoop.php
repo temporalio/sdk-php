@@ -115,11 +115,8 @@ final class CoreWorkerLoop
         }
 
         $this->profiler?->report();
-        foreach ($this->bridge->finalizeWorkers(\array_map(static fn(CoreWorkerHandle $worker): \FFI\CData => $worker->core, $this->workers)) as $tag => $error) {
+        foreach ($this->bridge->shutdownWorkers(\array_map(static fn(CoreWorkerHandle $worker): \FFI\CData => $worker->core, $this->workers)) as $tag => $error) {
             $this->logger->error(\sprintf('sdk-core worker for task queue "%s" did not finalize: %s', $this->workers[$tag]->taskQueue, $error));
-        }
-        foreach ($this->workers as $worker) {
-            $this->bridge->freeWorker($worker->core);
         }
 
         return $this->crashed ? 1 : 0;
