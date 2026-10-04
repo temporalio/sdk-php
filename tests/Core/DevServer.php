@@ -9,19 +9,32 @@ use Temporal\Testing\Environment;
 
 final class DevServer
 {
-    public const ADDRESS = '127.0.0.1:7477';
+    private const FREE_PORT_PROBE = 'tcp://127.0.0.1:0';
 
-    private static ?Environment $environment = null;
+    private static ?string $address = null;
 
     public static function address(): string
     {
-        if (self::$environment === null) {
-            $environment = Environment::create(new Command(self::ADDRESS));
-            $environment->startTemporalServer();
+        if (self::$address === null) {
+            $address = self::freeAddress();
+            $environment = Environment::create(new Command($address));
+            $environment->startTemporalServer(parameters: ['--headless']);
             \register_shutdown_function(static fn() => $environment->stop());
-            self::$environment = $environment;
+            self::$address = $address;
         }
 
-        return self::ADDRESS;
+        return self::$address;
+    }
+
+    private static function freeAddress(): string
+    {
+        $probe = \stream_socket_server(self::FREE_PORT_PROBE);
+        if ($probe === false) {
+            throw new \RuntimeException('No free local port for the dev server');
+        }
+        $address = (string) \stream_socket_get_name($probe, false);
+        \fclose($probe);
+
+        return $address;
     }
 }
