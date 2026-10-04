@@ -12,13 +12,13 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DataConverterException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Worker\Core\Failures;
+use Temporal\Worker\Core\PayloadMapper;
 
-final class FailuresTestCase extends TestCase
+final class PayloadMapperTestCase extends TestCase
 {
     public function testInvalidUtf8MessageFallsBackToScrubbedFailure(): void
     {
-        $failure = Failures::fromThrowable(new \RuntimeException("bad \xff byte"), DataConverter::createDefault());
+        $failure = (new PayloadMapper(DataConverter::createDefault()))->failure(new \RuntimeException("bad \xff byte"));
 
         self::assertSame('bad ? byte', $failure->getMessage());
         self::assertSame(FailureConverter::SOURCE, $failure->getSource());
@@ -32,7 +32,7 @@ final class FailuresTestCase extends TestCase
 
         try {
             $this->expectException(DataConverterException::class);
-            Failures::fromThrowable($error, DataConverter::createDefault());
+            (new PayloadMapper(DataConverter::createDefault()))->failure($error);
         } finally {
             \fclose($resource);
         }
@@ -54,6 +54,26 @@ final class FailuresTestCase extends TestCase
         $error = new ApplicationFailure('message', 'type', false, EncodedValues::fromValues(['detail']));
 
         $this->expectExceptionMessage('converter broke');
-        Failures::fromThrowable($error, $converter);
+        (new PayloadMapper($converter))->failure($error);
+    }
+
+    public function testFirstPayloadOfMissingOrEmptyValuesIsNull(): void
+    {
+        $mapper = new PayloadMapper(DataConverter::createDefault());
+
+        self::assertNull($mapper->firstPayload(null));
+        self::assertNull($mapper->firstPayload(EncodedValues::empty()));
+        self::assertSame('a', $mapper->decode($mapper->firstPayload($mapper->encode(['a', 'b']))));
+    }
+
+    public function testFailureRoundTripKeepsTheApplicationFailure(): void
+    {
+        $mapper = new PayloadMapper(DataConverter::createDefault());
+
+        $exception = $mapper->exception($mapper->failure(new ApplicationFailure('broken', 'Type', true)));
+
+        self::assertInstanceOf(ApplicationFailure::class, $exception);
+        self::assertSame('Type', $exception->getType());
+        self::assertTrue($exception->isNonRetryable());
     }
 }

@@ -13,6 +13,7 @@ namespace Temporal\Worker\Core;
 
 use Google\Protobuf\RepeatedField;
 use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
@@ -22,6 +23,9 @@ use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
+/**
+ * @internal
+ */
 final class PayloadMapper
 {
     public function __construct(
@@ -116,11 +120,29 @@ final class PayloadMapper
 
     public function failure(\Throwable $error): Failure
     {
-        return Failures::fromThrowable($error, $this->converter);
+        try {
+            return FailureConverter::mapExceptionToFailure($error, $this->converter);
+        } catch (\Exception $e) {
+            if (!self::isInvalidUtf8($e)) {
+                throw $e;
+            }
+
+            return new Failure([
+                'message' => \mb_scrub($error->getMessage(), 'UTF-8'),
+                'source' => FailureConverter::SOURCE,
+                'stack_trace' => \mb_scrub($error->getTraceAsString(), 'UTF-8'),
+                'application_failure_info' => new ApplicationFailureInfo(['type' => $error::class]),
+            ]);
+        }
     }
 
     public function exception(Failure $failure): \Throwable
     {
         return FailureConverter::mapFailureToException($failure, $this->converter);
+    }
+
+    private static function isInvalidUtf8(\Exception $error): bool
+    {
+        return $error::class === \Exception::class && \stripos($error->getMessage(), 'utf-8') !== false;
     }
 }

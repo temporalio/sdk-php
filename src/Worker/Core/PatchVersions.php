@@ -14,6 +14,9 @@ namespace Temporal\Worker\Core;
 use Coresdk\Workflow_commands\SetPatchMarker;
 use Coresdk\Workflow_commands\WorkflowCommand;
 
+/**
+ * @internal
+ */
 final class PatchVersions
 {
     private const DEFAULT_VERSION = -1;

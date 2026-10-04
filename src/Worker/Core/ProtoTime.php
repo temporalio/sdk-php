@@ -17,8 +17,12 @@ use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
 use Temporal\Internal\Support\DateInterval;
 
+/**
+ * @internal
+ */
 final class ProtoTime
 {
+    public const NANOS_PER_MILLISECOND = 1_000_000;
     private const NANOS_PER_SECOND = 1_000_000_000;
     private const NANOS_PER_MICRO = 1_000;
     private const MICROS_PER_SECOND = 1_000_000;
@@ -26,11 +30,6 @@ final class ProtoTime
 
     /** @var array<int, CarbonInterval> */
     private static array $intervals = [];
-
-    public static function nanos(?Duration $duration): int
-    {
-        return $duration === null ? 0 : (int) $duration->getSeconds() * self::NANOS_PER_SECOND + $duration->getNanos();
-    }
 
     public static function duration(int $nanos): Duration
     {
@@ -79,12 +78,12 @@ final class ProtoTime
     {
         return $timestamp === null
             ? (int) (new \DateTimeImmutable())->format('Uu')
-            : (int) $timestamp->getSeconds() * self::MICROS_PER_SECOND + \intdiv($timestamp->getNanos(), self::NANOS_PER_MICRO);
+            : self::microsOf($timestamp);
     }
 
-    public static function microsOf(?Duration $duration): int
+    public static function microsOf(Timestamp|Duration|null $value): int
     {
-        return $duration === null ? 0 : (int) $duration->getSeconds() * self::MICROS_PER_SECOND + \intdiv($duration->getNanos(), self::NANOS_PER_MICRO);
+        return $value === null ? 0 : (int) $value->getSeconds() * self::MICROS_PER_SECOND + \intdiv($value->getNanos(), self::NANOS_PER_MICRO);
     }
 
     public static function utc(int $micros): Carbon
@@ -93,5 +92,10 @@ final class ProtoTime
             \gmdate('Y-m-d\TH:i:s', \intdiv($micros, self::MICROS_PER_SECOND))
             . \sprintf('.%06d+00:00', $micros % self::MICROS_PER_SECOND),
         );
+    }
+
+    private static function nanos(?Duration $duration): int
+    {
+        return $duration === null ? 0 : (int) $duration->getSeconds() * self::NANOS_PER_SECOND + $duration->getNanos();
     }
 }

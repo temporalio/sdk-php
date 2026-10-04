@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+/**
+ * @internal
+ */
 final class RunState
 {
     public const TIMER = 1;
@@ -73,7 +76,11 @@ final class RunState
 
     public function requestId(int $seq): int
     {
-        return $this->requests[$seq] ?? throw new \OutOfBoundsException("Unknown command sequence $seq in run {$this->runId}");
+        if (!isset($this->requests[$seq])) {
+            throw new \OutOfBoundsException("Unknown command sequence $seq in run {$this->runId}");
+        }
+
+        return $this->requests[$seq];
     }
 
     public function release(int $seq): int

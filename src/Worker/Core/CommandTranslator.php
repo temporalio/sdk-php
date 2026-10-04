@@ -53,9 +53,11 @@ use Temporal\Worker\Transport\Command\Server\FailureResponse;
 use Temporal\Worker\Transport\Command\Server\SuccessResponse;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
+/**
+ * @internal
+ */
 final class CommandTranslator
 {
-    private const NANOS_PER_MILLISECOND = 1_000_000;
     private const SIDE_EFFECT_TIMEOUT_SECONDS = 60;
     private const FIRST_ATTEMPT = 1;
     private const NEGATIVE_TIMER_MESSAGE = 'negative duration provided %dms';
@@ -129,7 +131,7 @@ final class CommandTranslator
                 $commands[] = new WorkflowCommand([
                     'start_timer' => new StartTimer([
                         'seq' => $run->bind($id, RunState::TIMER),
-                        'start_to_fire_timeout' => ProtoTime::duration($ms * self::NANOS_PER_MILLISECOND),
+                        'start_to_fire_timeout' => ProtoTime::duration($ms * ProtoTime::NANOS_PER_MILLISECOND),
                     ]),
                     'user_metadata' => $this->userMetadata($options['summary'] ?? ''),
                 ]);
@@ -305,7 +307,9 @@ final class CommandTranslator
         /** @var array{name: string, options: array{ActivityID?: string, TaskQueueName?: string|null, ...<string, mixed>}} $request */
         $request = $command->getOptions();
         $options = $request['options'];
-        $cancellationType = $this->cancellationType($options['WaitForCancellation'] ?? false);
+        $cancellationType = ($options['WaitForCancellation'] ?? false) === true
+            ? ActivityCancellationType::WAIT_CANCELLATION_COMPLETED
+            : ActivityCancellationType::TRY_CANCEL;
         if ($cancellationType === ActivityCancellationType::TRY_CANCEL) {
             $run->markTryCancel($seq);
         }
@@ -512,12 +516,5 @@ final class CommandTranslator
             'maximum_attempts' => (int) ($retry['maximum_attempts'] ?? 0),
             'non_retryable_error_types' => $retry['non_retryable_error_types'] ?? [],
         ]);
-    }
-
-    private function cancellationType(mixed $waitForCancellation): int
-    {
-        return $waitForCancellation === true
-            ? ActivityCancellationType::WAIT_CANCELLATION_COMPLETED
-            : ActivityCancellationType::TRY_CANCEL;
     }
 }

@@ -26,6 +26,9 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Workflow\WorkflowType;
 
+/**
+ * @internal
+ */
 final class InfoFactory
 {
     private const FLOAT32_SIGNIFICANT_DIGITS = '%.7g';

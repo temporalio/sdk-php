@@ -31,6 +31,9 @@ use Temporal\Worker\Transport\Command\Server\SuccessResponse;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\WorkerFactory;
 
+/**
+ * @internal
+ */
 final class WorkflowActivations
 {
     /** @var array<string, RunState> */
@@ -55,7 +58,7 @@ final class WorkflowActivations
         private readonly string $namespace,
         private readonly string $taskQueue,
         private readonly array $versioningBehaviors,
-        bool $failWorkflowOnPanic = false,
+        bool $failWorkflowOnPanic,
     ) {
         $this->timeZone = new \DateTimeZone(\date_default_timezone_get());
         $this->payloads = new PayloadMapper($converter);

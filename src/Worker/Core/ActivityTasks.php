@@ -38,11 +38,15 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\WorkerFactory;
 
+/**
+ * @internal
+ */
 final class ActivityTasks implements RPCConnectionInterface
 {
     public const SIDE_EFFECT = '__php_side_effect';
 
-    private ?Bridge $bridge = null;
+    /** @psalm-suppress PropertyNotSetInConstructor */
+    private Bridge $bridge;
 
     /** @var array<string, array{\FFI\CData, ?Cancel}> */
     private array $running = [];
@@ -103,7 +107,6 @@ final class ActivityTasks implements RPCConnectionInterface
 
         $details = new Payloads();
         $details->mergeFromString(\base64_decode($payload['details']));
-        /** @var Bridge $this->bridge */
         $this->bridge->recordActivityHeartbeat(
             $this->running[$token][0],
             (new ActivityHeartbeat(['task_token' => $token, 'details' => $details->getPayloads()]))->serializeToString(),

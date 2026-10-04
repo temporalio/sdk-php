@@ -16,6 +16,9 @@ use Coresdk\Workflow_commands\ScheduleLocalActivity;
 use Coresdk\Workflow_commands\StartTimer;
 use Coresdk\Workflow_commands\WorkflowCommand;
 
+/**
+ * @internal
+ */
 final class LocalActivityRetries
 {
     /** @var array<int, ScheduleLocalActivity> */
