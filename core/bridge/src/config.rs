@@ -1,12 +1,15 @@
 use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
+use std::collections::HashSet;
 use std::time::Duration;
 use temporalio_client::{ClientTlsOptions, ConnectionOptions, GrpcCompression, TlsOptions};
 use temporalio_common::{
     protos::temporal::api::enums::v1::VersioningBehavior,
     worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
-use temporalio_sdk_core::{PollerBehavior, Url, WorkerConfig, WorkerVersioningStrategy};
+use temporalio_sdk_core::{
+    PollerBehavior, Url, WorkerConfig, WorkerVersioningStrategy, WorkflowErrorType,
+};
 use tonic::transport::{Certificate, ClientTlsConfig, Identity, Uri};
 
 pub fn parse<T: DeserializeOwned>(json: &[u8], what: &str) -> Result<T, String> {
@@ -161,6 +164,7 @@ pub struct WorkerJson {
     max_concurrent_activity_task_polls: usize,
     nonsticky_to_sticky_poll_ratio: f32,
     sticky_queue_schedule_to_start_timeout_ms: u64,
+    nondeterminism_fails_workflow: bool,
 }
 
 impl WorkerJson {
@@ -197,6 +201,11 @@ impl WorkerJson {
             .graceful_shutdown_period(Duration::from_millis(self.graceful_shutdown_period_ms))
             .maybe_max_worker_activities_per_second(self.max_worker_activities_per_second)
             .maybe_max_task_queue_activities_per_second(self.max_task_queue_activities_per_second)
+            .workflow_failure_errors(if self.nondeterminism_fails_workflow {
+                HashSet::from([WorkflowErrorType::Nondeterminism])
+            } else {
+                HashSet::new()
+            })
             .task_types(WorkerTaskTypes {
                 enable_workflows: self.workflows,
                 enable_local_activities: self.local_activities,
@@ -272,6 +281,7 @@ mod tests {
             "max_concurrent_activity_task_polls": 1,
             "nonsticky_to_sticky_poll_ratio": 0.5,
             "sticky_queue_schedule_to_start_timeout_ms": 5000,
+            "nondeterminism_fails_workflow": false,
         })
     }
 

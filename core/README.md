@@ -159,7 +159,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 - **`Workflow::sideEffect()`** is a local activity that the worker completes itself: one more activation per call, one marker per call (also `uuid*()`).
 - **`Workflow::getVersion()`** maps to patches with id `<changeId>-<version>` and a per-run cache. The `TemporalChangeVersion` search attribute that sdk-go upserts is not written.
 - **Local activities** run in the workflow process, not in the activity processes.
-- **`WorkflowPanicPolicy::FailWorkflow`** applies to panics in workflow code; non-determinism detected by sdk-core still fails the workflow task.
+- **`WorkflowPanicPolicy::FailWorkflow`** fails the workflow on panics and on non-determinism detected by sdk-core, but sdk-core fails the workflow only on the first attempt of the workflow task; a task that already timed out keeps failing (sdk-go fails it on any attempt).
 - **Deadlock detection:** `WorkerOptions::$deadlockDetectionTimeout` has no effect.
 - **Fiber concurrency** helps only activities that use non-blocking I/O. A blocking call (PDO, curl, `sleep`) stops all activities of the process. Fibers started inside an activity fiber (`Amp\async`, event loop callbacks) see the global Activity context; call `Activity::*` from the activity fiber itself.
 - **fork() after the runtime started:** the sdk-core runtime cannot be used in a process that forked after it started; `Bridge::shared()` throws a `LogicException` there.

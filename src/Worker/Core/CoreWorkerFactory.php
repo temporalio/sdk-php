@@ -111,7 +111,7 @@ class CoreWorkerFactory extends WorkerFactory
         (new CoreReplayer(Bridge::shared()))->replay(
             $history,
             $workflowId,
-            $this->config->build($worker, CoreRole::Workflow),
+            ['nondeterminism_fails_workflow' => false] + $this->config->build($worker, CoreRole::Workflow),
             $this->activations($worker, $this->dispatch(...)),
         );
     }
