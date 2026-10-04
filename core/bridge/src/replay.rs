@@ -93,7 +93,9 @@ mod tests {
         "max_concurrent_activity_task_polls": 1,
         "nonsticky_to_sticky_poll_ratio": 1.0,
         "sticky_queue_schedule_to_start_timeout_ms": 5000,
-        "nondeterminism_fails_workflow": false
+        "nondeterminism_fails_workflow": false,
+        "max_heartbeat_throttle_interval_ms": null,
+        "poller_autoscaling": false
     }"#;
 
     fn history() -> Vec<u8> {

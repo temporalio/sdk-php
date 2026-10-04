@@ -85,6 +85,8 @@ final class CoreWorkerConfig
             'sticky_queue_schedule_to_start_timeout_ms' => self::milliseconds($options->stickyScheduleToStartTimeout) ?? self::STICKY_SCHEDULE_TO_START_TIMEOUT_MS,
             'max_concurrent_activity_task_polls' => $options->maxConcurrentActivityTaskPollers ?: \min(self::MAX_ACTIVITY_POLLERS, $activityConcurrency),
             'nondeterminism_fails_workflow' => $options->workflowPanicPolicy === WorkflowPanicPolicy::FailWorkflow,
+            'max_heartbeat_throttle_interval_ms' => self::milliseconds($options->maxHeartbeatThrottleInterval),
+            'poller_autoscaling' => $this->options->pollerAutoscaling,
         ];
     }
 

@@ -27,6 +27,7 @@ final class CoreEnvironment
     public const GRPC_COMPRESSION = 'TEMPORAL_CORE_GRPC_COMPRESSION';
     public const PROFILE = 'TEMPORAL_CORE_PROFILE';
     public const PROMETHEUS = 'TEMPORAL_CORE_PROMETHEUS_ADDRESS';
+    public const POLLER_AUTOSCALING = 'TEMPORAL_CORE_POLLER_AUTOSCALING';
 
     public static function string(string $name): ?string
     {

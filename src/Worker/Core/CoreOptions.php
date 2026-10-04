@@ -40,6 +40,7 @@ final class CoreOptions
         public readonly int $maxCachedWorkflows,
         public readonly string $grpcCompression,
         public readonly bool $profiling,
+        public readonly bool $pollerAutoscaling,
     ) {}
 
     /**
@@ -71,6 +72,7 @@ final class CoreOptions
             maxCachedWorkflows: CoreEnvironment::integer(CoreEnvironment::MAX_CACHED_WORKFLOWS, self::DEFAULT_MAX_CACHED_WORKFLOWS, 0),
             grpcCompression: CoreEnvironment::string(CoreEnvironment::GRPC_COMPRESSION) ?? self::DEFAULT_GRPC_COMPRESSION,
             profiling: CoreEnvironment::flag(CoreEnvironment::PROFILE),
+            pollerAutoscaling: CoreEnvironment::flag(CoreEnvironment::POLLER_AUTOSCALING),
         );
     }
 

@@ -12,6 +12,9 @@ use temporalio_sdk_core::{
 };
 use tonic::transport::{Certificate, ClientTlsConfig, Identity, Uri};
 
+const AUTOSCALING_MIN_POLLERS: usize = 1;
+const AUTOSCALING_INITIAL_POLLERS: usize = 5;
+
 pub fn parse<T: DeserializeOwned>(json: &[u8], what: &str) -> Result<T, String> {
     serde_json::from_slice(json).map_err(|e| format!("Invalid {what} JSON: {e}"))
 }
@@ -165,6 +168,8 @@ pub struct WorkerJson {
     nonsticky_to_sticky_poll_ratio: f32,
     sticky_queue_schedule_to_start_timeout_ms: u64,
     nondeterminism_fails_workflow: bool,
+    max_heartbeat_throttle_interval_ms: Option<u64>,
+    poller_autoscaling: bool,
 }
 
 impl WorkerJson {
@@ -188,12 +193,16 @@ impl WorkerJson {
             .max_outstanding_workflow_tasks(self.max_outstanding_workflow_tasks)
             .max_outstanding_activities(self.max_outstanding_activities)
             .max_outstanding_local_activities(self.max_outstanding_local_activities)
-            .workflow_task_poller_behavior(PollerBehavior::SimpleMaximum(
-                self.max_concurrent_workflow_task_polls,
-            ))
-            .activity_task_poller_behavior(PollerBehavior::SimpleMaximum(
-                self.max_concurrent_activity_task_polls,
-            ))
+            .workflow_task_poller_behavior(
+                self.poller_behavior(self.max_concurrent_workflow_task_polls),
+            )
+            .activity_task_poller_behavior(
+                self.poller_behavior(self.max_concurrent_activity_task_polls),
+            )
+            .maybe_max_heartbeat_throttle_interval(
+                self.max_heartbeat_throttle_interval_ms
+                    .map(Duration::from_millis),
+            )
             .nonsticky_to_sticky_poll_ratio(self.nonsticky_to_sticky_poll_ratio)
             .sticky_queue_schedule_to_start_timeout(Duration::from_millis(
                 self.sticky_queue_schedule_to_start_timeout_ms,
@@ -213,6 +222,18 @@ impl WorkerJson {
                 enable_nexus: false,
             })
             .build()
+    }
+
+    fn poller_behavior(&self, maximum: usize) -> PollerBehavior {
+        if self.poller_autoscaling {
+            PollerBehavior::Autoscaling {
+                minimum: AUTOSCALING_MIN_POLLERS,
+                maximum,
+                initial: maximum.min(AUTOSCALING_INITIAL_POLLERS),
+            }
+        } else {
+            PollerBehavior::SimpleMaximum(maximum)
+        }
     }
 
     fn versioning_strategy(&self) -> Result<WorkerVersioningStrategy, String> {
@@ -282,6 +303,8 @@ mod tests {
             "nonsticky_to_sticky_poll_ratio": 0.5,
             "sticky_queue_schedule_to_start_timeout_ms": 5000,
             "nondeterminism_fails_workflow": false,
+            "max_heartbeat_throttle_interval_ms": null,
+            "poller_autoscaling": false,
         })
     }
 
