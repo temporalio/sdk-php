@@ -1,0 +1,152 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Core\Client;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
+use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
+use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
+use Temporal\Client\GRPC\Connection\ConnectionState;
+use Temporal\Client\GRPC\Core\CoreCloudServiceStub;
+use Temporal\Client\GRPC\Core\CoreOperatorServiceStub;
+use Temporal\Client\GRPC\Core\CoreWorkflowServiceStub;
+use Temporal\Client\GRPC\StatusCode;
+use Temporal\Internal\Bridge\Bridge;
+use Temporal\Internal\Bridge\BridgeConnection;
+use Temporal\Testing\CoreTestServiceStub;
+use Temporal\Tests\Core\DevServer;
+
+final class CoreStubTestCase extends TestCase
+{
+    private const CLOSED_ADDRESS = '127.0.0.1:1';
+    private const FREE_PORT_PROBE = 'tcp://127.0.0.1:0';
+    private const WAIT_FOR_FAILURE_MICROSECONDS = 5_000_000;
+    private const SHORT_WAIT_MICROSECONDS = 100_000;
+    private const CALL_TIMEOUT_MICROSECONDS = 200_500;
+
+    /** @var resource|null */
+    private $listener = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->listener !== null) {
+            \fclose($this->listener);
+        }
+    }
+
+    public static function provideStubClasses(): iterable
+    {
+        yield 'workflow service' => [CoreWorkflowServiceStub::class];
+        yield 'operator service' => [CoreOperatorServiceStub::class];
+        yield 'cloud service' => [CoreCloudServiceStub::class];
+        yield 'test service' => [CoreTestServiceStub::class];
+    }
+
+    /**
+     * @param class-string<CoreWorkflowServiceStub|CoreOperatorServiceStub|CoreCloudServiceStub|CoreTestServiceStub> $class
+     */
+    #[DataProvider('provideStubClasses')]
+    public function testStubIsIdleUntilItConnects(string $class): void
+    {
+        $stub = new $class(self::CLOSED_ADDRESS);
+
+        $this->assertSame(self::CLOSED_ADDRESS, $stub->getTarget());
+        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+    }
+
+    public function testClosedPortEndsInTransientFailure(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        $this->assertFalse($stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS));
+        $this->assertSame(ConnectionState::TransientFailure->value, $stub->getConnectivityState());
+    }
+
+    public function testCallToClosedPortReturnsUnavailable(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        [$response, $status] = $stub->GetSystemInfo(
+            new GetSystemInfoRequest(),
+            ['trace-bin' => ["\x00\x01"], 'trace' => ['plain']],
+            ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS],
+        )->wait();
+
+        $this->assertNull($response);
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+        $this->assertNotSame('', $status->details);
+        $this->assertSame([], $status->metadata);
+    }
+
+    public function testHandshakeThatNeverEndsStaysConnectingUntilClosed(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener(), BridgeConnection::tls(null, null, null, null));
+
+        $this->assertSame(ConnectionState::Connecting->value, $stub->getConnectivityState(true));
+        $this->assertFalse($stub->waitForReady(self::SHORT_WAIT_MICROSECONDS));
+        $this->assertSame(ConnectionState::Connecting->value, $stub->getConnectivityState());
+
+        $stub->close();
+        $stub->close();
+
+        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+    }
+
+    public function testCallWithoutAnAnswerExceedsItsDeadline(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+
+        $this->assertTrue($stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS));
+        $this->assertSame(ConnectionState::Ready->value, $stub->getConnectivityState(true));
+        [$response, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::CALL_TIMEOUT_MICROSECONDS])->wait();
+
+        $this->assertNull($response);
+        $this->assertSame(StatusCode::DEADLINE_EXCEEDED, $status->code);
+        $this->assertSame([], $status->metadata);
+    }
+
+    public function testStubFromAnotherProcessIsRejected(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+        \Closure::bind(static function (CoreWorkflowServiceStub $stub): void {
+            $stub->bridge = (new \ReflectionClass(Bridge::class))->newInstanceWithoutConstructor();
+        }, null, CoreWorkflowServiceStub::class)($stub);
+
+        try {
+            $stub->getConnectivityState();
+            $this->fail('The stub used a bridge of another process');
+        } catch (\LogicException $e) {
+            $this->assertSame(Bridge::FORKED_AFTER_START, $e->getMessage());
+        }
+
+        $stub->close();
+        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+    }
+
+    public function testServerAnswersWithResponseAndWithStatusDetails(): void
+    {
+        $stub = new CoreWorkflowServiceStub(DevServer::address());
+
+        $this->assertTrue($stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS));
+        [$info, $ok] = $stub->GetSystemInfo(new GetSystemInfoRequest())->wait();
+        [$missing, $notFound] = $stub->DescribeNamespace((new DescribeNamespaceRequest())->setNamespace('missing-' . \bin2hex(\random_bytes(4))))->wait();
+
+        $this->assertInstanceOf(GetSystemInfoResponse::class, $info);
+        $this->assertSame(StatusCode::OK, $ok->code);
+        $this->assertNull($missing);
+        $this->assertSame(StatusCode::NOT_FOUND, $notFound->code);
+        $this->assertNotSame('', $notFound->metadata['grpc-status-details-bin'][0]);
+    }
+
+    private function silentListener(): string
+    {
+        $listener = \stream_socket_server(self::FREE_PORT_PROBE);
+        $this->assertIsResource($listener);
+        $this->listener = $listener;
+
+        return (string) \stream_socket_get_name($listener, false);
+    }
+}
