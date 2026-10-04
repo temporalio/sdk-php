@@ -152,7 +152,7 @@ try {
     }
 
     $host = $coreTransport ? null : new RecordingHost(RoadRunner::create(), $workerTranscript);
-    $container->get(WorkerFactoryInterface::class)->run($host);
+    exit($container->get(WorkerFactoryInterface::class)->run($host));
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);
     $workerTranscript->flush();

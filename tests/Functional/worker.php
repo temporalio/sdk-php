@@ -87,4 +87,4 @@ foreach ($getClasses(__DIR__ . '/../Fixtures/src/Activity', 'Temporal\\Tests\\Ac
     }
 }
 
-$factory->run();
+exit($factory->run());
