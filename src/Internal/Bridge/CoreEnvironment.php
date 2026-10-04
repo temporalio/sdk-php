@@ -54,11 +54,11 @@ final class CoreEnvironment
         return $integer;
     }
 
-    public static function flag(string $name): bool
+    public static function flag(string $name, bool $default = false): bool
     {
         $value = self::string($name);
         if ($value === null) {
-            return false;
+            return $default;
         }
 
         $flag = \filter_var($value, \FILTER_VALIDATE_BOOL, \FILTER_NULL_ON_FAILURE);

@@ -61,7 +61,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process, a positive integer (1 thread uses 15–22 % less CPU than one per core). Another value throws an exception |
 | `TEMPORAL_CORE_GRPC_COMPRESSION` | `gzip` | `gzip` (sdk-core default) or `none`: gzip on the worker's gRPC calls saves network bytes and costs 7–15 % worker CPU. Another value stops the worker start with an error |
 | `TEMPORAL_CORE_PROMETHEUS_ADDRESS` | off | `host:port` of the sdk-core Prometheus exporter (`/metrics`). Each worker process takes the first free port from this one, so 1 workflow + 4 activity processes on `127.0.0.1:9464` serve `9464`–`9468` |
-| `TEMPORAL_CORE_POLLER_AUTOSCALING` | off | `1` lets sdk-core scale the workflow and activity pollers from 1 up to the configured maximum, starting from 5 |
+| `TEMPORAL_CORE_POLLER_AUTOSCALING` | on | sdk-core scales the workflow and activity pollers from 1 up to the configured maximum, starting from 5 (burst latency −70 %); `0` keeps a fixed number of pollers |
 | `TEMPORAL_CORE_PROFILE` | off | `1` logs per-phase timings and process CPU to stderr every 10 s and at shutdown |
 | `TEMPORAL_CORE_LOG` | `warn` | sdk-core log filter (`off`, `error`, `warn`, `info`, `debug` or a `tracing` filter); the records go to the worker's PSR logger with `target` and the core fields as context |
 
