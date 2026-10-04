@@ -67,6 +67,16 @@ jobs:
           cargo build --release --lib --manifest-path "$BRIDGE_MANIFEST"
           git diff --exit-code core/bridge/include
 
+      - name: Setup Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: core/roadrunner/go.mod
+          cache-dependency-path: core/roadrunner/go.sum
+
+      - name: RoadRunner build tests
+        working-directory: core/roadrunner
+        run: GOWORK=off go test -cover ./...
+
   php:
     name: PHP ${{ matrix.php }} on sdk-core, ${{ matrix.suite }}, activity concurrency ${{ matrix.concurrency }}
     runs-on: ubuntu-latest
@@ -75,8 +85,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { suite: unit, php: '8.2', concurrency: '1' }
-          - { suite: unit, php: '8.4', concurrency: '1' }
+          - { suite: core, php: '8.2', concurrency: '1' }
+          - { suite: core, php: '8.4', concurrency: '1' }
           - { suite: functional, php: '8.4', concurrency: '1' }
           - { suite: functional-timeskip, php: '8.4', concurrency: '1' }
           - { suite: acceptance, php: '8.4', concurrency: '1' }
@@ -101,15 +111,12 @@ jobs:
         uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
 
       - name: Download binaries
-        if: matrix.suite != 'unit'
         run: composer get:binaries
 
       - name: Install protoc
-        if: matrix.suite != 'unit'
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
 
       - name: Cache the bridge build
-        if: matrix.suite != 'unit'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: |
@@ -120,12 +127,11 @@ jobs:
           restore-keys: bridge-${{ runner.os }}-
 
       - name: Build the sdk-core bridge
-        if: matrix.suite != 'unit'
         run: cargo build --release --lib --manifest-path "$BRIDGE_MANIFEST"
 
-      - name: Unit
-        if: matrix.suite == 'unit'
-        run: composer test:unit
+      - name: Unit and native tests
+        if: matrix.suite == 'core'
+        run: tests/runner.php vendor/bin/phpunit --testsuite=Core --color=always --testdox
 
       - name: Functional
         if: matrix.suite == 'functional'
