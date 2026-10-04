@@ -7,7 +7,7 @@ use prost::Message;
 use std::{
     collections::VecDeque,
     future::Future,
-    os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd},
+    os::fd::{AsRawFd, OwnedFd},
     panic::AssertUnwindSafe,
     sync::{
         Arc, Condvar, Mutex,
@@ -18,6 +18,7 @@ use std::{
 use temporalio_sdk_core::PollError;
 use tokio::runtime::Handle;
 
+#[derive(Debug)]
 struct Event {
     tag: u64,
     kind: i32,
@@ -25,6 +26,7 @@ struct Event {
     data: Box<[u8]>,
 }
 
+#[derive(Debug)]
 pub struct Queue {
     pub handle: Handle,
     events: Mutex<VecDeque<Event>>,
@@ -36,11 +38,8 @@ pub struct Queue {
 
 impl Queue {
     pub fn new(handle: Handle) -> Result<Self, String> {
-        let mut fds: [RawFd; 2] = [0; 2];
-        if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {
-            return Err(std::io::Error::last_os_error().to_string());
-        }
-        let [read_fd, write_fd] = fds.map(|fd| unsafe { OwnedFd::from_raw_fd(fd) });
+        let (read_fd, write_fd) = std::io::pipe().map_err(|e| e.to_string())?;
+        let (read_fd, write_fd) = (OwnedFd::from(read_fd), OwnedFd::from(write_fd));
         for fd in [&read_fd, &write_fd] {
             let fd = fd.as_raw_fd();
             unsafe {
@@ -48,9 +47,8 @@ impl Queue {
                     fd,
                     libc::F_SETFL,
                     libc::fcntl(fd, libc::F_GETFL) | libc::O_NONBLOCK,
-                );
-                libc::fcntl(fd, libc::F_SETFD, libc::FD_CLOEXEC);
-            }
+                )
+            };
         }
         Ok(Self {
             handle,
@@ -169,7 +167,7 @@ mod tests {
     use crate::ffi::free;
     use crate::testing::{events, runtime};
 
-    fn read_bytes(fd: RawFd) -> isize {
+    fn read_bytes(fd: libc::c_int) -> isize {
         let mut buf = [0u8; 8];
         unsafe { libc::read(fd, buf.as_mut_ptr().cast(), buf.len()) }
     }

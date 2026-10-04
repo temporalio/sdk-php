@@ -1,6 +1,7 @@
 use crate::config::{RuntimeJson, parse};
 use crate::ffi::{KIND_LOG, STATUS_OK, construct, slice};
 use crate::queue::Queue;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -19,30 +20,40 @@ pub struct TpbRuntime {
     pub connections: Mutex<HashMap<String, Connection>>,
 }
 
+#[derive(Debug)]
 struct QueueLog(Arc<OnceLock<Arc<Queue>>>);
 
-impl std::fmt::Debug for QueueLog {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("QueueLog")
-    }
+fn push_log(
+    queue: &Queue,
+    level: &str,
+    target: &str,
+    message: &str,
+    fields: &HashMap<String, Value>,
+) {
+    let entry = serde_json::json!({
+        "level": level,
+        "target": target,
+        "message": message,
+        "fields": fields,
+    });
+    queue.push(0, KIND_LOG, STATUS_OK, entry.to_string().into_bytes());
 }
 
 impl CoreLogConsumer for QueueLog {
     fn on_log(&self, log: CoreLog) {
-        let Some(queue) = self.0.get() else {
-            return;
-        };
-        let entry = serde_json::json!({
-            "level": log.level.as_str(),
-            "target": log.target,
-            "message": log.message,
-            "fields": log.fields,
-        });
-        queue.push(0, KIND_LOG, STATUS_OK, entry.to_string().into_bytes());
+        if let Some(queue) = self.0.get() {
+            push_log(
+                queue,
+                log.level.as_str(),
+                &log.target,
+                &log.message,
+                &log.fields,
+            );
+        }
     }
 }
 
-fn prometheus_meter(address: &str) -> Result<Arc<dyn CoreMeter>, String> {
+fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, String> {
     let base: SocketAddr = address
         .parse()
         .map_err(|e| format!("Invalid Prometheus address {address}: {e}"))?;
@@ -59,7 +70,14 @@ fn prometheus_meter(address: &str) -> Result<Arc<dyn CoreMeter>, String> {
                 .build(),
         ) {
             Ok(server) => {
-                eprintln!("[temporal-core] Prometheus metrics on http://{socket_addr}/metrics");
+                let message = format!("Prometheus metrics on http://{socket_addr}/metrics");
+                push_log(
+                    queue,
+                    "INFO",
+                    env!("CARGO_CRATE_NAME"),
+                    &message,
+                    &HashMap::new(),
+                );
                 return Ok(server.meter);
             }
             Err(e) => last_error = e.to_string(),
@@ -85,13 +103,13 @@ fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
     let mut tokio = TokioRuntimeBuilder::default();
     tokio.inner.worker_threads(config.threads);
     let mut core = CoreRuntime::new(options, tokio).map_err(|e| e.to_string())?;
-    if let Some(address) = config.prometheus {
-        let _guard = core.tokio_handle().enter();
-        let meter = prometheus_meter(&address)?;
-        core.telemetry_mut().attach_late_init_metrics(meter);
-    }
     let queue = Arc::new(Queue::new(core.tokio_handle())?);
     let _ = log_queue.set(queue.clone());
+    if let Some(address) = config.prometheus {
+        let _guard = core.tokio_handle().enter();
+        let meter = prometheus_meter(&address, &queue)?;
+        core.telemetry_mut().attach_late_init_metrics(meter);
+    }
     Ok(TpbRuntime {
         core,
         queue,
@@ -112,6 +130,8 @@ pub unsafe extern "C" fn tpb_runtime_new(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ffi::tpb_bytes_free;
+    use crate::testing::events;
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
 
@@ -125,8 +145,17 @@ mod tests {
         response
     }
 
+    fn log_entry(runtime: &TpbRuntime) -> Value {
+        let [(0, KIND_LOG, STATUS_OK, ref data)] =
+            events(std::ptr::from_ref(runtime).cast_mut(), 1)[..]
+        else {
+            panic!("one log event expected");
+        };
+        serde_json::from_slice(data).unwrap()
+    }
+
     #[test]
-    fn prometheus_exporter_moves_to_the_next_free_port() {
+    fn prometheus_exporter_moves_to_the_next_free_port_and_logs_it() {
         let taken = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = taken.local_addr().unwrap().port();
         let config = format!(r#"{{"threads":1,"log":"off","prometheus":"127.0.0.1:{port}"}}"#);
@@ -134,7 +163,27 @@ mod tests {
         let runtime = new_runtime(config.as_bytes()).unwrap();
 
         assert!(scrape(port + 1).starts_with("HTTP/1.1 200"));
-        drop(runtime);
+        let entry = log_entry(&runtime);
+        assert_eq!(entry["level"], "INFO");
+        assert_eq!(entry["target"], "temporal_php_bridge");
+        assert_eq!(
+            entry["message"],
+            format!(
+                "Prometheus metrics on http://127.0.0.1:{}/metrics",
+                port + 1
+            )
+        );
+        assert_eq!(entry["fields"], serde_json::json!({}));
+    }
+
+    #[test]
+    fn prometheus_exporter_stops_at_the_last_port() {
+        let _taken = TcpListener::bind("127.0.0.1:65535");
+        let config = br#"{"threads":1,"log":"off","prometheus":"127.0.0.1:65535"}"#;
+
+        assert!(new_runtime(config).is_err_and(|e| {
+            e.starts_with("No free port for the Prometheus exporter from 127.0.0.1:65535: ")
+        }));
     }
 
     #[test]
@@ -145,31 +194,9 @@ mod tests {
             tracing::warn!(target: "temporalio_sdk_core", answer = 42, "core warning");
         });
 
-        let mut events = [crate::ffi::TpbEvent {
-            tag: 0,
-            kind: 0,
-            status: 0,
-            data: std::ptr::null_mut(),
-            len: 0,
-        }];
-        let count = unsafe {
-            crate::queue::tpb_next_events(
-                std::ptr::from_ref(&runtime).cast_mut(),
-                1000,
-                events.as_mut_ptr(),
-                1,
-            )
-        };
-        assert_eq!(count, 1);
-        assert_eq!(events[0].kind, KIND_LOG);
-        let data = unsafe {
-            Box::from_raw(std::ptr::slice_from_raw_parts_mut(
-                events[0].data,
-                events[0].len,
-            ))
-        };
-        let entry: serde_json::Value = serde_json::from_slice(&data).unwrap();
+        let entry = log_entry(&runtime);
         assert_eq!(entry["level"], "WARN");
+        assert_eq!(entry["target"], "temporalio_sdk_core");
         assert_eq!(entry["message"], "core warning");
         assert_eq!(entry["fields"]["answer"], 42);
     }
@@ -179,5 +206,18 @@ mod tests {
         let config = br#"{"threads":1,"log":"off","prometheus":"not an address"}"#;
 
         assert!(new_runtime(config).is_err_and(|e| e.contains("Invalid Prometheus address")));
+    }
+
+    #[test]
+    fn invalid_runtime_config_is_returned_through_the_error_pointers() {
+        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
+        let config = b"{";
+
+        let rt = unsafe { tpb_runtime_new(config.as_ptr().cast(), 1, &mut err, &mut err_len) };
+
+        assert!(rt.is_null());
+        let message = unsafe { slice(err.cast(), err_len) };
+        assert!(message.starts_with(b"Invalid runtime config JSON: "));
+        unsafe { tpb_bytes_free(err, err_len) };
     }
 }
