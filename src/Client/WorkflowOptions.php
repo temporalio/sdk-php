@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -195,10 +194,10 @@ final class WorkflowOptions extends Options
     public function __construct()
     {
         $this->workflowId = Uuid::v4();
-        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
-        $this->workflowRunTimeout = CarbonInterval::seconds(0);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
-        $this->workflowStartDelay = CarbonInterval::seconds(0);
+        $this->workflowExecutionTimeout = new \DateInterval('PT0S');
+        $this->workflowRunTimeout = new \DateInterval('PT0S');
+        $this->workflowTaskTimeout = new \DateInterval('PT0S');
+        $this->workflowStartDelay = new \DateInterval('PT0S');
         $this->priority = Priority::new();
 
         parent::__construct();

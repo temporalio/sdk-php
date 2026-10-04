@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Activity;
 use Temporal\Client\ActivityCompletionClientInterface;
@@ -119,10 +117,10 @@ final class ActivityInfo
         $this->taskToken = \base64_encode(Uuid::nil());
         $this->type = new ActivityType();
 
-        $this->heartbeatTimeout = CarbonInterval::second(0);
-        $this->scheduledTime = CarbonImmutable::now();
-        $this->startedTime = CarbonImmutable::now();
-        $this->deadline = CarbonImmutable::now();
+        $this->heartbeatTimeout = new \DateInterval('PT0S');
+        $this->scheduledTime = new \DateTimeImmutable();
+        $this->startedTime = new \DateTimeImmutable();
+        $this->deadline = new \DateTimeImmutable();
 
         $this->priority = Priority::new();
     }

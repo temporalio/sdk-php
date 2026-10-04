@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\Priority;
@@ -135,11 +134,10 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      */
     public function __construct()
     {
-        $zero = CarbonInterval::seconds(0);
-        $this->scheduleToStartTimeout = $zero;
-        $this->scheduleToCloseTimeout = clone $zero;
-        $this->startToCloseTimeout = clone $zero;
-        $this->heartbeatTimeout = clone $zero;
+        $this->scheduleToStartTimeout = new \DateInterval('PT0S');
+        $this->scheduleToCloseTimeout = new \DateInterval('PT0S');
+        $this->startToCloseTimeout = new \DateInterval('PT0S');
+        $this->heartbeatTimeout = new \DateInterval('PT0S');
         $this->priority = Priority::new();
 
         parent::__construct();
