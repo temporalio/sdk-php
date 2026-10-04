@@ -54,7 +54,7 @@ final class CoreWorkerConfig
     }
 
     /**
-     * @return array{workflows: bool, local_activities: bool, remote_activities: bool, max_concurrent_activity_task_polls: int, ...<string, mixed>}
+     * @return array{workflows: bool, local_activities: bool, remote_activities: bool, ...<string, mixed>}
      * @psalm-suppress RedundantCondition, TypeDoesNotContainType, DeprecatedProperty
      */
     public function build(WorkerInterface $worker, CoreRole $role): array

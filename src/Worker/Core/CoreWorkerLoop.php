@@ -23,8 +23,6 @@ use Temporal\Worker\WorkerInterface;
  */
 final class CoreWorkerLoop
 {
-    private const POLL_RETRY_DELAY_SECONDS = 1;
-    private const MAX_POLL_RETRY_DELAY_SECONDS = 30;
     private const PIPE_READ_BYTES = 65536;
     private const STOP_SIGNALS = [\SIGTERM, \SIGINT];
 
@@ -32,11 +30,6 @@ final class CoreWorkerLoop
     private array $workers = [];
 
     private int $open = 0;
-    private int $pollFailures = 0;
-
-    /** @var list<\Closure(): void> */
-    private array $repolls = [];
-
     private bool $stopping = false;
     private bool $shutdownRequested = false;
     private bool $crashed = false;
@@ -96,7 +89,7 @@ final class CoreWorkerLoop
                     (string) $worker->getID(),
                     ($this->activations)($worker, $dispatch),
                     $config['workflows'],
-                    $config['local_activities'] || $config['remote_activities'] ? $config['max_concurrent_activity_task_polls'] : 0,
+                    $config['local_activities'] || $config['remote_activities'],
                 );
             }
         }
@@ -119,7 +112,6 @@ final class CoreWorkerLoop
             $events = $this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS);
             $this->profiler?->add('wait', $waitedAt);
             $this->handle($events);
-            $this->repollFailed();
         }
 
         $this->profiler?->report();
@@ -164,7 +156,7 @@ final class CoreWorkerLoop
                 $this->bridge->pollWorkflowActivation($worker->core, $tag);
                 ++$this->open;
             }
-            for ($i = 0; $i < $worker->activityPolls; ++$i) {
+            if ($worker->activities) {
                 $this->bridge->pollActivityTask($worker->core, $tag);
                 ++$this->open;
             }
@@ -216,10 +208,9 @@ final class CoreWorkerLoop
     private function onActivation(CoreWorkerHandle $worker, int $tag, int $status, string $data, int $startedAt): void
     {
         if ($status !== Bridge::STATUS_OK) {
-            $this->onPollFailure($status, $data, fn() => $this->bridge->pollWorkflowActivation($worker->core, $tag));
+            $this->onPollFailure($status, $data);
             return;
         }
-        $this->pollFailures = 0;
         $this->bridge->completeWorkflowActivation($worker->core, $tag, $worker->activations->handle($data));
         $this->bridge->pollWorkflowActivation($worker->core, $tag);
         $this->profiler?->add('workflow-activation', $startedAt);
@@ -228,10 +219,9 @@ final class CoreWorkerLoop
     private function onActivityTask(CoreWorkerHandle $worker, int $tag, int $status, string $data, int $startedAt): void
     {
         if ($status !== Bridge::STATUS_OK) {
-            $this->onPollFailure($status, $data, fn() => $this->bridge->pollActivityTask($worker->core, $tag));
+            $this->onPollFailure($status, $data);
             return;
         }
-        $this->pollFailures = 0;
         $this->bridge->pollActivityTask($worker->core, $tag);
         $run = function () use ($worker, $tag, $data, $startedAt): void {
             $completion = $this->activityTasks->handle($worker->core, $worker->taskQueue, $data);
@@ -251,42 +241,17 @@ final class CoreWorkerLoop
         });
     }
 
-    private function onPollFailure(int $status, string $error, \Closure $repoll): void
+    private function onPollFailure(int $status, string $error): void
     {
-        if ($status === Bridge::STATUS_SHUTDOWN) {
-            --$this->open;
-            if (!$this->stopping) {
-                $this->logger->error('sdk-core worker shut down unexpectedly, stopping the process');
-                $this->crashed = true;
-                $this->requestStop();
-            }
+        --$this->open;
+        if ($this->stopping) {
             return;
         }
-
-        $this->logger->error('sdk-core poll failed: ' . $error);
-        $this->repolls[] = $repoll;
-    }
-
-    private function repollFailed(): void
-    {
-        if ($this->repolls === []) {
-            return;
-        }
-        $repolls = $this->repolls;
-        $this->repolls = [];
-        $delay = \min(self::MAX_POLL_RETRY_DELAY_SECONDS, self::POLL_RETRY_DELAY_SECONDS * 2 ** $this->pollFailures++);
-        $this->logger->warning(\sprintf('Retrying %d failed sdk-core polls in %d s', \count($repolls), $delay));
-        $repollAll = static function () use ($repolls): void {
-            foreach ($repolls as $repoll) {
-                $repoll();
-            }
-        };
-        if ($this->concurrent) {
-            EventLoop::delay($delay, $repollAll);
-            return;
-        }
-        \sleep($delay);
-        $repollAll();
+        $this->logger->error($status === Bridge::STATUS_SHUTDOWN
+            ? 'sdk-core worker shut down unexpectedly, stopping the process'
+            : 'sdk-core poll failed, stopping the process: ' . $error);
+        $this->crashed = true;
+        $this->requestStop();
     }
 
     /**
@@ -300,7 +265,6 @@ final class CoreWorkerLoop
             while (($events = $this->bridge->nextEvents(0)) !== []) {
                 $this->handle($events);
             }
-            $this->repollFailed();
         };
         $readable = EventLoop::onReadable($pipe, $pump);
         $timer = EventLoop::repeat(Bridge::POLL_TIMEOUT_MS / 1000, function () use ($pump, &$readable, &$timer): void {

@@ -21,6 +21,6 @@ final class CoreWorkerHandle
         public readonly string $taskQueue,
         public readonly WorkflowActivations $activations,
         public readonly bool $workflows,
-        public readonly int $activityPolls,
+        public readonly bool $activities,
     ) {}
 }
