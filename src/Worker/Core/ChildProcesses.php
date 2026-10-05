@@ -69,8 +69,6 @@ final class ChildProcesses
      */
     private static function exitForked(int $code): never
     {
-        \fflush(\STDOUT);
-        \fflush(\STDERR);
         \FFI::cdef('void _exit(int status);')->_exit($code);
     }
 
@@ -107,7 +105,7 @@ final class ChildProcesses
     {
         $process = \proc_open(
             [\PHP_BINARY, ...$this->iniArguments(), ...$this->script],
-            [\STDIN, \STDOUT, \STDERR],
+            [],
             $pipes,
             null,
             [...\getenv(), CoreEnvironment::ROLE => $role->value],
