@@ -61,6 +61,26 @@ final class WorkflowInteractions
         return new self($calls, $converter);
     }
 
+    public static function localActivityType(MarkerRecordedEventAttributes $attributes): string
+    {
+        foreach ($attributes->getDetails() as $key => $payloads) {
+            if ($key !== self::MARKER_DETAIL_DATA) {
+                continue;
+            }
+
+            $items = $payloads->getPayloads();
+            if (\count($items) === 0) {
+                return '';
+            }
+
+            $decoded = \json_decode($items[0]->getData(), true);
+
+            return \is_array($decoded) ? (string) ($decoded[self::MARKER_ACTIVITY_TYPE_KEY] ?? $decoded[self::MARKER_CORE_ACTIVITY_TYPE_KEY] ?? '') : '';
+        }
+
+        return '';
+    }
+
     public function activity(string $type): ActivityAssertion
     {
         $this->queriedActivityTypes[$type] = true;
@@ -152,26 +172,6 @@ final class WorkflowInteractions
             default:
                 return null;
         }
-    }
-
-    private static function localActivityType(MarkerRecordedEventAttributes $attributes): string
-    {
-        foreach ($attributes->getDetails() as $key => $payloads) {
-            if ($key !== self::MARKER_DETAIL_DATA) {
-                continue;
-            }
-
-            $items = $payloads->getPayloads();
-            if (\count($items) === 0) {
-                return '';
-            }
-
-            $decoded = \json_decode($items[0]->getData(), true);
-
-            return \is_array($decoded) ? (string) ($decoded[self::MARKER_ACTIVITY_TYPE_KEY] ?? $decoded[self::MARKER_CORE_ACTIVITY_TYPE_KEY] ?? '') : '';
-        }
-
-        return '';
     }
 
     private static function durationToMs(?Duration $duration): int

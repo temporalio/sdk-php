@@ -121,7 +121,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 ## Tests
 
-`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, without the 7 tests listed in [Limitations](#limitations-and-differences-to-roadrunner).
+`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, without the 2 tests listed in [Limitations](#limitations-and-differences-to-roadrunner).
 
 ## Benchmarks
 
@@ -165,6 +165,4 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 - **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned. `temporal.UpdateAPIKey` at run time is not supported.
 - **Testing package:** the RR KV caches are not replaced; the Functional harness still starts `rr serve` as a KV store.
 
-Acceptance tests that fail on core:
-- by design: `SideEffectTest` ×3 and `ResetWorkerTest::resetWithSignal` look for the Go `SideEffect` marker in the history; on core the value is in a `core_local_activity` marker;
-- harness only: `ClassicTest::replayDifferentVersions` (Go-recorded JSON fixtures), `WorkerRestartTest` (RR KV storage and RR restart), `TranscriptWorkflowFailureTest` (expects RR wire frames).
+Acceptance tests that fail on core (harness only): `WorkerRestartTest` (RR KV storage and RR restart), `TranscriptWorkflowFailureTest` (expects RR wire frames).
