@@ -15,6 +15,7 @@ use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -177,6 +178,40 @@ class BaseClientTestCase extends TestCase
         $client->testCall();
     }
 
+    public function testCancelledAfterDeadlineIsTimeout(): void
+    {
+        $client = $this->failingClient(StatusCode::CANCELLED);
+        $client = $client->withContext($client->getContext()->withDeadline(new \DateTimeImmutable('-1 second')));
+
+        self::expectException(TimeoutException::class);
+
+        $client->testCall();
+    }
+
+    public function testCancelledBeforeDeadlineIsCanceled(): void
+    {
+        $client = $this->failingClient(StatusCode::CANCELLED);
+        $client = $client->withContext($client->getContext()->withDeadline(new \DateTimeImmutable('+1 minute')));
+
+        self::expectException(CanceledException::class);
+
+        $client->testCall();
+    }
+
+    public function testRetryableErrorAfterTimeoutIsTimeout(): void
+    {
+        $client = $this->failingClient(StatusCode::UNAVAILABLE, 20_000);
+        $client = $client->withContext(
+            $client->getContext()
+                ->withTimeout(0.01)
+                ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(1)),
+        );
+
+        self::expectException(TimeoutException::class);
+
+        $client->testCall();
+    }
+
     public function testServiceClientCallCustomException(): void
     {
         $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
@@ -242,6 +277,24 @@ class BaseClientTestCase extends TestCase
             self::assertTrue($e->isTestError());
             self::assertSame(3, $e->attempt);
         }
+    }
+
+    private function failingClient(int $code, int $delayMicroseconds = 0): BaseClient
+    {
+        return $this->createClientMock(static fn() => new class($code, $delayMicroseconds) extends WorkflowServiceClient {
+            public function __construct(
+                private readonly int $code,
+                private readonly int $delayMicroseconds,
+            ) {}
+
+            public function testCall(): void
+            {
+                \usleep($this->delayMicroseconds);
+                throw new class((object) ['code' => $this->code, 'metadata' => []]) extends ServiceClientException {};
+            }
+
+            public function close(): void {}
+        })->withInterceptorPipeline(null);
     }
 
     private function createClientMock(?callable $serviceClientFactory = null): BaseClient
