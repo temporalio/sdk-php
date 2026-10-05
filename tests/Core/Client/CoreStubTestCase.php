@@ -26,6 +26,8 @@ final class CoreStubTestCase extends TestCase
     private const WAIT_FOR_FAILURE_MICROSECONDS = 5_000_000;
     private const SHORT_WAIT_MICROSECONDS = 100_000;
     private const CALL_TIMEOUT_MICROSECONDS = 200_500;
+    private const CLIENT_PREFACE_BYTES = 24;
+    private const TIMEOUT_BEYOND_GRPC_MICROSECONDS = 400_000_000_000_000_000;
 
     /** @var resource|null */
     private $listener = null;
@@ -71,7 +73,7 @@ final class CoreStubTestCase extends TestCase
 
         [$response, $status] = $stub->GetSystemInfo(
             new GetSystemInfoRequest(),
-            ['trace-bin' => ["\x00\x01"], 'trace' => ['plain']],
+            ['Trace-Bin' => ["\x00\x01"], 'Trace' => ['plain']],
             ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS],
         )->wait();
 
@@ -79,6 +81,45 @@ final class CoreStubTestCase extends TestCase
         $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
         $this->assertNotSame('', $status->details);
         $this->assertSame([], $status->metadata);
+    }
+
+    public function testTimeoutLongerThanGrpcCanEncodeIsCapped(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        [, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::TIMEOUT_BEYOND_GRPC_MICROSECONDS])->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+    }
+
+    public function testLargestIntegerTimeoutIsAccepted(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        [, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => \PHP_INT_MAX])->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+        $this->assertFalse($stub->waitForReady(\PHP_INT_MAX));
+    }
+
+    public function testInvalidMetadataKeyIsRejectedBeforeTheCall(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Metadata keys must be nonempty strings containing only alphanumeric characters, hyphens, underscores and dots');
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest(), ['bad key' => ['x']]);
+    }
+
+    public function testCallResultIsTakenOnce(): void
+    {
+        $call = (new CoreWorkflowServiceStub(self::CLOSED_ADDRESS))->GetSystemInfo(new GetSystemInfoRequest());
+        $call->wait();
+
+        $this->expectException(\LogicException::class);
+
+        $call->wait();
     }
 
     public function testHandshakeThatNeverEndsStaysConnectingUntilClosed(): void
@@ -106,6 +147,31 @@ final class CoreStubTestCase extends TestCase
         $this->assertNull($response);
         $this->assertSame(StatusCode::DEADLINE_EXCEEDED, $status->code);
         $this->assertSame([], $status->metadata);
+    }
+
+    public static function provideBrokenServerReplies(): iterable
+    {
+        yield 'connection closed' => [null];
+        yield 'not http/2' => ["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"];
+    }
+
+    #[DataProvider('provideBrokenServerReplies')]
+    public function testConnectionBrokenByTheServerIsUnavailable(?string $reply): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+        $connection = \stream_socket_accept($this->listener, self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000);
+        $this->assertIsResource($connection);
+        if ($reply !== null) {
+            \fread($connection, self::CLIENT_PREFACE_BYTES);
+            \fwrite($connection, $reply);
+        }
+        \fclose($connection);
+
+        [$response, $status] = $call->wait();
+
+        $this->assertNull($response);
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
     }
 
     public function testStubFromAnotherProcessIsRejected(): void

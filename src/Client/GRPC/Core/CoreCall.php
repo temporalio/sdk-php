@@ -19,6 +19,8 @@ use Temporal\Internal\Bridge\Bridge;
  */
 final class CoreCall
 {
+    private bool $waited = false;
+
     /**
      * @param array{class-string<\Google\Protobuf\Internal\Message>, string} $deserialize
      */
@@ -34,6 +36,10 @@ final class CoreCall
      */
     public function wait(): array
     {
+        if ($this->waited) {
+            throw new \LogicException('The result of this call is already taken');
+        }
+        $this->waited = true;
         [$grpcCode, $data] = $this->bridge->awaitCall($this->tag);
         $status = new \stdClass();
         $status->code = $grpcCode;

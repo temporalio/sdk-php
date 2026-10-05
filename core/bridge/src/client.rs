@@ -7,7 +7,7 @@ use prost::bytes::{Buf, BufMut};
 use std::{
     collections::HashMap,
     future::Future,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, PoisonError},
     time::Duration,
 };
 use temporalio_client::ClientKeepAliveOptions;
@@ -19,6 +19,8 @@ use tonic::{
     metadata::{AsciiMetadataKey, AsciiMetadataValue, BinaryMetadataKey, BinaryMetadataValue},
     transport::{Channel, Endpoint},
 };
+
+const MAX_GRPC_TIMEOUT: Duration = Duration::from_secs(99_999_999 * 60 * 60);
 
 pub struct TpbClient {
     endpoint: Endpoint,
@@ -107,10 +109,18 @@ fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
     })
 }
 
-fn request(body: Vec<u8>, metadata: &[u8], timeout_ms: u64) -> Result<Request<Vec<u8>>, Status> {
+fn timeout(timeout_ms: u64) -> Option<Duration> {
+    (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms).min(MAX_GRPC_TIMEOUT))
+}
+
+fn request(
+    body: Vec<u8>,
+    metadata: &[u8],
+    timeout: Option<Duration>,
+) -> Result<Request<Vec<u8>>, Status> {
     let mut request = Request::new(body);
-    if timeout_ms > 0 {
-        request.set_timeout(Duration::from_millis(timeout_ms));
+    if let Some(timeout) = timeout {
+        request.set_timeout(timeout);
     }
     if metadata.is_empty() {
         return Ok(request);
@@ -120,7 +130,6 @@ fn request(body: Vec<u8>, metadata: &[u8], timeout_ms: u64) -> Result<Request<Ve
     let invalid =
         |e: &dyn std::fmt::Display| Status::invalid_argument(format!("Invalid metadata: {e}"));
     for (key, values) in metadata {
-        let key = key.to_ascii_lowercase();
         for value in values {
             if key.ends_with("-bin") {
                 let name =
@@ -162,15 +171,22 @@ async fn with_deadline(
     call: impl Future<Output = Result<Vec<u8>, Status>>,
     timeout: Option<Duration>,
 ) -> Result<Vec<u8>, Status> {
-    let Some(timeout) = timeout else {
-        return call.await;
+    let result = match timeout {
+        None => call.await,
+        Some(timeout) => tokio::time::timeout(timeout, call)
+            .await
+            .unwrap_or_else(|_| Err(Status::deadline_exceeded("Deadline Exceeded"))),
     };
-    match tokio::time::timeout(timeout, call).await {
-        Err(_) => Err(Status::deadline_exceeded("Deadline Exceeded")),
-        Ok(Err(status)) if status.code() == Code::Cancelled && timed_out(&status) => {
-            Err(Status::deadline_exceeded(status.message()))
-        }
-        Ok(result) => result,
+    result.map_err(client_status)
+}
+
+fn client_status(status: Status) -> Status {
+    if timed_out(&status) {
+        return Status::deadline_exceeded(status.message());
+    }
+    match (status.code(), std::error::Error::source(&status)) {
+        (Code::Cancelled | Code::Unknown, Some(_)) => Status::unavailable(status.message()),
+        _ => status,
     }
 }
 
@@ -228,27 +244,31 @@ pub unsafe extern "C" fn tpb_client_call(
     metadata_len: usize,
     timeout_ms: u64,
 ) {
-    let c = unsafe { &*c };
+    let (c, path, body, metadata) = unsafe {
+        (
+            &*c,
+            slice(path, path_len),
+            slice(body, body_len),
+            slice(metadata, metadata_len),
+        )
+    };
+    let timeout = timeout(timeout_ms);
     guard(c.push_panic(tag), || {
-        let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
+        let prepared = PathAndQuery::try_from(path.to_vec())
             .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
-            .and_then(|path| {
-                let request = request(
-                    unsafe { slice(body, body_len) }.to_vec(),
-                    unsafe { slice(metadata, metadata_len) },
-                    timeout_ms,
-                )?;
-                Ok((path, request))
-            });
+            .and_then(|path| Ok((path, request(body.to_vec(), metadata, timeout)?)));
         let (path, request) = match prepared {
             Ok(prepared) => prepared,
             Err(status) => return c.push(tag, grpc_result(Err(status))),
         };
-        let channel = c.channel.lock().unwrap().clone();
+        let channel = c
+            .channel
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
         let queue = c.queue.clone();
         c.queue
             .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
                 let (grpc_code, data) =
                     grpc_result(with_deadline(call(channel, path, request), timeout).await);
                 queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
@@ -267,7 +287,7 @@ pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout
             .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
                 let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
                 let (grpc_code, data) = grpc_result(connected.map(|connected| {
-                    *channel.lock().unwrap() = connected;
+                    *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
                     Vec::new()
                 }));
                 queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
@@ -373,7 +393,7 @@ mod tests {
     }
 
     #[test]
-    fn panics_in_call_and_connect_become_internal_results() {
+    fn a_poisoned_channel_lock_keeps_the_client_working() {
         let rt = runtime();
         let c = client(rt, &grpc_server());
         let channel = unsafe { &*c }.channel.clone();
@@ -385,14 +405,36 @@ mod tests {
 
         call(c, 1, GET_SYSTEM_INFO, b"", 0);
         unsafe { tpb_client_connect(c, 2, 5_000) };
+        call(c, 3, GET_SYSTEM_INFO, b"", 0);
 
-        for (tag, (event_tag, kind, grpc_code, data)) in [1, 2].into_iter().zip(events(rt, 2)) {
-            assert_eq!(
-                (event_tag, kind, grpc_code),
-                (tag, KIND_RPC_RESULT, Code::Internal as i32)
-            );
-            assert!(message(&data).starts_with(b"Panic in temporal-php-bridge: "));
+        let ok = Code::Ok as i32;
+        assert_eq!(
+            events(rt, 3),
+            vec![
+                (1, KIND_RPC_RESULT, ok, vec![]),
+                (2, KIND_RPC_RESULT, ok, vec![]),
+                (3, KIND_RPC_RESULT, ok, vec![]),
+            ]
+        );
+        unsafe {
+            tpb_client_free(c);
+            free(rt);
         }
+    }
+
+    #[test]
+    fn a_panic_becomes_an_internal_result() {
+        let rt = runtime();
+        let c = client(rt, "http://127.0.0.1:1");
+
+        guard(unsafe { &*c }.push_panic(4), || panic!("boom"));
+
+        let [(tag, kind, grpc_code, data)] = events(rt, 1).try_into().unwrap();
+        assert_eq!(
+            (tag, kind, grpc_code),
+            (4, KIND_RPC_RESULT, Code::Internal as i32)
+        );
+        assert_eq!(message(&data), b"Panic in temporal-php-bridge: boom");
         unsafe {
             tpb_client_free(c);
             free(rt);
@@ -420,7 +462,7 @@ mod tests {
     #[test]
     fn request_reads_ascii_and_base64_binary_metadata() {
         let metadata = br#"{"Client-Name":["php"],"trace-bin":["AAEC"]}"#;
-        let prepared = request(vec![1], metadata, 1500).unwrap();
+        let prepared = request(vec![1], metadata, timeout(1500)).unwrap();
         assert_eq!(prepared.metadata().get("client-name").unwrap(), "php");
         assert_eq!(
             prepared
@@ -432,9 +474,18 @@ mod tests {
                 .as_ref(),
             &[0, 1, 2]
         );
-        assert!(request(vec![], br#"{"bad key":["x"]}"#, 0).is_err());
-        assert!(request(vec![], br#"{"key":"x"}"#, 0).is_err());
-        assert!(request(vec![], br#"{"key":[1]}"#, 0).is_err());
+        assert!(request(vec![], br#"{"bad key":["x"]}"#, None).is_err());
+        assert!(request(vec![], br#"{"key":"x"}"#, None).is_err());
+        assert!(request(vec![], br#"{"key":[1]}"#, None).is_err());
+    }
+
+    #[test]
+    fn timeout_is_capped_to_the_longest_grpc_timeout() {
+        assert_eq!(timeout(0), None);
+        assert_eq!(timeout(1500), Some(Duration::from_millis(1500)));
+        assert_eq!(timeout(u64::MAX), Some(MAX_GRPC_TIMEOUT));
+        let capped = request(vec![], b"", timeout(u64::MAX)).unwrap();
+        assert_eq!(capped.metadata().get("grpc-timeout").unwrap(), "99999999H");
     }
 
     #[test]
@@ -458,6 +509,19 @@ mod tests {
             timeout,
         ));
         assert_eq!(cancelled.unwrap_err().code(), Code::Cancelled);
+    }
+
+    #[test]
+    fn transport_failures_are_unavailable_and_server_statuses_are_kept() {
+        let transport =
+            |error: std::io::Error| client_status(Status::from_error(Box::new(error))).code();
+        let reset = std::io::Error::other("connection reset");
+        assert_eq!(transport(reset), Code::Unavailable);
+        let canceled = std::io::Error::other(Status::cancelled("operation was canceled"));
+        assert_eq!(transport(canceled), Code::Unavailable);
+        for code in [Code::Cancelled, Code::Unknown, Code::Internal] {
+            assert_eq!(client_status(Status::new(code, "server")).code(), code);
+        }
     }
 
     #[test]

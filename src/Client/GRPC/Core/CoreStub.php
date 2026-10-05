@@ -23,6 +23,7 @@ use Temporal\Internal\Bridge\BridgeConnection;
 trait CoreStub
 {
     private const MICROSECONDS_PER_MILLISECOND = 1000;
+    private const METADATA_KEY_PATTERN = '/^[.A-Za-z\d_-]+$/';
 
     private string $address;
 
@@ -93,26 +94,31 @@ trait CoreStub
      * @param string $method
      * @param \Google\Protobuf\Internal\Message $argument
      * @param array{class-string<\Google\Protobuf\Internal\Message>, string} $deserialize
-     * @param array<string, list<string>> $metadata
+     * @param array<array-key, list<string>> $metadata
      * @psalm-suppress MoreSpecificImplementedParamType, ImplementedReturnTypeMismatch
      */
     protected function _simpleRequest($method, $argument, $deserialize, array $metadata = [], array $options = []): CoreCall
     {
+        $normalized = [];
         foreach ($metadata as $key => $values) {
-            if (\str_ends_with(\strtolower($key), '-bin')) {
-                $metadata[$key] = \array_map(\base64_encode(...), $values);
+            if (!\preg_match(self::METADATA_KEY_PATTERN, (string) $key)) {
+                throw new \InvalidArgumentException('Metadata keys must be nonempty strings containing only alphanumeric characters, hyphens, underscores and dots');
             }
+            $key = \strtolower((string) $key);
+            $normalized[$key] = \str_ends_with($key, '-bin') ? \array_map(\base64_encode(...), $values) : $values;
         }
         $timeoutMs = isset($options['timeout']) ? \max(1, self::milliseconds((int) $options['timeout'])) : 0;
         $client = $this->client();
-        $tag = $this->bridge->startCall($client, $method, $argument->serializeToString(), $metadata, $timeoutMs);
+        $tag = $this->bridge->startCall($client, $method, $argument->serializeToString(), $normalized, $timeoutMs);
 
         return new CoreCall($this->bridge, $tag, $deserialize);
     }
 
     private static function milliseconds(int $microseconds): int
     {
-        return \intdiv($microseconds + self::MICROSECONDS_PER_MILLISECOND - 1, self::MICROSECONDS_PER_MILLISECOND);
+        $milliseconds = \intdiv($microseconds, self::MICROSECONDS_PER_MILLISECOND);
+
+        return $microseconds % self::MICROSECONDS_PER_MILLISECOND > 0 ? $milliseconds + 1 : $milliseconds;
     }
 
     /**
