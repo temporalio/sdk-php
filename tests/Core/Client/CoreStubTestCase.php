@@ -57,8 +57,23 @@ final class CoreStubTestCase extends TestCase
     {
         $stub = new $class(self::CLOSED_ADDRESS);
 
-        $this->assertSame(self::CLOSED_ADDRESS, $stub->getTarget());
+        $this->assertSame('dns:///' . self::CLOSED_ADDRESS, $stub->getTarget());
         $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+    }
+
+    public static function provideTargets(): iterable
+    {
+        yield 'host and port' => ['localhost:7233', 'dns:///localhost:7233'];
+        yield 'dns' => ['dns:///localhost:7233', 'dns:///localhost:7233'];
+        yield 'ipv4' => ['ipv4:127.0.0.1:7233', 'ipv4:127.0.0.1:7233'];
+        yield 'ipv6' => ['ipv6:[::1]:7233', 'ipv6:[::1]:7233'];
+        yield 'unix' => ['unix:/tmp/temporal.sock', 'unix:/tmp/temporal.sock'];
+    }
+
+    #[DataProvider('provideTargets')]
+    public function testTargetIsReportedAsExtGrpcReportsIt(string $address, string $target): void
+    {
+        $this->assertSame($target, (new CoreWorkflowServiceStub($address))->getTarget());
     }
 
     public function testClosedPortEndsInTransientFailure(): void
@@ -150,6 +165,7 @@ final class CoreStubTestCase extends TestCase
 
         $this->assertNull($response);
         $this->assertSame(StatusCode::DEADLINE_EXCEEDED, $status->code);
+        $this->assertSame('Deadline Exceeded', $status->details);
         $this->assertSame([], $status->metadata);
     }
 

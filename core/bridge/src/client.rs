@@ -255,6 +255,8 @@ async fn connect(target: Target, timeout: Duration) -> Result<Channel, Status> {
     }
 }
 
+const DEADLINE_EXCEEDED: &str = "Deadline Exceeded";
+
 async fn with_deadline(
     call: impl Future<Output = Result<Vec<u8>, Status>>,
     timeout: Option<Duration>,
@@ -263,14 +265,14 @@ async fn with_deadline(
         None => call.await,
         Some(timeout) => tokio::time::timeout(timeout, call)
             .await
-            .unwrap_or_else(|_| Err(Status::deadline_exceeded("Deadline Exceeded"))),
+            .unwrap_or_else(|_| Err(Status::deadline_exceeded(DEADLINE_EXCEEDED))),
     };
     result.map_err(client_status)
 }
 
 fn client_status(status: Status) -> Status {
     if timed_out(&status) {
-        return Status::deadline_exceeded(status.message());
+        return Status::deadline_exceeded(DEADLINE_EXCEEDED);
     }
     match (status.code(), std::error::Error::source(&status)) {
         (Code::Cancelled | Code::Unknown, Some(_)) => Status::unavailable(status.message()),
@@ -683,9 +685,10 @@ mod tests {
             async { Err(Status::from_error(Box::new(transport_error))) },
             timeout,
         ));
+        let expired = expired.err().map(|s| (s.code(), s.message().to_owned()));
         assert_eq!(
-            expired.err().map(|s| s.code()),
-            Some(Code::DeadlineExceeded)
+            expired,
+            Some((Code::DeadlineExceeded, DEADLINE_EXCEEDED.to_owned()))
         );
         let cancelled = rt.block_on(with_deadline(
             async { Err(Status::cancelled("cancelled by the server")) },

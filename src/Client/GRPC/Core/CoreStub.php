@@ -25,6 +25,8 @@ trait CoreStub
     private const MICROSECONDS_PER_MILLISECOND = 1000;
     private const METADATA_KEY_PATTERN = '/^[.A-Za-z\d_-]+$/';
     private const CLOSED_CHANNEL_ERROR_CODE = 1;
+    private const RESOLVED_TARGET_PATTERN = '/^(dns|ipv4|ipv6|unix|unix-abstract):/';
+    private const DEFAULT_TARGET_SCHEME = 'dns:///';
 
     private string $address;
 
@@ -50,7 +52,11 @@ trait CoreStub
     {
         $this->assertOpen('getTarget');
 
-        return $this->address;
+        if (\preg_match(self::RESOLVED_TARGET_PATTERN, $this->address) === 1) {
+            return $this->address;
+        }
+
+        return self::DEFAULT_TARGET_SCHEME . $this->address;
     }
 
     /**
