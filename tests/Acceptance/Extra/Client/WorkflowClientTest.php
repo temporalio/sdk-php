@@ -16,6 +16,8 @@ use Temporal\Workflow\WorkflowMethod;
 
 class WorkflowClientTest extends TestCase
 {
+    private const SERVER_BUILD_IDS = 'BuildIds';
+
     #[Test]
     public function describeWorkflowExecution(
         WorkflowClientInterface $client,
@@ -52,7 +54,8 @@ class WorkflowClientTest extends TestCase
         self::assertGreaterThanOrEqual(2, $description->info->historyLength);
         self::assertNull($description->info->parentExecution);
         self::assertNotNull($description->info->executionTime);
-        self::assertCount(7, $description->info->searchAttributes);
+        $searchAttributes = \iterator_to_array($description->info->searchAttributes->getValues());
+        self::assertCount(7, \array_diff_key($searchAttributes, [self::SERVER_BUILD_IDS => true]));
         self::assertCount(4, $description->info->memo);
         self::assertNull($description->info->executionDuration);
         self::assertSame($description->info->firstRunId, $description->info->execution->getRunID());
