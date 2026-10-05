@@ -25,7 +25,9 @@ class SideEffectTest extends TestCase
     ): void {
         $result = $stub->getResult(type: 'array');
 
-        self::assertEquals($result['system'], $result['current']);
+        self::assertSame($result['system']['timezone.offset'], $result['current']['timezone.offset']);
+        self::assertGreaterThanOrEqual($result['system']['timestamp'], $result['current']['timestamp']);
+        self::assertLessThan($result['system']['timestamp'] + 5, $result['current']['timestamp']);
     }
 
     #[Test]

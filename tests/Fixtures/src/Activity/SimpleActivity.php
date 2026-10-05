@@ -98,6 +98,7 @@ class SimpleActivity
         );
     }
 
+    #[ActivityMethod]
     public function updateRunID(WorkflowExecution $e): WorkflowExecution
     {
         $e->setRunId('updated');
