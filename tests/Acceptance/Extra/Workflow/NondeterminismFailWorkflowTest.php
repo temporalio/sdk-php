@@ -6,6 +6,10 @@ namespace Temporal\Tests\Acceptance\Extra\Workflow\NondeterminismFailWorkflow;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Enums\V1\TaskQueueType;
+use Temporal\Api\Taskqueue\V1\PollerInfo;
+use Temporal\Api\Taskqueue\V1\TaskQueue;
+use Temporal\Api\Workflowservice\V1\DescribeTaskQueueRequest;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -13,6 +17,7 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Worker\WorkflowPanicPolicy;
@@ -22,14 +27,14 @@ use Temporal\Workflow\WorkflowMethod;
 #[Worker(options: [WorkerFactory::class, 'options'])]
 class NondeterminismFailWorkflowTest extends TestCase
 {
-    private const WORKER_EXIT_WAIT_MICROSECONDS = 2_500_000;
-    private const FIRST_TASK_TIMEOUT_SECONDS = 10;
-    private const HISTORY_POLL_MICROSECONDS = 100_000;
+    private const WAIT_TIMEOUT_SECONDS = 15;
+    private const POLL_MICROSECONDS = 100_000;
 
     #[Test]
     public function nondeterminismAfterReplayFailsTheWorkflow(
         WorkflowClientInterface $client,
         Feature $feature,
+        State $runtime,
     ): void {
         $marker = \sys_get_temp_dir() . '/temporal-nondeterminism-' . \bin2hex(\random_bytes(8));
         $stub = $client->withTimeout(1)->newUntypedWorkflowStub(
@@ -39,13 +44,20 @@ class NondeterminismFailWorkflowTest extends TestCase
                 ->withWorkflowExecutionTimeout(30),
         );
         $client->start($stub, $marker);
-        $this->waitForFirstWorkflowTask($client, $stub);
+        $this->waitUntil(
+            fn(): bool => $this->firstWorkflowTaskCompleted($client, $stub),
+            'The first workflow task did not complete',
+        );
+        $pollers = $this->pollerIdentities($client, $runtime->namespace, $feature->taskQueue);
 
         try {
             $stub->query('die');
         } catch (WorkflowServiceException) {
         }
-        \usleep(self::WORKER_EXIT_WAIT_MICROSECONDS);
+        $this->waitUntil(
+            fn(): bool => \array_diff($this->pollerIdentities($client, $runtime->namespace, $feature->taskQueue), $pollers) !== [],
+            'No replacement worker polls the task queue',
+        );
         $stub->signal('go');
 
         try {
@@ -58,18 +70,44 @@ class NondeterminismFailWorkflowTest extends TestCase
         }
     }
 
-    private function waitForFirstWorkflowTask(WorkflowClientInterface $client, WorkflowStubInterface $stub): void
+    private function waitUntil(\Closure $condition, string $failure): void
     {
-        $deadline = \microtime(true) + self::FIRST_TASK_TIMEOUT_SECONDS;
+        $deadline = \microtime(true) + self::WAIT_TIMEOUT_SECONDS;
         while (\microtime(true) < $deadline) {
-            foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
-                if ($event->getEventType() === EventType::EVENT_TYPE_WORKFLOW_TASK_COMPLETED) {
-                    return;
-                }
+            if ($condition()) {
+                return;
             }
-            \usleep(self::HISTORY_POLL_MICROSECONDS);
+            \usleep(self::POLL_MICROSECONDS);
         }
-        self::fail('The first workflow task did not complete');
+        self::fail($failure);
+    }
+
+    private function firstWorkflowTaskCompleted(WorkflowClientInterface $client, WorkflowStubInterface $stub): bool
+    {
+        foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
+            if ($event->getEventType() === EventType::EVENT_TYPE_WORKFLOW_TASK_COMPLETED) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function pollerIdentities(WorkflowClientInterface $client, string $namespace, string $taskQueue): array
+    {
+        $response = $client->getServiceClient()->DescribeTaskQueue(
+            (new DescribeTaskQueueRequest())
+                ->setNamespace($namespace)
+                ->setTaskQueue((new TaskQueue())->setName($taskQueue))
+                ->setTaskQueueType(TaskQueueType::TASK_QUEUE_TYPE_WORKFLOW),
+        );
+
+        return \array_map(
+            static fn(PollerInfo $poller): string => $poller->getIdentity(),
+            \iterator_to_array($response->getPollers()),
+        );
     }
 }
 
