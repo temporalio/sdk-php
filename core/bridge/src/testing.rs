@@ -16,6 +16,16 @@ use tonic::codegen::http;
 
 pub type Event = (u64, i32, i32, Vec<u8>);
 
+pub type Checked = Result<(), Box<dyn std::error::Error>>;
+
+pub const GRPC_OK: &str = "0";
+
+pub fn only<const N: usize>(events: Vec<Event>) -> Result<[Event; N], String> {
+    events
+        .try_into()
+        .map_err(|events| format!("expected {N} events, received {events:?}"))
+}
+
 pub fn runtime() -> *mut TpbRuntime {
     let config = br#"{"threads":1,"log":"off"}"#;
     let rt = unsafe {
@@ -66,26 +76,26 @@ pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
 }
 
 pub fn grpc_server() -> String {
-    grpc_server_with(|_| "0")
+    grpc_server_with(|_| GRPC_OK).unwrap_or_default()
 }
 
-pub fn grpc_server_with(status: fn(&str) -> &'static str) -> String {
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    listener.set_nonblocking(true).unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap());
-    std::thread::spawn(move || {
+pub fn grpc_server_with(status: fn(&str) -> &'static str) -> std::io::Result<String> {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+    listener.set_nonblocking(true)?;
+    let address = format!("http://{}", listener.local_addr()?);
+    std::thread::spawn(move || -> std::io::Result<()> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
-            .build()
-            .unwrap();
+            .build()?;
         rt.block_on(async move {
-            let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+            let listener = tokio::net::TcpListener::from_std(listener)?;
             while let Ok((socket, _)) = listener.accept().await {
                 tokio::spawn(answer(socket, status));
             }
+            Ok(())
         })
     });
-    address
+    Ok(address)
 }
 
 async fn answer(socket: tokio::net::TcpStream, status: fn(&str) -> &'static str) {
@@ -94,10 +104,11 @@ async fn answer(socket: tokio::net::TcpStream, status: fn(&str) -> &'static str)
     };
     while let Some(Ok((request, mut respond))) = connection.accept().await {
         let grpc_status = status(request.uri().path());
-        let response = http::Response::builder()
-            .header("content-type", "application/grpc")
-            .body(())
-            .unwrap();
+        let mut response = http::Response::new(());
+        response.headers_mut().insert(
+            http::header::CONTENT_TYPE,
+            http::HeaderValue::from_static("application/grpc"),
+        );
         let Ok(mut stream) = respond.send_response(response, false) else {
             continue;
         };
@@ -147,7 +158,9 @@ pub fn worker_json(target_url: &str) -> serde_json::Value {
 
 pub fn replay_config() -> String {
     let mut json = worker_json("");
-    json.as_object_mut().unwrap().remove("connection");
+    if let Some(fields) = json.as_object_mut() {
+        fields.remove("connection");
+    }
     json.to_string()
 }
 
@@ -241,6 +254,6 @@ fn created<T>(object: *mut T, err: *mut u8, err_len: usize) -> Result<*mut T, St
     Err(message)
 }
 
-pub fn replayer(rt: *mut TpbRuntime, with_workflow_task: bool) -> *mut TpbWorker {
-    new_replayer(rt, &replay_config(), &history(with_workflow_task), b"wf").unwrap()
+pub fn replayer(rt: *mut TpbRuntime, with_workflow_task: bool) -> Result<*mut TpbWorker, String> {
+    new_replayer(rt, &replay_config(), &history(with_workflow_task), b"wf")
 }

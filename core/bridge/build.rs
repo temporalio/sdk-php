@@ -1,5 +1,5 @@
-fn main() {
-    let crate_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let crate_dir = std::env::var("CARGO_MANIFEST_DIR")?;
     cbindgen::Builder::new()
         .with_crate(crate_dir)
         .with_config(cbindgen::Config {
@@ -9,7 +9,7 @@ fn main() {
             documentation: false,
             ..Default::default()
         })
-        .generate()
-        .expect("Unable to generate the C header")
+        .generate()?
         .write_to_file("include/temporal_php_bridge.h");
+    Ok(())
 }

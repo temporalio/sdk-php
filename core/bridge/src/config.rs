@@ -272,11 +272,18 @@ impl WorkerJson {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::worker_json;
+    use crate::testing::{Checked, worker_json};
     use serde_json::{Value, json};
 
     fn worker() -> Value {
         worker_json("http://127.0.0.1:7233")
+    }
+
+    fn without(mut json: Value, key: &str) -> Value {
+        if let Some(fields) = json.as_object_mut() {
+            fields.remove(key);
+        }
+        json
     }
 
     fn parse_worker(json: &Value) -> Result<(ConnectionJson, WorkerJson), String> {
@@ -284,12 +291,16 @@ mod tests {
             .map(|(_, connection, worker)| (connection, worker))
     }
 
+    fn parse_error(json: &Value) -> String {
+        parse_worker(json).err().unwrap_or_default()
+    }
+
     fn worker_config(json: &Value) -> Result<WorkerConfig, String> {
         parse_worker(json)?.1.worker_config()
     }
 
     #[test]
-    fn workers_with_the_same_connection_share_the_connection_key() {
+    fn workers_with_the_same_connection_share_the_connection_key() -> Checked {
         let first = worker();
         let mut second = worker();
         second["task_queue"] = json!("another-queue");
@@ -297,13 +308,12 @@ mod tests {
         other["connection"]["identity"] = json!("2@host");
 
         let key = |json: &Value| {
-            WorkerJson::parse_with_connection(json.to_string().as_bytes())
-                .unwrap()
-                .0
+            WorkerJson::parse_with_connection(json.to_string().as_bytes()).map(|parsed| parsed.0)
         };
 
-        assert_eq!(key(&first), key(&second));
-        assert_ne!(key(&first), key(&other));
+        assert_eq!(key(&first)?, key(&second)?);
+        assert_ne!(key(&first)?, key(&other)?);
+        Ok(())
     }
 
     fn tls(client_cert: Option<&str>, client_private_key: Option<&str>) -> TlsJson {
@@ -316,8 +326,8 @@ mod tests {
     }
 
     #[test]
-    fn worker_config_maps_every_key() {
-        let config = worker_config(&worker()).unwrap();
+    fn worker_config_maps_every_key() -> Checked {
+        let config = worker_config(&worker())?;
         assert_eq!(config.namespace, "default");
         assert_eq!(config.task_queue, "q");
         assert_eq!(config.max_cached_workflows, 10000);
@@ -345,16 +355,17 @@ mod tests {
         assert!(config.task_types.enable_workflows);
         assert!(config.task_types.enable_local_activities);
         assert!(!config.task_types.enable_remote_activities);
+        Ok(())
     }
 
     #[test]
-    fn worker_config_maps_autoscaling_heartbeat_throttle_and_nondeterminism() {
+    fn worker_config_maps_autoscaling_heartbeat_throttle_and_nondeterminism() -> Checked {
         let mut json = worker();
         json["poller_autoscaling"] = json!(true);
         json["max_heartbeat_throttle_interval_ms"] = json!(60000);
         json["nondeterminism_fails_workflow"] = json!(true);
 
-        let config = worker_config(&json).unwrap();
+        let config = worker_config(&json)?;
 
         assert!(matches!(
             config.workflow_task_poller_behavior,
@@ -380,34 +391,20 @@ mod tests {
             config.workflow_failure_errors,
             HashSet::from([WorkflowErrorType::Nondeterminism])
         );
+        Ok(())
     }
 
     #[test]
     fn worker_config_rejects_missing_unknown_and_mistyped_keys() {
-        let mut missing = worker();
-        missing.as_object_mut().unwrap().remove("task_queue");
-        assert!(parse_worker(&missing).err().unwrap().contains("task_queue"));
+        assert!(parse_error(&without(worker(), "task_queue")).contains("task_queue"));
 
         let mut missing = worker();
-        missing["connection"]
-            .as_object_mut()
-            .unwrap()
-            .remove("client_name");
-        assert!(
-            parse_worker(&missing)
-                .err()
-                .unwrap()
-                .contains("client_name")
-        );
+        missing["connection"] = without(missing["connection"].take(), "client_name");
+        assert!(parse_error(&missing).contains("client_name"));
 
         let mut unknown = worker();
         unknown["max_cached_workflow"] = json!(1);
-        assert!(
-            parse_worker(&unknown)
-                .err()
-                .unwrap()
-                .contains("max_cached_workflow")
-        );
+        assert!(parse_error(&unknown).contains("max_cached_workflow"));
 
         let mut mistyped = worker();
         mistyped["max_cached_workflows"] = json!("10");
@@ -415,11 +412,11 @@ mod tests {
 
         let mut compression = worker();
         compression["connection"]["grpc_compression"] = json!("zstd");
-        assert!(parse_worker(&compression).err().unwrap().contains("zstd"));
+        assert!(parse_error(&compression).contains("zstd"));
     }
 
     #[test]
-    fn worker_config_reads_deployment() {
+    fn worker_config_reads_deployment() -> Checked {
         let mut json = worker();
         json["deployment"] = json!({
             "UseVersioning": true,
@@ -428,7 +425,7 @@ mod tests {
         });
         let auto_upgrade = Some(VersioningBehavior::AutoUpgrade.into());
         assert!(matches!(
-            worker_config(&json).unwrap().versioning_strategy,
+            worker_config(&json)?.versioning_strategy,
             WorkerVersioningStrategy::WorkerDeploymentBased(options)
                 if options.use_worker_versioning
                     && options.version.deployment_name == "app"
@@ -438,72 +435,70 @@ mod tests {
 
         json["deployment"]["DefaultVersioningBehavior"] = json!(0);
         assert!(matches!(
-            worker_config(&json).unwrap().versioning_strategy,
+            worker_config(&json)?.versioning_strategy,
             WorkerVersioningStrategy::WorkerDeploymentBased(options)
                 if options.default_versioning_behavior.is_none()
         ));
 
         json["deployment"]["DefaultVersioningBehavior"] = json!(99);
         assert!(worker_config(&json).is_err());
+        Ok(())
     }
 
     #[test]
-    fn replayer_config_is_the_worker_part_without_connection() {
-        let mut json = worker();
-        json.as_object_mut().unwrap().remove("connection");
-        let config: WorkerJson = parse(json.to_string().as_bytes(), "worker config").unwrap();
-        assert_eq!(config.worker_config().unwrap().task_queue, "q");
+    fn replayer_config_is_the_worker_part_without_connection() -> Checked {
+        let json = without(worker(), "connection");
+        let config: WorkerJson = parse(json.to_string().as_bytes(), "worker config")?;
+        assert_eq!(config.worker_config()?.task_queue, "q");
         assert!(parse::<WorkerJson>(worker().to_string().as_bytes(), "worker config").is_err());
-        assert!(parse_worker(&json).err().unwrap().contains("connection"));
+        assert!(parse_error(&json).contains("connection"));
+        Ok(())
     }
 
     #[test]
-    fn client_cert_and_key_must_be_set_together() {
-        let error = "client_cert and client_private_key must be set together";
+    fn client_cert_and_key_must_be_set_together() -> Checked {
+        let error = Some("client_cert and client_private_key must be set together".to_owned());
         for (cert, key) in [(Some("cert"), None), (None, Some("key"))] {
-            assert_eq!(tls(cert, key).options().err().unwrap(), error);
-            assert_eq!(tls(cert, key).client_config().err().unwrap(), error);
+            assert_eq!(tls(cert, key).options().err(), error);
+            assert_eq!(tls(cert, key).client_config().err(), error);
         }
-        assert!(
-            tls(None, None)
-                .options()
-                .unwrap()
-                .client_tls_options
-                .is_none()
-        );
+        assert!(tls(None, None).options()?.client_tls_options.is_none());
         assert!(
             tls(Some("cert"), Some("key"))
-                .options()
-                .unwrap()
+                .options()?
                 .client_tls_options
                 .is_some()
         );
         assert!(tls(None, None).client_config().is_ok());
         assert!(tls(Some("cert"), Some("key")).client_config().is_ok());
+        Ok(())
     }
 
     #[test]
-    fn client_tls_config_reads_the_ca_and_the_domain() {
+    fn client_tls_config_reads_the_ca_and_the_domain() -> Checked {
         let with_domain = |domain: &str| TlsJson {
             server_root_ca_cert: Some("ca".into()),
             domain: Some(domain.into()),
             ..tls(Some("cert"), Some("key"))
         };
 
-        let (_, origin) = with_domain("example.com").client_config().unwrap();
+        let (_, origin) = with_domain("example.com").client_config()?;
 
-        assert_eq!(origin.unwrap(), "https://example.com/");
+        assert_eq!(
+            origin.map(|o| o.to_string()).as_deref(),
+            Some("https://example.com/")
+        );
         assert!(
             with_domain("bad domain")
                 .client_config()
                 .err()
-                .unwrap()
-                .starts_with("Invalid TLS domain: ")
+                .is_some_and(|e| e.starts_with("Invalid TLS domain: "))
         );
+        Ok(())
     }
 
     #[test]
-    fn connection_options_read_tls_timeout_and_compression() {
+    fn connection_options_read_tls_timeout_and_compression() -> Checked {
         let mut json = worker();
         json["connection"]["tls"] = json!({
             "server_root_ca_cert": null,
@@ -512,20 +507,22 @@ mod tests {
             "client_private_key": null,
         });
         json["connection"]["grpc_compression"] = json!("none");
-        let options = parse_worker(&json).unwrap().0.options().unwrap();
+        let options = parse_worker(&json)?.0.options()?;
         assert_eq!(options.connect_timeout, Some(Duration::from_secs(10)));
         assert_eq!(options.grpc_compression, GrpcCompression::None);
         assert_eq!(
-            options.tls_options.unwrap().domain.as_deref(),
+            options.tls_options.and_then(|tls| tls.domain).as_deref(),
             Some("example.com")
         );
+        Ok(())
     }
 
     #[test]
-    fn runtime_config_needs_threads() {
-        let runtime: RuntimeJson = parse(br#"{"threads":2,"log":"off"}"#, "runtime").unwrap();
+    fn runtime_config_needs_threads() -> Checked {
+        let runtime: RuntimeJson = parse(br#"{"threads":2,"log":"off"}"#, "runtime")?;
         assert_eq!(runtime.threads.get(), 2);
         assert!(parse::<RuntimeJson>(br#"{"log":"info"}"#, "runtime").is_err());
         assert!(parse::<RuntimeJson>(br#"{"threads":"2","log":"off"}"#, "runtime").is_err());
+        Ok(())
     }
 }

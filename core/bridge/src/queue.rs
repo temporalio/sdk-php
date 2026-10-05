@@ -150,7 +150,7 @@ pub unsafe extern "C" fn tpb_next_events(
 mod tests {
     use super::*;
     use crate::ffi::{KIND_ACTIVITY_TASK, release};
-    use crate::testing::{empty_events, events, runtime};
+    use crate::testing::{Checked, empty_events, events, only, runtime};
     use std::io::{ErrorKind, Read};
     use temporalio_common::protos::coresdk::activity_task::ActivityTask;
 
@@ -238,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn poll_error_is_an_error_event() {
+    fn poll_error_is_an_error_event() -> Checked {
         let rt = runtime();
         let queue = &unsafe { &*rt }.queue;
         let failed: Result<ActivityTask, _> = Err(PollError::TonicError(
@@ -247,9 +247,10 @@ mod tests {
 
         queue.push_poll(5, KIND_ACTIVITY_TASK, failed);
 
-        let [(tag, kind, status, message)] = events(rt, 1).try_into().unwrap();
+        let [(tag, kind, status, message)] = only(events(rt, 1))?;
         assert_eq!((tag, kind, status), (5, KIND_ACTIVITY_TASK, STATUS_ERROR));
         assert!(String::from_utf8_lossy(&message).contains("server down"));
         release(rt);
+        Ok(())
     }
 }

@@ -283,8 +283,8 @@ mod tests {
     use super::*;
     use crate::ffi::STATUS_SHUTDOWN;
     use crate::testing::{
-        events, grpc_server, grpc_server_with, pending_events, replayer, runtime, start_worker,
-        worker_json,
+        Checked, GRPC_OK, events, grpc_server, grpc_server_with, only, pending_events, replayer,
+        runtime, start_worker, worker_json,
     };
     use temporalio_common::protos::coresdk::{
         activity_result::ActivityExecutionResult,
@@ -292,26 +292,19 @@ mod tests {
         workflow_completion::{Success, workflow_activation_completion::Status},
     };
 
-    const GRPC_OK: &str = "0";
     const GRPC_NOT_FOUND: &str = "5";
-
-    fn worker(rt: *mut TpbRuntime, json: serde_json::Value) -> *mut TpbWorker {
-        let w = start_worker(rt, &json);
-        assert!(w.is_ok(), "{w:?}");
-        w.unwrap_or(std::ptr::null_mut())
-    }
 
     fn text(data: &[u8]) -> String {
         String::from_utf8_lossy(data).into_owned()
     }
 
     #[test]
-    fn failed_validation_does_not_keep_the_task_queue_registered() {
+    fn failed_validation_does_not_keep_the_task_queue_registered() -> Checked {
         let rt = runtime();
         let server = grpc_server_with(|path| match path.ends_with("/DescribeNamespace") {
             true => GRPC_NOT_FOUND,
             false => GRPC_OK,
-        });
+        })?;
 
         for _ in 0..2 {
             let error = start_worker(rt, &worker_json(&server)).err();
@@ -323,6 +316,7 @@ mod tests {
             );
         }
         release(rt);
+        Ok(())
     }
 
     #[test]
@@ -351,12 +345,12 @@ mod tests {
     }
 
     #[test]
-    fn freeing_an_unfinalized_worker_releases_its_task_queue() {
+    fn freeing_an_unfinalized_worker_releases_its_task_queue() -> Checked {
         let rt = runtime();
         let server = grpc_server();
-        unsafe { tpb_worker_free(worker(rt, worker_json(&server))) };
+        unsafe { tpb_worker_free(start_worker(rt, &worker_json(&server))?) };
 
-        let w = worker(rt, worker_json(&server));
+        let w = start_worker(rt, &worker_json(&server))?;
 
         unsafe { tpb_worker_finalize_shutdown(w, 1) };
         assert_eq!(
@@ -367,16 +361,17 @@ mod tests {
             tpb_worker_free(w);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]
-    fn workers_with_the_same_connection_share_one_connection() {
+    fn workers_with_the_same_connection_share_one_connection() -> Checked {
         let rt = runtime();
         let server = grpc_server();
-        let first = worker(rt, worker_json(&server));
+        let first = start_worker(rt, &worker_json(&server))?;
         let mut another_queue = worker_json(&server);
         another_queue["task_queue"] = "another".into();
-        let second = worker(rt, another_queue);
+        let second = start_worker(rt, &another_queue)?;
 
         assert_eq!(
             unsafe { &*rt }.connections.try_lock().map(|c| c.len()).ok(),
@@ -398,6 +393,7 @@ mod tests {
             tpb_worker_free(second);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]
@@ -435,17 +431,17 @@ mod tests {
     }
 
     #[test]
-    fn replayer_polls_and_completes_workflow_activations() {
+    fn replayer_polls_and_completes_workflow_activations() -> Checked {
         let rt = runtime();
-        let w = replayer(rt, true);
+        let w = replayer(rt, true)?;
 
         unsafe { tpb_poll_workflow_activation(w, 1) };
-        let [(tag, kind, status, activation)] = events(rt, 1).try_into().unwrap();
+        let [(tag, kind, status, activation)] = only(events(rt, 1))?;
         assert_eq!(
             (tag, kind, status),
             (1, KIND_WORKFLOW_ACTIVATION, STATUS_OK)
         );
-        let run_id = WorkflowActivation::decode(&activation[..]).unwrap().run_id;
+        let run_id = WorkflowActivation::decode(&activation[..])?.run_id;
         assert_eq!(run_id, "run");
 
         let completion = WorkflowActivationCompletion {
@@ -459,7 +455,7 @@ mod tests {
             tpb_complete_workflow_activation(w, 2, completion.as_ptr().cast(), completion.len());
             tpb_complete_workflow_activation(w, 3, undecodable.as_ptr().cast(), 1);
         }
-        let [(tag, kind, status, error)] = events(rt, 1).try_into().unwrap();
+        let [(tag, kind, status, error)] = only(events(rt, 1))?;
         assert_eq!(
             (tag, kind, status),
             (3, KIND_WORKFLOW_COMPLETED, STATUS_ERROR)
@@ -470,12 +466,13 @@ mod tests {
             tpb_worker_free(w);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]
-    fn replayer_has_no_activities_but_accepts_heartbeats() {
+    fn replayer_has_no_activities_but_accepts_heartbeats() -> Checked {
         let rt = runtime();
-        let w = replayer(rt, false);
+        let w = replayer(rt, false)?;
         let completion = ActivityTaskCompletion {
             task_token: vec![1],
             result: Some(ActivityExecutionResult::ok(Default::default())),
@@ -501,7 +498,7 @@ mod tests {
             );
         }
 
-        let [poll, (tag, kind, status, error)] = events(rt, 2).try_into().unwrap();
+        let [poll, (tag, kind, status, error)] = only(events(rt, 2))?;
         assert_eq!(poll, (1, KIND_ACTIVITY_TASK, STATUS_SHUTDOWN, vec![]));
         assert_eq!(
             (tag, kind, status),
@@ -512,13 +509,14 @@ mod tests {
             tpb_worker_free(w);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]
-    fn calls_fail_while_finalize_holds_the_worker_and_shutdown_is_idempotent() {
+    fn calls_fail_while_finalize_holds_the_worker_and_shutdown_is_idempotent() -> Checked {
         let rt = runtime();
-        let w = replayer(rt, false);
-        let held = unsafe { &*w }.worker.clone().try_write_owned().unwrap();
+        let w = replayer(rt, false)?;
+        let held = unsafe { &*w }.worker.clone().try_write_owned()?;
         assert_eq!(
             unsafe { tpb_record_activity_heartbeat(w, std::ptr::null(), 0) },
             CALL_FAILED
@@ -537,6 +535,7 @@ mod tests {
             tpb_worker_free(w);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]

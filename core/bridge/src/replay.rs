@@ -58,7 +58,7 @@ mod tests {
         STATUS_SHUTDOWN, release,
     };
     use crate::testing::{
-        events, history, new_replayer, pending_events, replay_config, replayer, runtime,
+        Checked, events, history, new_replayer, pending_events, replay_config, replayer, runtime,
     };
     use crate::worker::{
         tpb_poll_workflow_activation, tpb_worker_finalize_shutdown, tpb_worker_free,
@@ -66,9 +66,9 @@ mod tests {
     };
 
     #[test]
-    fn finalize_shuts_down_a_replayer_with_a_poll_in_flight() {
+    fn finalize_shuts_down_a_replayer_with_a_poll_in_flight() -> Checked {
         let rt = runtime();
-        let w = replayer(rt, false);
+        let w = replayer(rt, false)?;
         unsafe { tpb_poll_workflow_activation(w, 1) };
         assert_eq!(pending_events(rt), 0);
         unsafe {
@@ -96,13 +96,16 @@ mod tests {
             tpb_worker_free(w);
             release(rt);
         }
+        Ok(())
     }
 
     #[test]
     fn invalid_config_history_and_workflow_id_return_an_error() {
         let rt = runtime();
         let error = |config: &str, history: &[u8], workflow_id: &[u8]| {
-            new_replayer(rt, config, history, workflow_id).unwrap_err()
+            new_replayer(rt, config, history, workflow_id)
+                .err()
+                .unwrap_or_default()
         };
 
         assert!(error("{}", &history(false), b"wf").starts_with("Invalid worker config JSON: "));

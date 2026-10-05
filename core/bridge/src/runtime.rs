@@ -147,25 +147,24 @@ pub unsafe extern "C" fn tpb_runtime_new(
 mod tests {
     use super::*;
     use crate::ffi::tpb_bytes_free;
-    use crate::testing::events;
+    use crate::testing::{Checked, events, only};
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
 
-    fn scrape(port: u16) -> String {
-        let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    fn scrape(port: u16) -> std::io::Result<String> {
+        let mut stream = TcpStream::connect(("127.0.0.1", port))?;
         stream
-            .write_all(b"GET /metrics HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
-            .unwrap();
+            .write_all(b"GET /metrics HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")?;
         let mut response = String::new();
-        stream.read_to_string(&mut response).unwrap();
-        response
+        stream.read_to_string(&mut response)?;
+        Ok(response)
     }
 
-    fn log_entry(runtime: &TpbRuntime) -> Value {
+    fn log_entry(runtime: &TpbRuntime) -> Result<Value, Box<dyn std::error::Error>> {
         let rt = std::ptr::from_ref(runtime).cast_mut();
-        let [(tag, kind, status, data)] = events(rt, 1).try_into().unwrap();
+        let [(tag, kind, status, data)] = only(events(rt, 1))?;
         assert_eq!((tag, kind, status), (0, KIND_LOG, STATUS_OK));
-        serde_json::from_slice(&data).unwrap()
+        Ok(serde_json::from_slice(&data)?)
     }
 
     #[test]
@@ -177,27 +176,26 @@ mod tests {
     }
 
     #[test]
-    fn prometheus_exporter_moves_to_the_next_free_port_and_logs_it() {
-        let taken = TcpListener::bind("127.0.0.1:0").unwrap();
-        let port = taken.local_addr().unwrap().port();
+    fn prometheus_exporter_moves_to_the_next_free_port_and_logs_it() -> Checked {
+        let taken = TcpListener::bind("127.0.0.1:0")?;
+        let port = taken.local_addr()?.port();
         let config = format!(r#"{{"threads":1,"log":"off","prometheus":"127.0.0.1:{port}"}}"#);
 
-        let runtime = new_runtime(config.as_bytes()).unwrap();
+        let runtime = new_runtime(config.as_bytes())?;
 
-        let entry = log_entry(&runtime);
+        let entry = log_entry(&runtime)?;
         assert_eq!(entry["level"], "INFO");
         assert_eq!(entry["target"], "temporal_php_bridge");
         assert_eq!(entry["fields"], serde_json::json!({}));
         let exporter_port: u16 = entry["message"]
             .as_str()
-            .unwrap()
-            .strip_prefix("Prometheus metrics on http://127.0.0.1:")
+            .and_then(|message| message.strip_prefix("Prometheus metrics on http://127.0.0.1:"))
             .and_then(|rest| rest.strip_suffix("/metrics"))
-            .unwrap()
-            .parse()
-            .unwrap();
+            .ok_or("no exporter address in the log")?
+            .parse()?;
         assert!(exporter_port > port);
-        assert!(scrape(exporter_port).starts_with("HTTP/1.1 200"));
+        assert!(scrape(exporter_port)?.starts_with("HTTP/1.1 200"));
+        Ok(())
     }
 
     #[test]
@@ -238,18 +236,19 @@ mod tests {
     }
 
     #[test]
-    fn core_logs_are_queued_as_log_events() {
-        let runtime = new_runtime(br#"{"threads":1,"log":"warn"}"#).unwrap();
+    fn core_logs_are_queued_as_log_events() -> Checked {
+        let runtime = new_runtime(br#"{"threads":1,"log":"warn"}"#)?;
 
         runtime.core.tokio_handle().block_on(async {
             tracing::warn!(target: "temporalio_sdk_core", answer = 42, "core warning");
         });
 
-        let entry = log_entry(&runtime);
+        let entry = log_entry(&runtime)?;
         assert_eq!(entry["level"], "WARN");
         assert_eq!(entry["target"], "temporalio_sdk_core");
         assert_eq!(entry["message"], "core warning");
         assert_eq!(entry["fields"]["answer"], 42);
+        Ok(())
     }
 
     #[test]
