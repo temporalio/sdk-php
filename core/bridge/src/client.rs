@@ -13,7 +13,7 @@ use std::{
     time::Duration,
 };
 use temporalio_client::ClientKeepAliveOptions;
-use tokio::{net::UnixStream, sync::watch};
+use tokio::{net::UnixStream, sync::watch, time::Instant};
 use tonic::{
     Code, Request, Status, TimeoutExpired,
     client::Grpc,
@@ -261,20 +261,23 @@ async fn with_deadline(
     call: impl Future<Output = Result<Vec<u8>, Status>>,
     timeout: Option<Duration>,
 ) -> Result<Vec<u8>, Status> {
-    let result = match timeout {
+    let deadline = timeout.map(|timeout| Instant::now() + timeout);
+    let result = match deadline {
         None => call.await,
-        Some(timeout) => tokio::time::timeout(timeout, call)
+        Some(deadline) => tokio::time::timeout_at(deadline, call)
             .await
             .unwrap_or_else(|_| Err(Status::deadline_exceeded(DEADLINE_EXCEEDED))),
     };
-    result.map_err(client_status)
+    let expired = deadline.is_some_and(|deadline| Instant::now() >= deadline);
+    result.map_err(|status| client_status(status, expired))
 }
 
-fn client_status(status: Status) -> Status {
+fn client_status(status: Status, expired: bool) -> Status {
     if timed_out(&status) {
         return Status::deadline_exceeded(DEADLINE_EXCEEDED);
     }
     match (status.code(), std::error::Error::source(&status)) {
+        (Code::Cancelled, Some(_)) if expired => Status::deadline_exceeded(DEADLINE_EXCEEDED),
         (Code::Cancelled | Code::Unknown, Some(_)) => Status::unavailable(status.message()),
         _ => status,
     }
@@ -699,15 +702,47 @@ mod tests {
     }
 
     #[test]
+    fn stream_cancelled_by_the_server_after_the_deadline_exceeds_it() -> Checked {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_time()
+            .build()?;
+        let timeout = Duration::from_millis(10);
+        let reset = || Status::from_error(Box::new(h2::Error::from(h2::Reason::CANCEL)));
+        let after_deadline = rt.block_on(with_deadline(
+            async move {
+                std::thread::sleep(timeout);
+                Err(reset())
+            },
+            Some(timeout),
+        ));
+        assert_eq!(
+            after_deadline
+                .err()
+                .map(|s| (s.code(), s.message().to_owned())),
+            Some((Code::DeadlineExceeded, DEADLINE_EXCEEDED.to_owned()))
+        );
+        let before_deadline = rt.block_on(with_deadline(async { Err(reset()) }, Some(timeout)));
+        assert_eq!(
+            before_deadline.err().map(|s| s.code()),
+            Some(Code::Unavailable)
+        );
+        Ok(())
+    }
+
+    #[test]
     fn transport_failures_are_unavailable_and_server_statuses_are_kept() {
-        let transport =
-            |error: std::io::Error| client_status(Status::from_error(Box::new(error))).code();
+        let transport = |error: std::io::Error| {
+            client_status(Status::from_error(Box::new(error)), false).code()
+        };
         let reset = std::io::Error::other("connection reset");
         assert_eq!(transport(reset), Code::Unavailable);
         let canceled = std::io::Error::other(Status::cancelled("operation was canceled"));
         assert_eq!(transport(canceled), Code::Unavailable);
         for code in [Code::Cancelled, Code::Unknown, Code::Internal] {
-            assert_eq!(client_status(Status::new(code, "server")).code(), code);
+            assert_eq!(
+                client_status(Status::new(code, "server"), true).code(),
+                code
+            );
         }
     }
 
