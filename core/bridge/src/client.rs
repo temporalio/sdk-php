@@ -162,15 +162,22 @@ async fn with_deadline(
     call: impl Future<Output = Result<Vec<u8>, Status>>,
     timeout: Option<Duration>,
 ) -> Result<Vec<u8>, Status> {
-    let Some(timeout) = timeout else {
-        return call.await;
+    let result = match timeout {
+        None => call.await,
+        Some(timeout) => tokio::time::timeout(timeout, call)
+            .await
+            .unwrap_or_else(|_| Err(Status::deadline_exceeded("Deadline Exceeded"))),
     };
-    match tokio::time::timeout(timeout, call).await {
-        Err(_) => Err(Status::deadline_exceeded("Deadline Exceeded")),
-        Ok(Err(status)) if status.code() == Code::Cancelled && timed_out(&status) => {
-            Err(Status::deadline_exceeded(status.message()))
-        }
-        Ok(result) => result,
+    result.map_err(client_status)
+}
+
+fn client_status(status: Status) -> Status {
+    if timed_out(&status) {
+        return Status::deadline_exceeded(status.message());
+    }
+    match (status.code(), std::error::Error::source(&status)) {
+        (Code::Cancelled | Code::Unknown, Some(_)) => Status::unavailable(status.message()),
+        _ => status,
     }
 }
 
@@ -458,6 +465,19 @@ mod tests {
             timeout,
         ));
         assert_eq!(cancelled.unwrap_err().code(), Code::Cancelled);
+    }
+
+    #[test]
+    fn transport_failures_are_unavailable_and_server_statuses_are_kept() {
+        let transport =
+            |error: std::io::Error| client_status(Status::from_error(Box::new(error))).code();
+        let reset = std::io::Error::other("connection reset");
+        assert_eq!(transport(reset), Code::Unavailable);
+        let canceled = std::io::Error::other(Status::cancelled("operation was canceled"));
+        assert_eq!(transport(canceled), Code::Unavailable);
+        for code in [Code::Cancelled, Code::Unknown, Code::Internal] {
+            assert_eq!(client_status(Status::new(code, "server")).code(), code);
+        }
     }
 
     #[test]

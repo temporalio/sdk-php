@@ -26,6 +26,7 @@ final class CoreStubTestCase extends TestCase
     private const WAIT_FOR_FAILURE_MICROSECONDS = 5_000_000;
     private const SHORT_WAIT_MICROSECONDS = 100_000;
     private const CALL_TIMEOUT_MICROSECONDS = 200_500;
+    private const CLIENT_PREFACE_BYTES = 24;
 
     /** @var resource|null */
     private $listener = null;
@@ -106,6 +107,31 @@ final class CoreStubTestCase extends TestCase
         $this->assertNull($response);
         $this->assertSame(StatusCode::DEADLINE_EXCEEDED, $status->code);
         $this->assertSame([], $status->metadata);
+    }
+
+    public static function provideBrokenServerReplies(): iterable
+    {
+        yield 'connection closed' => [null];
+        yield 'not http/2' => ["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"];
+    }
+
+    #[DataProvider('provideBrokenServerReplies')]
+    public function testConnectionBrokenByTheServerIsUnavailable(?string $reply): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+        $connection = \stream_socket_accept($this->listener, self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000);
+        $this->assertIsResource($connection);
+        if ($reply !== null) {
+            \fread($connection, self::CLIENT_PREFACE_BYTES);
+            \fwrite($connection, $reply);
+        }
+        \fclose($connection);
+
+        [$response, $status] = $call->wait();
+
+        $this->assertNull($response);
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
     }
 
     public function testStubFromAnotherProcessIsRejected(): void
