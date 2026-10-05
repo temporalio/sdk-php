@@ -1,12 +1,13 @@
 use crate::ffi::{
-    STATUS_ERROR, STATUS_OK, STATUS_SHUTDOWN, TpbEvent, call, events_out, into_raw_bytes,
+    KIND_LOG, STATUS_ERROR, STATUS_OK, STATUS_SHUTDOWN, TpbEvent, call, events_out, into_raw_bytes,
     panic_message, set_nonblocking,
 };
 use crate::runtime::TpbRuntime;
 use futures_util::FutureExt;
 use prost::Message;
+use serde_json::Value;
 use std::{
-    collections::VecDeque,
+    collections::{HashMap, VecDeque},
     future::Future,
     io::{PipeReader, PipeWriter, Write},
     os::fd::AsRawFd,
@@ -20,6 +21,8 @@ use std::{
 use temporalio_sdk_core::PollError;
 use tokio::runtime::Handle;
 
+pub(crate) const MAX_PENDING_LOGS: usize = 10_000;
+
 struct Event {
     tag: u64,
     kind: i32,
@@ -27,9 +30,41 @@ struct Event {
     data: Box<[u8]>,
 }
 
+#[derive(Default)]
+struct Events {
+    list: VecDeque<Event>,
+    logs: usize,
+    dropped_logs: u64,
+}
+
+impl Events {
+    fn add(&mut self, tag: u64, kind: i32, status: i32, data: Vec<u8>) {
+        if kind == KIND_LOG {
+            self.logs += 1;
+        }
+        self.list.push_back(Event {
+            tag,
+            kind,
+            status,
+            data: data.into_boxed_slice(),
+        });
+    }
+}
+
+fn log_entry(level: &str, target: &str, message: &str, fields: &HashMap<String, Value>) -> Vec<u8> {
+    serde_json::json!({
+        "level": level,
+        "target": target,
+        "message": message,
+        "fields": fields,
+    })
+    .to_string()
+    .into_bytes()
+}
+
 pub struct Queue {
     pub handle: Handle,
-    events: Mutex<VecDeque<Event>>,
+    events: Mutex<Events>,
     ready: Condvar,
     read_fd: PipeReader,
     write_fd: PipeWriter,
@@ -43,7 +78,7 @@ impl Queue {
         set_nonblocking(&write_fd).map_err(|e| e.to_string())?;
         Ok(Self {
             handle,
-            events: Mutex::new(VecDeque::new()),
+            events: Mutex::new(Events::default()),
             ready: Condvar::new(),
             read_fd,
             write_fd,
@@ -51,19 +86,43 @@ impl Queue {
         })
     }
 
-    fn events(&self) -> MutexGuard<'_, VecDeque<Event>> {
+    fn events(&self) -> MutexGuard<'_, Events> {
         self.events.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     pub fn push(&self, tag: u64, kind: i32, status: i32, data: Vec<u8>) {
         let mut events = self.events();
-        let was_empty = events.is_empty();
-        events.push_back(Event {
-            tag,
-            kind,
-            status,
-            data: data.into_boxed_slice(),
-        });
+        let was_empty = events.list.is_empty();
+        events.add(tag, kind, status, data);
+        self.wake(events, was_empty);
+    }
+
+    pub fn push_log(
+        &self,
+        level: &str,
+        target: &str,
+        message: &str,
+        fields: &HashMap<String, Value>,
+    ) {
+        let entry = log_entry(level, target, message, fields);
+        let mut events = self.events();
+        let dropped = events.dropped_logs;
+        if events.logs + usize::from(dropped > 0) >= MAX_PENDING_LOGS {
+            events.dropped_logs += 1;
+            return;
+        }
+        let was_empty = events.list.is_empty();
+        if dropped > 0 {
+            let notice = format!("{dropped} log records were dropped: the event queue was full");
+            let notice = log_entry("WARN", env!("CARGO_CRATE_NAME"), &notice, &HashMap::new());
+            events.add(0, KIND_LOG, STATUS_OK, notice);
+            events.dropped_logs = 0;
+        }
+        events.add(0, KIND_LOG, STATUS_OK, entry);
+        self.wake(events, was_empty);
+    }
+
+    fn wake(&self, events: MutexGuard<'_, Events>, was_empty: bool) {
         drop(events);
         self.ready.notify_one();
         if was_empty && self.fd_watched.load(Ordering::Relaxed) {
@@ -104,16 +163,20 @@ impl Queue {
 
     fn take(&self, timeout_ms: u32, out: &mut [TpbEvent]) -> usize {
         let mut events = self.events();
-        if events.is_empty() && timeout_ms > 0 {
+        if events.list.is_empty() && timeout_ms > 0 {
             let timeout = Duration::from_millis(timeout_ms.into());
             events = self
                 .ready
-                .wait_timeout_while(events, timeout, |e| e.is_empty())
+                .wait_timeout_while(events, timeout, |e| e.list.is_empty())
                 .unwrap_or_else(PoisonError::into_inner)
                 .0;
         }
-        let count = events.len().min(out.len());
-        for (slot, event) in out.iter_mut().zip(events.drain(..count)) {
+        let events = &mut *events;
+        let count = events.list.len().min(out.len());
+        for (slot, event) in out.iter_mut().zip(events.list.drain(..count)) {
+            if event.kind == KIND_LOG {
+                events.logs -= 1;
+            }
             let (data, len) = into_raw_bytes(event.data);
             *slot = TpbEvent {
                 tag: event.tag,

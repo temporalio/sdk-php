@@ -55,24 +55,47 @@ pub fn pending_events(rt: *mut TpbRuntime) -> usize {
     unsafe { tpb_next_events(rt, 300, buf.as_mut_ptr(), buf.len()) }
 }
 
-pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
-    let mut events = Vec::new();
-    while events.len() < count {
-        let mut buf: [TpbEvent; 8] = empty_events();
-        let taken = unsafe { tpb_next_events(rt, 5_000, buf.as_mut_ptr(), buf.len()) };
-        assert!(taken > 0, "no event in 5 seconds, received {events:?}");
-        for e in &buf[..taken] {
-            events.push((
+fn take_events(rt: *mut TpbRuntime, timeout_ms: u32) -> Vec<Event> {
+    let mut buf: [TpbEvent; 8] = empty_events();
+    let taken = unsafe { tpb_next_events(rt, timeout_ms, buf.as_mut_ptr(), buf.len()) };
+    buf[..taken]
+        .iter()
+        .map(|e| {
+            let event = (
                 e.tag,
                 e.kind,
                 e.status,
                 bytes(e.data.cast(), e.len).to_vec(),
-            ));
+            );
             unsafe { tpb_bytes_free(e.data, e.len) };
-        }
+            event
+        })
+        .collect()
+}
+
+pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
+    let mut events = Vec::new();
+    while events.len() < count {
+        let taken = take_events(rt, 5_000);
+        assert!(
+            !taken.is_empty(),
+            "no event in 5 seconds, received {events:?}"
+        );
+        events.extend(taken);
     }
     events.sort();
     events
+}
+
+pub fn drain_events(rt: *mut TpbRuntime) -> Vec<Event> {
+    let mut events = Vec::new();
+    loop {
+        let taken = take_events(rt, 0);
+        if taken.is_empty() {
+            return events;
+        }
+        events.extend(taken);
+    }
 }
 
 pub fn grpc_server() -> std::io::Result<String> {

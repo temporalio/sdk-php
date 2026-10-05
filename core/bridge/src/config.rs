@@ -6,6 +6,7 @@ use std::time::Duration;
 use temporalio_client::{ClientTlsOptions, ConnectionOptions, GrpcCompression, TlsOptions};
 use temporalio_common::{
     protos::temporal::api::enums::v1::VersioningBehavior,
+    telemetry::metrics::TemporalMeter,
     worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
 use temporalio_sdk_core::{
@@ -106,7 +107,10 @@ pub struct ConnectionJson {
 }
 
 impl ConnectionJson {
-    pub fn options(self) -> Result<ConnectionOptions, String> {
+    pub fn options(
+        self,
+        metrics_meter: Option<TemporalMeter>,
+    ) -> Result<ConnectionOptions, String> {
         Ok(
             ConnectionOptions::new(Url::parse(&self.target_url).map_err(|e| e.to_string())?)
                 .client_name(self.client_name)
@@ -115,6 +119,7 @@ impl ConnectionJson {
                 .maybe_api_key(self.api_key)
                 .maybe_tls_options(self.tls.map(TlsJson::options).transpose()?)
                 .connect_timeout(Duration::from_millis(self.connect_timeout_ms))
+                .maybe_metrics_meter(metrics_meter)
                 .grpc_compression(match self.grpc_compression {
                     Compression::Gzip => GrpcCompression::Gzip,
                     Compression::None => GrpcCompression::None,
@@ -507,7 +512,7 @@ mod tests {
             "client_private_key": null,
         });
         json["connection"]["grpc_compression"] = json!("none");
-        let options = parse_worker(&json)?.0.options()?;
+        let options = parse_worker(&json)?.0.options(None)?;
         assert_eq!(options.connect_timeout, Some(Duration::from_secs(10)));
         assert_eq!(options.grpc_compression, GrpcCompression::None);
         assert_eq!(
