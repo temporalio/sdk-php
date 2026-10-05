@@ -145,4 +145,4 @@ jobs:
         if: matrix.suite == 'acceptance'
         run: >-
           vendor/bin/phpunit --testsuite=Acceptance --testdox
-          --filter '/^(?!.*(ClassicTest::replayDifferentVersions|ResetWorkerTest::resetWithSignal|SideEffectTest::(summaryRecordedOnMarker|distinctSummariesPerSideEffect|noSummaryWhenOptionsOmitted)|TranscriptWorkflowFailureTest::|WorkerRestartTest::)).*$/'
+          --filter '/^(?!.*(TranscriptWorkflowFailureTest::|WorkerRestartTest::)).*$/'
