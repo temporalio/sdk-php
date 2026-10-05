@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
+use Symfony\Component\Process\Process;
+use Temporal\Tests\CoreWorker;
 use Temporal\Testing\Environment;
 use Temporal\Testing\SystemInfo;
 use Temporal\Testing\Transcript\TranscriptStore;
@@ -11,6 +13,7 @@ use Temporal\Testing\Transcript\TranscriptStore;
 final class RRStarter
 {
     private Environment $environment;
+    private ?Process $coreWorker = null;
 
     public function __construct(
         private State $runtime,
@@ -22,7 +25,7 @@ final class RRStarter
 
     public function start(): void
     {
-        if ($this->environment->isRoadRunnerRunning()) {
+        if ($this->environment->isRoadRunnerRunning() || $this->coreWorker?->isRunning()) {
             return;
         }
 
@@ -42,8 +45,9 @@ final class RRStarter
             $workerArgs[] = 'test-class=' . $class;
         }
 
+        $rrBinary = $this->runtime->workDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable;
         $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
+            $rrBinary,
             'serve',
             '-w',
             $this->runtime->rrConfigDir,
@@ -69,6 +73,11 @@ final class RRStarter
             $envs['TEMPORAL_TRANSCRIPT_RUN_ID'] = $runId;
         }
 
+        if (CoreWorker::enabled()) {
+            $this->startCoreWorker($rrBinary, $workerArgs, $envs);
+            return;
+        }
+
         $this->environment->startRoadRunner(
             rrCommand: $rrCommand,
             envs: $envs,
@@ -78,7 +87,37 @@ final class RRStarter
 
     public function stop(): void
     {
+        if ($this->coreWorker?->isRunning()) {
+            \exec('pgrep -P ' . $this->coreWorker->getPid(), $children);
+            $this->coreWorker->stop(3);
+            foreach ($children as $child) {
+                \posix_kill((int) $child, \SIGKILL);
+            }
+        }
+        $this->coreWorker = null;
         $this->environment->stopRoadRunner();
+    }
+
+    private function startCoreWorker(string $rrBinary, array $workerArgs, array $envs): void
+    {
+        $workerCommand = \implode(' ', $workerArgs);
+        $this->coreWorker = CoreWorker::start(
+            [
+                $rrBinary,
+                'serve',
+                '-c',
+                '.rr.core.yaml',
+                '-o',
+                "service.workflow.command=$workerCommand",
+                '-o',
+                "service.activity.command=$workerCommand",
+                '-o',
+                "service.activity.process_num={$this->runtime->activityWorkers}",
+            ],
+            $this->runtime->rrConfigDir,
+            $this->runtime->workDir . '/runtime/tests/core-worker.log',
+            ['TEMPORAL_TRANSCRIPT_DIR' => 'runtime/tests/transcripts'] + $envs,
+        );
     }
 
     public function __destruct()

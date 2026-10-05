@@ -23,6 +23,7 @@ final class TaskQueueResolver
         \Temporal\Tests\Acceptance\Extra\Versioning\Classic\ClassicTest::class,
         \Temporal\Tests\Acceptance\Extra\Versioning\Deployment\DeploymentTest::class,
         \Temporal\Tests\Acceptance\Extra\Activity\ActivityPaused\ActivityPausedTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\NondeterminismFailWorkflow\NondeterminismFailWorkflowTest::class,
     ];
 
     /**

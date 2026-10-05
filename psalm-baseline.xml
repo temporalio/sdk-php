@@ -1407,11 +1407,6 @@
       <code><![CDATA[getWorkflowType]]></code>
     </UndefinedMethod>
   </file>
-  <file src="testing/src/TestService.php">
-    <UndefinedClass>
-      <code><![CDATA[ChannelCredentials]]></code>
-    </UndefinedClass>
-  </file>
   <file src="testing/src/Transcript/TranscriptActivityInterceptor.php">
     <PossiblyNullReference>
       <code><![CDATA[getID]]></code>

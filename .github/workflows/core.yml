@@ -1,0 +1,134 @@
+name: Core transport
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'testing/**'
+      - 'tests/**'
+      - 'core/**'
+      - 'composer.json'
+      - 'phpunit.xml.dist'
+      - '.github/workflows/core.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'testing/**'
+      - 'tests/**'
+      - 'core/**'
+      - 'composer.json'
+      - 'phpunit.xml.dist'
+      - '.github/workflows/core.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  cancel-in-progress: true
+  group: core-${{ github.ref }}
+
+env:
+  CARGO_TERM_COLOR: never
+  BRIDGE_MANIFEST: core/bridge/Cargo.toml
+
+jobs:
+  bridge:
+    name: Bridge (Rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
+
+      - name: Cache the bridge build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/bridge/target
+          key: bridge-checks-${{ runner.os }}-${{ hashFiles('core/bridge/Cargo.lock', 'core/bridge/src/**', 'core/bridge/build.rs') }}
+          restore-keys: bridge-checks-${{ runner.os }}-
+
+      - name: Format
+        run: cargo fmt --manifest-path "$BRIDGE_MANIFEST" -- --check
+
+      - name: Clippy
+        run: cargo clippy --release --all-targets --manifest-path "$BRIDGE_MANIFEST" -- -D warnings
+
+      - name: Unit tests
+        run: cargo test --release --lib --manifest-path "$BRIDGE_MANIFEST"
+
+      - name: The generated header matches the sources
+        run: |
+          cargo build --release --lib --manifest-path "$BRIDGE_MANIFEST"
+          git diff --exit-code core/bridge/include
+
+  php:
+    name: PHP ${{ matrix.php }} on sdk-core, ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { suite: core, php: '8.2' }
+          - { suite: core, php: '8.4' }
+          - { suite: functional, php: '8.4' }
+          - { suite: functional-timeskip, php: '8.4' }
+          - { suite: acceptance, php: '8.4' }
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TEMPORAL_HEADLESS: true
+      TEMPORAL_WORKER_TRANSPORT: core
+      XDEBUG_MODE: off
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Setup PHP without ext-grpc
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, sockets, curl, protobuf, ffi, pcntl, posix, :grpc
+
+      - name: Install dependencies with composer
+        uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
+
+      - name: Download binaries
+        run: composer get:binaries
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
+
+      - name: Cache the bridge build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/bridge/target
+          key: bridge-${{ runner.os }}-${{ hashFiles('core/bridge/Cargo.lock', 'core/bridge/src/**', 'core/bridge/build.rs') }}
+          restore-keys: bridge-${{ runner.os }}-
+
+      - name: Build the sdk-core bridge
+        run: cargo build --release --lib --manifest-path "$BRIDGE_MANIFEST"
+
+      - name: Unit and native tests
+        if: matrix.suite == 'core'
+        run: tests/runner.php vendor/bin/phpunit --testsuite=Core --color=always --testdox
+
+      - name: Functional
+        if: matrix.suite == 'functional'
+        run: composer test:func
+
+      - name: Functional with time skipping
+        if: matrix.suite == 'functional-timeskip'
+        run: composer test:func-timeskip
+
+      - name: Acceptance
+        if: matrix.suite == 'acceptance'
+        run: vendor/bin/phpunit --testsuite=Acceptance --testdox

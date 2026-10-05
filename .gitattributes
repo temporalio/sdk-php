@@ -12,3 +12,4 @@
 Makefile               export-ignore
 patches.lock.json      export-ignore
 /phpbench.json          export-ignore
+/bench/                export-ignore
