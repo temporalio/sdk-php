@@ -8,6 +8,7 @@ use crate::queue::{Queue, error_status};
 use crate::runtime::TpbRuntime;
 use prost::Message;
 use std::{
+    collections::hash_map::Entry,
     fmt::Display,
     future::Future,
     sync::{
@@ -147,19 +148,15 @@ fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
     let worker_config = config.worker_config()?;
     let options = connection.options()?;
     let worker = rt.queue.handle.block_on(async {
-        let cached = rt.connections.lock().unwrap().get(&connection_key).cloned();
-        let connection = match cached {
-            Some(connection) => connection,
-            None => {
-                let connection = Connection::connect(options)
-                    .await
-                    .map_err(|e| format!("Connection failed: {e}"))?;
-                rt.connections
-                    .lock()
-                    .unwrap()
-                    .insert(connection_key, connection.clone());
-                connection
-            }
+        let connection = match rt.connections.lock().await.entry(connection_key) {
+            Entry::Occupied(cached) => cached.get().clone(),
+            Entry::Vacant(entry) => entry
+                .insert(
+                    Connection::connect(options)
+                        .await
+                        .map_err(|e| format!("Connection failed: {e}"))?,
+                )
+                .clone(),
         };
         let worker = temporalio_sdk_core::init_worker(&rt.core, worker_config, connection)
             .map_err(|e| format!("Worker start failed: {e}"))?;
@@ -381,7 +378,10 @@ mod tests {
         another_queue["task_queue"] = "another".into();
         let second = worker(rt, another_queue);
 
-        assert_eq!(unsafe { &*rt }.connections.lock().unwrap().len(), 1);
+        assert_eq!(
+            unsafe { &*rt }.connections.try_lock().map(|c| c.len()).ok(),
+            Some(1)
+        );
         unsafe {
             tpb_worker_finalize_shutdown(first, 1);
             tpb_worker_finalize_shutdown(second, 2);
@@ -398,6 +398,40 @@ mod tests {
             tpb_worker_free(second);
             release(rt);
         }
+    }
+
+    #[test]
+    fn concurrent_workers_for_one_task_queue_share_the_connection() {
+        let rt = runtime();
+        let server = grpc_server();
+        let runtime_address = rt as usize;
+        let start = std::sync::Barrier::new(2);
+
+        let created: Vec<Result<usize, String>> = std::thread::scope(|scope| {
+            let threads: Vec<_> = (0..2)
+                .map(|_| {
+                    scope.spawn(|| {
+                        start.wait();
+                        start_worker(runtime_address as *mut TpbRuntime, &worker_json(&server))
+                            .map(|w| w as usize)
+                    })
+                })
+                .collect();
+            threads
+                .into_iter()
+                .map(|thread| thread.join().unwrap_or(Err("panicked".into())))
+                .collect()
+        });
+
+        let errors: Vec<&String> = created.iter().filter_map(|w| w.as_ref().err()).collect();
+        assert!(
+            errors.len() == 1 && errors[0].contains("Registration of multiple workers"),
+            "{created:?}"
+        );
+        for w in created.into_iter().flatten() {
+            unsafe { tpb_worker_free(w as *mut TpbWorker) };
+        }
+        release(rt);
     }
 
     #[test]

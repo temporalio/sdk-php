@@ -4,13 +4,14 @@ use crate::queue::Queue;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 use temporalio_client::Connection;
 use temporalio_common::telemetry::{
     CoreLog, CoreLogConsumer, Logger, PrometheusExporterOptions, TelemetryOptions,
     metrics::CoreMeter, start_prometheus_metric_exporter,
 };
 use temporalio_sdk_core::{CoreRuntime, RuntimeOptions, TokioRuntimeBuilder};
+use tokio::sync::Mutex;
 
 const PROMETHEUS_PORT_ATTEMPTS: u16 = 64;
 
