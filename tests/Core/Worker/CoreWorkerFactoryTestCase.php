@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Core\Worker;
 
+use Coresdk\Activity_task\ActivityTask;
+use Coresdk\ActivityTaskCompletion;
+use Coresdk\Workflow_activation\WorkflowActivation;
+use Coresdk\Workflow_completion\WorkflowActivationCompletion;
 use PHPUnit\Framework\TestCase;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
@@ -93,9 +97,18 @@ final class CoreWorkerFactoryTestCase extends TestCase
         $factory->newWorker($queue)
             ->registerWorkflowTypes(CoreHeartbeatWorkflow::class)
             ->registerActivityImplementations(new CoreHeartbeatActivity());
+        $wire = [];
+        $factory->observeWire(static function (string $type, string $bytes) use (&$wire): void {
+            (new $type())->mergeFromString($bytes);
+            $wire[$type] = true;
+        });
 
         self::assertSame(0, self::runWithTimeout($factory));
         self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
+        self::assertEqualsCanonicalizing(
+            [WorkflowActivation::class, WorkflowActivationCompletion::class, ActivityTask::class, ActivityTaskCompletion::class],
+            \array_keys($wire),
+        );
     }
 
     public function testFailedWorkerCreationReleasesTheEarlierTaskQueues(): void

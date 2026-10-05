@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Google\Protobuf\Internal\Message;
 use Temporal\Internal\Bridge\Bridge;
 use Psr\Log\LoggerInterface;
 use Temporal\Api\History\V1\History;
@@ -40,6 +41,9 @@ class CoreWorkerFactory extends WorkerFactory
     private CoreWorkerConfig $config;
     private ActivityTasks $activityTasks;
     private LoggerInterface $logger;
+
+    /** @var null|\Closure(class-string<Message>, string): void */
+    private ?\Closure $wire = null;
 
     public static function create(
         ?DataConverterInterface $converter = null,
@@ -101,6 +105,15 @@ class CoreWorkerFactory extends WorkerFactory
         return $supervisor->run($roles);
     }
 
+    /**
+     * @param \Closure(class-string<Message>, string): void $wire
+     * @internal
+     */
+    public function observeWire(\Closure $wire): void
+    {
+        $this->wire = $wire;
+    }
+
     public function replay(History $history, string $workflowId): void
     {
         $events = $history->getEvents();
@@ -131,6 +144,7 @@ class CoreWorkerFactory extends WorkerFactory
             $this->logger,
             $role === CoreRole::Activity && $this->options->activityConcurrency > 1,
             $supervised ? \posix_getppid() : null,
+            $this->wire,
         );
 
         return Pipeline::prepare($this->pluginRegistry->getPlugins(WorkerPluginInterface::class))

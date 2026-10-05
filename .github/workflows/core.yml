@@ -141,8 +141,18 @@ jobs:
         if: matrix.suite == 'functional-timeskip'
         run: composer test:func-timeskip
 
-      - name: Acceptance without the core differences listed in core/README.md
+      - name: Setup Go
         if: matrix.suite == 'acceptance'
-        run: >-
-          vendor/bin/phpunit --testsuite=Acceptance --testdox
-          --filter '/^(?!.*(TranscriptWorkflowFailureTest::|WorkerRestartTest::)).*$/'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: core/roadrunner/go.mod
+          cache-dependency-path: core/roadrunner/go.sum
+
+      - name: Build RoadRunner without the Temporal plugin
+        if: matrix.suite == 'acceptance'
+        working-directory: core/roadrunner
+        run: GOWORK=off CGO_ENABLED=0 go build -trimpath -o rr .
+
+      - name: Acceptance
+        if: matrix.suite == 'acceptance'
+        run: vendor/bin/phpunit --testsuite=Acceptance --testdox

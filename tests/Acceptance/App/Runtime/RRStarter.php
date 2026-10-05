@@ -99,15 +99,23 @@ final class RRStarter
 
     private function startCoreWorker(array $workerArgs, array $envs): void
     {
+        $workerCommand = \implode(' ', $workerArgs);
         $this->coreWorker = CoreWorker::start(
-            $workerArgs,
+            [
+                $this->runtime->workDir . '/core/roadrunner/rr',
+                'serve',
+                '-c',
+                '.rr.core.yaml',
+                '-o',
+                "service.workflow.command=$workerCommand",
+                '-o',
+                "service.activity.command=$workerCommand",
+                '-o',
+                "service.activity.process_num={$this->runtime->activityWorkers}",
+            ],
             $this->runtime->rrConfigDir,
             $this->runtime->workDir . '/runtime/tests/core-worker.log',
-            [
-                'TEMPORAL_CORE_WORKFLOW_PROCESSES' => 1,
-                'TEMPORAL_CORE_ACTIVITY_PROCESSES' => $this->runtime->activityWorkers,
-                'TEMPORAL_TRANSCRIPT_DIR' => 'runtime/tests/transcripts',
-            ] + $envs,
+            ['TEMPORAL_TRANSCRIPT_DIR' => 'runtime/tests/transcripts'] + $envs,
         );
     }
 

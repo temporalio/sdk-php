@@ -33,6 +33,7 @@ use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Tests\Acceptance\App\Transport\RecordingCoreWire;
 use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
 use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Tests\CoreWorker;
@@ -101,20 +102,21 @@ try {
 
     $plugins = [new TranscriptPlugin($workerTranscript)];
     $coreTransport = CoreWorker::enabled();
-    $container->bindSingleton(
-        WorkerFactoryInterface::class,
-        $coreTransport
-            ? CoreWorkerFactory::create(
-                converter: $converter,
-                pluginRegistry: new PluginRegistry($plugins),
-                address: $runtime->address,
-                namespace: $runtime->namespace,
-            )
-            : WorkerFactory::create(
-                converter: $converter,
-                pluginRegistry: new PluginRegistry($plugins),
-            )
-    );
+    if ($coreTransport) {
+        $factory = CoreWorkerFactory::create(
+            converter: $converter,
+            pluginRegistry: new PluginRegistry($plugins),
+            address: $runtime->address,
+            namespace: $runtime->namespace,
+        );
+        $factory->observeWire((new RecordingCoreWire($workerTranscript))(...));
+    } else {
+        $factory = WorkerFactory::create(
+            converter: $converter,
+            pluginRegistry: new PluginRegistry($plugins),
+        );
+    }
+    $container->bindSingleton(WorkerFactoryInterface::class, $factory);
 
     $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
     $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {

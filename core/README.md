@@ -121,7 +121,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 ## Tests
 
-`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, without the 2 tests listed in [Limitations](#limitations-and-differences-to-roadrunner).
+`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). Acceptance starts the worker processes under the `roadrunner/` build (`tests/Acceptance/.rr.core.yaml`, build it first). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8.
 
 ## Benchmarks
 
@@ -164,5 +164,3 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 - **fork() after the runtime started:** the sdk-core runtime cannot be used in a process that forked after it started; `Bridge::shared()` throws a `LogicException` there.
 - **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned. `temporal.UpdateAPIKey` at run time is not supported.
 - **Testing package:** the RR KV caches are not replaced; the Functional harness still starts `rr serve` as a KV store.
-
-Acceptance tests that fail on core (harness only): `WorkerRestartTest` (RR KV storage and RR restart), `TranscriptWorkflowFailureTest` (expects RR wire frames).
