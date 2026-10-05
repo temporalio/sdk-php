@@ -85,7 +85,17 @@ fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, 
                 );
                 return Ok(server.meter);
             }
-            Err(e) => last_error = e.to_string(),
+            Err(e)
+                if e.downcast_ref::<std::io::Error>()
+                    .is_some_and(|e| e.kind() == std::io::ErrorKind::AddrInUse) =>
+            {
+                last_error = e.to_string()
+            }
+            Err(e) => {
+                return Err(format!(
+                    "Unable to start the Prometheus exporter on {socket_addr}: {e}"
+                ));
+            }
         }
     }
     Err(format!(
@@ -197,6 +207,21 @@ mod tests {
         assert!(new_runtime(config).is_err_and(|e| {
             e.starts_with("No free port for the Prometheus exporter from 127.0.0.1:65535: ")
         }));
+    }
+
+    #[test]
+    fn prometheus_exporter_stays_on_the_port_when_the_address_is_not_local() {
+        let config = br#"{"threads":1,"log":"off","prometheus":"192.0.2.1:9464"}"#;
+
+        let error = new_runtime(config).err();
+
+        assert!(
+            error
+                .as_deref()
+                .is_some_and(|e| e
+                    .starts_with("Unable to start the Prometheus exporter on 192.0.2.1:9464: ")),
+            "{error:?}"
+        );
     }
 
     #[test]
