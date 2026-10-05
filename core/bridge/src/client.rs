@@ -20,6 +20,8 @@ use tonic::{
     transport::{Channel, Endpoint},
 };
 
+const MAX_GRPC_TIMEOUT: Duration = Duration::from_secs(99_999_999 * 60 * 60);
+
 pub struct TpbClient {
     endpoint: Endpoint,
     channel: Arc<Mutex<Channel>>,
@@ -107,10 +109,18 @@ fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
     })
 }
 
-fn request(body: Vec<u8>, metadata: &[u8], timeout_ms: u64) -> Result<Request<Vec<u8>>, Status> {
+fn timeout(timeout_ms: u64) -> Option<Duration> {
+    (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms).min(MAX_GRPC_TIMEOUT))
+}
+
+fn request(
+    body: Vec<u8>,
+    metadata: &[u8],
+    timeout: Option<Duration>,
+) -> Result<Request<Vec<u8>>, Status> {
     let mut request = Request::new(body);
-    if timeout_ms > 0 {
-        request.set_timeout(Duration::from_millis(timeout_ms));
+    if let Some(timeout) = timeout {
+        request.set_timeout(timeout);
     }
     if metadata.is_empty() {
         return Ok(request);
@@ -236,6 +246,7 @@ pub unsafe extern "C" fn tpb_client_call(
     timeout_ms: u64,
 ) {
     let c = unsafe { &*c };
+    let timeout = timeout(timeout_ms);
     guard(c.push_panic(tag), || {
         let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
             .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
@@ -243,7 +254,7 @@ pub unsafe extern "C" fn tpb_client_call(
                 let request = request(
                     unsafe { slice(body, body_len) }.to_vec(),
                     unsafe { slice(metadata, metadata_len) },
-                    timeout_ms,
+                    timeout,
                 )?;
                 Ok((path, request))
             });
@@ -255,7 +266,6 @@ pub unsafe extern "C" fn tpb_client_call(
         let queue = c.queue.clone();
         c.queue
             .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let timeout = (timeout_ms > 0).then(|| Duration::from_millis(timeout_ms));
                 let (grpc_code, data) =
                     grpc_result(with_deadline(call(channel, path, request), timeout).await);
                 queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
@@ -427,7 +437,7 @@ mod tests {
     #[test]
     fn request_reads_ascii_and_base64_binary_metadata() {
         let metadata = br#"{"Client-Name":["php"],"trace-bin":["AAEC"]}"#;
-        let prepared = request(vec![1], metadata, 1500).unwrap();
+        let prepared = request(vec![1], metadata, timeout(1500)).unwrap();
         assert_eq!(prepared.metadata().get("client-name").unwrap(), "php");
         assert_eq!(
             prepared
@@ -439,9 +449,18 @@ mod tests {
                 .as_ref(),
             &[0, 1, 2]
         );
-        assert!(request(vec![], br#"{"bad key":["x"]}"#, 0).is_err());
-        assert!(request(vec![], br#"{"key":"x"}"#, 0).is_err());
-        assert!(request(vec![], br#"{"key":[1]}"#, 0).is_err());
+        assert!(request(vec![], br#"{"bad key":["x"]}"#, None).is_err());
+        assert!(request(vec![], br#"{"key":"x"}"#, None).is_err());
+        assert!(request(vec![], br#"{"key":[1]}"#, None).is_err());
+    }
+
+    #[test]
+    fn timeout_is_capped_to_the_longest_grpc_timeout() {
+        assert_eq!(timeout(0), None);
+        assert_eq!(timeout(1500), Some(Duration::from_millis(1500)));
+        assert_eq!(timeout(u64::MAX), Some(MAX_GRPC_TIMEOUT));
+        let capped = request(vec![], b"", timeout(u64::MAX)).unwrap();
+        assert_eq!(capped.metadata().get("grpc-timeout").unwrap(), "99999999H");
     }
 
     #[test]

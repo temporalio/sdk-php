@@ -27,6 +27,7 @@ final class CoreStubTestCase extends TestCase
     private const SHORT_WAIT_MICROSECONDS = 100_000;
     private const CALL_TIMEOUT_MICROSECONDS = 200_500;
     private const CLIENT_PREFACE_BYTES = 24;
+    private const TIMEOUT_BEYOND_GRPC_MICROSECONDS = 400_000_000_000_000_000;
 
     /** @var resource|null */
     private $listener = null;
@@ -80,6 +81,15 @@ final class CoreStubTestCase extends TestCase
         $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
         $this->assertNotSame('', $status->details);
         $this->assertSame([], $status->metadata);
+    }
+
+    public function testTimeoutLongerThanGrpcCanEncodeIsCapped(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        [, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::TIMEOUT_BEYOND_GRPC_MICROSECONDS])->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
     }
 
     public function testHandshakeThatNeverEndsStaysConnectingUntilClosed(): void
