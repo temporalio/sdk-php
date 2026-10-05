@@ -11,6 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Core;
 
+use Coresdk\Activity_task\ActivityTask;
+use Coresdk\ActivityTaskCompletion;
+use Coresdk\Workflow_activation\WorkflowActivation;
+use Coresdk\Workflow_completion\WorkflowActivationCompletion;
+use Google\Protobuf\Internal\Message;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Temporal\Internal\Bridge\Bridge;
@@ -31,12 +36,16 @@ final class CoreWorkerLoop
     private bool $shutdownRequested = false;
     private bool $crashed = false;
 
+    /**
+     * @param null|\Closure(class-string<Message>, string): void $wire
+     */
     public function __construct(
         private readonly Bridge $bridge,
         private readonly ActivityTasks $activityTasks,
         private readonly LoggerInterface $logger,
         private readonly bool $concurrent,
         private readonly ?int $supervisorPid,
+        private readonly ?\Closure $wire = null,
     ) {}
 
     /**
@@ -143,7 +152,10 @@ final class CoreWorkerLoop
             $this->onPollFailure($status, $data);
             return;
         }
-        $this->bridge->completeWorkflowActivation($worker->core, $tag, $worker->activations->handle($data));
+        $this->wire?->__invoke(WorkflowActivation::class, $data);
+        $completion = $worker->activations->handle($data);
+        $this->wire?->__invoke(WorkflowActivationCompletion::class, $completion);
+        $this->bridge->completeWorkflowActivation($worker->core, $tag, $completion);
         $this->bridge->pollWorkflowActivation($worker->core, $tag);
     }
 
@@ -154,9 +166,11 @@ final class CoreWorkerLoop
             return;
         }
         $this->bridge->pollActivityTask($worker->core, $tag);
+        $this->wire?->__invoke(ActivityTask::class, $data);
         $run = function () use ($worker, $tag, $data): void {
             $completion = $this->activityTasks->handle($worker->core, $worker->taskQueue, $data);
             if ($completion !== null) {
+                $this->wire?->__invoke(ActivityTaskCompletion::class, $completion);
                 $this->bridge->completeActivityTask($worker->core, $tag, $completion);
             }
         };
