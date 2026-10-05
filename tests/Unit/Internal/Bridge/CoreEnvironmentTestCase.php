@@ -25,6 +25,10 @@ final class CoreEnvironmentTestCase extends TestCase
         yield 'flag default' => [null, static fn(): bool => CoreEnvironment::flag(self::NAME, true), true];
         yield 'flag off' => ['off', static fn(): bool => CoreEnvironment::flag(self::NAME, true), false];
         yield 'flag on' => ['1', static fn(): bool => CoreEnvironment::flag(self::NAME, false), true];
+        yield 'map unset' => [null, static fn(): ?array => CoreEnvironment::map(self::NAME), null];
+        yield 'map set' => [' a = b ,token=x=y', static fn(): ?array => CoreEnvironment::map(self::NAME), ['a' => 'b', 'token' => 'x=y']];
+        yield 'map pair without value' => ['a=b,c', static fn(): ?array => CoreEnvironment::map(self::NAME), new \InvalidArgumentException(self::NAME . ' must be a comma-separated list of key=value pairs, "a=b,c" given')];
+        yield 'map pair without key' => ['=b', static fn(): ?array => CoreEnvironment::map(self::NAME), new \InvalidArgumentException(self::NAME . ' must be a comma-separated list of key=value pairs, "=b" given')];
         yield 'flag invalid' => ['maybe', static fn(): bool => CoreEnvironment::flag(self::NAME, true), new \InvalidArgumentException(self::NAME . ' must be a boolean, "maybe" given')];
     }
 

@@ -28,6 +28,13 @@ final class CoreEnvironment
     public const PROMETHEUS = 'TEMPORAL_CORE_PROMETHEUS_ADDRESS';
     public const POLLER_AUTOSCALING = 'TEMPORAL_CORE_POLLER_AUTOSCALING';
     public const WORKER_HEARTBEAT_INTERVAL = 'TEMPORAL_CORE_WORKER_HEARTBEAT_INTERVAL_MS';
+    public const OTEL_URL = 'TEMPORAL_CORE_OTEL_URL';
+    public const OTEL_PROTOCOL = 'TEMPORAL_CORE_OTEL_PROTOCOL';
+    public const OTEL_HEADERS = 'TEMPORAL_CORE_OTEL_HEADERS';
+    public const OTEL_METRIC_PERIODICITY = 'TEMPORAL_CORE_OTEL_METRIC_PERIODICITY_MS';
+    public const OTEL_USE_SECONDS_FOR_DURATIONS = 'TEMPORAL_CORE_OTEL_USE_SECONDS_FOR_DURATIONS';
+    public const METRIC_PREFIX = 'TEMPORAL_CORE_METRIC_PREFIX';
+    public const METRIC_GLOBAL_TAGS = 'TEMPORAL_CORE_METRIC_GLOBAL_TAGS';
 
     public static function string(string $name): ?string
     {
@@ -67,5 +74,28 @@ final class CoreEnvironment
         }
 
         return $flag;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public static function map(string $name): ?array
+    {
+        $value = self::string($name);
+        if ($value === null) {
+            return null;
+        }
+
+        $map = [];
+        foreach (\explode(',', $value) as $pair) {
+            $parts = \explode('=', $pair, 2);
+            $key = \trim($parts[0]);
+            if ($key === '' || !isset($parts[1])) {
+                throw new \InvalidArgumentException(\sprintf('%s must be a comma-separated list of key=value pairs, "%s" given', $name, $value));
+            }
+            $map[$key] = \trim($parts[1]);
+        }
+
+        return $map;
     }
 }

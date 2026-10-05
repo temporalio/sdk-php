@@ -1,12 +1,12 @@
 use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroUsize;
 use std::time::Duration;
 use temporalio_client::{ClientTlsOptions, ConnectionOptions, GrpcCompression, TlsOptions};
 use temporalio_common::{
     protos::temporal::api::enums::v1::VersioningBehavior,
-    telemetry::metrics::TemporalMeter,
+    telemetry::{OtelCollectorOptions, OtlpProtocol, metrics::TemporalMeter},
     worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
 use temporalio_sdk_core::{
@@ -27,7 +27,49 @@ pub struct RuntimeJson {
     pub threads: NonZeroUsize,
     pub log: String,
     pub prometheus: Option<String>,
+    pub otel: Option<OtelJson>,
+    pub metric_prefix: Option<String>,
+    pub global_tags: Option<HashMap<String, String>>,
     pub worker_heartbeat_interval_ms: Option<u64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum OtelProtocol {
+    Grpc,
+    Http,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OtelJson {
+    url: String,
+    headers: Option<HashMap<String, String>>,
+    metric_periodicity_ms: u64,
+    protocol: OtelProtocol,
+    use_seconds_for_durations: bool,
+}
+
+impl OtelJson {
+    pub fn options(
+        self,
+        global_tags: Option<HashMap<String, String>>,
+    ) -> Result<OtelCollectorOptions, String> {
+        Ok(OtelCollectorOptions::builder()
+            .url(
+                Url::parse(&self.url)
+                    .map_err(|e| format!("Invalid OpenTelemetry URL {}: {e}", self.url))?,
+            )
+            .maybe_headers(self.headers)
+            .metric_periodicity(Duration::from_millis(self.metric_periodicity_ms))
+            .protocol(match self.protocol {
+                OtelProtocol::Grpc => OtlpProtocol::Grpc,
+                OtelProtocol::Http => OtlpProtocol::Http,
+            })
+            .use_seconds_for_durations(self.use_seconds_for_durations)
+            .maybe_global_tags(global_tags)
+            .build())
+    }
 }
 
 #[derive(Deserialize)]

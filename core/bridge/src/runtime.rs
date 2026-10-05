@@ -8,7 +8,7 @@ use std::time::Duration;
 use temporalio_client::Connection;
 use temporalio_common::telemetry::{
     CoreLog, CoreLogConsumer, Logger, PrometheusExporterOptions, TelemetryOptions,
-    metrics::CoreMeter, start_prometheus_metric_exporter,
+    build_otlp_metric_exporter, metrics::CoreMeter, start_prometheus_metric_exporter,
 };
 use temporalio_sdk_core::{CoreRuntime, RuntimeOptions, TokioRuntimeBuilder};
 use tokio::sync::Mutex;
@@ -37,7 +37,11 @@ impl CoreLogConsumer for QueueLog {
     }
 }
 
-fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, String> {
+fn prometheus_meter(
+    address: &str,
+    global_tags: Option<HashMap<String, String>>,
+    queue: &Queue,
+) -> Result<Arc<dyn CoreMeter>, String> {
     let base: SocketAddr = address
         .parse()
         .map_err(|e| format!("Invalid Prometheus address {address}: {e}"))?;
@@ -51,6 +55,7 @@ fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, 
         match start_prometheus_metric_exporter(
             PrometheusExporterOptions::builder()
                 .socket_addr(socket_addr)
+                .maybe_global_tags(global_tags.clone())
                 .build(),
         ) {
             Ok(server) => {
@@ -78,12 +83,16 @@ fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, 
 
 fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
     let config: RuntimeJson = parse(config, "runtime config")?;
+    if config.prometheus.is_some() && config.otel.is_some() {
+        return Err("Prometheus and OpenTelemetry metrics cannot be used together".into());
+    }
     let log_queue = Arc::new(OnceLock::new());
     let telemetry = TelemetryOptions::builder()
         .logging(Logger::Push {
             filter: config.log,
             consumer: Arc::new(QueueLog(log_queue.clone())),
         })
+        .maybe_metric_prefix(config.metric_prefix)
         .build();
     let options = RuntimeOptions::builder()
         .telemetry_options(telemetry)
@@ -98,9 +107,18 @@ fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
     let mut core = CoreRuntime::new(options, tokio).map_err(|e| e.to_string())?;
     let queue = Arc::new(Queue::new(core.tokio_handle())?);
     let _ = log_queue.set(queue.clone());
-    if let Some(address) = config.prometheus {
+    let meter = {
         let _guard = core.tokio_handle().enter();
-        let meter = prometheus_meter(&address, &queue)?;
+        match (config.prometheus, config.otel) {
+            (Some(address), _) => Some(prometheus_meter(&address, config.global_tags, &queue)?),
+            (None, Some(otel)) => Some(Arc::new(
+                build_otlp_metric_exporter(otel.options(config.global_tags)?)
+                    .map_err(|e| format!("Unable to start the OpenTelemetry exporter: {e}"))?,
+            ) as Arc<dyn CoreMeter>),
+            (None, None) => None,
+        }
+    };
+    if let Some(meter) = meter {
         core.telemetry_mut().attach_late_init_metrics(meter);
     }
     Ok(TpbRuntime {
@@ -131,7 +149,7 @@ mod tests {
     };
     use crate::worker::tpb_worker_free;
     use serde_json::Value;
-    use std::io::{Read, Write};
+    use std::io::{BufRead, BufReader, Read, Write};
     use std::net::{TcpListener, TcpStream};
 
     fn scrape(port: u16) -> std::io::Result<String> {
@@ -157,6 +175,67 @@ mod tests {
             .and_then(|rest| rest.strip_suffix("/metrics"))
             .ok_or("no exporter address in the log")?
             .parse()?)
+    }
+
+    fn otlp_request(listener: &TcpListener) -> std::io::Result<(Vec<String>, Vec<u8>)> {
+        let (stream, _) = listener.accept()?;
+        let mut reader = BufReader::new(stream);
+        let head: Vec<String> = reader
+            .by_ref()
+            .lines()
+            .map_while(Result::ok)
+            .take_while(|line| !line.is_empty())
+            .collect();
+        let length = head
+            .iter()
+            .find_map(|line| {
+                line.to_ascii_lowercase()
+                    .strip_prefix("content-length: ")?
+                    .parse()
+                    .ok()
+            })
+            .unwrap_or(0);
+        let mut body = vec![0; length];
+        reader.read_exact(&mut body)?;
+        reader
+            .into_inner()
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
+        Ok((head, body))
+    }
+
+    fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+        haystack.windows(needle.len()).any(|w| w == needle)
+    }
+
+    #[test]
+    fn otlp_http_exporter_sends_prefixed_and_tagged_worker_metrics() -> Checked {
+        let collector = TcpListener::bind("127.0.0.1:0")?;
+        let port = collector.local_addr()?.port();
+        let config = format!(
+            r#"{{"threads":1,"log":"off","metric_prefix":"php_","global_tags":{{"deployment":"otlp-test"}},
+            "otel":{{"url":"http://127.0.0.1:{port}/v1/metrics","headers":{{"x-api-key":"secret"}},
+            "metric_periodicity_ms":100,"protocol":"http","use_seconds_for_durations":true}}}}"#
+        );
+        let runtime = new_runtime(config.as_bytes())?;
+        let rt = std::ptr::from_ref(&runtime).cast_mut();
+        let worker = start_worker(rt, &worker_json(&grpc_server()?))?;
+
+        let received = (0..50).map(|_| otlp_request(&collector)).find(|request| {
+            request
+                .as_ref()
+                .map_or(true, |(_, body)| contains(body, b"php_request"))
+        });
+        unsafe { tpb_worker_free(worker) };
+
+        let (head, body) = received.ok_or("no php_request metric was exported")??;
+        assert_eq!(head[0], "POST /v1/metrics HTTP/1.1");
+        assert!(
+            head.iter()
+                .any(|line| line.eq_ignore_ascii_case("x-api-key: secret")),
+            "{head:?}"
+        );
+        assert!(contains(&body, b"otlp-test"));
+        Ok(())
     }
 
     #[test]
@@ -203,6 +282,63 @@ mod tests {
             "no client request metric in {metrics}"
         );
         Ok(())
+    }
+
+    #[test]
+    fn prometheus_metrics_carry_the_metric_prefix_and_the_global_tags() -> Checked {
+        let taken = TcpListener::bind("127.0.0.1:0")?;
+        let port = taken.local_addr()?.port();
+        let config = format!(
+            r#"{{"threads":1,"log":"off","prometheus":"127.0.0.1:{port}","metric_prefix":"php_","global_tags":{{"deployment":"prom-test"}}}}"#
+        );
+        let runtime = new_runtime(config.as_bytes())?;
+        let exporter_port = exporter_port(&log_entry(&runtime)?)?;
+        let rt = std::ptr::from_ref(&runtime).cast_mut();
+
+        let worker = start_worker(rt, &worker_json(&grpc_server()?))?;
+
+        let metrics = scrape(exporter_port)?;
+        unsafe { tpb_worker_free(worker) };
+        assert!(
+            metrics.lines().any(|line| line.starts_with("php_request{")
+                && line.contains(r#"deployment="prom-test""#)),
+            "no prefixed and tagged request metric in {metrics}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn prometheus_and_opentelemetry_metrics_are_alternatives() {
+        let config = br#"{"threads":1,"log":"off","prometheus":"127.0.0.1:0","otel":{"url":"http://127.0.0.1:4317","headers":null,"metric_periodicity_ms":1000,"protocol":"grpc","use_seconds_for_durations":false}}"#;
+
+        assert_eq!(
+            new_runtime(config).err().as_deref(),
+            Some("Prometheus and OpenTelemetry metrics cannot be used together")
+        );
+    }
+
+    #[test]
+    fn invalid_opentelemetry_url_is_an_error() {
+        let config = br#"{"threads":1,"log":"off","otel":{"url":"not a url","headers":null,"metric_periodicity_ms":1000,"protocol":"http","use_seconds_for_durations":false}}"#;
+
+        assert_eq!(
+            new_runtime(config).err().as_deref(),
+            Some("Invalid OpenTelemetry URL not a url: relative URL without a base")
+        );
+    }
+
+    #[test]
+    fn opentelemetry_grpc_exporter_rejects_an_invalid_header() {
+        let config = br#"{"threads":1,"log":"off","otel":{"url":"http://127.0.0.1:4317","headers":{"bad header":"x"},"metric_periodicity_ms":1000,"protocol":"grpc","use_seconds_for_durations":false}}"#;
+
+        let error = new_runtime(config).err();
+
+        assert!(
+            error
+                .as_deref()
+                .is_some_and(|e| e.starts_with("Unable to start the OpenTelemetry exporter: ")),
+            "{error:?}"
+        );
     }
 
     #[test]
