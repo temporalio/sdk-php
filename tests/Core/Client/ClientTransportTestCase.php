@@ -18,6 +18,7 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Testing\TestService;
+use Temporal\Tests\Core\DevServer;
 
 final class ClientTransportTestCase extends TestCase
 {
@@ -70,6 +71,15 @@ final class ClientTransportTestCase extends TestCase
 
         $this->assertTrue($fiber->isTerminated());
         $this->assertStringStartsWith('Failed to connect to Temporal service.', (string) $error);
+    }
+
+    public function testConnectionIsConnectedAfterAnAnsweredCall(): void
+    {
+        $client = ServiceClient::create(DevServer::address());
+
+        $client->GetSystemInfo(new GetSystemInfoRequest());
+
+        $this->assertTrue($client->getConnection()->isConnected());
     }
 
     public function testOperatorClientReportsUnavailableServer(): void

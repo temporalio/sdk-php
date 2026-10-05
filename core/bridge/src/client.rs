@@ -3,29 +3,35 @@ use crate::ffi::{KIND_RPC_RESULT, bytes, construct, guard, object, release, requ
 use crate::queue::Queue;
 use crate::runtime::TpbRuntime;
 use base64::{Engine, prelude::BASE64_STANDARD};
+use hyper_util::rt::TokioIo;
 use prost::bytes::{Buf, BufMut};
 use std::{
     collections::HashMap,
     future::Future,
+    io,
     sync::{Arc, Mutex, PoisonError},
     time::Duration,
 };
 use temporalio_client::ClientKeepAliveOptions;
+use tokio::{net::UnixStream, sync::watch};
 use tonic::{
     Code, Request, Status, TimeoutExpired,
     client::Grpc,
     codec::{Codec, DecodeBuf, Decoder, EncodeBuf, Encoder},
     codegen::http::uri::PathAndQuery,
     metadata::{AsciiMetadataKey, AsciiMetadataValue, BinaryMetadataKey, BinaryMetadataValue},
-    transport::{Channel, Endpoint},
+    transport::{Channel, Endpoint, Uri},
 };
+use tower::{Service, service_fn};
 
 const MAX_GRPC_TIMEOUT: Duration = Duration::from_secs(99_999_999 * 60 * 60);
+const CHANNEL_CLOSED: &str = "Channel is closed";
 
 pub struct TpbClient {
-    endpoint: Endpoint,
+    target: Target,
     channel: Arc<Mutex<Channel>>,
     queue: Arc<Queue>,
+    open: watch::Sender<()>,
 }
 
 impl TpbClient {
@@ -35,6 +41,24 @@ impl TpbClient {
 
     fn push_panic(&self, tag: u64) -> impl FnOnce(String) + '_ {
         move |message| self.push(tag, internal_error(message))
+    }
+
+    fn spawn(
+        &self,
+        tag: u64,
+        task: impl Future<Output = Result<Vec<u8>, Status>> + Send + 'static,
+    ) {
+        let queue = self.queue.clone();
+        let mut open = self.open.subscribe();
+        self.queue
+            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                let result = tokio::select! {
+                    result = task => result,
+                    _ = open.changed() => Err(Status::cancelled(CHANNEL_CLOSED)),
+                };
+                let (grpc_code, data) = grpc_result(result);
+                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+            });
     }
 }
 
@@ -77,35 +101,99 @@ impl Decoder for RawCodec {
     }
 }
 
-fn endpoint(config: ClientJson) -> Result<Endpoint, String> {
+#[derive(Clone)]
+struct Target {
+    endpoint: Endpoint,
+    socket: Option<Arc<str>>,
+}
+
+impl Target {
+    fn connect_lazy(&self) -> Channel {
+        match &self.socket {
+            None => self.endpoint.connect_lazy(),
+            Some(path) => self
+                .endpoint
+                .connect_with_connector_lazy(unix_socket(path.clone())),
+        }
+    }
+
+    async fn connect(self) -> Result<Channel, tonic::transport::Error> {
+        match self.socket {
+            None => self.endpoint.connect().await,
+            Some(path) => {
+                self.endpoint
+                    .connect_with_connector(unix_socket(path))
+                    .await
+            }
+        }
+    }
+}
+
+fn unix_socket(
+    path: Arc<str>,
+) -> impl Service<
+    Uri,
+    Response = TokioIo<UnixStream>,
+    Error = io::Error,
+    Future = impl Future<Output = io::Result<TokioIo<UnixStream>>> + Send,
+> + Send
++ 'static {
+    service_fn(move |_: Uri| {
+        let path = path.clone();
+        async move { UnixStream::connect(&*path).await.map(TokioIo::new) }
+    })
+}
+
+fn grpc_target(target_url: &str) -> (String, Option<Arc<str>>) {
+    let Some((scheme, target)) = target_url.split_once("://") else {
+        return (target_url.to_owned(), None);
+    };
+    if let Some(path) = target.strip_prefix("unix:") {
+        let path = path.strip_prefix("//").unwrap_or(path);
+        return (format!("{scheme}://localhost"), Some(path.into()));
+    }
+    let authority = match target.split_once(':') {
+        Some(("dns", name)) => name.strip_prefix("//").map_or(name, |name| {
+            name.split_once('/').map_or(name, |(_, name)| name)
+        }),
+        Some(("ipv4" | "ipv6", address)) => address,
+        _ => target,
+    };
+    (format!("{scheme}://{authority}"), None)
+}
+
+fn target(config: ClientJson) -> Result<Target, String> {
+    let (uri, socket) = grpc_target(&config.target_url);
     let keep_alive = ClientKeepAliveOptions::default();
-    let endpoint = Endpoint::from_shared(config.target_url)
+    let endpoint = Endpoint::from_shared(uri)
         .map_err(|e| e.to_string())?
         .connect_timeout(Duration::from_millis(config.connect_timeout_ms))
         .keep_alive_while_idle(true)
         .http2_keep_alive_interval(keep_alive.interval)
         .keep_alive_timeout(keep_alive.timeout);
     let Some(tls) = config.tls else {
-        return Ok(endpoint);
+        return Ok(Target { endpoint, socket });
     };
     let (tls, origin) = tls.client_config()?;
     let endpoint = match origin {
         Some(origin) => endpoint.origin(origin),
         None => endpoint,
     };
-    endpoint.tls_config(tls).map_err(|e| e.to_string())
+    let endpoint = endpoint.tls_config(tls).map_err(|e| e.to_string())?;
+    Ok(Target { endpoint, socket })
 }
 
 fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
-    let endpoint = endpoint(parse(config, "client config")?)?;
+    let target = target(parse(config, "client config")?)?;
     let channel = {
         let _guard = rt.queue.handle.enter();
-        endpoint.connect_lazy()
+        target.connect_lazy()
     };
     Ok(TpbClient {
-        endpoint,
+        target,
         channel: Arc::new(Mutex::new(channel)),
         queue: rt.queue.clone(),
+        open: watch::Sender::new(()),
     })
 }
 
@@ -160,8 +248,8 @@ async fn call(
     Ok(grpc.unary(request, path, RawCodec).await?.into_inner())
 }
 
-async fn connect(endpoint: Endpoint, timeout: Duration) -> Result<Channel, Status> {
-    match tokio::time::timeout(timeout, endpoint.connect()).await {
+async fn connect(target: Target, timeout: Duration) -> Result<Channel, Status> {
+    match tokio::time::timeout(timeout, target.connect()).await {
         Err(_) => Err(Status::deadline_exceeded("Connection timeout expired")),
         Ok(result) => result.map_err(|e| Status::from_error(e.into())),
     }
@@ -268,13 +356,7 @@ pub unsafe extern "C" fn tpb_client_call(
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone();
-        let queue = c.queue.clone();
-        c.queue
-            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let (grpc_code, data) =
-                    grpc_result(with_deadline(call(channel, path, request), timeout).await);
-                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-            });
+        c.spawn(tag, with_deadline(call(channel, path, request), timeout));
     })
 }
 
@@ -284,18 +366,13 @@ pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout
         return;
     };
     guard(c.push_panic(tag), || {
-        let endpoint = c.endpoint.clone();
+        let target = c.target.clone();
         let channel = c.channel.clone();
-        let queue = c.queue.clone();
-        c.queue
-            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
-                let (grpc_code, data) = grpc_result(connected.map(|connected| {
-                    *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
-                    Vec::new()
-                }));
-                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-            });
+        c.spawn(tag, async move {
+            let connected = connect(target, Duration::from_millis(timeout_ms)).await?;
+            *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
+            Ok(Vec::new())
+        });
     })
 }
 
@@ -372,6 +449,80 @@ mod tests {
             ]
         );
         unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
+    }
+
+    fn unix_forwarder(socket: &std::path::Path, address: String) -> std::io::Result<()> {
+        let _ = std::fs::remove_file(socket);
+        let listener = std::os::unix::net::UnixListener::bind(socket)?;
+        listener.set_nonblocking(true)?;
+        std::thread::spawn(move || -> std::io::Result<()> {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(async move {
+                let listener = tokio::net::UnixListener::from_std(listener)?;
+                loop {
+                    let (mut unix, _) = listener.accept().await?;
+                    let mut tcp = tokio::net::TcpStream::connect(&address).await?;
+                    tokio::spawn(async move {
+                        tokio::io::copy_bidirectional(&mut unix, &mut tcp).await
+                    });
+                }
+            })
+        });
+        Ok(())
+    }
+
+    #[test]
+    fn calls_reach_the_server_through_dns_ipv4_and_unix_targets() -> Checked {
+        let rt = runtime();
+        let server = grpc_server()?;
+        let address = server.trim_start_matches("http://");
+        let socket = std::env::temp_dir().join(format!("tpb-{}.sock", std::process::id()));
+        unix_forwarder(&socket, address.to_owned())?;
+        let socket = socket.display();
+        let clients = [
+            format!("http://dns:///{address}"),
+            format!("http://dns:{address}"),
+            format!("http://dns://127.0.0.53/{address}"),
+            format!("http://ipv4:{address}"),
+            format!("http://unix:{socket}"),
+            format!("http://unix://{socket}"),
+        ]
+        .map(|target| client(rt, &target));
+
+        for (tag, c) in (1..).zip(clients) {
+            call(c, tag, GET_SYSTEM_INFO, b"", 5_000);
+        }
+        unsafe { tpb_client_connect(clients[4], 7, 5_000) };
+
+        let ok = |tag| (tag, KIND_RPC_RESULT, Code::Ok as i32, vec![]);
+        assert_eq!(events(rt, 7), (1..=7).map(ok).collect::<Vec<_>>());
+        for c in clients {
+            unsafe { tpb_client_free(c) };
+        }
+        release(rt);
+        Ok(())
+    }
+
+    #[test]
+    fn freeing_the_client_cancels_its_calls_in_flight() -> Checked {
+        let rt = runtime();
+        let silent = std::net::TcpListener::bind("127.0.0.1:0")?;
+        let c = client(rt, &format!("http://{}", silent.local_addr()?));
+
+        call(c, 1, GET_SYSTEM_INFO, b"", 60_000);
+        std::thread::sleep(Duration::from_millis(300));
+        unsafe { tpb_client_free(c) };
+
+        let [(tag, kind, grpc_code, data)] = only(events(rt, 1))?;
+        assert_eq!(
+            (tag, kind, grpc_code),
+            (1, KIND_RPC_RESULT, Code::Cancelled as i32)
+        );
+        assert_eq!(message(&data), CHANNEL_CLOSED.as_bytes());
         release(rt);
         Ok(())
     }
@@ -473,7 +624,7 @@ mod tests {
         let endpoint_of = |target_url: &str, tls: &str| {
             let json =
                 format!(r#"{{"target_url":"{target_url}","tls":{tls},"connect_timeout_ms":1}}"#);
-            parse(json.as_bytes(), "client config").and_then(endpoint)
+            parse(json.as_bytes(), "client config").and_then(target)
         };
         let tls = |domain: &str| {
             format!(
@@ -562,11 +713,13 @@ mod tests {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
-        let closed = Endpoint::from_static("http://127.0.0.1:1");
-        let refused = rt.block_on(connect(closed, Duration::from_secs(5)));
+        let tcp = |uri| Target {
+            endpoint: Endpoint::from_static(uri),
+            socket: None,
+        };
+        let refused = rt.block_on(connect(tcp("http://127.0.0.1:1"), Duration::from_secs(5)));
         assert_eq!(refused.err().map(|s| s.code()), Some(Code::Unavailable));
-        let unreachable = Endpoint::from_static("http://192.0.2.1:7233");
-        let timeout = rt.block_on(connect(unreachable, Duration::ZERO));
+        let timeout = rt.block_on(connect(tcp("http://192.0.2.1:7233"), Duration::ZERO));
         assert_eq!(
             timeout.err().map(|s| s.code()),
             Some(Code::DeadlineExceeded)

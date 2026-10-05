@@ -13,14 +13,16 @@ base64 = "0.22"
 libc = "0.2"
 mimalloc = { version = "0.1", default-features = false }
 futures-util = "0.3"
+hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
 prost = "0.14"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", default-features = false, features = ["rt", "sync", "time"] }
+tokio = { version = "1", default-features = false, features = ["macros", "net", "rt", "sync", "time"] }
 tonic = { version = "0.14", default-features = false, features = ["channel", "codegen", "tls-ring", "tls-native-roots"] }
 temporalio-sdk-core = "0.9.0"
 temporalio-client = "1.0.0"
 temporalio-common = { version = "1.0.0", features = ["core-based-sdk"] }
+tower = { version = "0.5", default-features = false, features = ["util"] }
 
 [dev-dependencies]
 h2 = "0.4"

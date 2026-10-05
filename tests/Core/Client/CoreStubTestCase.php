@@ -6,6 +6,7 @@ namespace Temporal\Tests\Core\Client;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
@@ -28,6 +29,7 @@ final class CoreStubTestCase extends TestCase
     private const CALL_TIMEOUT_MICROSECONDS = 200_500;
     private const CLIENT_PREFACE_BYTES = 24;
     private const TIMEOUT_BEYOND_GRPC_MICROSECONDS = 400_000_000_000_000_000;
+    private const PIPE_READ_BYTES = 1024;
 
     /** @var resource|null */
     private $listener = null;
@@ -133,7 +135,9 @@ final class CoreStubTestCase extends TestCase
         $stub->close();
         $stub->close();
 
-        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+        $this->expectExceptionObject(new \RuntimeException('getConnectivityState error.Channel is already closed.', 1));
+
+        $stub->getConnectivityState();
     }
 
     public function testCallWithoutAnAnswerExceedsItsDeadline(): void
@@ -189,7 +193,76 @@ final class CoreStubTestCase extends TestCase
         }
 
         $stub->close();
-        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+        $this->expectExceptionObject(new \RuntimeException('getConnectivityState error.Channel is already closed.', 1));
+
+        $stub->getConnectivityState();
+    }
+
+    public function testCloseEndsTheCallInFlight(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+
+        $stub->close();
+
+        $this->expectExceptionObject(new \RuntimeException('startBatch Error. Channel is closed', 1));
+
+        $call->wait();
+    }
+
+    public function testCloseWakesTheCallThatWaitsInAFiber(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $bridge = Bridge::shared();
+        $pipe = $bridge->openEventPipe();
+        $readable = EventLoop::onReadable($pipe, static function () use ($bridge, $pipe): void {
+            \fread($pipe, self::PIPE_READ_BYTES);
+            $bridge->nextEvents(0);
+        });
+        $failure = null;
+        $started = \microtime(true);
+        EventLoop::queue(static function () use ($stub, $readable, &$failure): void {
+            try {
+                $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS])->wait();
+            } catch (\RuntimeException $e) {
+                $failure = $e;
+            }
+            EventLoop::cancel($readable);
+        });
+        EventLoop::delay(self::SHORT_WAIT_MICROSECONDS / 1_000_000, $stub->close(...));
+
+        EventLoop::run();
+        $bridge->closeEventPipe();
+
+        $this->assertEquals(new \RuntimeException('startBatch Error. Channel is closed', 1), $failure);
+        $this->assertLessThan(self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000, \microtime(true) - $started);
+    }
+
+    public function testClosedStubRejectsCallsAndQueries(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+        $stub->close();
+        $closed = static function (\Closure $use): string {
+            try {
+                $use();
+            } catch (\RuntimeException|\InvalidArgumentException $e) {
+                return \sprintf('%s(%d): %s', $e::class, $e->getCode(), $e->getMessage());
+            }
+
+            return 'no exception';
+        };
+
+        $this->assertSame([
+            'InvalidArgumentException(1): Call cannot be constructed from a closed Channel',
+            'RuntimeException(1): getConnectivityState error.Channel is already closed.',
+            'RuntimeException(1): getConnectivityState error.Channel is already closed.',
+            'RuntimeException(1): getTarget error.Channel is already closed.',
+        ], [
+            $closed(static fn() => $stub->GetSystemInfo(new GetSystemInfoRequest())),
+            $closed(static fn() => $stub->getConnectivityState(true)),
+            $closed(static fn() => $stub->waitForReady(self::SHORT_WAIT_MICROSECONDS)),
+            $closed(static fn() => $stub->getTarget()),
+        ]);
     }
 
     public function testServerAnswersWithResponseAndWithStatusDetails(): void
@@ -205,6 +278,84 @@ final class CoreStubTestCase extends TestCase
         $this->assertNull($missing);
         $this->assertSame(StatusCode::NOT_FOUND, $notFound->code);
         $this->assertNotSame('', $notFound->metadata['grpc-status-details-bin'][0]);
+    }
+
+    public static function provideNamedTargets(): iterable
+    {
+        yield 'dns with an empty authority' => ['dns:///'];
+        yield 'dns without an authority' => ['dns:'];
+        yield 'dns with an authority' => ['dns://127.0.0.53/'];
+        yield 'ipv4' => ['ipv4:'];
+    }
+
+    #[DataProvider('provideNamedTargets')]
+    public function testNamedTargetReachesTheServer(string $prefix): void
+    {
+        $stub = new CoreWorkflowServiceStub($prefix . DevServer::address());
+
+        [$info, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS])->wait();
+
+        $this->assertSame(StatusCode::OK, $status->code, $status->details);
+        $this->assertInstanceOf(GetSystemInfoResponse::class, $info);
+    }
+
+    public static function provideUnixTargets(): iterable
+    {
+        yield 'unix:/path' => ['unix:'];
+        yield 'unix:///path' => ['unix://'];
+    }
+
+    #[DataProvider('provideUnixTargets')]
+    public function testUnixTargetConnectsToTheSocket(string $prefix): void
+    {
+        $socket = \sys_get_temp_dir() . '/tpb-' . \getmypid() . '.sock';
+        $listener = \stream_socket_server('unix://' . $socket);
+        $this->assertIsResource($listener);
+        $this->listener = $listener;
+        $stub = new CoreWorkflowServiceStub($prefix . $socket);
+
+        $ready = $stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS);
+        $connection = \stream_socket_accept($listener, 0);
+        \unlink($socket);
+
+        $this->assertTrue($ready);
+        $this->assertIsResource($connection);
+    }
+
+    public function testAnsweredCallsMakeTheStubReady(): void
+    {
+        $stub = new CoreWorkflowServiceStub(DevServer::address());
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest())->wait();
+        $afterResponse = $stub->getConnectivityState();
+        $stub->DescribeNamespace((new DescribeNamespaceRequest())->setNamespace('missing-' . \bin2hex(\random_bytes(4))))->wait();
+
+        $this->assertSame(ConnectionState::Ready->value, $afterResponse);
+        $this->assertSame(ConnectionState::Ready->value, $stub->getConnectivityState());
+    }
+
+    public function testCallToClosedPortMakesTheStubTransientFailure(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest())->wait();
+
+        $this->assertSame(ConnectionState::TransientFailure->value, $stub->getConnectivityState());
+    }
+
+    public function testReadyStubTurnsTransientFailureWhenTheServerGoesAway(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $this->assertTrue($stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS));
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+        $connection = \stream_socket_accept($this->listener, self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000);
+        $this->assertIsResource($connection);
+        \fclose($connection);
+
+        [, $status] = $call->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+        $this->assertSame(ConnectionState::TransientFailure->value, $stub->getConnectivityState());
     }
 
     private function silentListener(): string

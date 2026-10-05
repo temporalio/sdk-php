@@ -2180,6 +2180,7 @@ dependencies = [
  "cbindgen",
  "futures-util",
  "h2",
+ "hyper-util",
  "libc",
  "mimalloc",
  "prost",
@@ -2190,6 +2191,7 @@ dependencies = [
  "temporalio-sdk-core",
  "tokio",
  "tonic",
+ "tower",
  "tracing",
 ]
 
