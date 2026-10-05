@@ -146,7 +146,7 @@ impl Drop for TpbWorker {
 fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
     let (connection_key, connection, config) = WorkerJson::parse_with_connection(config)?;
     let worker_config = config.worker_config()?;
-    let options = connection.options()?;
+    let options = connection.options(rt.core.telemetry().get_temporal_metric_meter())?;
     let worker = rt.queue.handle.block_on(async {
         let connection = match rt.connections.lock().await.entry(connection_key) {
             Entry::Occupied(cached) => cached.get().clone(),

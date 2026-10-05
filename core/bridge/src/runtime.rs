@@ -120,7 +120,10 @@ mod tests {
     use crate::ffi::tpb_bytes_free;
     use crate::ffi::{KIND_ACTIVITY_TASK, KIND_LOG, STATUS_OK};
     use crate::queue::MAX_PENDING_LOGS;
-    use crate::testing::{Checked, Event, drain_events, events, only};
+    use crate::testing::{
+        Checked, Event, drain_events, events, grpc_server, only, start_worker, worker_json,
+    };
+    use crate::worker::tpb_worker_free;
     use serde_json::Value;
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
@@ -139,6 +142,15 @@ mod tests {
         let [(tag, kind, status, data)] = only(events(rt, 1))?;
         assert_eq!((tag, kind, status), (0, KIND_LOG, STATUS_OK));
         Ok(serde_json::from_slice(&data)?)
+    }
+
+    fn exporter_port(entry: &Value) -> Result<u16, Box<dyn std::error::Error>> {
+        Ok(entry["message"]
+            .as_str()
+            .and_then(|message| message.strip_prefix("Prometheus metrics on http://127.0.0.1:"))
+            .and_then(|rest| rest.strip_suffix("/metrics"))
+            .ok_or("no exporter address in the log")?
+            .parse()?)
     }
 
     #[test]
@@ -161,14 +173,29 @@ mod tests {
         assert_eq!(entry["level"], "INFO");
         assert_eq!(entry["target"], "temporal_php_bridge");
         assert_eq!(entry["fields"], serde_json::json!({}));
-        let exporter_port: u16 = entry["message"]
-            .as_str()
-            .and_then(|message| message.strip_prefix("Prometheus metrics on http://127.0.0.1:"))
-            .and_then(|rest| rest.strip_suffix("/metrics"))
-            .ok_or("no exporter address in the log")?
-            .parse()?;
+        let exporter_port = exporter_port(&entry)?;
         assert!(exporter_port > port);
         assert!(scrape(exporter_port)?.starts_with("HTTP/1.1 200"));
+        Ok(())
+    }
+
+    #[test]
+    fn worker_connection_records_client_request_metrics() -> Checked {
+        let taken = TcpListener::bind("127.0.0.1:0")?;
+        let port = taken.local_addr()?.port();
+        let config = format!(r#"{{"threads":1,"log":"off","prometheus":"127.0.0.1:{port}"}}"#);
+        let runtime = new_runtime(config.as_bytes())?;
+        let exporter_port = exporter_port(&log_entry(&runtime)?)?;
+        let rt = std::ptr::from_ref(&runtime).cast_mut();
+
+        let worker = start_worker(rt, &worker_json(&grpc_server()?))?;
+
+        let metrics = scrape(exporter_port)?;
+        unsafe { tpb_worker_free(worker) };
+        assert!(
+            metrics.contains("temporal_request{"),
+            "no client request metric in {metrics}"
+        );
         Ok(())
     }
 
