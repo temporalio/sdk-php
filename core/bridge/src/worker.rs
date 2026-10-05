@@ -78,6 +78,19 @@ impl TpbWorker {
         status
     }
 
+    fn finalize(&self) -> impl Future<Output = bool> + Send + 'static {
+        self.initiate_shutdown();
+        let worker = self.worker.clone();
+        async move {
+            let core = worker.write().await.take();
+            let Some(core) = core else {
+                return false;
+            };
+            core.finalize_shutdown().await;
+            true
+        }
+    }
+
     fn poll<T, F>(&self, tag: u64, kind: i32, poll: impl FnOnce(Core) -> F)
     where
         T: Message,
@@ -120,6 +133,12 @@ impl TpbWorker {
         self.queue.spawn(tag, kind, error_status, async move {
             queue.push_error(tag, kind, result.await.map_err(|e| e.to_string()));
         });
+    }
+}
+
+impl Drop for TpbWorker {
+    fn drop(&mut self) {
+        self.queue.handle.spawn(self.finalize());
     }
 }
 
@@ -261,20 +280,17 @@ pub unsafe extern "C" fn tpb_worker_finalize_shutdown(w: *mut TpbWorker, tag: u6
         |_| (),
         || {
             let w = unsafe { &*w };
-            w.initiate_shutdown();
-            let worker = w.worker.clone();
+            let finalize = w.finalize();
             let queue = w.queue.clone();
             w.queue
                 .spawn(tag, KIND_SHUTDOWN_FINALIZED, error_status, async move {
-                    let core = worker.write().await.take();
-                    let Some(core) = core else {
+                    if !finalize.await {
                         return queue.push_error(
                             tag,
                             KIND_SHUTDOWN_FINALIZED,
                             Err(FINALIZED.into()),
                         );
-                    };
-                    core.finalize_shutdown().await;
+                    }
                     queue.push(tag, KIND_SHUTDOWN_FINALIZED, STATUS_OK, Vec::new());
                 });
         },
@@ -331,6 +347,25 @@ mod tests {
             );
         }
         unsafe { free(rt) };
+    }
+
+    #[test]
+    fn freeing_an_unfinalized_worker_releases_its_task_queue() {
+        let rt = runtime();
+        let server = grpc_server();
+        unsafe { tpb_worker_free(worker(rt, worker_json(&server))) };
+
+        let w = worker(rt, worker_json(&server));
+
+        unsafe { tpb_worker_finalize_shutdown(w, 1) };
+        assert_eq!(
+            events(rt, 1),
+            vec![(1, KIND_SHUTDOWN_FINALIZED, STATUS_OK, vec![])]
+        );
+        unsafe {
+            tpb_worker_free(w);
+            free(rt);
+        }
     }
 
     #[test]
