@@ -289,7 +289,7 @@ final class BridgeTestCase extends TestCase
     {
         $config = new CoreWorkerConfig(CoreOptions::create($address, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
         $worker = CoreWorkerFactory::create()->newWorker($queue);
-        $core = $bridge->newWorker(['connection' => $config->connection($worker)] + $config->build($worker, CoreRole::Workflow));
+        $core = $bridge->newWorker(['connection' => $config->connection($worker, '')] + $config->build($worker, CoreRole::Workflow));
         $bridge->pollWorkflowActivation($core, 1);
 
         return $core;
