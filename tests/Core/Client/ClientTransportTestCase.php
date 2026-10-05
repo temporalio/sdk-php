@@ -22,6 +22,7 @@ use Temporal\Testing\TestService;
 final class ClientTransportTestCase extends TestCase
 {
     private const CLOSED_ADDRESS = '127.0.0.1:1';
+    private const CONNECT_TIMEOUT_SECONDS = 5;
 
     public function testServiceClientReportsUnavailableServer(): void
     {
@@ -50,6 +51,25 @@ final class ClientTransportTestCase extends TestCase
 
         $this->assertTrue($fiber->isTerminated());
         $this->assertSame(StatusCode::UNAVAILABLE, $code);
+    }
+
+    public function testConnectInAnEventLoopFiberEnds(): void
+    {
+        $connection = ServiceClient::create(self::CLOSED_ADDRESS)->getConnection();
+        $error = null;
+        $fiber = new \Fiber(static function () use ($connection, &$error): void {
+            try {
+                $connection->connect(self::CONNECT_TIMEOUT_SECONDS);
+            } catch (\RuntimeException $e) {
+                $error = $e->getMessage();
+            }
+        });
+
+        EventLoop::queue($fiber->start(...));
+        EventLoop::run();
+
+        $this->assertTrue($fiber->isTerminated());
+        $this->assertStringStartsWith('Failed to connect to Temporal service.', (string) $error);
     }
 
     public function testOperatorClientReportsUnavailableServer(): void

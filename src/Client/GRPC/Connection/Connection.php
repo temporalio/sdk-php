@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC\Connection;
 
 use Grpc\BaseStub;
+use Revolt\EventLoop;
 use Temporal\Client\Common\ServerCapabilities;
 
 /**
@@ -12,6 +13,8 @@ use Temporal\Client\Common\ServerCapabilities;
  */
 final class Connection implements ConnectionInterface
 {
+    private const EVENT_LOOP_WAIT_SECONDS = 0.05;
+
     private ?ServerCapabilities $capabilities = null;
     private BaseStub $client;
 
@@ -51,9 +54,14 @@ final class Connection implements ConnectionInterface
         // Start connecting
         $this->getState(true);
         $isFiber = \Fiber::getCurrent() !== null;
+        $inEventLoop = $isFiber && \class_exists(EventLoop::class, false) && EventLoop::getDriver()->isRunning();
         do {
             // Wait a bit
-            if ($isFiber) {
+            if ($inEventLoop) {
+                $suspension = EventLoop::getSuspension();
+                EventLoop::delay(self::EVENT_LOOP_WAIT_SECONDS, $suspension->resume(...));
+                $suspension->suspend();
+            } elseif ($isFiber) {
                 \Fiber::suspend();
             } else {
                 $this->client->waitForReady(50);
