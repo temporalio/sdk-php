@@ -75,8 +75,8 @@ pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
     events
 }
 
-pub fn grpc_server() -> String {
-    grpc_server_with(|_| GRPC_OK).unwrap_or_default()
+pub fn grpc_server() -> std::io::Result<String> {
+    grpc_server_with(|_| GRPC_OK)
 }
 
 pub fn grpc_server_with(status: fn(&str) -> &'static str) -> std::io::Result<String> {

@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn freeing_an_unfinalized_worker_releases_its_task_queue() -> Checked {
         let rt = runtime();
-        let server = grpc_server();
+        let server = grpc_server()?;
         unsafe { tpb_worker_free(start_worker(rt, &worker_json(&server))?) };
 
         let w = start_worker(rt, &worker_json(&server))?;
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn workers_with_the_same_connection_share_one_connection() -> Checked {
         let rt = runtime();
-        let server = grpc_server();
+        let server = grpc_server()?;
         let first = start_worker(rt, &worker_json(&server))?;
         let mut another_queue = worker_json(&server);
         another_queue["task_queue"] = "another".into();
@@ -397,9 +397,9 @@ mod tests {
     }
 
     #[test]
-    fn concurrent_workers_for_one_task_queue_share_the_connection() {
+    fn concurrent_workers_for_one_task_queue_share_the_connection() -> Checked {
         let rt = runtime();
-        let server = grpc_server();
+        let server = grpc_server()?;
         let runtime_address = rt as usize;
         let start = std::sync::Barrier::new(2);
 
@@ -428,6 +428,7 @@ mod tests {
             unsafe { tpb_worker_free(w as *mut TpbWorker) };
         }
         release(rt);
+        Ok(())
     }
 
     #[test]

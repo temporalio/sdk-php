@@ -52,10 +52,6 @@ pub fn bytes<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
     unsafe { std::slice::from_raw_parts(data.cast(), len) }
 }
 
-pub unsafe fn slice<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
-    bytes(data, len)
-}
-
 pub fn events_out<'a>(out: *mut TpbEvent, max: usize) -> &'a mut [TpbEvent] {
     if out.is_null() || max == 0 {
         return &mut [];
@@ -114,10 +110,6 @@ pub fn release<T>(value: *mut T) {
             }
         },
     )
-}
-
-pub unsafe fn free<T>(value: *mut T) {
-    release(value)
 }
 
 #[unsafe(no_mangle)]

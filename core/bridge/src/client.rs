@@ -1,5 +1,5 @@
 use crate::config::{ClientJson, parse};
-use crate::ffi::{KIND_RPC_RESULT, construct, free, guard, slice};
+use crate::ffi::{KIND_RPC_RESULT, bytes, construct, guard, object, release, required};
 use crate::queue::Queue;
 use crate::runtime::TpbRuntime;
 use base64::{Engine, prelude::BASE64_STANDARD};
@@ -229,7 +229,9 @@ pub unsafe extern "C" fn tpb_client_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbClient {
-    unsafe { construct(err, err_len, || new_client(&*rt, slice(config, config_len))) }
+    construct(err, err_len, || {
+        new_client(required(rt, "runtime")?, bytes(config, config_len))
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -244,14 +246,14 @@ pub unsafe extern "C" fn tpb_client_call(
     metadata_len: usize,
     timeout_ms: u64,
 ) {
-    let (c, path, body, metadata) = unsafe {
-        (
-            &*c,
-            slice(path, path_len),
-            slice(body, body_len),
-            slice(metadata, metadata_len),
-        )
+    let Some(c) = object(c) else {
+        return;
     };
+    let (path, body, metadata) = (
+        bytes(path, path_len),
+        bytes(body, body_len),
+        bytes(metadata, metadata_len),
+    );
     let timeout = timeout(timeout_ms);
     guard(c.push_panic(tag), || {
         let prepared = PathAndQuery::try_from(path.to_vec())
@@ -278,7 +280,9 @@ pub unsafe extern "C" fn tpb_client_call(
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout_ms: u64) {
-    let c = unsafe { &*c };
+    let Some(c) = object(c) else {
+        return;
+    };
     guard(c.push_panic(tag), || {
         let endpoint = c.endpoint.clone();
         let channel = c.channel.clone();
@@ -297,13 +301,14 @@ pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_client_free(c: *mut TpbClient) {
-    unsafe { free(c) }
+    release(c)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{Event, events, grpc_server, runtime};
+    use crate::ffi::{bytes, tpb_bytes_free};
+    use crate::testing::{Checked, Event, events, grpc_server, only, runtime};
 
     const GET_SYSTEM_INFO: &[u8] =
         b"/temporal.api.workflowservice.v1.WorkflowService/GetSystemInfo";
@@ -341,15 +346,17 @@ mod tests {
     }
 
     fn message(data: &[u8]) -> &[u8] {
-        let length = u32::from_le_bytes(data[..4].try_into().unwrap()) as usize;
+        let mut length = [0; 4];
+        length.copy_from_slice(&data[..4]);
+        let length = u32::from_le_bytes(length) as usize;
         assert_eq!(data.len(), 4 + length);
         &data[4..]
     }
 
     #[test]
-    fn call_and_connect_succeed_against_a_grpc_server() {
+    fn call_and_connect_succeed_against_a_grpc_server() -> Checked {
         let rt = runtime();
-        let c = client(rt, &grpc_server());
+        let c = client(rt, &grpc_server()?);
 
         call(c, 1, GET_SYSTEM_INFO, b"", 0);
         call(c, 2, GET_SYSTEM_INFO, br#"{"client-name":["php"]}"#, 5_000);
@@ -364,14 +371,13 @@ mod tests {
                 (3, KIND_RPC_RESULT, ok, vec![]),
             ]
         );
-        unsafe {
-            tpb_client_free(c);
-            free(rt);
-        }
+        unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
     }
 
     #[test]
-    fn call_with_an_invalid_path_or_metadata_reports_invalid_argument() {
+    fn call_with_an_invalid_path_or_metadata_reports_invalid_argument() -> Checked {
         let rt = runtime();
         let c = client(rt, "http://127.0.0.1:1");
 
@@ -383,22 +389,21 @@ mod tests {
             assert_eq!((tag, kind, grpc_code), expected);
             assert!(message(&data).starts_with(prefix));
         };
-        let [path, metadata] = events(rt, 2).try_into().unwrap();
+        let [path, metadata] = only(events(rt, 2))?;
         invalid(path, 7, b"Invalid RPC path: ");
         invalid(metadata, 8, b"Invalid metadata: ");
-        unsafe {
-            tpb_client_free(c);
-            free(rt);
-        }
+        unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
     }
 
     #[test]
-    fn a_poisoned_channel_lock_keeps_the_client_working() {
+    fn a_poisoned_channel_lock_keeps_the_client_working() -> Checked {
         let rt = runtime();
-        let c = client(rt, &grpc_server());
+        let c = client(rt, &grpc_server()?);
         let channel = unsafe { &*c }.channel.clone();
         let poisoner = std::thread::spawn(move || {
-            let _locked = channel.lock().unwrap();
+            let _locked = channel.lock();
             panic!("poisoned");
         });
         assert!(poisoner.join().is_err());
@@ -416,29 +421,51 @@ mod tests {
                 (3, KIND_RPC_RESULT, ok, vec![]),
             ]
         );
+        unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
+    }
+
+    #[test]
+    fn null_runtime_and_client_pointers_do_not_crash() {
+        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
+        let config = br#"{"target_url":"http://127.0.0.1:1","tls":null,"connect_timeout_ms":1}"#;
+        let c = unsafe {
+            tpb_client_new(
+                std::ptr::null_mut(),
+                config.as_ptr().cast(),
+                config.len(),
+                &mut err,
+                &mut err_len,
+            )
+        };
+        assert!(c.is_null());
+        assert_eq!(bytes(err.cast(), err_len), b"The runtime pointer is null");
+        unsafe { tpb_bytes_free(err, err_len) };
+
+        call(c, 1, GET_SYSTEM_INFO, b"", 0);
         unsafe {
+            tpb_client_connect(c, 2, 0);
             tpb_client_free(c);
-            free(rt);
         }
     }
 
     #[test]
-    fn a_panic_becomes_an_internal_result() {
+    fn a_panic_becomes_an_internal_result() -> Checked {
         let rt = runtime();
         let c = client(rt, "http://127.0.0.1:1");
 
         guard(unsafe { &*c }.push_panic(4), || panic!("boom"));
 
-        let [(tag, kind, grpc_code, data)] = events(rt, 1).try_into().unwrap();
+        let [(tag, kind, grpc_code, data)] = only(events(rt, 1))?;
         assert_eq!(
             (tag, kind, grpc_code),
             (4, KIND_RPC_RESULT, Code::Internal as i32)
         );
         assert_eq!(message(&data), b"Panic in temporal-php-bridge: boom");
-        unsafe {
-            tpb_client_free(c);
-            free(rt);
-        }
+        unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
     }
 
     #[test]
@@ -446,7 +473,7 @@ mod tests {
         let endpoint_of = |target_url: &str, tls: &str| {
             let json =
                 format!(r#"{{"target_url":"{target_url}","tls":{tls},"connect_timeout_ms":1}}"#);
-            endpoint(parse(json.as_bytes(), "client config").unwrap())
+            parse(json.as_bytes(), "client config").and_then(endpoint)
         };
         let tls = |domain: &str| {
             format!(
@@ -460,55 +487,61 @@ mod tests {
     }
 
     #[test]
-    fn request_reads_ascii_and_base64_binary_metadata() {
+    fn request_reads_ascii_and_base64_binary_metadata() -> Checked {
         let metadata = br#"{"Client-Name":["php"],"trace-bin":["AAEC"]}"#;
-        let prepared = request(vec![1], metadata, timeout(1500)).unwrap();
-        assert_eq!(prepared.metadata().get("client-name").unwrap(), "php");
-        assert_eq!(
-            prepared
-                .metadata()
-                .get_bin("trace-bin")
-                .unwrap()
-                .to_bytes()
-                .unwrap()
-                .as_ref(),
-            &[0, 1, 2]
-        );
+        let prepared = request(vec![1], metadata, timeout(1500))?;
+        let client_name = prepared.metadata().get("client-name");
+        assert_eq!(client_name.and_then(|v| v.to_str().ok()), Some("php"));
+        let trace = prepared.metadata().get_bin("trace-bin");
+        let trace = trace.and_then(|v| v.to_bytes().ok());
+        assert_eq!(trace.as_deref(), Some(&[0, 1, 2][..]));
         assert!(request(vec![], br#"{"bad key":["x"]}"#, None).is_err());
         assert!(request(vec![], br#"{"key":"x"}"#, None).is_err());
         assert!(request(vec![], br#"{"key":[1]}"#, None).is_err());
+        Ok(())
     }
 
     #[test]
-    fn timeout_is_capped_to_the_longest_grpc_timeout() {
+    fn timeout_is_capped_to_the_longest_grpc_timeout() -> Checked {
         assert_eq!(timeout(0), None);
         assert_eq!(timeout(1500), Some(Duration::from_millis(1500)));
         assert_eq!(timeout(u64::MAX), Some(MAX_GRPC_TIMEOUT));
-        let capped = request(vec![], b"", timeout(u64::MAX)).unwrap();
-        assert_eq!(capped.metadata().get("grpc-timeout").unwrap(), "99999999H");
+        let capped = request(vec![], b"", timeout(u64::MAX))?;
+        let grpc_timeout = capped.metadata().get("grpc-timeout");
+        assert_eq!(
+            grpc_timeout.and_then(|v| v.to_str().ok()),
+            Some("99999999H")
+        );
+        Ok(())
     }
 
     #[test]
-    fn expired_deadline_is_deadline_exceeded() {
+    fn expired_deadline_is_deadline_exceeded() -> Checked {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_time()
-            .build()
-            .unwrap();
+            .build()?;
         let timeout = Some(Duration::from_millis(10));
         let pending = rt.block_on(with_deadline(std::future::pending(), timeout));
-        assert_eq!(pending.unwrap_err().code(), Code::DeadlineExceeded);
+        assert_eq!(
+            pending.err().map(|s| s.code()),
+            Some(Code::DeadlineExceeded)
+        );
         let expired_status = Status::from_error(Box::new(TimeoutExpired(())));
         let transport_error = std::io::Error::other(expired_status);
         let expired = rt.block_on(with_deadline(
             async { Err(Status::from_error(Box::new(transport_error))) },
             timeout,
         ));
-        assert_eq!(expired.unwrap_err().code(), Code::DeadlineExceeded);
+        assert_eq!(
+            expired.err().map(|s| s.code()),
+            Some(Code::DeadlineExceeded)
+        );
         let cancelled = rt.block_on(with_deadline(
             async { Err(Status::cancelled("cancelled by the server")) },
             timeout,
         ));
-        assert_eq!(cancelled.unwrap_err().code(), Code::Cancelled);
+        assert_eq!(cancelled.err().map(|s| s.code()), Some(Code::Cancelled));
+        Ok(())
     }
 
     #[test]
@@ -525,17 +558,20 @@ mod tests {
     }
 
     #[test]
-    fn connect_reports_unavailable_and_timeout() {
+    fn connect_reports_unavailable_and_timeout() -> Checked {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
-            .build()
-            .unwrap();
+            .build()?;
         let closed = Endpoint::from_static("http://127.0.0.1:1");
         let refused = rt.block_on(connect(closed, Duration::from_secs(5)));
-        assert_eq!(refused.unwrap_err().code(), Code::Unavailable);
+        assert_eq!(refused.err().map(|s| s.code()), Some(Code::Unavailable));
         let unreachable = Endpoint::from_static("http://192.0.2.1:7233");
         let timeout = rt.block_on(connect(unreachable, Duration::ZERO));
-        assert_eq!(timeout.unwrap_err().code(), Code::DeadlineExceeded);
+        assert_eq!(
+            timeout.err().map(|s| s.code()),
+            Some(Code::DeadlineExceeded)
+        );
+        Ok(())
     }
 
     #[test]
