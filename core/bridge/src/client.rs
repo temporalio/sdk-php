@@ -11,6 +11,7 @@ use std::{
     time::Duration,
 };
 use temporalio_client::ClientKeepAliveOptions;
+use tokio::sync::watch;
 use tonic::{
     Code, Request, Status, TimeoutExpired,
     client::Grpc,
@@ -21,11 +22,13 @@ use tonic::{
 };
 
 const MAX_GRPC_TIMEOUT: Duration = Duration::from_secs(99_999_999 * 60 * 60);
+const CHANNEL_CLOSED: &str = "Channel is closed";
 
 pub struct TpbClient {
     endpoint: Endpoint,
     channel: Arc<Mutex<Channel>>,
     queue: Arc<Queue>,
+    open: watch::Sender<()>,
 }
 
 impl TpbClient {
@@ -35,6 +38,24 @@ impl TpbClient {
 
     fn push_panic(&self, tag: u64) -> impl FnOnce(String) + '_ {
         move |message| self.push(tag, internal_error(message))
+    }
+
+    fn spawn(
+        &self,
+        tag: u64,
+        task: impl Future<Output = Result<Vec<u8>, Status>> + Send + 'static,
+    ) {
+        let queue = self.queue.clone();
+        let mut open = self.open.subscribe();
+        self.queue
+            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
+                let result = tokio::select! {
+                    result = task => result,
+                    _ = open.changed() => Err(Status::cancelled(CHANNEL_CLOSED)),
+                };
+                let (grpc_code, data) = grpc_result(result);
+                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
+            });
     }
 }
 
@@ -106,6 +127,7 @@ fn new_client(rt: &TpbRuntime, config: &[u8]) -> Result<TpbClient, String> {
         endpoint,
         channel: Arc::new(Mutex::new(channel)),
         queue: rt.queue.clone(),
+        open: watch::Sender::new(()),
     })
 }
 
@@ -268,13 +290,7 @@ pub unsafe extern "C" fn tpb_client_call(
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone();
-        let queue = c.queue.clone();
-        c.queue
-            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let (grpc_code, data) =
-                    grpc_result(with_deadline(call(channel, path, request), timeout).await);
-                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-            });
+        c.spawn(tag, with_deadline(call(channel, path, request), timeout));
     })
 }
 
@@ -286,16 +302,11 @@ pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout
     guard(c.push_panic(tag), || {
         let endpoint = c.endpoint.clone();
         let channel = c.channel.clone();
-        let queue = c.queue.clone();
-        c.queue
-            .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
-                let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
-                let (grpc_code, data) = grpc_result(connected.map(|connected| {
-                    *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
-                    Vec::new()
-                }));
-                queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
-            });
+        c.spawn(tag, async move {
+            let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await?;
+            *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
+            Ok(Vec::new())
+        });
     })
 }
 
@@ -372,6 +383,26 @@ mod tests {
             ]
         );
         unsafe { tpb_client_free(c) };
+        release(rt);
+        Ok(())
+    }
+
+    #[test]
+    fn freeing_the_client_cancels_its_calls_in_flight() -> Checked {
+        let rt = runtime();
+        let silent = std::net::TcpListener::bind("127.0.0.1:0")?;
+        let c = client(rt, &format!("http://{}", silent.local_addr()?));
+
+        call(c, 1, GET_SYSTEM_INFO, b"", 60_000);
+        std::thread::sleep(Duration::from_millis(300));
+        unsafe { tpb_client_free(c) };
+
+        let [(tag, kind, grpc_code, data)] = only(events(rt, 1))?;
+        assert_eq!(
+            (tag, kind, grpc_code),
+            (1, KIND_RPC_RESULT, Code::Cancelled as i32)
+        );
+        assert_eq!(message(&data), CHANNEL_CLOSED.as_bytes());
         release(rt);
         Ok(())
     }

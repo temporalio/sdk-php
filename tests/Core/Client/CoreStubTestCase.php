@@ -6,6 +6,7 @@ namespace Temporal\Tests\Core\Client;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
@@ -28,6 +29,7 @@ final class CoreStubTestCase extends TestCase
     private const CALL_TIMEOUT_MICROSECONDS = 200_500;
     private const CLIENT_PREFACE_BYTES = 24;
     private const TIMEOUT_BEYOND_GRPC_MICROSECONDS = 400_000_000_000_000_000;
+    private const PIPE_READ_BYTES = 1024;
 
     /** @var resource|null */
     private $listener = null;
@@ -133,7 +135,9 @@ final class CoreStubTestCase extends TestCase
         $stub->close();
         $stub->close();
 
-        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+        $this->expectExceptionObject(new \RuntimeException('getConnectivityState error.Channel is already closed.', 1));
+
+        $stub->getConnectivityState();
     }
 
     public function testCallWithoutAnAnswerExceedsItsDeadline(): void
@@ -189,7 +193,76 @@ final class CoreStubTestCase extends TestCase
         }
 
         $stub->close();
-        $this->assertSame(ConnectionState::Idle->value, $stub->getConnectivityState());
+        $this->expectExceptionObject(new \RuntimeException('getConnectivityState error.Channel is already closed.', 1));
+
+        $stub->getConnectivityState();
+    }
+
+    public function testCloseEndsTheCallInFlight(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+
+        $stub->close();
+
+        $this->expectExceptionObject(new \RuntimeException('startBatch Error. Channel is closed', 1));
+
+        $call->wait();
+    }
+
+    public function testCloseWakesTheCallThatWaitsInAFiber(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $bridge = Bridge::shared();
+        $pipe = $bridge->openEventPipe();
+        $readable = EventLoop::onReadable($pipe, static function () use ($bridge, $pipe): void {
+            \fread($pipe, self::PIPE_READ_BYTES);
+            $bridge->nextEvents(0);
+        });
+        $failure = null;
+        $started = \microtime(true);
+        EventLoop::queue(static function () use ($stub, $readable, &$failure): void {
+            try {
+                $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS])->wait();
+            } catch (\RuntimeException $e) {
+                $failure = $e;
+            }
+            EventLoop::cancel($readable);
+        });
+        EventLoop::delay(self::SHORT_WAIT_MICROSECONDS / 1_000_000, $stub->close(...));
+
+        EventLoop::run();
+        $bridge->closeEventPipe();
+
+        $this->assertEquals(new \RuntimeException('startBatch Error. Channel is closed', 1), $failure);
+        $this->assertLessThan(self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000, \microtime(true) - $started);
+    }
+
+    public function testClosedStubRejectsCallsAndQueries(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+        $stub->close();
+        $closed = static function (\Closure $use): string {
+            try {
+                $use();
+            } catch (\RuntimeException|\InvalidArgumentException $e) {
+                return \sprintf('%s(%d): %s', $e::class, $e->getCode(), $e->getMessage());
+            }
+
+            return 'no exception';
+        };
+
+        $this->assertSame([
+            'InvalidArgumentException(1): Call cannot be constructed from a closed Channel',
+            'RuntimeException(1): getConnectivityState error.Channel is already closed.',
+            'RuntimeException(1): getConnectivityState error.Channel is already closed.',
+            'RuntimeException(1): getTarget error.Channel is already closed.',
+        ], [
+            $closed(static fn() => $stub->GetSystemInfo(new GetSystemInfoRequest())),
+            $closed(static fn() => $stub->getConnectivityState(true)),
+            $closed(static fn() => $stub->waitForReady(self::SHORT_WAIT_MICROSECONDS)),
+            $closed(static fn() => $stub->getTarget()),
+        ]);
     }
 
     public function testServerAnswersWithResponseAndWithStatusDetails(): void

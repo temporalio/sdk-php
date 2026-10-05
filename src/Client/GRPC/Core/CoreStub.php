@@ -24,6 +24,7 @@ trait CoreStub
 {
     private const MICROSECONDS_PER_MILLISECOND = 1000;
     private const METADATA_KEY_PATTERN = '/^[.A-Za-z\d_-]+$/';
+    private const CLOSED_CHANNEL_ERROR_CODE = 1;
 
     private string $address;
 
@@ -34,6 +35,7 @@ trait CoreStub
     private ?Bridge $bridge = null;
     private ConnectionState $state = ConnectionState::Idle;
     private ?int $connecting = null;
+    private bool $closed = false;
 
     /**
      * @param array<string, ?string>|null $tls
@@ -46,6 +48,8 @@ trait CoreStub
 
     public function getTarget(): string
     {
+        $this->assertOpen('getTarget');
+
         return $this->address;
     }
 
@@ -82,7 +86,7 @@ trait CoreStub
         $this->core = null;
         $this->bridge = null;
         $this->connecting = null;
-        $this->state = ConnectionState::Idle;
+        $this->closed = true;
     }
 
     public function __destruct()
@@ -99,6 +103,9 @@ trait CoreStub
      */
     protected function _simpleRequest($method, $argument, $deserialize, array $metadata = [], array $options = []): CoreCall
     {
+        if ($this->closed) {
+            throw new \InvalidArgumentException('Call cannot be constructed from a closed Channel', self::CLOSED_CHANNEL_ERROR_CODE);
+        }
         $normalized = [];
         foreach ($metadata as $key => $values) {
             if (!\preg_match(self::METADATA_KEY_PATTERN, (string) $key)) {
@@ -111,7 +118,7 @@ trait CoreStub
         $client = $this->client();
         $tag = $this->bridge->startCall($client, $method, $argument->serializeToString(), $normalized, $timeoutMs);
 
-        return new CoreCall($this->bridge, $tag, $deserialize);
+        return new CoreCall($this->bridge, $tag, $deserialize, $this->settle(...));
     }
 
     private static function milliseconds(int $microseconds): int
@@ -135,6 +142,20 @@ trait CoreStub
         return $this->core;
     }
 
+    private function settle(): void
+    {
+        if ($this->closed) {
+            throw new \RuntimeException('startBatch Error. Channel is closed', self::CLOSED_CHANNEL_ERROR_CODE);
+        }
+    }
+
+    private function assertOpen(string $method): void
+    {
+        if ($this->closed) {
+            throw new \RuntimeException($method . ' error.Channel is already closed.', self::CLOSED_CHANNEL_ERROR_CODE);
+        }
+    }
+
     private function assertSameProcess(): void
     {
         if ($this->bridge !== null && !Bridge::isCurrent($this->bridge)) {
@@ -144,6 +165,7 @@ trait CoreStub
 
     private function updateState(bool $connect, int $waitMs): void
     {
+        $this->assertOpen('getConnectivityState');
         $this->assertSameProcess();
         if ($connect && $this->connecting === null && $this->state !== ConnectionState::Ready) {
             $client = $this->client();
