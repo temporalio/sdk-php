@@ -116,7 +116,7 @@ fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
         .telemetry_options(telemetry)
         .build()?;
     let mut tokio = TokioRuntimeBuilder::default();
-    tokio.inner.worker_threads(config.threads);
+    tokio.inner.worker_threads(config.threads.get());
     let mut core = CoreRuntime::new(options, tokio).map_err(|e| e.to_string())?;
     let queue = Arc::new(Queue::new(core.tokio_handle())?);
     let _ = log_queue.set(queue.clone());
@@ -220,6 +220,18 @@ mod tests {
                 .as_deref()
                 .is_some_and(|e| e
                     .starts_with("Unable to start the Prometheus exporter on 192.0.2.1:9464: ")),
+            "{error:?}"
+        );
+    }
+
+    #[test]
+    fn zero_threads_is_a_config_error() {
+        let error = new_runtime(br#"{"threads":0,"log":"off"}"#).err();
+
+        assert!(
+            error.as_deref().is_some_and(|e| e.starts_with(
+                "Invalid runtime config JSON: invalid value: integer `0`, expected a nonzero usize"
+            )),
             "{error:?}"
         );
     }
