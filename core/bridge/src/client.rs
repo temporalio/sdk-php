@@ -244,19 +244,19 @@ pub unsafe extern "C" fn tpb_client_call(
     metadata_len: usize,
     timeout_ms: u64,
 ) {
-    let c = unsafe { &*c };
+    let (c, path, body, metadata) = unsafe {
+        (
+            &*c,
+            slice(path, path_len),
+            slice(body, body_len),
+            slice(metadata, metadata_len),
+        )
+    };
     let timeout = timeout(timeout_ms);
     guard(c.push_panic(tag), || {
-        let prepared = PathAndQuery::try_from(unsafe { slice(path, path_len) }.to_vec())
+        let prepared = PathAndQuery::try_from(path.to_vec())
             .map_err(|e| Status::invalid_argument(format!("Invalid RPC path: {e}")))
-            .and_then(|path| {
-                let request = request(
-                    unsafe { slice(body, body_len) }.to_vec(),
-                    unsafe { slice(metadata, metadata_len) },
-                    timeout,
-                )?;
-                Ok((path, request))
-            });
+            .and_then(|path| Ok((path, request(body.to_vec(), metadata, timeout)?)));
         let (path, request) = match prepared {
             Ok(prepared) => prepared,
             Err(status) => return c.push(tag, grpc_result(Err(status))),
