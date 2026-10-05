@@ -160,6 +160,30 @@ final class CoreWorkerFactoryTestCase extends TestCase
         self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
     }
 
+    public function testUpdatedApiKeyIsReadAgainWhileTheWorkerRuns(): void
+    {
+        $queue = self::startWorkflow();
+        $factory = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        $factory->newWorker($queue, WorkerOptions::new()->withLocalActivityWorkerOnly(true))->registerWorkflowTypes(CoreHeartbeatWorkflow::class);
+        $key = new class implements \Stringable {
+            public int $reads = 0;
+
+            public function __toString(): string
+            {
+                return 'key-' . ++$this->reads;
+            }
+        };
+        $factory->updateApiKey($key);
+        self::$stopInWorkflow = true;
+        try {
+            self::assertSame(0, self::runWithTimeout($factory));
+        } finally {
+            self::$stopInWorkflow = false;
+        }
+
+        self::assertGreaterThan(2, $key->reads);
+    }
+
     private static function startWorkflow(): string
     {
         self::$address = DevServer::address();

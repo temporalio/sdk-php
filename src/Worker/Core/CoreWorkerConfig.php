@@ -107,7 +107,7 @@ final class CoreWorkerConfig
         ];
     }
 
-    public function connection(WorkerInterface $worker): array
+    public function connection(WorkerInterface $worker, string $apiKey): array
     {
         $identity = $worker->getOptions()->identity;
         $tls = $this->options->tls;
@@ -119,7 +119,7 @@ final class CoreWorkerConfig
             'client_name' => SdkVersion::SDK_NAME,
             'client_version' => SdkVersion::getSdkVersion(),
             'identity' => $identity ?: (string) \getmypid() . '@' . (string) \gethostname(),
-            'api_key' => $this->options->apiKey,
+            'api_key' => $apiKey === '' ? null : $apiKey,
             'grpc_compression' => $this->options->grpcCompression,
         ];
     }

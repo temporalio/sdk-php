@@ -46,7 +46,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 |---|---|---|
 | `TEMPORAL_ADDRESS` | `127.0.0.1:7233` | server address |
 | `TEMPORAL_NAMESPACE` | `default` | namespace |
-| `TEMPORAL_API_KEY` | none | API key, sent as `Authorization: Bearer <key>`. Turns TLS on. `ServiceCredentials::withApiKey()` passed to `create()` has priority |
+| `TEMPORAL_API_KEY` | none | API key, sent as `Authorization: Bearer <key>`. Turns TLS on. `ServiceCredentials::withApiKey()` passed to `create()` has priority. `$factory->updateApiKey($key)` replaces it at run time, as the RoadRunner `temporal.UpdateAPIKey` RPC: the worker polls send the new key. A `\Stringable` key is read again at least every 0.5 s in each worker process |
 | `TEMPORAL_TLS` | off | `true` turns TLS on with the system root certificates, `false` turns it off also with an API key |
 | `TEMPORAL_TLS_SERVER_CA_CERT_PATH` / `_DATA` | system roots | server root CA (PEM file or PEM text). Turns TLS on |
 | `TEMPORAL_TLS_CLIENT_CERT_PATH` / `_DATA` | none | client certificate for mTLS (PEM) |
@@ -162,5 +162,5 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 - **Deadlock detection:** `WorkerOptions::$deadlockDetectionTimeout` has no effect.
 - **Fiber concurrency** helps only activities that use non-blocking I/O. A blocking call (PDO, curl, `sleep`) stops all activities of the process. Fibers started inside an activity fiber (`Amp\async`, event loop callbacks) see the global Activity context; call `Activity::*` from the activity fiber itself.
 - **fork() after the runtime started:** the sdk-core runtime cannot be used in a process that forked after it started; `Bridge::shared()` throws a `LogicException` there.
-- **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned. `temporal.UpdateAPIKey` at run time is not supported.
+- **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned.
 - **Testing package:** the RR KV caches are not replaced; the Functional harness still starts `rr serve` as a KV store.

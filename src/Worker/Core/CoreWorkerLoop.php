@@ -35,8 +35,10 @@ final class CoreWorkerLoop
     private bool $stopping = false;
     private bool $shutdownRequested = false;
     private bool $crashed = false;
+    private string $apiKeyInUse = '';
 
     /**
+     * @param \Closure(): string $apiKey
      * @param null|\Closure(class-string<Message>, string): void $wire
      */
     public function __construct(
@@ -45,6 +47,7 @@ final class CoreWorkerLoop
         private readonly LoggerInterface $logger,
         private readonly bool $concurrent,
         private readonly ?int $supervisorPid,
+        private readonly \Closure $apiKey,
         private readonly ?\Closure $wire = null,
     ) {}
 
@@ -58,6 +61,7 @@ final class CoreWorkerLoop
             \pcntl_signal($signal, $this->requestStop(...));
         }
         try {
+            $this->apiKeyInUse = ($this->apiKey)();
             $this->workers = $workers();
 
             return $this->workers === [] ? 0 : $this->run();
@@ -80,6 +84,7 @@ final class CoreWorkerLoop
         }
         while ($this->open > 0) {
             $this->checkSupervisor();
+            $this->updateApiKey();
             $this->handle($this->bridge->nextEvents(Bridge::POLL_TIMEOUT_MS));
         }
 
@@ -127,6 +132,18 @@ final class CoreWorkerLoop
         if ($this->supervisorPid !== null && !$this->stopping && \posix_getppid() !== $this->supervisorPid) {
             $this->logger->error('The supervisor process is gone, stopping');
             $this->requestStop();
+        }
+    }
+
+    private function updateApiKey(): void
+    {
+        $apiKey = ($this->apiKey)();
+        if ($apiKey === $this->apiKeyInUse) {
+            return;
+        }
+        $this->apiKeyInUse = $apiKey;
+        foreach ($this->workers as $worker) {
+            $this->bridge->setApiKey($worker->core, $apiKey);
         }
     }
 
@@ -211,6 +228,7 @@ final class CoreWorkerLoop
         $readable = EventLoop::onReadable($pipe, $pump);
         $timer = EventLoop::repeat(Bridge::POLL_TIMEOUT_MS / 1000, function () use ($pump, &$readable, &$timer): void {
             $this->checkSupervisor();
+            $this->updateApiKey();
             $pump();
             if ($this->open === 0) {
                 EventLoop::cancel($readable);

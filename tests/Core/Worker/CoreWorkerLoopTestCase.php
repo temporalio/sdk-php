@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Core\Worker;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Temporal\DataConverter\DataConverter;
@@ -117,17 +118,55 @@ final class CoreWorkerLoopTestCase extends TestCase
         self::assertMatchesRegularExpression('/^sdk-core worker for task queue "default" did not finalize: Decode failure.*; The sdk-core worker did not finalize in time$/', $this->errors()[0]);
     }
 
+    public static function provideConcurrency(): iterable
+    {
+        yield 'blocking loop' => [false];
+        yield 'event loop' => [true];
+    }
+
+    #[DataProvider('provideConcurrency')]
+    public function testUnchangedApiKeyIsReadAgainButNotSet(bool $concurrent): void
+    {
+        $reads = 0;
+        $code = $this->loop($concurrent, apiKey: static function () use (&$reads): string {
+            ++$reads;
+            return 'key';
+        })->serve(static fn(): array => [self::handle(static fn(): array => [])]);
+
+        self::assertSame(1, $code);
+        self::assertGreaterThan(1, $reads);
+    }
+
+    public function testChangedApiKeyIsSetOnTheWorkers(): void
+    {
+        $keys = ['old', 'new'];
+        $handle = self::handle(static fn(): array => []);
+        try {
+            $this->loop(apiKey: static function () use (&$keys): string {
+                return \count($keys) > 1 ? \array_shift($keys) : $keys[0];
+            })->serve(static fn(): array => [$handle]);
+        } catch (\RuntimeException $e) {
+            $this->bridge->shutdownWorkers([$handle->core]);
+            self::assertSame('Unable to set the API key: the sdk-core worker has no connection or is finalized', $e->getMessage());
+            return;
+        }
+        self::fail('A replayer has no connection for the API key');
+    }
+
     private function serve(CoreWorkerHandle $handle): int
     {
         return $this->loop()->serve(static fn(): array => [$handle]);
     }
 
-    private function loop(bool $concurrent = false, ?int $supervisorPid = null): CoreWorkerLoop
+    /**
+     * @param null|\Closure(): string $apiKey
+     */
+    private function loop(bool $concurrent = false, ?int $supervisorPid = null, ?\Closure $apiKey = null): CoreWorkerLoop
     {
         $activityTasks = new ActivityTasks();
         $activityTasks->bind($this->bridge, static fn(): array => [], DataConverter::createDefault());
 
-        return new CoreWorkerLoop($this->bridge, $activityTasks, $this->logger, $concurrent, $supervisorPid);
+        return new CoreWorkerLoop($this->bridge, $activityTasks, $this->logger, $concurrent, $supervisorPid, $apiKey ?? static fn(): string => '');
     }
 
     /**

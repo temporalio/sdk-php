@@ -4,6 +4,7 @@ use crate::replay::tpb_replayer_new;
 use crate::runtime::{TpbRuntime, tpb_runtime_new};
 use crate::worker::{TpbWorker, tpb_worker_new};
 use prost::{Message, bytes::Bytes};
+use std::sync::{Arc, Mutex, PoisonError};
 use temporalio_common::protos::temporal::api::{
     common::v1::WorkflowType,
     enums::v1::EventType,
@@ -103,6 +104,20 @@ pub fn grpc_server() -> std::io::Result<String> {
 }
 
 pub fn grpc_server_with(status: fn(&str) -> &'static str) -> std::io::Result<String> {
+    serve(status, Authorizations::default())
+}
+
+pub type Authorizations = Arc<Mutex<Vec<Option<String>>>>;
+
+pub fn grpc_server_seeing_authorizations() -> std::io::Result<(String, Authorizations)> {
+    let authorizations = Authorizations::default();
+    Ok((serve(|_| GRPC_OK, authorizations.clone())?, authorizations))
+}
+
+fn serve(
+    status: fn(&str) -> &'static str,
+    authorizations: Authorizations,
+) -> std::io::Result<String> {
     let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
     listener.set_nonblocking(true)?;
     let address = format!("http://{}", listener.local_addr()?);
@@ -114,19 +129,33 @@ pub fn grpc_server_with(status: fn(&str) -> &'static str) -> std::io::Result<Str
             let listener = tokio::net::TcpListener::from_std(listener)?;
             loop {
                 let (socket, _) = listener.accept().await?;
-                tokio::spawn(answer(socket, status));
+                tokio::spawn(answer(socket, status, authorizations.clone()));
             }
         })
     });
     Ok(address)
 }
 
-async fn answer(socket: tokio::net::TcpStream, status: fn(&str) -> &'static str) {
+async fn answer(
+    socket: tokio::net::TcpStream,
+    status: fn(&str) -> &'static str,
+    authorizations: Authorizations,
+) {
     let Ok(mut connection) = h2::server::handshake(socket).await else {
         return;
     };
     while let Some(Ok((request, mut respond))) = connection.accept().await {
         let grpc_status = status(request.uri().path());
+        if request.uri().path().ends_with("/PollWorkflowTaskQueue") {
+            let authorization = request
+                .headers()
+                .get(http::header::AUTHORIZATION)
+                .map(|value| String::from_utf8_lossy(value.as_bytes()).into_owned());
+            authorizations
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .push(authorization);
+        }
         let mut response = http::Response::new(());
         response.headers_mut().insert(
             http::header::CONTENT_TYPE,
