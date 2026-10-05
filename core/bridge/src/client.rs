@@ -7,7 +7,7 @@ use prost::bytes::{Buf, BufMut};
 use std::{
     collections::HashMap,
     future::Future,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, PoisonError},
     time::Duration,
 };
 use temporalio_client::ClientKeepAliveOptions;
@@ -262,7 +262,11 @@ pub unsafe extern "C" fn tpb_client_call(
             Ok(prepared) => prepared,
             Err(status) => return c.push(tag, grpc_result(Err(status))),
         };
-        let channel = c.channel.lock().unwrap().clone();
+        let channel = c
+            .channel
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
         let queue = c.queue.clone();
         c.queue
             .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
@@ -284,7 +288,7 @@ pub unsafe extern "C" fn tpb_client_connect(c: *mut TpbClient, tag: u64, timeout
             .spawn(tag, KIND_RPC_RESULT, internal_error, async move {
                 let connected = connect(endpoint, Duration::from_millis(timeout_ms)).await;
                 let (grpc_code, data) = grpc_result(connected.map(|connected| {
-                    *channel.lock().unwrap() = connected;
+                    *channel.lock().unwrap_or_else(PoisonError::into_inner) = connected;
                     Vec::new()
                 }));
                 queue.push(tag, KIND_RPC_RESULT, grpc_code, data);
@@ -390,7 +394,7 @@ mod tests {
     }
 
     #[test]
-    fn panics_in_call_and_connect_become_internal_results() {
+    fn a_poisoned_channel_lock_keeps_the_client_working() {
         let rt = runtime();
         let c = client(rt, &grpc_server());
         let channel = unsafe { &*c }.channel.clone();
@@ -402,14 +406,36 @@ mod tests {
 
         call(c, 1, GET_SYSTEM_INFO, b"", 0);
         unsafe { tpb_client_connect(c, 2, 5_000) };
+        call(c, 3, GET_SYSTEM_INFO, b"", 0);
 
-        for (tag, (event_tag, kind, grpc_code, data)) in [1, 2].into_iter().zip(events(rt, 2)) {
-            assert_eq!(
-                (event_tag, kind, grpc_code),
-                (tag, KIND_RPC_RESULT, Code::Internal as i32)
-            );
-            assert!(message(&data).starts_with(b"Panic in temporal-php-bridge: "));
+        let ok = Code::Ok as i32;
+        assert_eq!(
+            events(rt, 3),
+            vec![
+                (1, KIND_RPC_RESULT, ok, vec![]),
+                (2, KIND_RPC_RESULT, ok, vec![]),
+                (3, KIND_RPC_RESULT, ok, vec![]),
+            ]
+        );
+        unsafe {
+            tpb_client_free(c);
+            free(rt);
         }
+    }
+
+    #[test]
+    fn a_panic_becomes_an_internal_result() {
+        let rt = runtime();
+        let c = client(rt, "http://127.0.0.1:1");
+
+        guard(unsafe { &*c }.push_panic(4), || panic!("boom"));
+
+        let [(tag, kind, grpc_code, data)] = events(rt, 1).try_into().unwrap();
+        assert_eq!(
+            (tag, kind, grpc_code),
+            (4, KIND_RPC_RESULT, Code::Internal as i32)
+        );
+        assert_eq!(message(&data), b"Panic in temporal-php-bridge: boom");
         unsafe {
             tpb_client_free(c);
             free(rt);
