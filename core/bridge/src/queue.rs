@@ -56,14 +56,17 @@ impl Queue {
     }
 
     pub fn push(&self, tag: u64, kind: i32, status: i32, data: Vec<u8>) {
-        self.events().push_back(Event {
+        let mut events = self.events();
+        let was_empty = events.is_empty();
+        events.push_back(Event {
             tag,
             kind,
             status,
             data: data.into_boxed_slice(),
         });
+        drop(events);
         self.ready.notify_one();
-        if self.fd_watched.load(Ordering::Relaxed) {
+        if was_empty && self.fd_watched.load(Ordering::Relaxed) {
             let _ = (&self.write_fd).write_all(&[1]);
         }
     }
@@ -160,20 +163,25 @@ mod tests {
     }
 
     #[test]
-    fn event_fd_gets_one_byte_per_event_after_it_is_watched() {
+    fn event_fd_gets_one_byte_when_the_watched_queue_stops_being_empty() {
         let rt = runtime();
         let queue = &unsafe { &*rt }.queue;
         queue.push(1, 0, STATUS_OK, Vec::new());
         assert_eq!(read_bytes(queue), Err(ErrorKind::WouldBlock));
+        assert_eq!(events(rt, 1).len(), 1);
 
         let fd = unsafe { tpb_event_fd(rt) };
         assert_eq!(fd, queue.read_fd.as_raw_fd());
-        queue.push(2, 0, STATUS_OK, Vec::new());
-        queue.push(3, 0, STATUS_OK, Vec::new());
-        assert_eq!(read_bytes(queue), Ok(2));
+        for tag in 2..=301 {
+            queue.push(tag, 0, STATUS_OK, Vec::new());
+        }
+        assert_eq!(read_bytes(queue), Ok(1));
         assert_eq!(read_bytes(queue), Err(ErrorKind::WouldBlock));
+        assert_eq!(events(rt, 300).len(), 300);
 
-        assert_eq!(events(rt, 3).len(), 3);
+        queue.push(302, 0, STATUS_OK, Vec::new());
+        assert_eq!(read_bytes(queue), Ok(1));
+        assert_eq!(events(rt, 1).len(), 1);
         release(rt);
     }
 

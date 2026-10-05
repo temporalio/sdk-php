@@ -192,9 +192,7 @@ final class CoreWorkerLoop
         $pipe = $this->bridge->openEventPipe();
         $pump = function () use ($pipe): void {
             \fread($pipe, self::PIPE_READ_BYTES);
-            while (($events = $this->bridge->nextEvents(0)) !== []) {
-                $this->handle($events);
-            }
+            $this->handle($this->bridge->nextEvents(0));
         };
         $readable = EventLoop::onReadable($pipe, $pump);
         $timer = EventLoop::repeat(Bridge::POLL_TIMEOUT_MS / 1000, function () use ($pump, &$readable, &$timer): void {
