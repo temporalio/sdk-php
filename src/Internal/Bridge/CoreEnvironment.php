@@ -27,6 +27,22 @@ final class CoreEnvironment
     public const GRPC_COMPRESSION = 'TEMPORAL_CORE_GRPC_COMPRESSION';
     public const PROMETHEUS = 'TEMPORAL_CORE_PROMETHEUS_ADDRESS';
     public const POLLER_AUTOSCALING = 'TEMPORAL_CORE_POLLER_AUTOSCALING';
+    public const WORKER_HEARTBEAT_INTERVAL = 'TEMPORAL_CORE_WORKER_HEARTBEAT_INTERVAL_MS';
+    public const OTEL_URL = 'TEMPORAL_CORE_OTEL_URL';
+    public const OTEL_PROTOCOL = 'TEMPORAL_CORE_OTEL_PROTOCOL';
+    public const OTEL_HEADERS = 'TEMPORAL_CORE_OTEL_HEADERS';
+    public const OTEL_METRIC_PERIODICITY = 'TEMPORAL_CORE_OTEL_METRIC_PERIODICITY_MS';
+    public const OTEL_USE_SECONDS_FOR_DURATIONS = 'TEMPORAL_CORE_OTEL_USE_SECONDS_FOR_DURATIONS';
+    public const METRIC_PREFIX = 'TEMPORAL_CORE_METRIC_PREFIX';
+    public const METRIC_GLOBAL_TAGS = 'TEMPORAL_CORE_METRIC_GLOBAL_TAGS';
+    public const TUNER_TARGET_MEMORY_USAGE = 'TEMPORAL_CORE_TUNER_TARGET_MEMORY_USAGE';
+    public const TUNER_TARGET_CPU_USAGE = 'TEMPORAL_CORE_TUNER_TARGET_CPU_USAGE';
+    public const TUNER_WORKFLOW_MIN_SLOTS = 'TEMPORAL_CORE_TUNER_WORKFLOW_MIN_SLOTS';
+    public const TUNER_WORKFLOW_MAX_SLOTS = 'TEMPORAL_CORE_TUNER_WORKFLOW_MAX_SLOTS';
+    public const TUNER_WORKFLOW_RAMP_THROTTLE = 'TEMPORAL_CORE_TUNER_WORKFLOW_RAMP_THROTTLE_MS';
+    public const TUNER_ACTIVITY_MIN_SLOTS = 'TEMPORAL_CORE_TUNER_ACTIVITY_MIN_SLOTS';
+    public const TUNER_ACTIVITY_MAX_SLOTS = 'TEMPORAL_CORE_TUNER_ACTIVITY_MAX_SLOTS';
+    public const TUNER_ACTIVITY_RAMP_THROTTLE = 'TEMPORAL_CORE_TUNER_ACTIVITY_RAMP_THROTTLE_MS';
 
     public static function string(string $name): ?string
     {
@@ -66,5 +82,43 @@ final class CoreEnvironment
         }
 
         return $flag;
+    }
+
+    public static function fraction(string $name): ?float
+    {
+        $value = self::string($name);
+        if ($value === null) {
+            return null;
+        }
+
+        $fraction = \filter_var($value, \FILTER_VALIDATE_FLOAT, ['options' => ['min_range' => 0, 'max_range' => 1]]);
+        if ($fraction === false) {
+            throw new \InvalidArgumentException(\sprintf('%s must be a number from 0 to 1, "%s" given', $name, $value));
+        }
+
+        return $fraction;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public static function map(string $name): ?array
+    {
+        $value = self::string($name);
+        if ($value === null) {
+            return null;
+        }
+
+        $map = [];
+        foreach (\explode(',', $value) as $pair) {
+            $parts = \explode('=', $pair, 2);
+            $key = \trim($parts[0]);
+            if ($key === '' || !isset($parts[1])) {
+                throw new \InvalidArgumentException(\sprintf('%s must be a comma-separated list of key=value pairs, "%s" given', $name, $value));
+            }
+            $map[$key] = \trim($parts[1]);
+        }
+
+        return $map;
     }
 }

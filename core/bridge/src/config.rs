@@ -1,16 +1,19 @@
 use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroUsize;
+use std::sync::Arc;
 use std::time::Duration;
 use temporalio_client::{ClientTlsOptions, ConnectionOptions, GrpcCompression, TlsOptions};
 use temporalio_common::{
     protos::temporal::api::enums::v1::VersioningBehavior,
-    telemetry::metrics::TemporalMeter,
+    telemetry::{OtelCollectorOptions, OtlpProtocol, metrics::TemporalMeter},
     worker::{WorkerDeploymentOptions, WorkerDeploymentVersion, WorkerTaskTypes},
 };
 use temporalio_sdk_core::{
-    PollerBehavior, Url, WorkerConfig, WorkerVersioningStrategy, WorkflowErrorType,
+    PollerBehavior, ResourceBasedSlotsOptions, ResourceBasedTunerConfig, ResourceSlotOptions,
+    SlotKind, SlotSupplierOptions, TunerHolderOptions, Url, WorkerConfig, WorkerTuner,
+    WorkerVersioningStrategy, WorkflowErrorType,
 };
 use tonic::transport::{Certificate, ClientTlsConfig, Identity, Uri};
 
@@ -27,6 +30,49 @@ pub struct RuntimeJson {
     pub threads: NonZeroUsize,
     pub log: String,
     pub prometheus: Option<String>,
+    pub otel: Option<OtelJson>,
+    pub metric_prefix: Option<String>,
+    pub global_tags: Option<HashMap<String, String>>,
+    pub worker_heartbeat_interval_ms: Option<u64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum OtelProtocol {
+    Grpc,
+    Http,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OtelJson {
+    url: String,
+    headers: Option<HashMap<String, String>>,
+    metric_periodicity_ms: u64,
+    protocol: OtelProtocol,
+    use_seconds_for_durations: bool,
+}
+
+impl OtelJson {
+    pub fn options(
+        self,
+        global_tags: Option<HashMap<String, String>>,
+    ) -> Result<OtelCollectorOptions, String> {
+        Ok(OtelCollectorOptions::builder()
+            .url(
+                Url::parse(&self.url)
+                    .map_err(|e| format!("Invalid OpenTelemetry URL {}: {e}", self.url))?,
+            )
+            .maybe_headers(self.headers)
+            .metric_periodicity(Duration::from_millis(self.metric_periodicity_ms))
+            .protocol(match self.protocol {
+                OtelProtocol::Grpc => OtlpProtocol::Grpc,
+                OtelProtocol::Http => OtlpProtocol::Http,
+            })
+            .use_seconds_for_durations(self.use_seconds_for_durations)
+            .maybe_global_tags(global_tags)
+            .build())
+    }
 }
 
 #[derive(Deserialize)]
@@ -154,6 +200,56 @@ struct DeploymentJson {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+struct SlotsJson {
+    min_slots: usize,
+    max_slots: usize,
+    ramp_throttle_ms: u64,
+}
+
+impl SlotsJson {
+    fn options<SK: SlotKind>(&self) -> SlotSupplierOptions<SK> {
+        SlotSupplierOptions::ResourceBased(ResourceSlotOptions::new(
+            self.min_slots,
+            self.max_slots,
+            Duration::from_millis(self.ramp_throttle_ms),
+        ))
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TunerJson {
+    target_memory_usage: f64,
+    target_cpu_usage: f64,
+    workflow_slots: SlotsJson,
+    activity_slots: SlotsJson,
+}
+
+impl TunerJson {
+    fn tuner(
+        &self,
+        local_activity_slots: usize,
+    ) -> Result<Arc<dyn WorkerTuner + Send + Sync>, String> {
+        let tuner = TunerHolderOptions::builder()
+            .resource_based_config(ResourceBasedTunerConfig::Options(
+                ResourceBasedSlotsOptions::builder()
+                    .target_mem_usage(self.target_memory_usage)
+                    .target_cpu_usage(self.target_cpu_usage)
+                    .build(),
+            ))
+            .workflow_slot_options(self.workflow_slots.options())
+            .activity_slot_options(self.activity_slots.options())
+            .local_activity_slot_options(SlotSupplierOptions::FixedSize {
+                slots: local_activity_slots,
+            })
+            .build_tuner_holder()
+            .map_err(|e| e.to_string())?;
+        Ok(Arc::new(tuner))
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WorkerJson {
     namespace: String,
     task_queue: String,
@@ -176,6 +272,7 @@ pub struct WorkerJson {
     nondeterminism_fails_workflow: bool,
     max_heartbeat_throttle_interval_ms: Option<u64>,
     poller_autoscaling: bool,
+    tuner: Option<TunerJson>,
 }
 
 impl WorkerJson {
@@ -192,14 +289,27 @@ impl WorkerJson {
     }
 
     pub fn worker_config(&self) -> Result<WorkerConfig, String> {
+        let fixed_slots = self.tuner.is_none();
         WorkerConfig::builder()
             .namespace(self.namespace.as_str())
             .task_queue(self.task_queue.as_str())
             .versioning_strategy(self.versioning_strategy()?)
             .max_cached_workflows(self.max_cached_workflows)
-            .max_outstanding_workflow_tasks(self.max_outstanding_workflow_tasks)
-            .max_outstanding_activities(self.max_outstanding_activities)
-            .max_outstanding_local_activities(self.max_outstanding_local_activities)
+            .maybe_max_outstanding_workflow_tasks(
+                fixed_slots.then_some(self.max_outstanding_workflow_tasks),
+            )
+            .maybe_max_outstanding_activities(
+                fixed_slots.then_some(self.max_outstanding_activities),
+            )
+            .maybe_max_outstanding_local_activities(
+                fixed_slots.then_some(self.max_outstanding_local_activities),
+            )
+            .maybe_tuner(
+                self.tuner
+                    .as_ref()
+                    .map(|tuner| tuner.tuner(self.max_outstanding_local_activities))
+                    .transpose()?,
+            )
             .workflow_task_poller_behavior(
                 self.poller_behavior(self.max_concurrent_workflow_task_polls),
             )
@@ -396,6 +506,41 @@ mod tests {
             config.workflow_failure_errors,
             HashSet::from([WorkflowErrorType::Nondeterminism])
         );
+        Ok(())
+    }
+
+    #[test]
+    fn worker_config_builds_a_resource_based_tuner_instead_of_fixed_slots() -> Checked {
+        let mut json = worker();
+        json["tuner"] = json!({
+            "target_memory_usage": 0.8,
+            "target_cpu_usage": 0.9,
+            "workflow_slots": {"min_slots": 5, "max_slots": 500, "ramp_throttle_ms": 0},
+            "activity_slots": {"min_slots": 1, "max_slots": 4, "ramp_throttle_ms": 50},
+        });
+
+        let config = worker_config(&json)?;
+
+        assert_eq!(
+            (
+                config.max_outstanding_workflow_tasks,
+                config.max_outstanding_activities,
+                config.max_outstanding_local_activities
+            ),
+            (None, None, None)
+        );
+        let tuner = config.tuner.ok_or("no tuner")?;
+        assert_eq!(
+            tuner.workflow_task_slot_supplier().slot_supplier_kind(),
+            "ResourceBased"
+        );
+        assert_eq!(
+            tuner.activity_task_slot_supplier().slot_supplier_kind(),
+            "ResourceBased"
+        );
+        let local_activities = tuner.local_activity_slot_supplier();
+        assert_eq!(local_activities.slot_supplier_kind(), "Fixed");
+        assert_eq!(local_activities.available_slots(), Some(1));
         Ok(())
     }
 

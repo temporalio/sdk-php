@@ -8,12 +8,23 @@ use Coresdk\ActivityHeartbeat;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Revolt\EventLoop;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Api\Enums\V1\WorkerStatus;
+use Temporal\Api\Workflowservice\V1\ListWorkersRequest;
+use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Internal\Bridge\Bridge;
 use Temporal\Internal\Bridge\BridgeConnection;
 use Temporal\Internal\Bridge\CoreEnvironment;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Tests\Core\DevServer;
 use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
 use Temporal\Tests\Core\Replayers;
+use Temporal\Worker\Core\CoreOptions;
+use Temporal\Worker\Core\CoreRole;
+use Temporal\Worker\Core\CoreWorkerConfig;
+use Temporal\Worker\Core\CoreWorkerFactory;
 
 final class BridgeTestCase extends TestCase
 {
@@ -22,6 +33,14 @@ final class BridgeTestCase extends TestCase
     private const CALL_TIMEOUT_MS = 5000;
     private const STARTED_EVENT_ID = 1;
     private const MORE_EVENTS_THAN_ONE_FETCH = 300;
+    private const HEARTBEAT_INTERVAL_MS = '1000';
+    private const HEARTBEAT_WAIT_SECONDS = 10.0;
+    private const HEARTBEATS = 2;
+    private const HEARTBEAT_CHECK_INTERVAL_US = 200_000;
+    private const OTEL_METRIC_PERIODICITY_MS = '100';
+    private const OTLP_ACCEPT_TIMEOUT_SECONDS = 5.0;
+    private const OTLP_EXPORTS = 50;
+    private const HTTP_HEAD_END = "\r\n\r\n";
 
     public function testSharedBridgeIsTheCurrentOne(): void
     {
@@ -63,6 +82,51 @@ final class BridgeTestCase extends TestCase
 
         self::assertSame(LogLevel::INFO, $logger->records[0]['level']);
         self::assertSame('temporalio_sdk_core', $logger->records[0]['context']['target']);
+    }
+
+    public function testRunningWorkerHeartbeatsAtTheConfiguredInterval(): void
+    {
+        $address = DevServer::address();
+        $bridge = self::withServer([CoreEnvironment::WORKER_HEARTBEAT_INTERVAL => self::HEARTBEAT_INTERVAL_MS], static fn(): Bridge => new Bridge());
+        $queue = \uniqid('core-heartbeat-', true);
+        $core = self::startWorker($bridge, $address, $queue);
+
+        $statuses = self::heartbeats(ServiceClient::create($address), $queue);
+        $bridge->shutdownWorkers([1 => $core]);
+
+        self::assertSame(\array_fill(0, self::HEARTBEATS, WorkerStatus::WORKER_STATUS_RUNNING), \array_values($statuses));
+    }
+
+    public function testOpenTelemetryEnvironmentExportsTaggedWorkerMetrics(): void
+    {
+        $collector = \stream_socket_server('tcp://127.0.0.1:0');
+        $bridge = self::withServer([
+            CoreEnvironment::OTEL_URL => 'http://' . (string) \stream_socket_get_name($collector, false) . '/v1/metrics',
+            CoreEnvironment::OTEL_PROTOCOL => 'http',
+            CoreEnvironment::OTEL_HEADERS => 'x-api-key = secret, x-tenant=php',
+            CoreEnvironment::OTEL_METRIC_PERIODICITY => self::OTEL_METRIC_PERIODICITY_MS,
+            CoreEnvironment::OTEL_USE_SECONDS_FOR_DURATIONS => 'true',
+            CoreEnvironment::METRIC_PREFIX => 'php_',
+            CoreEnvironment::METRIC_GLOBAL_TAGS => 'deployment=php-otlp',
+        ], static fn(): Bridge => new Bridge());
+        $core = self::startWorker($bridge, DevServer::address(), \uniqid('core-otel-', true));
+
+        [$head, $body] = self::otlpRequest($collector, 'php_request');
+        $bridge->shutdownWorkers([1 => $core]);
+
+        self::assertStringStartsWith("POST /v1/metrics HTTP/1.1\r\n", $head);
+        self::assertStringContainsString("\r\nx-api-key: secret\r\n", \strtolower($head));
+        self::assertStringContainsString("\r\nx-tenant: php\r\n", \strtolower($head));
+        self::assertStringContainsString('php-otlp', $body);
+    }
+
+    public function testPrometheusAndOpenTelemetryAreAlternatives(): void
+    {
+        $this->expectExceptionMessage('tpb_runtime_new failed: Prometheus and OpenTelemetry metrics cannot be used together');
+        self::withServer([
+            CoreEnvironment::PROMETHEUS => '127.0.0.1:0',
+            CoreEnvironment::OTEL_URL => 'http://127.0.0.1:4317',
+        ], static fn(): Bridge => new Bridge());
     }
 
     public function testCallToAClosedPortIsUnavailable(): void
@@ -219,6 +283,63 @@ final class BridgeTestCase extends TestCase
         $bridge->shutdownWorkers([2 => $core]);
 
         self::assertCount(self::MORE_EVENTS_THAN_ONE_FETCH, $events);
+    }
+
+    private static function startWorker(Bridge $bridge, string $address, string $queue): \FFI\CData
+    {
+        $config = new CoreWorkerConfig(CoreOptions::create($address, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
+        $worker = CoreWorkerFactory::create()->newWorker($queue);
+        $core = $bridge->newWorker(['connection' => $config->connection($worker)] + $config->build($worker, CoreRole::Workflow));
+        $bridge->pollWorkflowActivation($core, 1);
+
+        return $core;
+    }
+
+    /**
+     * @param resource $collector
+     * @return array{string, string}
+     */
+    private static function otlpRequest($collector, string $metric): array
+    {
+        for ($i = 0; $i < self::OTLP_EXPORTS; ++$i) {
+            $connection = \stream_socket_accept($collector, self::OTLP_ACCEPT_TIMEOUT_SECONDS);
+            self::assertNotFalse($connection, 'No OTLP export arrived');
+            $request = '';
+            while (!\str_contains($request, self::HTTP_HEAD_END)) {
+                $request .= (string) \fread($connection, 8192);
+            }
+            [$head, $body] = \explode(self::HTTP_HEAD_END, $request, 2);
+            \preg_match('/^content-length: (\d+)$/mi', $head, $length);
+            while (\strlen($body) < (int) ($length[1] ?? 0)) {
+                $body .= (string) \fread($connection, 8192);
+            }
+            \fwrite($connection, "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            \fclose($connection);
+            if (\str_contains($body, $metric)) {
+                return [$head . self::HTTP_HEAD_END, $body];
+            }
+        }
+        self::fail(\sprintf('No %s metric in %d OTLP exports', $metric, self::OTLP_EXPORTS));
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private static function heartbeats(ServiceClient $client, string $queue): array
+    {
+        $statuses = [];
+        $deadline = \microtime(true) + self::HEARTBEAT_WAIT_SECONDS;
+        while (\count($statuses) < self::HEARTBEATS && \microtime(true) < $deadline) {
+            foreach ($client->ListWorkers(new ListWorkersRequest(['namespace' => 'default']))->getWorkersInfo() as $info) {
+                $heartbeat = $info->getWorkerHeartbeat();
+                if ($heartbeat?->getTaskQueue() === $queue) {
+                    $statuses[(string) $heartbeat->getHeartbeatTime()?->serializeToString()] = $heartbeat->getStatus();
+                }
+            }
+            \usleep(self::HEARTBEAT_CHECK_INTERVAL_US);
+        }
+
+        return $statuses;
     }
 
     /**

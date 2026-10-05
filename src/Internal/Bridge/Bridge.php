@@ -40,6 +40,9 @@ final class Bridge
     private const DEFAULT_THREADS = 1;
     private const NANOSECONDS_PER_MILLISECOND = 1_000_000;
     private const DEFAULT_LOG_FILTER = 'warn';
+    private const DEFAULT_WORKER_HEARTBEAT_INTERVAL_MS = 60_000;
+    private const DEFAULT_OTEL_PROTOCOL = 'grpc';
+    private const DEFAULT_OTEL_METRIC_PERIODICITY_MS = 1000;
     private const LOG_LEVELS = ['ERROR' => LogLevel::ERROR, 'WARN' => LogLevel::WARNING, 'INFO' => LogLevel::INFO];
     private const HEADER = __DIR__ . '/../../../core/bridge/include/temporal_php_bridge.h';
 
@@ -78,6 +81,10 @@ final class Bridge
             'threads' => CoreEnvironment::integer(CoreEnvironment::THREADS, self::DEFAULT_THREADS, 1),
             'log' => CoreEnvironment::string(CoreEnvironment::LOG) ?? self::DEFAULT_LOG_FILTER,
             'prometheus' => CoreEnvironment::string(CoreEnvironment::PROMETHEUS),
+            'otel' => self::otel(),
+            'metric_prefix' => CoreEnvironment::string(CoreEnvironment::METRIC_PREFIX),
+            'global_tags' => CoreEnvironment::map(CoreEnvironment::METRIC_GLOBAL_TAGS),
+            'worker_heartbeat_interval_ms' => CoreEnvironment::integer(CoreEnvironment::WORKER_HEARTBEAT_INTERVAL, self::DEFAULT_WORKER_HEARTBEAT_INTERVAL_MS, 0) ?: null,
         ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         /** @var \FFI\CData $events */
@@ -328,6 +335,22 @@ final class Bridge
     private static function nowMilliseconds(): int
     {
         return \intdiv(\hrtime(true), self::NANOSECONDS_PER_MILLISECOND);
+    }
+
+    private static function otel(): ?array
+    {
+        $url = CoreEnvironment::string(CoreEnvironment::OTEL_URL);
+        if ($url === null) {
+            return null;
+        }
+
+        return [
+            'url' => $url,
+            'headers' => CoreEnvironment::map(CoreEnvironment::OTEL_HEADERS),
+            'metric_periodicity_ms' => CoreEnvironment::integer(CoreEnvironment::OTEL_METRIC_PERIODICITY, self::DEFAULT_OTEL_METRIC_PERIODICITY_MS, 1),
+            'protocol' => CoreEnvironment::string(CoreEnvironment::OTEL_PROTOCOL) ?? self::DEFAULT_OTEL_PROTOCOL,
+            'use_seconds_for_durations' => CoreEnvironment::flag(CoreEnvironment::OTEL_USE_SECONDS_FOR_DURATIONS, false),
+        ];
     }
 
     private static function json(array $value): string

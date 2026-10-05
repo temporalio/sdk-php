@@ -104,6 +104,7 @@ final class CoreWorkerConfig
             'nondeterminism_fails_workflow' => $options->workflowPanicPolicy === WorkflowPanicPolicy::FailWorkflow,
             'max_heartbeat_throttle_interval_ms' => self::milliseconds($options->maxHeartbeatThrottleInterval),
             'poller_autoscaling' => $this->options->pollerAutoscaling,
+            'tuner' => $this->tuner($activityConcurrency),
         ];
     }
 
@@ -137,5 +138,19 @@ final class CoreWorkerConfig
     private static function milliseconds(?\DateInterval $interval): ?int
     {
         return $interval === null ? null : (int) CarbonInterval::instance($interval)->totalMilliseconds;
+    }
+
+    private function tuner(int $activityConcurrency): ?array
+    {
+        $tuner = $this->options->tuner;
+        if ($tuner === null) {
+            return null;
+        }
+
+        $activityMaxSlots = \min($tuner['activity_slots']['max_slots'], $activityConcurrency);
+        $tuner['activity_slots']['max_slots'] = $activityMaxSlots;
+        $tuner['activity_slots']['min_slots'] = \min($tuner['activity_slots']['min_slots'], $activityMaxSlots);
+
+        return $tuner;
     }
 }

@@ -44,6 +44,7 @@ final class CoreWorkerConfigTestCase extends TestCase
             'nondeterminism_fails_workflow' => false,
             'max_heartbeat_throttle_interval_ms' => null,
             'poller_autoscaling' => true,
+            'tuner' => null,
         ]];
         yield 'activity role with concurrency' => [CoreRole::Activity, WorkerOptions::new(), 4, [
             'workflows' => false,
@@ -75,6 +76,25 @@ final class CoreWorkerConfigTestCase extends TestCase
                 'nondeterminism_fails_workflow' => true,
                 'max_heartbeat_throttle_interval_ms' => 3000,
             ]];
+    }
+
+    public static function provideTuners(): iterable
+    {
+        yield 'activity slots below the concurrency' => [CoreRole::Activity, 8, ['min_slots' => 1, 'max_slots' => 4, 'ramp_throttle_ms' => 50], ['min_slots' => 1, 'max_slots' => 4, 'ramp_throttle_ms' => 50]];
+        yield 'activity slots capped at the concurrency' => [CoreRole::Activity, 2, ['min_slots' => 3, 'max_slots' => 500, 'ramp_throttle_ms' => 50], ['min_slots' => 2, 'max_slots' => 2, 'ramp_throttle_ms' => 50]];
+        yield 'sequential activities in the workflow process' => [CoreRole::All, 8, ['min_slots' => 1, 'max_slots' => 500, 'ramp_throttle_ms' => 50], ['min_slots' => 1, 'max_slots' => 1, 'ramp_throttle_ms' => 50]];
+    }
+
+    #[DataProvider('provideTuners')]
+    public function testTunerActivitySlotsNeverExceedTheProcessConcurrency(CoreRole $role, int $activityConcurrency, array $activitySlots, array $expected): void
+    {
+        $workflowSlots = ['min_slots' => 5, 'max_slots' => 500, 'ramp_throttle_ms' => 0];
+        $tuner = ['target_memory_usage' => 0.8, 'target_cpu_usage' => 0.9, 'workflow_slots' => $workflowSlots, 'activity_slots' => $activitySlots];
+        $config = self::config(self::options(activityConcurrency: $activityConcurrency, tuner: $tuner));
+
+        $build = $config->build(self::worker(WorkerOptions::new()), $role);
+
+        self::assertSame(\array_replace($tuner, ['activity_slots' => $expected]), $build['tuner']);
     }
 
     #[DataProvider('provideBuilds')]
@@ -142,7 +162,7 @@ final class CoreWorkerConfigTestCase extends TestCase
         self::assertSame($expected, \array_intersect_key($connection, $expected));
     }
 
-    private static function options(int $activityConcurrency = 1, ?ConfigTls $tls = null): CoreOptions
+    private static function options(int $activityConcurrency = 1, ?ConfigTls $tls = null, ?array $tuner = null): CoreOptions
     {
         $construct = \Closure::bind(static fn(mixed ...$arguments): CoreOptions => new CoreOptions(...$arguments), null, CoreOptions::class);
 
@@ -157,6 +177,7 @@ final class CoreWorkerConfigTestCase extends TestCase
             maxCachedWorkflows: self::MAX_CACHED_WORKFLOWS,
             grpcCompression: 'gzip',
             pollerAutoscaling: true,
+            tuner: $tuner,
         );
     }
 

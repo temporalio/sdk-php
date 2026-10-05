@@ -20,6 +20,8 @@ use Temporal\Worker\ServiceCredentials;
 
 /**
  * @internal
+ * @psalm-type SlotsShape = array{min_slots: int, max_slots: int, ramp_throttle_ms: int}
+ * @psalm-type TunerShape = array{target_memory_usage: float, target_cpu_usage: float, workflow_slots: SlotsShape, activity_slots: SlotsShape}
  */
 final class CoreOptions
 {
@@ -31,7 +33,15 @@ final class CoreOptions
     private const MEMORY_RESERVE_BYTES = 64 * 1024 * 1024;
     private const CACHED_WORKFLOW_BYTES = 64 * 1024;
     private const DEFAULT_GRPC_COMPRESSION = 'gzip';
+    private const DEFAULT_WORKFLOW_MIN_SLOTS = 5;
+    private const DEFAULT_ACTIVITY_MIN_SLOTS = 1;
+    private const DEFAULT_MAX_SLOTS = 500;
+    private const DEFAULT_WORKFLOW_RAMP_THROTTLE_MS = 0;
+    private const DEFAULT_ACTIVITY_RAMP_THROTTLE_MS = 50;
 
+    /**
+     * @param TunerShape|null $tuner
+     */
     private function __construct(
         public readonly string $address,
         public readonly string $namespace,
@@ -43,6 +53,7 @@ final class CoreOptions
         public readonly int $maxCachedWorkflows,
         public readonly string $grpcCompression,
         public readonly bool $pollerAutoscaling,
+        public readonly ?array $tuner,
     ) {}
 
     /**
@@ -74,6 +85,7 @@ final class CoreOptions
             maxCachedWorkflows: CoreEnvironment::integer(CoreEnvironment::MAX_CACHED_WORKFLOWS, self::defaultMaxCachedWorkflows((string) \ini_get('memory_limit')), 0),
             grpcCompression: CoreEnvironment::string(CoreEnvironment::GRPC_COMPRESSION) ?? self::DEFAULT_GRPC_COMPRESSION,
             pollerAutoscaling: CoreEnvironment::flag(CoreEnvironment::POLLER_AUTOSCALING, true),
+            tuner: self::tuner(),
         );
     }
 
@@ -91,6 +103,40 @@ final class CoreOptions
             self::MIN_DEFAULT_CACHED_WORKFLOWS,
             \min(self::DEFAULT_MAX_CACHED_WORKFLOWS, \intdiv($bytes - self::MEMORY_RESERVE_BYTES, self::CACHED_WORKFLOW_BYTES)),
         );
+    }
+
+    /**
+     * @return TunerShape|null
+     */
+    private static function tuner(): ?array
+    {
+        $memory = CoreEnvironment::fraction(CoreEnvironment::TUNER_TARGET_MEMORY_USAGE);
+        $cpu = CoreEnvironment::fraction(CoreEnvironment::TUNER_TARGET_CPU_USAGE);
+        if ($memory === null && $cpu === null) {
+            return null;
+        }
+        if ($memory === null || $cpu === null) {
+            throw new \InvalidArgumentException(\sprintf('%s and %s must be set together', CoreEnvironment::TUNER_TARGET_MEMORY_USAGE, CoreEnvironment::TUNER_TARGET_CPU_USAGE));
+        }
+
+        return [
+            'target_memory_usage' => $memory,
+            'target_cpu_usage' => $cpu,
+            'workflow_slots' => self::slots(CoreEnvironment::TUNER_WORKFLOW_MIN_SLOTS, self::DEFAULT_WORKFLOW_MIN_SLOTS, CoreEnvironment::TUNER_WORKFLOW_MAX_SLOTS, CoreEnvironment::TUNER_WORKFLOW_RAMP_THROTTLE, self::DEFAULT_WORKFLOW_RAMP_THROTTLE_MS),
+            'activity_slots' => self::slots(CoreEnvironment::TUNER_ACTIVITY_MIN_SLOTS, self::DEFAULT_ACTIVITY_MIN_SLOTS, CoreEnvironment::TUNER_ACTIVITY_MAX_SLOTS, CoreEnvironment::TUNER_ACTIVITY_RAMP_THROTTLE, self::DEFAULT_ACTIVITY_RAMP_THROTTLE_MS),
+        ];
+    }
+
+    /**
+     * @return SlotsShape
+     */
+    private static function slots(string $min, int $defaultMin, string $max, string $rampThrottle, int $defaultRampThrottle): array
+    {
+        return [
+            'min_slots' => CoreEnvironment::integer($min, $defaultMin, 0),
+            'max_slots' => CoreEnvironment::integer($max, self::DEFAULT_MAX_SLOTS, 1),
+            'ramp_throttle_ms' => CoreEnvironment::integer($rampThrottle, $defaultRampThrottle, 0),
+        ];
     }
 
     private static function processes(string $name, ?int $argument): int

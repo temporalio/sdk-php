@@ -14,6 +14,7 @@ use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\WorkflowExecution;
+use Temporal\Api\Workflowservice\V1\ListWorkersRequest;
 use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
@@ -111,6 +112,27 @@ final class CoreWorkerFactoryTestCase extends TestCase
         );
     }
 
+    public function testResourceBasedTunerRunsWorkflowsAndActivities(): void
+    {
+        $queue = self::startWorkflow();
+        $tuner = [CoreEnvironment::TUNER_TARGET_MEMORY_USAGE => '0.9', CoreEnvironment::TUNER_TARGET_CPU_USAGE => '0.9'];
+        $_SERVER = $tuner + $_SERVER;
+        try {
+            $factory = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        } finally {
+            foreach (\array_keys($tuner) as $name) {
+                unset($_SERVER[$name]);
+            }
+        }
+        $factory->newWorker($queue)
+            ->registerWorkflowTypes(CoreHeartbeatWorkflow::class)
+            ->registerActivityImplementations(new CoreHeartbeatActivity());
+
+        self::assertSame(0, self::runWithTimeout($factory));
+        self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
+        self::assertSame(['ResourceBased', 'ResourceBased', 'Fixed'], self::slotSupplierKinds($queue));
+    }
+
     public function testFailedWorkerCreationReleasesTheEarlierTaskQueues(): void
     {
         $queue = self::startWorkflow();
@@ -193,6 +215,26 @@ final class CoreWorkerFactoryTestCase extends TestCase
         $client->start($client->newUntypedWorkflowStub('CoreHeartbeatWorkflow', WorkflowOptions::new()->withTaskQueue($queue)));
 
         return $queue;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function slotSupplierKinds(string $queue): array
+    {
+        $workers = ServiceClient::create(self::$address)->ListWorkers(new ListWorkersRequest(['namespace' => 'default']));
+        foreach ($workers->getWorkersInfo() as $info) {
+            $heartbeat = $info->getWorkerHeartbeat();
+            if ($heartbeat?->getTaskQueue() === $queue) {
+                return [
+                    (string) $heartbeat->getWorkflowTaskSlotsInfo()?->getSlotSupplierKind(),
+                    (string) $heartbeat->getActivityTaskSlotsInfo()?->getSlotSupplierKind(),
+                    (string) $heartbeat->getLocalActivitySlotsInfo()?->getSlotSupplierKind(),
+                ];
+            }
+        }
+
+        return [];
     }
 
     private static function runWithTimeout(CoreWorkerFactory $factory): int

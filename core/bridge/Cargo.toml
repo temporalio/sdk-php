@@ -21,7 +21,7 @@ tokio = { version = "1", default-features = false, features = ["macros", "net", 
 tonic = { version = "0.14", default-features = false, features = ["channel", "codegen", "tls-ring", "tls-native-roots"] }
 temporalio-sdk-core = "0.9.0"
 temporalio-client = "1.0.0"
-temporalio-common = { version = "1.0.0", features = ["core-based-sdk"] }
+temporalio-common = { version = "1.0.0", features = ["core-based-sdk", "otel"] }
 tower = { version = "0.5", default-features = false, features = ["util"] }
 
 [dev-dependencies]

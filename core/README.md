@@ -60,7 +60,18 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process, a positive integer (1 thread uses 15–22 % less CPU than one per core). Another value throws an exception |
 | `TEMPORAL_CORE_GRPC_COMPRESSION` | `gzip` | `gzip` (sdk-core default) or `none`: gzip on the worker's gRPC calls saves network bytes and costs 7–15 % worker CPU. Another value stops the worker start with an error |
 | `TEMPORAL_CORE_PROMETHEUS_ADDRESS` | off | `host:port` of the sdk-core Prometheus exporter (`/metrics`): the worker metrics and the `temporal_request*` and `temporal_long_request*` metrics of its gRPC connection. Each worker process takes the first free port from this one, so 1 workflow + 4 activity processes on `127.0.0.1:9464` serve `9464`–`9468` |
+| `TEMPORAL_CORE_OTEL_URL` | off | OTLP collector URL for the same sdk-core metrics (`http://host:4317` for gRPC, `http://host:4318/v1/metrics` for HTTP). An alternative to `TEMPORAL_CORE_PROMETHEUS_ADDRESS`: both stop the worker start with an error |
+| `TEMPORAL_CORE_OTEL_PROTOCOL` | `grpc` | `grpc` or `http` (OTLP/HTTP protobuf) |
+| `TEMPORAL_CORE_OTEL_HEADERS` | none | `key=value,key=value` headers of every export request, for example an API key |
+| `TEMPORAL_CORE_OTEL_METRIC_PERIODICITY_MS` | `1000` | interval of the OTLP metric export |
+| `TEMPORAL_CORE_OTEL_USE_SECONDS_FOR_DURATIONS` | off | `true` exports durations as float seconds, not integer milliseconds |
+| `TEMPORAL_CORE_METRIC_PREFIX` | `temporal_` | prefix of the sdk-core metric names (Prometheus and OTLP) |
+| `TEMPORAL_CORE_METRIC_GLOBAL_TAGS` | none | `key=value,key=value` labels on every sdk-core metric (Prometheus and OTLP) |
 | `TEMPORAL_CORE_POLLER_AUTOSCALING` | on | sdk-core scales the workflow and activity pollers from 1 up to the configured maximum, starting from 5 (burst latency −70 %); `0` keeps a fixed number of pollers |
+| `TEMPORAL_CORE_TUNER_TARGET_MEMORY_USAGE`, `TEMPORAL_CORE_TUNER_TARGET_CPU_USAGE` | off (fixed slots) | target host memory and CPU usage from 0 to 1, set both: sdk-core's resource-based tuner gives out workflow and activity slots while the host stays below them. Local activities stay at 1 slot |
+| `TEMPORAL_CORE_TUNER_WORKFLOW_MIN_SLOTS` / `_MAX_SLOTS` / `_RAMP_THROTTLE_MS` | `5` / `500` / `0` | workflow task slots of the resource-based tuner: always given, at most, minimum time between two new slots (Python and .NET defaults) |
+| `TEMPORAL_CORE_TUNER_ACTIVITY_MIN_SLOTS` / `_MAX_SLOTS` / `_RAMP_THROTTLE_MS` | `1` / `500` / `50` | activity slots of the resource-based tuner; both are capped at the activities that the process runs at the same time (`TEMPORAL_CORE_ACTIVITY_CONCURRENCY`, 1 in a workflow process) |
+| `TEMPORAL_CORE_WORKER_HEARTBEAT_INTERVAL_MS` | `60000` | interval of the sdk-core worker heartbeats that the server shows in `temporal worker list` / `describe`, 1000–60000 (as in the other SDKs); `0` turns them off |
 | `TEMPORAL_CORE_LOG` | `warn` | sdk-core log filter (`off`, `error`, `warn`, `info`, `debug` or a `tracing` filter); the records go to the worker's PSR logger with `target` and the core fields as context. At most 10000 records wait for the worker; more are dropped and a WARN record tells how many |
 
 The worker sends the `client-name: temporal-php-2` and `client-version: <temporal/sdk version>` headers, as RoadRunner does.
