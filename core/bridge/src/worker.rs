@@ -144,10 +144,11 @@ fn new_worker(rt: &TpbRuntime, config: &[u8]) -> Result<TpbWorker, String> {
         };
         let worker = temporalio_sdk_core::init_worker(&rt.core, worker_config, connection)
             .map_err(|e| format!("Worker start failed: {e}"))?;
-        worker
-            .validate()
-            .await
-            .map_err(|e| format!("Worker validation failed: {e}"))?;
+        if let Err(e) = worker.validate().await {
+            worker.initiate_shutdown();
+            worker.finalize_shutdown().await;
+            return Err(format!("Worker validation failed: {e}"));
+        }
         Ok::<_, String>(worker)
     })?;
     Ok(TpbWorker::new(worker, rt.queue.clone()))
@@ -289,31 +290,47 @@ pub unsafe extern "C" fn tpb_worker_free(w: *mut TpbWorker) {
 mod tests {
     use super::*;
     use crate::ffi::STATUS_SHUTDOWN;
-    use crate::testing::{events, grpc_server, pending_events, replayer, runtime, worker_json};
+    use crate::testing::{
+        events, grpc_server, grpc_server_with, pending_events, replayer, runtime, start_worker,
+        worker_json,
+    };
     use temporalio_common::protos::coresdk::{
         activity_result::ActivityExecutionResult,
         workflow_activation::WorkflowActivation,
         workflow_completion::{Success, workflow_activation_completion::Status},
     };
 
+    const GRPC_OK: &str = "0";
+    const GRPC_NOT_FOUND: &str = "5";
+
     fn worker(rt: *mut TpbRuntime, json: serde_json::Value) -> *mut TpbWorker {
-        let config = json.to_string();
-        let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
-        let w = unsafe {
-            tpb_worker_new(
-                rt,
-                config.as_ptr().cast(),
-                config.len(),
-                &mut err,
-                &mut err_len,
-            )
-        };
-        assert_eq!(unsafe { slice(err.cast(), err_len) }, b"");
-        w
+        let w = start_worker(rt, &json);
+        assert!(w.is_ok(), "{w:?}");
+        w.unwrap_or(std::ptr::null_mut())
     }
 
     fn text(data: &[u8]) -> String {
         String::from_utf8_lossy(data).into_owned()
+    }
+
+    #[test]
+    fn failed_validation_does_not_keep_the_task_queue_registered() {
+        let rt = runtime();
+        let server = grpc_server_with(|path| match path.ends_with("/DescribeNamespace") {
+            true => GRPC_NOT_FOUND,
+            false => GRPC_OK,
+        });
+
+        for _ in 0..2 {
+            let error = start_worker(rt, &worker_json(&server)).err();
+            assert!(
+                error
+                    .as_deref()
+                    .is_some_and(|e| e.starts_with("Worker validation failed: ")),
+                "{error:?}"
+            );
+        }
+        unsafe { free(rt) };
     }
 
     #[test]

@@ -2,7 +2,7 @@ use crate::ffi::{TpbEvent, slice, tpb_bytes_free};
 use crate::queue::tpb_next_events;
 use crate::replay::tpb_replayer_new;
 use crate::runtime::{TpbRuntime, tpb_runtime_new};
-use crate::worker::TpbWorker;
+use crate::worker::{TpbWorker, tpb_worker_new};
 use prost::{Message, bytes::Bytes};
 use temporalio_common::protos::temporal::api::{
     common::v1::WorkflowType,
@@ -66,6 +66,10 @@ pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
 }
 
 pub fn grpc_server() -> String {
+    grpc_server_with(|_| "0")
+}
+
+pub fn grpc_server_with(status: fn(&str) -> &'static str) -> String {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     listener.set_nonblocking(true).unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
@@ -77,18 +81,19 @@ pub fn grpc_server() -> String {
         rt.block_on(async move {
             let listener = tokio::net::TcpListener::from_std(listener).unwrap();
             while let Ok((socket, _)) = listener.accept().await {
-                tokio::spawn(answer_ok(socket));
+                tokio::spawn(answer(socket, status));
             }
         })
     });
     address
 }
 
-async fn answer_ok(socket: tokio::net::TcpStream) {
+async fn answer(socket: tokio::net::TcpStream, status: fn(&str) -> &'static str) {
     let Ok(mut connection) = h2::server::handshake(socket).await else {
         return;
     };
-    while let Some(Ok((_, mut respond))) = connection.accept().await {
+    while let Some(Ok((request, mut respond))) = connection.accept().await {
+        let grpc_status = status(request.uri().path());
         let response = http::Response::builder()
             .header("content-type", "application/grpc")
             .body(())
@@ -99,7 +104,7 @@ async fn answer_ok(socket: tokio::net::TcpStream) {
         let _ = stream.send_data(Bytes::from_static(&[0; 5]), false);
         let _ = stream.send_trailers(http::HeaderMap::from_iter([(
             http::HeaderName::from_static("grpc-status"),
-            http::HeaderValue::from_static("0"),
+            http::HeaderValue::from_static(grpc_status),
         )]));
     }
 }
@@ -206,10 +211,32 @@ pub fn new_replayer(
             &mut err_len,
         )
     };
-    if !w.is_null() {
-        return Ok(w);
+    created(w, err, err_len)
+}
+
+pub fn start_worker(
+    rt: *mut TpbRuntime,
+    json: &serde_json::Value,
+) -> Result<*mut TpbWorker, String> {
+    let config = json.to_string();
+    let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
+    let w = unsafe {
+        tpb_worker_new(
+            rt,
+            config.as_ptr().cast(),
+            config.len(),
+            &mut err,
+            &mut err_len,
+        )
+    };
+    created(w, err, err_len)
+}
+
+fn created<T>(object: *mut T, err: *mut u8, err_len: usize) -> Result<*mut T, String> {
+    if !object.is_null() {
+        return Ok(object);
     }
-    let message = String::from_utf8(unsafe { slice(err.cast(), err_len) }.to_vec()).unwrap();
+    let message = String::from_utf8_lossy(unsafe { slice(err.cast(), err_len) }).into_owned();
     unsafe { tpb_bytes_free(err, err_len) };
     Err(message)
 }
