@@ -76,6 +76,35 @@ final class CoreOptionsTestCase extends TestCase
         self::assertSame('server', $options->tls?->serverName);
     }
 
+    public static function provideMemoryLimits(): iterable
+    {
+        yield 'unlimited' => ['-1', 10_000];
+        yield '2G is capped at the unlimited default' => ['2G', 10_000];
+        yield '512M' => ['512M', 7_168];
+        yield '128M' => ['128M', 1_024];
+        yield '96M in bytes' => ['100663296', 512];
+        yield '64M leaves nothing above the reserve' => ['64M', 10];
+        yield '16M' => ['16M', 10];
+    }
+
+    #[DataProvider('provideMemoryLimits')]
+    public function testDefaultCacheSizeFollowsTheMemoryLimit(string $memoryLimit, int $expected): void
+    {
+        self::assertSame($expected, CoreOptions::defaultMaxCachedWorkflows($memoryLimit));
+    }
+
+    public function testMemoryLimitChangesOnlyTheDefaultCacheSize(): void
+    {
+        $previous = (string) \ini_get('memory_limit');
+        self::assertNotFalse(\ini_set('memory_limit', '512M'));
+        try {
+            self::assertSame(7_168, $this->create([], [], [])->maxCachedWorkflows);
+            self::assertSame(20_000, $this->create([], [CoreEnvironment::MAX_CACHED_WORKFLOWS => '20000'], [])->maxCachedWorkflows);
+        } finally {
+            \ini_set('memory_limit', $previous);
+        }
+    }
+
     public function testNegativeProcessCountIsRejected(): void
     {
         $this->expectExceptionObject(new \InvalidArgumentException(CoreEnvironment::ACTIVITY_PROCESSES . ' must be an integer not less than 0, "-1" given'));

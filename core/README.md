@@ -56,7 +56,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_WORKFLOW_PROCESSES` | `1` | workflow processes (each has its own sticky cache) |
 | `TEMPORAL_CORE_ACTIVITY_PROCESSES` | `1` | activity processes; `0` runs activities in the workflow process (they block workflow tasks while they run) |
 | `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` | `1` | activities that one activity process runs at the same time in Fibers on the Revolt event loop (only for non-blocking activity code, `revolt/event-loop` must be installed) |
-| `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | `10000` | sticky cache size per workflow process |
+| `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | from `memory_limit` | sticky cache size per workflow process. The default is (`memory_limit` − 64 MiB) / 64 KiB, from 10 to 10000 (`10000` with `memory_limit=-1`; 1024 with 128M), as TypeScript sizes `maxCachedWorkflows` from the heap limit: a cached workflow takes about 56 KB of PHP memory |
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process, a positive integer (1 thread uses 15–22 % less CPU than one per core). Another value throws an exception |
 | `TEMPORAL_CORE_GRPC_COMPRESSION` | `gzip` | `gzip` (sdk-core default) or `none`: gzip on the worker's gRPC calls saves network bytes and costs 7–15 % worker CPU. Another value stops the worker start with an error |
 | `TEMPORAL_CORE_PROMETHEUS_ADDRESS` | off | `host:port` of the sdk-core Prometheus exporter (`/metrics`): the worker metrics and the `temporal_request*` and `temporal_long_request*` metrics of its gRPC connection. Each worker process takes the first free port from this one, so 1 workflow + 4 activity processes on `127.0.0.1:9464` serve `9464`–`9468` |
