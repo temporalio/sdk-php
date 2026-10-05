@@ -28,6 +28,7 @@ final class CoreOptionsTestCase extends TestCase
             'maxCachedWorkflows' => 10_000,
             'grpcCompression' => 'gzip',
             'pollerAutoscaling' => true,
+            'tuner' => null,
         ]];
         yield 'arguments' => [[], [], [
             'address' => 'arg:7233',
@@ -51,6 +52,30 @@ final class CoreOptionsTestCase extends TestCase
             'grpcCompression' => 'none',
             'pollerAutoscaling' => false,
         ]];
+        yield 'resource-based tuner defaults' => [[], [
+            CoreEnvironment::TUNER_TARGET_MEMORY_USAGE => '0.8',
+            CoreEnvironment::TUNER_TARGET_CPU_USAGE => '0.9',
+        ], [], ['tuner' => [
+            'target_memory_usage' => 0.8,
+            'target_cpu_usage' => 0.9,
+            'workflow_slots' => ['min_slots' => 5, 'max_slots' => 500, 'ramp_throttle_ms' => 0],
+            'activity_slots' => ['min_slots' => 1, 'max_slots' => 500, 'ramp_throttle_ms' => 50],
+        ]]];
+        yield 'resource-based tuner slots' => [[], [
+            CoreEnvironment::TUNER_TARGET_MEMORY_USAGE => '1',
+            CoreEnvironment::TUNER_TARGET_CPU_USAGE => '0',
+            CoreEnvironment::TUNER_WORKFLOW_MIN_SLOTS => '2',
+            CoreEnvironment::TUNER_WORKFLOW_MAX_SLOTS => '20',
+            CoreEnvironment::TUNER_WORKFLOW_RAMP_THROTTLE => '10',
+            CoreEnvironment::TUNER_ACTIVITY_MIN_SLOTS => '0',
+            CoreEnvironment::TUNER_ACTIVITY_MAX_SLOTS => '30',
+            CoreEnvironment::TUNER_ACTIVITY_RAMP_THROTTLE => '0',
+        ], [], ['tuner' => [
+            'target_memory_usage' => 1.0,
+            'target_cpu_usage' => 0.0,
+            'workflow_slots' => ['min_slots' => 2, 'max_slots' => 20, 'ramp_throttle_ms' => 10],
+            'activity_slots' => ['min_slots' => 0, 'max_slots' => 30, 'ramp_throttle_ms' => 0],
+        ]]];
         yield 'profile' => [self::PROFILE_ENVIRONMENT, [], [], [
             'address' => 'profile:7233',
             'namespace' => 'profile-ns',
@@ -80,6 +105,12 @@ final class CoreOptionsTestCase extends TestCase
     {
         $this->expectExceptionObject(new \InvalidArgumentException(CoreEnvironment::ACTIVITY_PROCESSES . ' must be an integer not less than 0, "-1" given'));
         $this->create([], [], ['activityProcesses' => -1]);
+    }
+
+    public function testTunerTargetsMustBeSetTogether(): void
+    {
+        $this->expectExceptionObject(new \InvalidArgumentException(CoreEnvironment::TUNER_TARGET_MEMORY_USAGE . ' and ' . CoreEnvironment::TUNER_TARGET_CPU_USAGE . ' must be set together'));
+        $this->create([], [CoreEnvironment::TUNER_TARGET_CPU_USAGE => '0.9'], []);
     }
 
     private function create(array $environment, array $server, array $arguments): CoreOptions

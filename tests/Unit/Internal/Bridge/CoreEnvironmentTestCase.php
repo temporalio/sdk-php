@@ -25,6 +25,10 @@ final class CoreEnvironmentTestCase extends TestCase
         yield 'flag default' => [null, static fn(): bool => CoreEnvironment::flag(self::NAME, true), true];
         yield 'flag off' => ['off', static fn(): bool => CoreEnvironment::flag(self::NAME, true), false];
         yield 'flag on' => ['1', static fn(): bool => CoreEnvironment::flag(self::NAME, false), true];
+        yield 'fraction unset' => [null, static fn(): ?float => CoreEnvironment::fraction(self::NAME), null];
+        yield 'fraction set' => ['0.75', static fn(): ?float => CoreEnvironment::fraction(self::NAME), 0.75];
+        yield 'fraction above one' => ['1.5', static fn(): ?float => CoreEnvironment::fraction(self::NAME), new \InvalidArgumentException(self::NAME . ' must be a number from 0 to 1, "1.5" given')];
+        yield 'fraction not a number' => ['most', static fn(): ?float => CoreEnvironment::fraction(self::NAME), new \InvalidArgumentException(self::NAME . ' must be a number from 0 to 1, "most" given')];
         yield 'map unset' => [null, static fn(): ?array => CoreEnvironment::map(self::NAME), null];
         yield 'map set' => [' a = b ,token=x=y', static fn(): ?array => CoreEnvironment::map(self::NAME), ['a' => 'b', 'token' => 'x=y']];
         yield 'map pair without value' => ['a=b,c', static fn(): ?array => CoreEnvironment::map(self::NAME), new \InvalidArgumentException(self::NAME . ' must be a comma-separated list of key=value pairs, "a=b,c" given')];
