@@ -1,7 +1,6 @@
 use crate::config::{RuntimeJson, parse};
-use crate::ffi::{KIND_LOG, STATUS_OK, bytes, construct};
+use crate::ffi::{bytes, construct};
 use crate::queue::Queue;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, OnceLock};
@@ -29,32 +28,10 @@ impl std::fmt::Debug for QueueLog {
     }
 }
 
-fn push_log(
-    queue: &Queue,
-    level: &str,
-    target: &str,
-    message: &str,
-    fields: &HashMap<String, Value>,
-) {
-    let entry = serde_json::json!({
-        "level": level,
-        "target": target,
-        "message": message,
-        "fields": fields,
-    });
-    queue.push(0, KIND_LOG, STATUS_OK, entry.to_string().into_bytes());
-}
-
 impl CoreLogConsumer for QueueLog {
     fn on_log(&self, log: CoreLog) {
         if let Some(queue) = self.0.get() {
-            push_log(
-                queue,
-                log.level.as_str(),
-                &log.target,
-                &log.message,
-                &log.fields,
-            );
+            queue.push_log(log.level.as_str(), &log.target, &log.message, &log.fields);
         }
     }
 }
@@ -77,13 +54,7 @@ fn prometheus_meter(address: &str, queue: &Queue) -> Result<Arc<dyn CoreMeter>, 
         ) {
             Ok(server) => {
                 let message = format!("Prometheus metrics on http://{socket_addr}/metrics");
-                push_log(
-                    queue,
-                    "INFO",
-                    env!("CARGO_CRATE_NAME"),
-                    &message,
-                    &HashMap::new(),
-                );
+                queue.push_log("INFO", env!("CARGO_CRATE_NAME"), &message, &HashMap::new());
                 return Ok(server.meter);
             }
             Err(e)
@@ -147,7 +118,10 @@ pub unsafe extern "C" fn tpb_runtime_new(
 mod tests {
     use super::*;
     use crate::ffi::tpb_bytes_free;
-    use crate::testing::{Checked, events, only};
+    use crate::ffi::{KIND_ACTIVITY_TASK, KIND_LOG, STATUS_OK};
+    use crate::queue::MAX_PENDING_LOGS;
+    use crate::testing::{Checked, Event, drain_events, events, only};
+    use serde_json::Value;
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
 
@@ -248,6 +222,63 @@ mod tests {
         assert_eq!(entry["target"], "temporalio_sdk_core");
         assert_eq!(entry["message"], "core warning");
         assert_eq!(entry["fields"]["answer"], 42);
+        Ok(())
+    }
+
+    fn messages(events: &[Event]) -> Result<Vec<Value>, serde_json::Error> {
+        events
+            .iter()
+            .filter(|(_, kind, _, _)| *kind == KIND_LOG)
+            .map(|(_, _, _, data)| {
+                serde_json::from_slice::<Value>(data).map(|e| e["message"].clone())
+            })
+            .collect()
+    }
+
+    #[test]
+    fn pending_logs_stop_at_the_cap_and_the_loss_is_logged_when_logs_fit_again() -> Checked {
+        let runtime = new_runtime(br#"{"threads":1,"log":"off"}"#)?;
+        let rt = std::ptr::from_ref(&runtime).cast_mut();
+        let consumer = QueueLog(Arc::new(OnceLock::from(runtime.queue.clone())));
+        let log = |message: String| CoreLog {
+            target: "temporalio_sdk_core".into(),
+            message,
+            timestamp: std::time::SystemTime::now(),
+            level: tracing::Level::DEBUG,
+            fields: HashMap::new(),
+            span_contexts: Vec::new(),
+        };
+
+        for i in 0..MAX_PENDING_LOGS + 3 {
+            consumer.on_log(log(format!("flood {i}")));
+        }
+        runtime
+            .queue
+            .push(1, KIND_ACTIVITY_TASK, STATUS_OK, Vec::new());
+
+        let flood = drain_events(rt);
+        assert_eq!(flood.len(), MAX_PENDING_LOGS + 1);
+        assert_eq!(
+            flood.last(),
+            Some(&(1, KIND_ACTIVITY_TASK, STATUS_OK, vec![]))
+        );
+        assert_eq!(
+            messages(&flood)?.last(),
+            Some(&Value::from(format!("flood {}", MAX_PENDING_LOGS - 1)))
+        );
+
+        consumer.on_log(log("after".into()));
+
+        let after = drain_events(rt);
+        assert_eq!(after.len(), 2);
+        let notice: Value = serde_json::from_slice(&after[0].3)?;
+        assert_eq!(notice["level"], "WARN");
+        assert_eq!(notice["target"], "temporal_php_bridge");
+        assert_eq!(
+            notice["message"],
+            "3 log records were dropped: the event queue was full"
+        );
+        assert_eq!(messages(&after[1..])?, vec![Value::from("after")]);
         Ok(())
     }
 
