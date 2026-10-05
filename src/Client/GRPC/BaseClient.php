@@ -15,6 +15,7 @@ use Carbon\CarbonInterval;
 use Grpc\BaseStub;
 use Grpc\UnaryCall;
 use Psr\Log\LoggerInterface;
+use Revolt\EventLoop;
 use Temporal\Client\Common\BackoffThrottler;
 use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\Connection\Connection;
@@ -362,6 +363,13 @@ abstract class BaseClient implements GrpcClientInterface
     {
         if (\Fiber::getCurrent() === null) {
             \usleep($param);
+            return;
+        }
+
+        if (\class_exists(EventLoop::class, false) && EventLoop::getDriver()->isRunning()) {
+            $suspension = EventLoop::getSuspension();
+            EventLoop::delay($param / 1_000_000, $suspension->resume(...));
+            $suspension->suspend();
             return;
         }
 

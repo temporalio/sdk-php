@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Core\Client;
 
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 use Temporal\Api\Cloud\Cloudservice\V1\GetNamespacesRequest;
 use Temporal\Api\Operatorservice\V1\ListSearchAttributesRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
@@ -29,6 +30,26 @@ final class ClientTransportTestCase extends TestCase
         $this->expectUnavailable();
 
         $client->GetSystemInfo(new GetSystemInfoRequest());
+    }
+
+    public function testRetryInAnEventLoopFiberEndsTheCall(): void
+    {
+        $client = ServiceClient::create(self::CLOSED_ADDRESS)
+            ->withContext(Context::default()->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)));
+        $code = null;
+        $fiber = new \Fiber(static function () use ($client, &$code): void {
+            try {
+                $client->GetSystemInfo(new GetSystemInfoRequest());
+            } catch (ServiceClientException $e) {
+                $code = $e->getCode();
+            }
+        });
+
+        EventLoop::queue($fiber->start(...));
+        EventLoop::run();
+
+        $this->assertTrue($fiber->isTerminated());
+        $this->assertSame(StatusCode::UNAVAILABLE, $code);
     }
 
     public function testOperatorClientReportsUnavailableServer(): void
