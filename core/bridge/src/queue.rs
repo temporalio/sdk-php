@@ -12,7 +12,7 @@ use std::{
     os::fd::AsRawFd,
     panic::AssertUnwindSafe,
     sync::{
-        Arc, Condvar, Mutex,
+        Arc, Condvar, Mutex, MutexGuard, PoisonError,
         atomic::{AtomicBool, Ordering},
     },
     time::Duration,
@@ -51,8 +51,12 @@ impl Queue {
         })
     }
 
+    fn events(&self) -> MutexGuard<'_, VecDeque<Event>> {
+        self.events.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     pub fn push(&self, tag: u64, kind: i32, status: i32, data: Vec<u8>) {
-        self.events.lock().unwrap().push_back(Event {
+        self.events().push_back(Event {
             tag,
             kind,
             status,
@@ -96,13 +100,13 @@ impl Queue {
     }
 
     fn take(&self, timeout_ms: u32, out: &mut [TpbEvent]) -> usize {
-        let mut events = self.events.lock().unwrap();
+        let mut events = self.events();
         if events.is_empty() && timeout_ms > 0 {
             let timeout = Duration::from_millis(timeout_ms.into());
             events = self
                 .ready
                 .wait_timeout_while(events, timeout, |e| e.is_empty())
-                .unwrap()
+                .unwrap_or_else(PoisonError::into_inner)
                 .0;
         }
         let count = events.len().min(out.len());
@@ -211,6 +215,24 @@ mod tests {
                 0
             );
         }
+        assert_eq!(events(rt, 1), vec![(1, 0, STATUS_OK, vec![])]);
+        release(rt);
+    }
+
+    #[test]
+    fn queue_works_after_a_panic_while_its_lock_was_held() {
+        let rt = runtime();
+        let queue = unsafe { &*rt }.queue.clone();
+        let poisoner = queue.clone();
+        let poisoned = std::thread::spawn(move || {
+            let _held = poisoner.events.lock();
+            panic!("poison")
+        })
+        .join();
+        assert!(poisoned.is_err());
+
+        queue.push(1, 0, STATUS_OK, Vec::new());
+
         assert_eq!(events(rt, 1), vec![(1, 0, STATUS_OK, vec![])]);
         release(rt);
     }
