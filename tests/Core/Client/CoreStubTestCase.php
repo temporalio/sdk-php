@@ -73,7 +73,7 @@ final class CoreStubTestCase extends TestCase
 
         [$response, $status] = $stub->GetSystemInfo(
             new GetSystemInfoRequest(),
-            ['trace-bin' => ["\x00\x01"], 'trace' => ['plain']],
+            ['Trace-Bin' => ["\x00\x01"], 'Trace' => ['plain']],
             ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS],
         )->wait();
 
@@ -100,6 +100,16 @@ final class CoreStubTestCase extends TestCase
 
         $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
         $this->assertFalse($stub->waitForReady(\PHP_INT_MAX));
+    }
+
+    public function testInvalidMetadataKeyIsRejectedBeforeTheCall(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Metadata keys must be nonempty strings containing only alphanumeric characters, hyphens, underscores and dots');
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest(), ['bad key' => ['x']]);
     }
 
     public function testCallResultIsTakenOnce(): void

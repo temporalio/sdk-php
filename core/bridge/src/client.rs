@@ -130,7 +130,6 @@ fn request(
     let invalid =
         |e: &dyn std::fmt::Display| Status::invalid_argument(format!("Invalid metadata: {e}"));
     for (key, values) in metadata {
-        let key = key.to_ascii_lowercase();
         for value in values {
             if key.ends_with("-bin") {
                 let name =
