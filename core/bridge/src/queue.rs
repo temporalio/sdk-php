@@ -1,5 +1,6 @@
 use crate::ffi::{
-    STATUS_ERROR, STATUS_OK, STATUS_SHUTDOWN, TpbEvent, guard, into_raw_bytes, panic_message,
+    STATUS_ERROR, STATUS_OK, STATUS_SHUTDOWN, TpbEvent, call, events_out, into_raw_bytes,
+    panic_message, set_nonblocking,
 };
 use crate::runtime::TpbRuntime;
 use futures_util::FutureExt;
@@ -7,7 +8,8 @@ use prost::Message;
 use std::{
     collections::VecDeque,
     future::Future,
-    os::fd::{AsRawFd, OwnedFd},
+    io::{PipeReader, PipeWriter, Write},
+    os::fd::AsRawFd,
     panic::AssertUnwindSafe,
     sync::{
         Arc, Condvar, Mutex,
@@ -29,25 +31,16 @@ pub struct Queue {
     pub handle: Handle,
     events: Mutex<VecDeque<Event>>,
     ready: Condvar,
-    read_fd: OwnedFd,
-    write_fd: OwnedFd,
+    read_fd: PipeReader,
+    write_fd: PipeWriter,
     fd_watched: AtomicBool,
 }
 
 impl Queue {
     pub fn new(handle: Handle) -> Result<Self, String> {
         let (read_fd, write_fd) = std::io::pipe().map_err(|e| e.to_string())?;
-        let (read_fd, write_fd) = (OwnedFd::from(read_fd), OwnedFd::from(write_fd));
-        for fd in [&read_fd, &write_fd] {
-            let fd = fd.as_raw_fd();
-            unsafe {
-                libc::fcntl(
-                    fd,
-                    libc::F_SETFL,
-                    libc::fcntl(fd, libc::F_GETFL) | libc::O_NONBLOCK,
-                )
-            };
-        }
+        set_nonblocking(&read_fd).map_err(|e| e.to_string())?;
+        set_nonblocking(&write_fd).map_err(|e| e.to_string())?;
         Ok(Self {
             handle,
             events: Mutex::new(VecDeque::new()),
@@ -67,7 +60,7 @@ impl Queue {
         });
         self.ready.notify_one();
         if self.fd_watched.load(Ordering::Relaxed) {
-            unsafe { libc::write(self.write_fd.as_raw_fd(), [1u8].as_ptr().cast(), 1) };
+            let _ = (&self.write_fd).write_all(&[1]);
         }
     }
 
@@ -133,14 +126,10 @@ pub fn error_status(message: String) -> (i32, Vec<u8>) {
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_event_fd(rt: *mut TpbRuntime) -> libc::c_int {
-    guard(
-        |_| -1,
-        || {
-            let queue = &unsafe { &*rt }.queue;
-            queue.fd_watched.store(true, Ordering::Relaxed);
-            queue.read_fd.as_raw_fd()
-        },
-    )
+    call(rt, -1, |rt| {
+        rt.queue.fd_watched.store(true, Ordering::Relaxed);
+        rt.queue.read_fd.as_raw_fd()
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -150,25 +139,20 @@ pub unsafe extern "C" fn tpb_next_events(
     out: *mut TpbEvent,
     max: usize,
 ) -> usize {
-    guard(
-        |_| 0,
-        || {
-            let out = unsafe { std::slice::from_raw_parts_mut(out, max) };
-            unsafe { &*rt }.queue.take(timeout_ms, out)
-        },
-    )
+    call(rt, 0, |rt| rt.queue.take(timeout_ms, events_out(out, max)))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ffi::{KIND_ACTIVITY_TASK, free};
+    use crate::ffi::{KIND_ACTIVITY_TASK, release};
     use crate::testing::{empty_events, events, runtime};
+    use std::io::{ErrorKind, Read};
     use temporalio_common::protos::coresdk::activity_task::ActivityTask;
 
-    fn read_bytes(fd: libc::c_int) -> isize {
+    fn read_bytes(queue: &Queue) -> Result<usize, ErrorKind> {
         let mut buf = [0u8; 8];
-        unsafe { libc::read(fd, buf.as_mut_ptr().cast(), buf.len()) }
+        (&queue.read_fd).read(&mut buf).map_err(|e| e.kind())
     }
 
     #[test]
@@ -176,17 +160,17 @@ mod tests {
         let rt = runtime();
         let queue = &unsafe { &*rt }.queue;
         queue.push(1, 0, STATUS_OK, Vec::new());
-        assert_eq!(read_bytes(queue.read_fd.as_raw_fd()), -1);
+        assert_eq!(read_bytes(queue), Err(ErrorKind::WouldBlock));
 
         let fd = unsafe { tpb_event_fd(rt) };
         assert_eq!(fd, queue.read_fd.as_raw_fd());
         queue.push(2, 0, STATUS_OK, Vec::new());
         queue.push(3, 0, STATUS_OK, Vec::new());
-        assert_eq!(read_bytes(fd), 2);
-        assert_eq!(read_bytes(fd), -1);
+        assert_eq!(read_bytes(queue), Ok(2));
+        assert_eq!(read_bytes(queue), Err(ErrorKind::WouldBlock));
 
         assert_eq!(events(rt, 3).len(), 3);
-        unsafe { free(rt) };
+        release(rt);
     }
 
     #[test]
@@ -203,7 +187,32 @@ mod tests {
         assert_eq!([out[0].tag, out[1].tag], [1, 2]);
         assert_eq!(queue.take(0, &mut out), 1);
         assert_eq!(out[0].tag, 3);
-        unsafe { free(rt) };
+        release(rt);
+    }
+
+    #[test]
+    fn null_runtime_has_no_event_fd_and_no_events() {
+        assert_eq!(unsafe { tpb_event_fd(std::ptr::null_mut()) }, -1);
+        let mut out: [TpbEvent; 1] = empty_events();
+        assert_eq!(
+            unsafe { tpb_next_events(std::ptr::null_mut(), 0, out.as_mut_ptr(), 1) },
+            0
+        );
+    }
+
+    #[test]
+    fn null_event_buffer_takes_no_events() {
+        let rt = runtime();
+        unsafe { &*rt }.queue.push(1, 0, STATUS_OK, Vec::new());
+
+        for max in [0, 4] {
+            assert_eq!(
+                unsafe { tpb_next_events(rt, 0, std::ptr::null_mut(), max) },
+                0
+            );
+        }
+        assert_eq!(events(rt, 1), vec![(1, 0, STATUS_OK, vec![])]);
+        release(rt);
     }
 
     #[test]
@@ -219,6 +228,6 @@ mod tests {
         let [(tag, kind, status, message)] = events(rt, 1).try_into().unwrap();
         assert_eq!((tag, kind, status), (5, KIND_ACTIVITY_TASK, STATUS_ERROR));
         assert!(String::from_utf8_lossy(&message).contains("server down"));
-        unsafe { free(rt) };
+        release(rt);
     }
 }

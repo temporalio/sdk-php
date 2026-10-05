@@ -1,4 +1,4 @@
-use crate::ffi::{TpbEvent, slice, tpb_bytes_free};
+use crate::ffi::{TpbEvent, bytes, tpb_bytes_free};
 use crate::queue::tpb_next_events;
 use crate::replay::tpb_replayer_new;
 use crate::runtime::{TpbRuntime, tpb_runtime_new};
@@ -56,7 +56,7 @@ pub fn events(rt: *mut TpbRuntime, count: usize) -> Vec<Event> {
                 e.tag,
                 e.kind,
                 e.status,
-                unsafe { slice(e.data.cast(), e.len) }.to_vec(),
+                bytes(e.data.cast(), e.len).to_vec(),
             ));
             unsafe { tpb_bytes_free(e.data, e.len) };
         }
@@ -236,7 +236,7 @@ fn created<T>(object: *mut T, err: *mut u8, err_len: usize) -> Result<*mut T, St
     if !object.is_null() {
         return Ok(object);
     }
-    let message = String::from_utf8_lossy(unsafe { slice(err.cast(), err_len) }).into_owned();
+    let message = String::from_utf8_lossy(bytes(err.cast(), err_len)).into_owned();
     unsafe { tpb_bytes_free(err, err_len) };
     Err(message)
 }

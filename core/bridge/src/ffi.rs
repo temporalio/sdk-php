@@ -1,5 +1,7 @@
 use std::{
     any::Any,
+    io,
+    os::fd::AsRawFd,
     panic::{AssertUnwindSafe, catch_unwind},
 };
 
@@ -35,11 +37,39 @@ pub fn into_raw_bytes(bytes: Box<[u8]>) -> (*mut u8, usize) {
     (Box::into_raw(bytes).cast(), len)
 }
 
-pub unsafe fn slice<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
+pub fn object<'a, T>(ptr: *mut T) -> Option<&'a T> {
+    unsafe { ptr.as_ref() }
+}
+
+pub fn required<'a, T>(ptr: *mut T, name: &str) -> Result<&'a T, String> {
+    object(ptr).ok_or_else(|| format!("The {name} pointer is null"))
+}
+
+pub fn bytes<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
     if data.is_null() || len == 0 {
         return &[];
     }
     unsafe { std::slice::from_raw_parts(data.cast(), len) }
+}
+
+pub unsafe fn slice<'a>(data: *const libc::c_char, len: usize) -> &'a [u8] {
+    bytes(data, len)
+}
+
+pub fn events_out<'a>(out: *mut TpbEvent, max: usize) -> &'a mut [TpbEvent] {
+    if out.is_null() || max == 0 {
+        return &mut [];
+    }
+    unsafe { std::slice::from_raw_parts_mut(out, max) }
+}
+
+pub fn set_nonblocking(fd: &impl AsRawFd) -> io::Result<()> {
+    let fd = fd.as_raw_fd();
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+    if flags < 0 || unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
 }
 
 pub fn panic_message(panic: Box<dyn Any + Send>) -> String {
@@ -55,7 +85,11 @@ pub fn guard<T>(fallback: impl FnOnce(String) -> T, body: impl FnOnce() -> T) ->
     catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|panic| fallback(panic_message(panic)))
 }
 
-pub unsafe fn construct<T>(
+pub fn call<T, R: Copy>(ptr: *mut T, failed: R, body: impl FnOnce(&T) -> R) -> R {
+    guard(|_| failed, || object(ptr).map_or(failed, body))
+}
+
+pub fn construct<T>(
     err: *mut *mut u8,
     err_len: *mut usize,
     body: impl FnOnce() -> Result<T, String>,
@@ -71,7 +105,7 @@ pub unsafe fn construct<T>(
     std::ptr::null_mut()
 }
 
-pub unsafe fn free<T>(value: *mut T) {
+pub fn release<T>(value: *mut T) {
     guard(
         |_| (),
         || {
@@ -80,6 +114,10 @@ pub unsafe fn free<T>(value: *mut T) {
             }
         },
     )
+}
+
+pub unsafe fn free<T>(value: *mut T) {
+    release(value)
 }
 
 #[unsafe(no_mangle)]
@@ -102,25 +140,38 @@ mod tests {
     fn construct_returns_errors_and_panics_through_the_error_pointers() {
         let (mut err, mut err_len) = (std::ptr::null_mut(), 0);
         let failed: Result<u8, String> = Err("no worker".into());
-        assert!(unsafe { construct(&mut err, &mut err_len, || failed) }.is_null());
-        assert_eq!(unsafe { slice(err.cast(), err_len) }, b"no worker");
+        assert!(construct(&mut err, &mut err_len, || failed).is_null());
+        assert_eq!(bytes(err.cast(), err_len), b"no worker");
         unsafe { tpb_bytes_free(err, err_len) };
 
-        let panicked = unsafe {
-            construct(&mut err, &mut err_len, || -> Result<u8, String> {
-                panic!("boom")
-            })
-        };
+        let panicked = construct(&mut err, &mut err_len, || -> Result<u8, String> {
+            panic!("boom")
+        });
         assert!(panicked.is_null());
         assert_eq!(
-            unsafe { slice(err.cast(), err_len) },
+            bytes(err.cast(), err_len),
             b"Panic in temporal-php-bridge: boom"
         );
         unsafe { tpb_bytes_free(err, err_len) };
 
         let unreported: Result<u8, String> = Err("lost".into());
         let null = std::ptr::null_mut();
-        assert!(unsafe { construct(null, std::ptr::null_mut(), || unreported) }.is_null());
+        assert!(construct(null, std::ptr::null_mut(), || unreported).is_null());
+    }
+
+    struct ClosedFd;
+
+    impl AsRawFd for ClosedFd {
+        fn as_raw_fd(&self) -> std::os::fd::RawFd {
+            -1
+        }
+    }
+
+    #[test]
+    fn set_nonblocking_reports_an_invalid_fd() {
+        let error = set_nonblocking(&ClosedFd).err().map(|e| e.raw_os_error());
+
+        assert_eq!(error, Some(Some(libc::EBADF)));
     }
 
     #[test]
@@ -139,9 +190,7 @@ mod tests {
 
     #[test]
     fn freeing_null_does_nothing() {
-        unsafe {
-            tpb_bytes_free(std::ptr::null_mut(), 0);
-            free(std::ptr::null_mut::<u8>());
-        }
+        unsafe { tpb_bytes_free(std::ptr::null_mut(), 0) };
+        release(std::ptr::null_mut::<u8>());
     }
 }

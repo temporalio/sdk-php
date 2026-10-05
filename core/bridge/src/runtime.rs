@@ -1,5 +1,5 @@
 use crate::config::{RuntimeJson, parse};
-use crate::ffi::{KIND_LOG, STATUS_OK, construct, slice};
+use crate::ffi::{KIND_LOG, STATUS_OK, bytes, construct};
 use crate::queue::Queue;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -129,7 +129,7 @@ pub unsafe extern "C" fn tpb_runtime_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbRuntime {
-    unsafe { construct(err, err_len, || new_runtime(slice(config, config_len))) }
+    construct(err, err_len, || new_runtime(bytes(config, config_len)))
 }
 
 #[cfg(test)]
@@ -229,7 +229,7 @@ mod tests {
         let rt = unsafe { tpb_runtime_new(config.as_ptr().cast(), 1, &mut err, &mut err_len) };
 
         assert!(rt.is_null());
-        let message = unsafe { slice(err.cast(), err_len) };
+        let message = bytes(err.cast(), err_len);
         assert!(message.starts_with(b"Invalid runtime config JSON: "));
         unsafe { tpb_bytes_free(err, err_len) };
     }

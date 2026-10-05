@@ -1,8 +1,8 @@
 use crate::config::WorkerJson;
 use crate::ffi::{
     CALL_FAILED, CALL_OK, KIND_ACTIVITY_COMPLETED, KIND_ACTIVITY_TASK, KIND_SHUTDOWN_FINALIZED,
-    KIND_WORKFLOW_ACTIVATION, KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, construct, free,
-    guard, slice,
+    KIND_WORKFLOW_ACTIVATION, KIND_WORKFLOW_COMPLETED, STATUS_ERROR, STATUS_OK, bytes, call,
+    construct, release, required,
 };
 use crate::queue::{Queue, error_status};
 use crate::runtime::TpbRuntime;
@@ -181,31 +181,27 @@ pub unsafe extern "C" fn tpb_worker_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbWorker {
-    unsafe { construct(err, err_len, || new_worker(&*rt, slice(config, config_len))) }
+    construct(err, err_len, || {
+        new_worker(required(rt, "runtime")?, bytes(config, config_len))
+    })
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_poll_workflow_activation(w: *mut TpbWorker, tag: u64) {
-    guard(
-        |_| (),
-        || {
-            unsafe { &*w }.poll(tag, KIND_WORKFLOW_ACTIVATION, |core| async move {
-                core.poll_workflow_activation().await
-            })
-        },
-    )
+    call(w, (), |w| {
+        w.poll(tag, KIND_WORKFLOW_ACTIVATION, |core| async move {
+            core.poll_workflow_activation().await
+        })
+    })
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_poll_activity_task(w: *mut TpbWorker, tag: u64) {
-    guard(
-        |_| (),
-        || {
-            unsafe { &*w }.poll(tag, KIND_ACTIVITY_TASK, |core| async move {
-                core.poll_activity_task().await
-            })
-        },
-    )
+    call(w, (), |w| {
+        w.poll(tag, KIND_ACTIVITY_TASK, |core| async move {
+            core.poll_activity_task().await
+        })
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -215,19 +211,16 @@ pub unsafe extern "C" fn tpb_complete_workflow_activation(
     data: *const libc::c_char,
     len: usize,
 ) {
-    guard(
-        |_| (),
-        || {
-            unsafe { &*w }.complete(
-                tag,
-                KIND_WORKFLOW_COMPLETED,
-                unsafe { slice(data, len) },
-                |core, completion: WorkflowActivationCompletion| async move {
-                    core.complete_workflow_activation(completion).await
-                },
-            )
-        },
-    )
+    call(w, (), |w| {
+        w.complete(
+            tag,
+            KIND_WORKFLOW_COMPLETED,
+            bytes(data, len),
+            |core, completion: WorkflowActivationCompletion| async move {
+                core.complete_workflow_activation(completion).await
+            },
+        )
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -237,19 +230,16 @@ pub unsafe extern "C" fn tpb_complete_activity_task(
     data: *const libc::c_char,
     len: usize,
 ) {
-    guard(
-        |_| (),
-        || {
-            unsafe { &*w }.complete(
-                tag,
-                KIND_ACTIVITY_COMPLETED,
-                unsafe { slice(data, len) },
-                |core, completion: ActivityTaskCompletion| async move {
-                    core.complete_activity_task(completion).await
-                },
-            )
-        },
-    )
+    call(w, (), |w| {
+        w.complete(
+            tag,
+            KIND_ACTIVITY_COMPLETED,
+            bytes(data, len),
+            |core, completion: ActivityTaskCompletion| async move {
+                core.complete_activity_task(completion).await
+            },
+        )
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -258,48 +248,37 @@ pub unsafe extern "C" fn tpb_record_activity_heartbeat(
     data: *const libc::c_char,
     len: usize,
 ) -> i32 {
-    guard(
-        |_| CALL_FAILED,
-        || {
-            let Ok(heartbeat) = ActivityHeartbeat::decode(unsafe { slice(data, len) }) else {
-                return CALL_FAILED;
-            };
-            unsafe { &*w }.call(|core| core.record_activity_heartbeat(heartbeat))
-        },
-    )
+    call(w, CALL_FAILED, |w| {
+        let Ok(heartbeat) = ActivityHeartbeat::decode(bytes(data, len)) else {
+            return CALL_FAILED;
+        };
+        w.call(|core| core.record_activity_heartbeat(heartbeat))
+    })
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_worker_initiate_shutdown(w: *mut TpbWorker) -> i32 {
-    guard(|_| CALL_FAILED, || unsafe { &*w }.initiate_shutdown())
+    call(w, CALL_FAILED, TpbWorker::initiate_shutdown)
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_worker_finalize_shutdown(w: *mut TpbWorker, tag: u64) {
-    guard(
-        |_| (),
-        || {
-            let w = unsafe { &*w };
-            let finalize = w.finalize();
-            let queue = w.queue.clone();
-            w.queue
-                .spawn(tag, KIND_SHUTDOWN_FINALIZED, error_status, async move {
-                    if !finalize.await {
-                        return queue.push_error(
-                            tag,
-                            KIND_SHUTDOWN_FINALIZED,
-                            Err(FINALIZED.into()),
-                        );
-                    }
-                    queue.push(tag, KIND_SHUTDOWN_FINALIZED, STATUS_OK, Vec::new());
-                });
-        },
-    )
+    call(w, (), |w| {
+        let finalize = w.finalize();
+        let queue = w.queue.clone();
+        w.queue
+            .spawn(tag, KIND_SHUTDOWN_FINALIZED, error_status, async move {
+                if !finalize.await {
+                    return queue.push_error(tag, KIND_SHUTDOWN_FINALIZED, Err(FINALIZED.into()));
+                }
+                queue.push(tag, KIND_SHUTDOWN_FINALIZED, STATUS_OK, Vec::new());
+            });
+    })
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_worker_free(w: *mut TpbWorker) {
-    unsafe { free(w) }
+    release(w)
 }
 
 #[cfg(test)]
@@ -346,7 +325,32 @@ mod tests {
                 "{error:?}"
             );
         }
-        unsafe { free(rt) };
+        release(rt);
+    }
+
+    #[test]
+    fn null_runtime_is_an_error() {
+        let error = start_worker(std::ptr::null_mut(), &worker_json("http://127.0.0.1:1"));
+
+        assert_eq!(error, Err("The runtime pointer is null".to_owned()));
+    }
+
+    #[test]
+    fn calls_on_a_null_worker_fail() {
+        let null = std::ptr::null_mut();
+        unsafe {
+            tpb_poll_workflow_activation(null, 1);
+            tpb_poll_activity_task(null, 2);
+            tpb_complete_workflow_activation(null, 3, std::ptr::null(), 0);
+            tpb_complete_activity_task(null, 4, std::ptr::null(), 0);
+            assert_eq!(
+                tpb_record_activity_heartbeat(null, std::ptr::null(), 0),
+                CALL_FAILED
+            );
+            assert_eq!(tpb_worker_initiate_shutdown(null), CALL_FAILED);
+            tpb_worker_finalize_shutdown(null, 5);
+            tpb_worker_free(null);
+        }
     }
 
     #[test]
@@ -364,7 +368,7 @@ mod tests {
         );
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -392,7 +396,7 @@ mod tests {
         unsafe {
             tpb_worker_free(first);
             tpb_worker_free(second);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -430,7 +434,7 @@ mod tests {
         assert_eq!(pending_events(rt), 0);
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -472,7 +476,7 @@ mod tests {
         assert_eq!(text(&error), "Activities are not enabled on this worker");
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -497,7 +501,7 @@ mod tests {
         );
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -541,7 +545,7 @@ mod tests {
         );
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 }

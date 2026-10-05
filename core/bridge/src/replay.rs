@@ -1,5 +1,5 @@
 use crate::config::{WorkerJson, parse};
-use crate::ffi::{construct, slice};
+use crate::ffi::{bytes, construct, required};
 use crate::runtime::TpbRuntime;
 use crate::worker::TpbWorker;
 use prost::Message;
@@ -41,23 +41,21 @@ pub unsafe extern "C" fn tpb_replayer_new(
     err: *mut *mut u8,
     err_len: *mut usize,
 ) -> *mut TpbWorker {
-    unsafe {
-        construct(err, err_len, || {
-            new_replayer(
-                &*rt,
-                slice(config, config_len),
-                slice(history, history_len),
-                slice(workflow_id, workflow_id_len),
-            )
-        })
-    }
+    construct(err, err_len, || {
+        new_replayer(
+            required(rt, "runtime")?,
+            bytes(config, config_len),
+            bytes(history, history_len),
+            bytes(workflow_id, workflow_id_len),
+        )
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use crate::ffi::{
         CALL_OK, KIND_SHUTDOWN_FINALIZED, KIND_WORKFLOW_ACTIVATION, STATUS_ERROR, STATUS_OK,
-        STATUS_SHUTDOWN, free,
+        STATUS_SHUTDOWN, release,
     };
     use crate::testing::{
         events, history, new_replayer, pending_events, replay_config, replayer, runtime,
@@ -96,7 +94,7 @@ mod tests {
         );
         unsafe {
             tpb_worker_free(w);
-            free(rt);
+            release(rt);
         }
     }
 
@@ -112,6 +110,18 @@ mod tests {
         assert!(
             error(&replay_config(), &history(false), b"\xff").starts_with("Invalid workflow ID: ")
         );
-        unsafe { free(rt) };
+        release(rt);
+    }
+
+    #[test]
+    fn null_runtime_is_an_error() {
+        let error = new_replayer(
+            std::ptr::null_mut(),
+            &replay_config(),
+            &history(false),
+            b"wf",
+        );
+
+        assert_eq!(error, Err("The runtime pointer is null".to_owned()));
     }
 }
