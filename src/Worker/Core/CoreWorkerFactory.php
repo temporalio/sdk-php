@@ -143,17 +143,22 @@ class CoreWorkerFactory extends WorkerFactory
     private function workerHandles(Bridge $bridge, CoreRole $role): array
     {
         $handles = [];
-        foreach ($this->queues as $worker) {
-            $config = $this->config->build($worker, $role);
-            if ($config['workflows'] || $config['remote_activities']) {
-                $handles[] = new CoreWorkerHandle(
-                    $bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
-                    (string) $worker->getID(),
-                    $this->activations($worker, $this->dispatch(...)),
-                    $config['workflows'],
-                    $config['local_activities'] || $config['remote_activities'],
-                );
+        try {
+            foreach ($this->queues as $worker) {
+                $config = $this->config->build($worker, $role);
+                if ($config['workflows'] || $config['remote_activities']) {
+                    $handles[] = new CoreWorkerHandle(
+                        $bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
+                        (string) $worker->getID(),
+                        $this->activations($worker, $this->dispatch(...)),
+                        $config['workflows'],
+                        $config['local_activities'] || $config['remote_activities'],
+                    );
+                }
             }
+        } catch (\Throwable $e) {
+            $bridge->shutdownWorkers(\array_map(static fn(CoreWorkerHandle $handle): \FFI\CData => $handle->core, $handles));
+            throw $e;
         }
         if ($handles === []) {
             $this->logger->info(\sprintf('No task queue needs a %s process, exiting', $role->value));

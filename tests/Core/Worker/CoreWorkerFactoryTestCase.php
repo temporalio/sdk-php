@@ -15,6 +15,7 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\RetryOptions;
+use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Exception\Client\ActivityPausedException;
 use Temporal\Internal\Bridge\CoreEnvironment;
 use Temporal\Tests\Core\DevServer;
@@ -22,6 +23,7 @@ use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
 use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\WorkerDeploymentOptions;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -94,6 +96,31 @@ final class CoreWorkerFactoryTestCase extends TestCase
 
         self::assertSame(0, self::runWithTimeout($factory));
         self::assertSame([ActivityPausedException::class], self::$heartbeatErrors);
+    }
+
+    public function testFailedWorkerCreationReleasesTheEarlierTaskQueues(): void
+    {
+        $queue = self::startWorkflow();
+        $failing = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        $failing->newWorker($queue)->registerWorkflowTypes(CoreHeartbeatWorkflow::class);
+        $failing->newWorker($queue . '-invalid', WorkerOptions::new()->withDeploymentOptions(WorkerDeploymentOptions::new()
+            ->withUseVersioning(false)
+            ->withVersion('core.invalid')
+            ->withDefaultVersioningBehavior(VersioningBehavior::Pinned)))
+            ->registerWorkflowTypes(CoreHeartbeatWorkflow::class);
+        try {
+            $failing->run();
+            self::fail('The invalid deployment options must fail the worker creation');
+        } catch (\RuntimeException $e) {
+            self::assertStringContainsString('default_versioning_behavior', $e->getMessage());
+        }
+
+        $factory = CoreWorkerFactory::create(address: self::$address, workflowProcesses: 1, activityProcesses: 0, logger: new LoggerSpy());
+        $factory->newWorker($queue)
+            ->registerWorkflowTypes(CoreHeartbeatWorkflow::class)
+            ->registerActivityImplementations(new CoreHeartbeatActivity());
+
+        self::assertSame(0, self::runWithTimeout($factory));
     }
 
     public function testConcurrentActivityProcessRunsActivitiesInFibers(): void
