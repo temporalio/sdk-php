@@ -121,7 +121,7 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 ## Tests
 
-`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, without the 7 tests listed in [Limitations](#limitations-and-differences-to-roadrunner).
+`TEMPORAL_WORKER_TRANSPORT=core` runs the Functional and Acceptance suites on this transport (`composer test:func`, `composer test:func-timeskip`, `composer test:accept`). Acceptance starts the worker processes under the `roadrunner/` build (`tests/Acceptance/.rr.core.yaml`, build it first). The `Core transport` CI workflow runs them without ext-grpc, Acceptance with `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` 1 and 8, without the 5 tests listed in [Limitations](#limitations-and-differences-to-roadrunner).
 
 ## Benchmarks
 
@@ -167,4 +167,4 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 
 Acceptance tests that fail on core:
 - by design: `SideEffectTest` ×3 and `ResetWorkerTest::resetWithSignal` look for the Go `SideEffect` marker in the history; on core the value is in a `core_local_activity` marker;
-- harness only: `ClassicTest::replayDifferentVersions` (Go-recorded JSON fixtures), `WorkerRestartTest` (RR KV storage and RR restart), `TranscriptWorkflowFailureTest` (expects RR wire frames).
+- harness only: `ClassicTest::replayDifferentVersions` (Go-recorded JSON fixtures).
