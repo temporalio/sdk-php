@@ -102,6 +102,16 @@ final class CoreStubTestCase extends TestCase
         $this->assertFalse($stub->waitForReady(\PHP_INT_MAX));
     }
 
+    public function testCallResultIsTakenOnce(): void
+    {
+        $call = (new CoreWorkflowServiceStub(self::CLOSED_ADDRESS))->GetSystemInfo(new GetSystemInfoRequest());
+        $call->wait();
+
+        $this->expectException(\LogicException::class);
+
+        $call->wait();
+    }
+
     public function testHandshakeThatNeverEndsStaysConnectingUntilClosed(): void
     {
         $stub = new CoreWorkflowServiceStub($this->silentListener(), BridgeConnection::tls(null, null, null, null));
