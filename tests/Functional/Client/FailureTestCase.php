@@ -20,6 +20,7 @@ use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
+use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\SignalExceptionsWorkflow;
 use Temporal\Tests\Workflow\UpdateExceptionsWorkflow;
 
@@ -29,6 +30,8 @@ use Temporal\Tests\Workflow\UpdateExceptionsWorkflow;
  */
 class FailureTestCase extends AbstractClient
 {
+    use WithoutTimeSkipping;
+
     public function testSimpleFailurePropagation()
     {
         $client = $this->createClient();
