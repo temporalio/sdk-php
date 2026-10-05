@@ -94,7 +94,7 @@ trait CoreStub
      * @param string $method
      * @param \Google\Protobuf\Internal\Message $argument
      * @param array{class-string<\Google\Protobuf\Internal\Message>, string} $deserialize
-     * @param array<string, list<string>> $metadata
+     * @param array<array-key, list<string>> $metadata
      * @psalm-suppress MoreSpecificImplementedParamType, ImplementedReturnTypeMismatch
      */
     protected function _simpleRequest($method, $argument, $deserialize, array $metadata = [], array $options = []): CoreCall
