@@ -280,6 +280,48 @@ final class CoreStubTestCase extends TestCase
         $this->assertNotSame('', $notFound->metadata['grpc-status-details-bin'][0]);
     }
 
+    public static function provideNamedTargets(): iterable
+    {
+        yield 'dns with an empty authority' => ['dns:///'];
+        yield 'dns without an authority' => ['dns:'];
+        yield 'dns with an authority' => ['dns://127.0.0.53/'];
+        yield 'ipv4' => ['ipv4:'];
+    }
+
+    #[DataProvider('provideNamedTargets')]
+    public function testNamedTargetReachesTheServer(string $prefix): void
+    {
+        $stub = new CoreWorkflowServiceStub($prefix . DevServer::address());
+
+        [$info, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS])->wait();
+
+        $this->assertSame(StatusCode::OK, $status->code, $status->details);
+        $this->assertInstanceOf(GetSystemInfoResponse::class, $info);
+    }
+
+    public static function provideUnixTargets(): iterable
+    {
+        yield 'unix:/path' => ['unix:'];
+        yield 'unix:///path' => ['unix://'];
+    }
+
+    #[DataProvider('provideUnixTargets')]
+    public function testUnixTargetConnectsToTheSocket(string $prefix): void
+    {
+        $socket = \sys_get_temp_dir() . '/tpb-' . \getmypid() . '.sock';
+        $listener = \stream_socket_server('unix://' . $socket);
+        $this->assertIsResource($listener);
+        $this->listener = $listener;
+        $stub = new CoreWorkflowServiceStub($prefix . $socket);
+
+        $ready = $stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS);
+        $connection = \stream_socket_accept($listener, 0);
+        \unlink($socket);
+
+        $this->assertTrue($ready);
+        $this->assertIsResource($connection);
+    }
+
     public function testAnsweredCallsMakeTheStubReady(): void
     {
         $stub = new CoreWorkflowServiceStub(DevServer::address());
