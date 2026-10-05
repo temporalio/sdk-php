@@ -284,9 +284,9 @@ abstract class BaseClient implements GrpcClientInterface
 
         do {
             ++$attempt;
+            $deadline = $ctx->getDeadline();
             try {
                 $options = $ctx->getOptions();
-                $deadline = $ctx->getDeadline();
                 if ($deadline !== null) {
                     $diff = (new \DateTime())->diff($deadline);
                     $options['timeout'] = \max(0, (int) CarbonInterval::instance($diff)->totalMicroseconds);
@@ -304,8 +304,10 @@ abstract class BaseClient implements GrpcClientInterface
 
                 return $result;
             } catch (ServiceClientException $e) {
+                $deadlineReached = $deadline !== null && new \DateTimeImmutable() > $deadline;
                 if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
-                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
+                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED
+                        || ($deadlineReached && $e->getCode() === StatusCode::CANCELLED)) {
                         throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
                     }
 
@@ -317,14 +319,13 @@ abstract class BaseClient implements GrpcClientInterface
                     throw $e;
                 }
 
+                if ($deadlineReached) {
+                    throw new TimeoutException('Call timeout has been reached');
+                }
+
                 if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
                     // Reached maximum attempts
                     throw $e;
-                }
-
-                if ($ctx->getDeadline() !== null && new \DateTimeImmutable() > $ctx->getDeadline()) {
-                    // Deadline is reached
-                    throw new TimeoutException('Call timeout has been reached');
                 }
 
                 // Init interval values in milliseconds
