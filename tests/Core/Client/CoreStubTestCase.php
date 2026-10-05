@@ -280,6 +280,42 @@ final class CoreStubTestCase extends TestCase
         $this->assertNotSame('', $notFound->metadata['grpc-status-details-bin'][0]);
     }
 
+    public function testAnsweredCallsMakeTheStubReady(): void
+    {
+        $stub = new CoreWorkflowServiceStub(DevServer::address());
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest())->wait();
+        $afterResponse = $stub->getConnectivityState();
+        $stub->DescribeNamespace((new DescribeNamespaceRequest())->setNamespace('missing-' . \bin2hex(\random_bytes(4))))->wait();
+
+        $this->assertSame(ConnectionState::Ready->value, $afterResponse);
+        $this->assertSame(ConnectionState::Ready->value, $stub->getConnectivityState());
+    }
+
+    public function testCallToClosedPortMakesTheStubTransientFailure(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        $stub->GetSystemInfo(new GetSystemInfoRequest())->wait();
+
+        $this->assertSame(ConnectionState::TransientFailure->value, $stub->getConnectivityState());
+    }
+
+    public function testReadyStubTurnsTransientFailureWhenTheServerGoesAway(): void
+    {
+        $stub = new CoreWorkflowServiceStub($this->silentListener());
+        $this->assertTrue($stub->waitForReady(self::WAIT_FOR_FAILURE_MICROSECONDS));
+        $call = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => self::WAIT_FOR_FAILURE_MICROSECONDS]);
+        $connection = \stream_socket_accept($this->listener, self::WAIT_FOR_FAILURE_MICROSECONDS / 1_000_000);
+        $this->assertIsResource($connection);
+        \fclose($connection);
+
+        [, $status] = $call->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+        $this->assertSame(ConnectionState::TransientFailure->value, $stub->getConnectivityState());
+    }
+
     private function silentListener(): string
     {
         $listener = \stream_socket_server(self::FREE_PORT_PROBE);

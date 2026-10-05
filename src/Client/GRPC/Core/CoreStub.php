@@ -142,11 +142,16 @@ trait CoreStub
         return $this->core;
     }
 
-    private function settle(): void
+    private function settle(int $grpcCode): void
     {
         if ($this->closed) {
             throw new \RuntimeException('startBatch Error. Channel is closed', self::CLOSED_CHANNEL_ERROR_CODE);
         }
+        $this->state = match ($grpcCode) {
+            StatusCode::OK => ConnectionState::Ready,
+            StatusCode::UNAVAILABLE => ConnectionState::TransientFailure,
+            default => $this->state,
+        };
     }
 
     private function assertOpen(string $method): void

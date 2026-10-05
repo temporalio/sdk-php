@@ -23,7 +23,7 @@ final class CoreCall
 
     /**
      * @param array{class-string<\Google\Protobuf\Internal\Message>, string} $deserialize
-     * @param \Closure(): void $settle
+     * @param \Closure(int): void $settle
      */
     public function __construct(
         private readonly Bridge $bridge,
@@ -43,7 +43,7 @@ final class CoreCall
         }
         $this->waited = true;
         [$grpcCode, $data] = $this->bridge->awaitCall($this->tag);
-        ($this->settle)();
+        ($this->settle)($grpcCode);
         $status = new \stdClass();
         $status->code = $grpcCode;
         $status->details = '';
