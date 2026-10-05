@@ -89,10 +89,10 @@ pub fn grpc_server_with(status: fn(&str) -> &'static str) -> std::io::Result<Str
             .build()?;
         rt.block_on(async move {
             let listener = tokio::net::TcpListener::from_std(listener)?;
-            while let Ok((socket, _)) = listener.accept().await {
+            loop {
+                let (socket, _) = listener.accept().await?;
                 tokio::spawn(answer(socket, status));
             }
-            Ok(())
         })
     });
     Ok(address)
