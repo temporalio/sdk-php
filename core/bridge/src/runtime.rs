@@ -4,6 +4,7 @@ use crate::queue::Queue;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, OnceLock};
+use std::time::Duration;
 use temporalio_client::Connection;
 use temporalio_common::telemetry::{
     CoreLog, CoreLogConsumer, Logger, PrometheusExporterOptions, TelemetryOptions,
@@ -86,6 +87,11 @@ fn new_runtime(config: &[u8]) -> Result<TpbRuntime, String> {
         .build();
     let options = RuntimeOptions::builder()
         .telemetry_options(telemetry)
+        .heartbeat_interval(
+            config
+                .worker_heartbeat_interval_ms
+                .map(Duration::from_millis),
+        )
         .build()?;
     let mut tokio = TokioRuntimeBuilder::default();
     tokio.inner.worker_threads(config.threads.get());
@@ -306,6 +312,18 @@ mod tests {
             "3 log records were dropped: the event queue was full"
         );
         assert_eq!(messages(&after[1..])?, vec![Value::from("after")]);
+        Ok(())
+    }
+
+    #[test]
+    fn worker_heartbeat_interval_outside_one_to_sixty_seconds_is_an_error() -> Checked {
+        let config = br#"{"threads":1,"log":"off","worker_heartbeat_interval_ms":500}"#;
+
+        assert_eq!(
+            new_runtime(config).err().as_deref(),
+            Some("heartbeat_interval (500ms) must be between 1s and 60s")
+        );
+        new_runtime(br#"{"threads":1,"log":"off","worker_heartbeat_interval_ms":1000}"#)?;
         Ok(())
     }
 

@@ -40,6 +40,7 @@ final class Bridge
     private const DEFAULT_THREADS = 1;
     private const NANOSECONDS_PER_MILLISECOND = 1_000_000;
     private const DEFAULT_LOG_FILTER = 'warn';
+    private const DEFAULT_WORKER_HEARTBEAT_INTERVAL_MS = 60_000;
     private const LOG_LEVELS = ['ERROR' => LogLevel::ERROR, 'WARN' => LogLevel::WARNING, 'INFO' => LogLevel::INFO];
     private const HEADER = __DIR__ . '/../../../core/bridge/include/temporal_php_bridge.h';
 
@@ -78,6 +79,7 @@ final class Bridge
             'threads' => CoreEnvironment::integer(CoreEnvironment::THREADS, self::DEFAULT_THREADS, 1),
             'log' => CoreEnvironment::string(CoreEnvironment::LOG) ?? self::DEFAULT_LOG_FILTER,
             'prometheus' => CoreEnvironment::string(CoreEnvironment::PROMETHEUS),
+            'worker_heartbeat_interval_ms' => CoreEnvironment::integer(CoreEnvironment::WORKER_HEARTBEAT_INTERVAL, self::DEFAULT_WORKER_HEARTBEAT_INTERVAL_MS, 0) ?: null,
         ]);
         $this->runtime = $this->construct('tpb_runtime_new', $config, \strlen($config));
         /** @var \FFI\CData $events */

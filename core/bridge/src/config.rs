@@ -27,6 +27,7 @@ pub struct RuntimeJson {
     pub threads: NonZeroUsize,
     pub log: String,
     pub prometheus: Option<String>,
+    pub worker_heartbeat_interval_ms: Option<u64>,
 }
 
 #[derive(Deserialize)]

@@ -8,12 +8,23 @@ use Coresdk\ActivityHeartbeat;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Revolt\EventLoop;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Api\Enums\V1\WorkerStatus;
+use Temporal\Api\Workflowservice\V1\ListWorkersRequest;
+use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Internal\Bridge\Bridge;
 use Temporal\Internal\Bridge\BridgeConnection;
 use Temporal\Internal\Bridge\CoreEnvironment;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Tests\Core\DevServer;
 use Temporal\Tests\Unit\Client\Stub\LoggerSpy;
 use Temporal\Tests\Core\Replayers;
+use Temporal\Worker\Core\CoreOptions;
+use Temporal\Worker\Core\CoreRole;
+use Temporal\Worker\Core\CoreWorkerConfig;
+use Temporal\Worker\Core\CoreWorkerFactory;
 
 final class BridgeTestCase extends TestCase
 {
@@ -22,6 +33,10 @@ final class BridgeTestCase extends TestCase
     private const CALL_TIMEOUT_MS = 5000;
     private const STARTED_EVENT_ID = 1;
     private const MORE_EVENTS_THAN_ONE_FETCH = 300;
+    private const HEARTBEAT_INTERVAL_MS = '1000';
+    private const HEARTBEAT_WAIT_SECONDS = 10.0;
+    private const HEARTBEATS = 2;
+    private const HEARTBEAT_CHECK_INTERVAL_US = 200_000;
 
     public function testSharedBridgeIsTheCurrentOne(): void
     {
@@ -63,6 +78,22 @@ final class BridgeTestCase extends TestCase
 
         self::assertSame(LogLevel::INFO, $logger->records[0]['level']);
         self::assertSame('temporalio_sdk_core', $logger->records[0]['context']['target']);
+    }
+
+    public function testRunningWorkerHeartbeatsAtTheConfiguredInterval(): void
+    {
+        $address = DevServer::address();
+        $bridge = self::withServer([CoreEnvironment::WORKER_HEARTBEAT_INTERVAL => self::HEARTBEAT_INTERVAL_MS], static fn(): Bridge => new Bridge());
+        $queue = \uniqid('core-heartbeat-', true);
+        $config = new CoreWorkerConfig(CoreOptions::create($address, null, null, null, null), new Marshaller(new AttributeMapperFactory(new AttributeReader())));
+        $worker = CoreWorkerFactory::create()->newWorker($queue);
+        $core = $bridge->newWorker(['connection' => $config->connection($worker)] + $config->build($worker, CoreRole::Workflow));
+        $bridge->pollWorkflowActivation($core, 1);
+
+        $statuses = self::heartbeats(ServiceClient::create($address), $queue);
+        $bridge->shutdownWorkers([1 => $core]);
+
+        self::assertSame(\array_fill(0, self::HEARTBEATS, WorkerStatus::WORKER_STATUS_RUNNING), \array_values($statuses));
     }
 
     public function testCallToAClosedPortIsUnavailable(): void
@@ -219,6 +250,26 @@ final class BridgeTestCase extends TestCase
         $bridge->shutdownWorkers([2 => $core]);
 
         self::assertCount(self::MORE_EVENTS_THAN_ONE_FETCH, $events);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private static function heartbeats(ServiceClient $client, string $queue): array
+    {
+        $statuses = [];
+        $deadline = \microtime(true) + self::HEARTBEAT_WAIT_SECONDS;
+        while (\count($statuses) < self::HEARTBEATS && \microtime(true) < $deadline) {
+            foreach ($client->ListWorkers(new ListWorkersRequest(['namespace' => 'default']))->getWorkersInfo() as $info) {
+                $heartbeat = $info->getWorkerHeartbeat();
+                if ($heartbeat?->getTaskQueue() === $queue) {
+                    $statuses[(string) $heartbeat->getHeartbeatTime()?->serializeToString()] = $heartbeat->getStatus();
+                }
+            }
+            \usleep(self::HEARTBEAT_CHECK_INTERVAL_US);
+        }
+
+        return $statuses;
     }
 
     /**
