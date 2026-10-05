@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Api\Enums\V1\EventType;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -56,6 +58,16 @@ class AwaitTestCase extends AbstractClient
         $wait->addValue('test3');
         $wait->addValue('test4');
 
+        try {
+            $result = $run->getResult(Type::TYPE_ARRAY, 3);
+        } catch (TimeoutException) {
+            $events = [];
+            foreach ($client->getWorkflowHistory($run->getExecution()) as $event) {
+                $events[] = EventType::name($event->getEventType());
+            }
+            $this->fail('No close event in 3 seconds, history: ' . \implode(', ', $events));
+        }
+
         $this->assertSame(
             [
                 'test1',
@@ -63,7 +75,7 @@ class AwaitTestCase extends AbstractClient
                 'test3',
                 'test4'
             ],
-            $run->getResult(Type::TYPE_ARRAY, 3)
+            $result,
         );
     }
 
