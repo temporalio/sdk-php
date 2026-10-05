@@ -254,6 +254,13 @@ final class Bridge
         }
     }
 
+    public function setApiKey(\FFI\CData $worker, string $apiKey): void
+    {
+        if ($this->ffi->tpb_worker_set_api_key($worker, $apiKey, \strlen($apiKey)) !== self::CALL_OK) {
+            throw new \RuntimeException('Unable to set the API key: the sdk-core worker has no connection or is finalized');
+        }
+    }
+
     public function initiateShutdown(\FFI\CData $worker): void
     {
         $this->ffi->tpb_worker_initiate_shutdown($worker);

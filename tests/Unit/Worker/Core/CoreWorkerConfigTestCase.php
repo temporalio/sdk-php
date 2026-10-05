@@ -118,25 +118,26 @@ final class CoreWorkerConfigTestCase extends TestCase
 
     public static function provideConnections(): iterable
     {
-        yield 'plain with process identity' => [null, WorkerOptions::new(), [
+        yield 'plain with process identity' => [null, WorkerOptions::new(), 'updated-key', [
             'target_url' => 'http://host:7233',
             'tls' => null,
             'client_name' => SdkVersion::SDK_NAME,
             'identity' => \getmypid() . '@' . \gethostname(),
-            'api_key' => 'key',
+            'api_key' => 'updated-key',
             'grpc_compression' => 'gzip',
         ]];
-        yield 'tls with identity' => [new ConfigTls(serverName: 'server'), WorkerOptions::new()->withIdentity('me'), [
+        yield 'tls with identity and no key' => [new ConfigTls(serverName: 'server'), WorkerOptions::new()->withIdentity('me'), '', [
             'target_url' => 'https://host:7233',
             'tls' => ['server_root_ca_cert' => null, 'domain' => 'server', 'client_cert' => null, 'client_private_key' => null],
             'identity' => 'me',
+            'api_key' => null,
         ]];
     }
 
     #[DataProvider('provideConnections')]
-    public function testConnection(?ConfigTls $tls, WorkerOptions $workerOptions, array $expected): void
+    public function testConnection(?ConfigTls $tls, WorkerOptions $workerOptions, string $apiKey, array $expected): void
     {
-        $connection = self::config(self::options(tls: $tls))->connection(self::worker($workerOptions));
+        $connection = self::config(self::options(tls: $tls))->connection(self::worker($workerOptions), $apiKey);
 
         self::assertSame($expected, \array_intersect_key($connection, $expected));
     }

@@ -46,7 +46,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 |---|---|---|
 | `TEMPORAL_ADDRESS` | `127.0.0.1:7233` | server address |
 | `TEMPORAL_NAMESPACE` | `default` | namespace |
-| `TEMPORAL_API_KEY` | none | API key, sent as `Authorization: Bearer <key>`. Turns TLS on. `ServiceCredentials::withApiKey()` passed to `create()` has priority |
+| `TEMPORAL_API_KEY` | none | API key, sent as `Authorization: Bearer <key>`. Turns TLS on. `ServiceCredentials::withApiKey()` passed to `create()` has priority. `$factory->updateApiKey($key)` replaces it at run time, as the RoadRunner `temporal.UpdateAPIKey` RPC: the worker polls send the new key. A `\Stringable` key is read again at least every 0.5 s in each worker process |
 | `TEMPORAL_TLS` | off | `true` turns TLS on with the system root certificates, `false` turns it off also with an API key |
 | `TEMPORAL_TLS_SERVER_CA_CERT_PATH` / `_DATA` | system roots | server root CA (PEM file or PEM text). Turns TLS on |
 | `TEMPORAL_TLS_CLIENT_CERT_PATH` / `_DATA` | none | client certificate for mTLS (PEM) |
@@ -56,7 +56,7 @@ Run it with plain `php worker.php`. No `rr` binary and no `.rr.yaml` are necessa
 | `TEMPORAL_CORE_WORKFLOW_PROCESSES` | `1` | workflow processes (each has its own sticky cache) |
 | `TEMPORAL_CORE_ACTIVITY_PROCESSES` | `1` | activity processes; `0` runs activities in the workflow process (they block workflow tasks while they run) |
 | `TEMPORAL_CORE_ACTIVITY_CONCURRENCY` | `1` | activities that one activity process runs at the same time in Fibers on the Revolt event loop (only for non-blocking activity code, `revolt/event-loop` must be installed) |
-| `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | `10000` | sticky cache size per workflow process |
+| `TEMPORAL_CORE_MAX_CACHED_WORKFLOWS` | from `memory_limit` | sticky cache size per workflow process. The default is (`memory_limit` − 64 MiB) / 64 KiB, from 10 to 10000 (`10000` with `memory_limit=-1`; 1024 with 128M), as TypeScript sizes `maxCachedWorkflows` from the heap limit: a cached workflow takes about 56 KB of PHP memory |
 | `TEMPORAL_CORE_THREADS` | `1` | tokio worker threads per process, a positive integer (1 thread uses 15–22 % less CPU than one per core). Another value throws an exception |
 | `TEMPORAL_CORE_GRPC_COMPRESSION` | `gzip` | `gzip` (sdk-core default) or `none`: gzip on the worker's gRPC calls saves network bytes and costs 7–15 % worker CPU. Another value stops the worker start with an error |
 | `TEMPORAL_CORE_PROMETHEUS_ADDRESS` | off | `host:port` of the sdk-core Prometheus exporter (`/metrics`): the worker metrics and the `temporal_request*` and `temporal_long_request*` metrics of its gRPC connection. Each worker process takes the first free port from this one, so 1 workflow + 4 activity processes on `127.0.0.1:9464` serve `9464`–`9468` |
@@ -162,5 +162,5 @@ When ext-grpc is not loaded, `ServiceClient`, `OperatorClient`, `CloudClient` an
 - **Deadlock detection:** `WorkerOptions::$deadlockDetectionTimeout` has no effect.
 - **Fiber concurrency** helps only activities that use non-blocking I/O. A blocking call (PDO, curl, `sleep`) stops all activities of the process. Fibers started inside an activity fiber (`Amp\async`, event loop callbacks) see the global Activity context; call `Activity::*` from the activity fiber itself.
 - **fork() after the runtime started:** the sdk-core runtime cannot be used in a process that forked after it started; `Bridge::shared()` throws a `LogicException` there.
-- **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned. `temporal.UpdateAPIKey` at run time is not supported.
+- **gRPC client without ext-grpc:** a failed call returns the status code, the message and `grpc-status-details-bin`; other response headers and trailers are not returned.
 - **Testing package:** the RR KV caches are not replaced; the Functional harness still starts `rr serve` as a KV store.

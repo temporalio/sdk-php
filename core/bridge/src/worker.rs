@@ -68,6 +68,17 @@ impl TpbWorker {
         CALL_OK
     }
 
+    fn set_api_key(&self, api_key: Option<String>) -> i32 {
+        let Ok(worker) = self.worker.try_read() else {
+            return CALL_FAILED;
+        };
+        let Some(connection) = worker.as_ref().and_then(Worker::get_client_connection) else {
+            return CALL_FAILED;
+        };
+        connection.set_api_key(api_key);
+        CALL_OK
+    }
+
     fn initiate_shutdown(&self) -> i32 {
         if self.shutdown_initiated.load(Ordering::Acquire) {
             return CALL_OK;
@@ -254,6 +265,18 @@ pub unsafe extern "C" fn tpb_record_activity_heartbeat(
 }
 
 #[unsafe(no_mangle)]
+pub unsafe extern "C" fn tpb_worker_set_api_key(
+    w: *mut TpbWorker,
+    api_key: *const libc::c_char,
+    len: usize,
+) -> i32 {
+    call(w, CALL_FAILED, |w| {
+        let api_key = bytes(api_key, len);
+        w.set_api_key((!api_key.is_empty()).then(|| String::from_utf8_lossy(api_key).into_owned()))
+    })
+}
+
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn tpb_worker_initiate_shutdown(w: *mut TpbWorker) -> i32 {
     call(w, CALL_FAILED, TpbWorker::initiate_shutdown)
 }
@@ -283,8 +306,12 @@ mod tests {
     use super::*;
     use crate::ffi::STATUS_SHUTDOWN;
     use crate::testing::{
-        Checked, GRPC_OK, events, grpc_server, grpc_server_with, only, pending_events, replayer,
-        runtime, start_worker, worker_json,
+        Authorizations, Checked, GRPC_OK, events, grpc_server, grpc_server_seeing_authorizations,
+        grpc_server_with, only, pending_events, replayer, runtime, start_worker, worker_json,
+    };
+    use std::{
+        sync::PoisonError,
+        time::{Duration, Instant},
     };
     use temporalio_common::protos::coresdk::{
         activity_result::ActivityExecutionResult,
@@ -296,6 +323,70 @@ mod tests {
 
     fn text(data: &[u8]) -> String {
         String::from_utf8_lossy(data).into_owned()
+    }
+
+    fn last_poll_sends(authorizations: &Authorizations, expected: Option<&str>) -> bool {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            let last = authorizations
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .last()
+                .cloned();
+            if last == Some(expected.map(str::to_owned)) {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        false
+    }
+
+    fn set_api_key(w: *mut TpbWorker, api_key: &str) -> i32 {
+        unsafe { tpb_worker_set_api_key(w, api_key.as_ptr().cast(), api_key.len()) }
+    }
+
+    #[test]
+    fn polls_send_the_api_key_set_at_run_time() -> Checked {
+        let rt = runtime();
+        let (server, authorizations) = grpc_server_seeing_authorizations()?;
+        let mut json = worker_json(&server);
+        json["connection"]["api_key"] = "old".into();
+        let w = start_worker(rt, &json)?;
+        unsafe { tpb_poll_workflow_activation(w, 1) };
+        assert!(last_poll_sends(&authorizations, Some("Bearer old")));
+
+        assert_eq!(set_api_key(w, "new"), CALL_OK);
+        assert!(last_poll_sends(&authorizations, Some("Bearer new")));
+
+        assert_eq!(set_api_key(w, ""), CALL_OK);
+        assert!(last_poll_sends(&authorizations, None));
+
+        unsafe { tpb_worker_finalize_shutdown(w, 2) };
+        assert_eq!(
+            events(rt, 2),
+            vec![
+                (1, KIND_WORKFLOW_ACTIVATION, STATUS_SHUTDOWN, vec![]),
+                (2, KIND_SHUTDOWN_FINALIZED, STATUS_OK, vec![]),
+            ]
+        );
+        unsafe {
+            tpb_worker_free(w);
+            release(rt);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn replayer_has_no_connection_for_an_api_key() -> Checked {
+        let rt = runtime();
+        let w = replayer(rt, false)?;
+
+        assert_eq!(set_api_key(w, "key"), CALL_FAILED);
+        unsafe {
+            tpb_worker_free(w);
+            release(rt);
+        }
+        Ok(())
     }
 
     #[test]
@@ -339,6 +430,7 @@ mod tests {
                 CALL_FAILED
             );
             assert_eq!(tpb_worker_initiate_shutdown(null), CALL_FAILED);
+            assert_eq!(set_api_key(null, "key"), CALL_FAILED);
             tpb_worker_finalize_shutdown(null, 5);
             tpb_worker_free(null);
         }
@@ -523,6 +615,7 @@ mod tests {
             CALL_FAILED
         );
         assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_FAILED);
+        assert_eq!(set_api_key(w, "key"), CALL_FAILED);
         drop(held);
         assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_OK);
         assert_eq!(unsafe { tpb_worker_initiate_shutdown(w) }, CALL_OK);
@@ -553,6 +646,7 @@ mod tests {
             tpb_complete_activity_task(w, 2, std::ptr::null(), 0);
             tpb_worker_finalize_shutdown(w, 3);
             assert_eq!(tpb_worker_initiate_shutdown(w), CALL_FAILED);
+            assert_eq!(set_api_key(w, "key"), CALL_FAILED);
             assert_eq!(
                 tpb_record_activity_heartbeat(w, std::ptr::null(), 0),
                 CALL_FAILED

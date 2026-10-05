@@ -41,6 +41,7 @@ class CoreWorkerFactory extends WorkerFactory
     private CoreWorkerConfig $config;
     private ActivityTasks $activityTasks;
     private LoggerInterface $logger;
+    private \Stringable|string $apiKey;
 
     /** @var null|\Closure(class-string<Message>, string): void */
     private ?\Closure $wire = null;
@@ -68,8 +69,14 @@ class CoreWorkerFactory extends WorkerFactory
         $factory->options = CoreOptions::create($address, $namespace, $credentials, $workflowProcesses, $activityProcesses);
         $factory->config = new CoreWorkerConfig($factory->options, $factory->marshaller);
         $factory->logger = $logger ?? new StderrLogger();
+        $factory->apiKey = $factory->options->apiKey ?? '';
 
         return $factory;
+    }
+
+    public function updateApiKey(\Stringable|string $key): void
+    {
+        $this->apiKey = $key;
     }
 
     public function run(?HostConnectionInterface $host = null): int
@@ -144,6 +151,7 @@ class CoreWorkerFactory extends WorkerFactory
             $this->logger,
             $role === CoreRole::Activity && $this->options->activityConcurrency > 1,
             $supervised ? \posix_getppid() : null,
+            fn(): string => (string) $this->apiKey,
             $this->wire,
         );
 
@@ -162,7 +170,7 @@ class CoreWorkerFactory extends WorkerFactory
                 $config = $this->config->build($worker, $role);
                 if ($config['workflows'] || $config['remote_activities']) {
                     $handles[] = new CoreWorkerHandle(
-                        $bridge->newWorker(['connection' => $this->config->connection($worker)] + $config),
+                        $bridge->newWorker(['connection' => $this->config->connection($worker, (string) $this->apiKey)] + $config),
                         (string) $worker->getID(),
                         $this->activations($worker, $this->dispatch(...)),
                         $config['workflows'],
