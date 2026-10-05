@@ -112,7 +112,9 @@ trait CoreStub
 
     private static function milliseconds(int $microseconds): int
     {
-        return \intdiv($microseconds + self::MICROSECONDS_PER_MILLISECOND - 1, self::MICROSECONDS_PER_MILLISECOND);
+        $milliseconds = \intdiv($microseconds, self::MICROSECONDS_PER_MILLISECOND);
+
+        return $microseconds % self::MICROSECONDS_PER_MILLISECOND > 0 ? $milliseconds + 1 : $milliseconds;
     }
 
     /**

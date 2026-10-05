@@ -92,6 +92,16 @@ final class CoreStubTestCase extends TestCase
         $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
     }
 
+    public function testLargestIntegerTimeoutIsAccepted(): void
+    {
+        $stub = new CoreWorkflowServiceStub(self::CLOSED_ADDRESS);
+
+        [, $status] = $stub->GetSystemInfo(new GetSystemInfoRequest(), [], ['timeout' => \PHP_INT_MAX])->wait();
+
+        $this->assertSame(StatusCode::UNAVAILABLE, $status->code);
+        $this->assertFalse($stub->waitForReady(\PHP_INT_MAX));
+    }
+
     public function testHandshakeThatNeverEndsStaysConnectingUntilClosed(): void
     {
         $stub = new CoreWorkflowServiceStub($this->silentListener(), BridgeConnection::tls(null, null, null, null));

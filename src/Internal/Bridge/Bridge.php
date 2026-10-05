@@ -190,11 +190,11 @@ final class Bridge
      */
     public function pollCall(int $tag, int $timeoutMs): ?array
     {
-        $deadline = \hrtime(true) + $timeoutMs * self::NANOSECONDS_PER_MILLISECOND;
+        $deadline = self::nowMilliseconds() + $timeoutMs;
         do {
-            $left = \max(0, \intdiv($deadline - \hrtime(true), self::NANOSECONDS_PER_MILLISECOND));
+            $left = \max(0, $deadline - self::nowMilliseconds());
             \array_push($this->backlog, ...$this->fetch(\min($left, self::POLL_TIMEOUT_MS)));
-        } while (!isset($this->rpcResults[$tag]) && \hrtime(true) < $deadline);
+        } while (!isset($this->rpcResults[$tag]) && self::nowMilliseconds() < $deadline);
         $result = $this->rpcResults[$tag] ?? null;
         if ($result !== null) {
             unset($this->rpcResults[$tag]);
@@ -316,6 +316,11 @@ final class Bridge
         \array_push($this->backlog, ...$events);
 
         return $events;
+    }
+
+    private static function nowMilliseconds(): int
+    {
+        return \intdiv(\hrtime(true), self::NANOSECONDS_PER_MILLISECOND);
     }
 
     private static function json(array $value): string
