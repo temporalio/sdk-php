@@ -43,8 +43,9 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         private ValuesInterface $input,
         private HeaderInterface $header,
         private readonly ?ValuesInterface $lastHeartbeatDetails = null,
+        ?ActivityInfo $info = null,
     ) {
-        $this->info = new ActivityInfo();
+        $this->info = $info ?? new ActivityInfo();
     }
 
     public function getInfo(): ActivityInfo

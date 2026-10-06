@@ -33,7 +33,10 @@ use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Tests\Acceptance\App\Transport\RecordingCoreWire;
 use Temporal\Tests\Acceptance\App\Transport\RecordingHost;
+use Temporal\Worker\Core\CoreWorkerFactory;
+use Temporal\Tests\CoreWorker;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
@@ -98,13 +101,22 @@ try {
     $container->bindSingleton(DataConverter::class, $converter);
 
     $plugins = [new TranscriptPlugin($workerTranscript)];
-    $container->bindSingleton(
-        WorkerFactoryInterface::class,
-        WorkerFactory::create(
+    $coreTransport = CoreWorker::enabled();
+    if ($coreTransport) {
+        $factory = CoreWorkerFactory::create(
             converter: $converter,
             pluginRegistry: new PluginRegistry($plugins),
-        )
-    );
+            address: $runtime->address,
+            namespace: $runtime->namespace,
+        );
+        $factory->observeWire((new RecordingCoreWire($workerTranscript))(...));
+    } else {
+        $factory = WorkerFactory::create(
+            converter: $converter,
+            pluginRegistry: new PluginRegistry($plugins),
+        );
+    }
+    $container->bindSingleton(WorkerFactoryInterface::class, $factory);
 
     $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
     $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
@@ -141,8 +153,8 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $host = new RecordingHost(RoadRunner::create(), $workerTranscript);
-    $container->get(WorkerFactoryInterface::class)->run($host);
+    $host = $coreTransport ? null : new RecordingHost(RoadRunner::create(), $workerTranscript);
+    exit($container->get(WorkerFactoryInterface::class)->run($host));
 } catch (\Throwable $e) {
     $workerTranscript->writeFatal($e);
     $workerTranscript->flush();
