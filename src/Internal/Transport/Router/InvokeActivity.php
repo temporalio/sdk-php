@@ -117,9 +117,7 @@ class InvokeActivity extends Route
                 $resolver->resolve($resultPayloads);
             }
         } catch (\Throwable $e) {
-            if ($e instanceof TemporalFailure) {
-                $e->setSerializationContext($serializationContext);
-            }
+            TemporalFailure::bindSerializationContext($e, $serializationContext);
 
             $resolver->reject($e);
         } finally {

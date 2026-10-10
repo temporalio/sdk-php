@@ -17,6 +17,7 @@ use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -381,7 +382,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function panic(?\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            function (PanicInput $failure): PromiseInterface {
+                if ($failure->failure !== null) {
+                    TemporalFailure::bindSerializationContext($failure->failure, $this->getSerializationContext());
+                }
+
+                return $this->request(new Panic($failure->failure), false);
+            },
             /** @see WorkflowOutboundCallsInterceptor::panic() */
             'panic',
         )(new PanicInput($failure));

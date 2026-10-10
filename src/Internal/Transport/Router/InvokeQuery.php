@@ -92,9 +92,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     $context->applySerializationContext($resultValues);
                     $resolver->resolve($resultValues);
                 } catch (\Throwable $e) {
-                    if ($e instanceof TemporalFailure) {
-                        $e->setSerializationContext($context->getSerializationContext());
-                    }
+                    TemporalFailure::bindSerializationContext($e, $context->getSerializationContext());
 
                     $resolver->reject($e);
                 }

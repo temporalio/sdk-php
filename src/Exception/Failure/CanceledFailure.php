@@ -38,9 +38,8 @@ class CanceledFailure extends TemporalFailure
         $this->details->setSerializationContext($this->getSerializationContext());
     }
 
-    public function setSerializationContext(?SerializationContext $context): void
+    protected function applySerializationContext(?SerializationContext $context): void
     {
-        parent::setSerializationContext($context);
         $this->details->setSerializationContext($context);
     }
 }

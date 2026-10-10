@@ -78,9 +78,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             }
         } catch (\Throwable $e) {
-            if ($e instanceof TemporalFailure) {
-                $e->setSerializationContext($context->getSerializationContext());
-            }
+            TemporalFailure::bindSerializationContext($e, $context->getSerializationContext());
 
             $context->getClient()->send(
                 new UpdateResponse(
@@ -109,9 +107,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             },
             static function (\Throwable $err) use ($updateId, $context): void {
-                if ($err instanceof TemporalFailure) {
-                    $err->setSerializationContext($context->getSerializationContext());
-                }
+                TemporalFailure::bindSerializationContext($err, $context->getSerializationContext());
 
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,

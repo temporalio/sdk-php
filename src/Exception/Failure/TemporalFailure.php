@@ -44,6 +44,18 @@ class TemporalFailure extends TemporalException implements \Stringable
         $this->originalMessage = $originalMessage ?? '';
     }
 
+    public static function bindSerializationContext(\Throwable $error, SerializationContext $context): void
+    {
+        $failure = $error;
+        while ($failure !== null && !$failure instanceof self) {
+            $failure = $failure->getPrevious();
+        }
+
+        if ($failure instanceof self) {
+            $failure->setSerializationContext($context);
+        }
+    }
+
     public function getFailure(): ?Failure
     {
         return $this->failure;
@@ -99,7 +111,12 @@ class TemporalFailure extends TemporalException implements \Stringable
 
     public function setSerializationContext(?SerializationContext $context): void
     {
+        if ($this->serializationContext !== null) {
+            return;
+        }
+
         $this->serializationContext = $context;
+        $this->applySerializationContext($context);
 
         $previous = $this->getPrevious();
         while ($previous !== null) {
@@ -143,4 +160,6 @@ class TemporalFailure extends TemporalException implements \Stringable
 
         return parent::buildMessage($result);
     }
+
+    protected function applySerializationContext(?SerializationContext $context): void {}
 }
