@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Exception\Failure;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 
 class TimeoutFailure extends TemporalFailure
@@ -47,6 +48,13 @@ class TimeoutFailure extends TemporalFailure
 
     public function setDataConverter(DataConverterInterface $converter): void
     {
+        parent::setDataConverter($converter);
         $this->lastHeartbeatDetails->setDataConverter($converter);
+        $this->lastHeartbeatDetails->setSerializationContext($this->getSerializationContext());
+    }
+
+    protected function applySerializationContext(?SerializationContext $context): void
+    {
+        $this->lastHeartbeatDetails->setSerializationContext($context);
     }
 }

@@ -15,8 +15,10 @@ use React\Promise\Deferred;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -56,7 +58,12 @@ final class StartWorkflow extends Route
 
         // Search Attributes and Typed Search Attributes
         $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
-        $memo = $this->convertMemo($options['info']['Memo'] ?? null);
+        $memoContext = new WorkflowSerializationContext(
+            (string) ($options['info']['Namespace'] ?? ''),
+            (string) ($options['info']['WorkflowExecution']['ID'] ?? ''),
+        );
+        $memo = $this->convertMemo($options['info']['Memo'] ?? null, $this->services->dataConverter);
+        $memo?->setSerializationContext($memoContext);
         $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
         $options['info']['TypedSearchAttributes'] = $this->prepareTypedSA($options['search_attributes'] ?? null);
         $options['info']['Memo'] = $memo?->getValues();
@@ -65,12 +72,16 @@ final class StartWorkflow extends Route
         $input = $this->services->marshaller->unmarshal($options, new Input());
 
         /** @psalm-suppress InaccessibleProperty */
-        $input->input = $payloads;
-        /** @psalm-suppress InaccessibleProperty */
         $input->header = $request->getHeader();
 
         $info = $input->info;
         $request->getTickInfo()->applyTo($info);
+
+        $serializationContext = WorkflowSerializationContext::fromInfo($info);
+        $payloads->setSerializationContext($serializationContext);
+        /** @psalm-suppress InaccessibleProperty */
+        $input->input = $payloads;
+        $lastCompletionResult?->setSerializationContext($serializationContext);
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
@@ -85,7 +96,9 @@ final class StartWorkflow extends Route
 
         $process = new Process($this->services, $runId, $instance);
         $this->services->running->add($process);
-        $resolver->resolve(EncodedValues::fromValues([null]));
+        $ack = EncodedValues::fromValues([null], $this->services->dataConverter);
+        $ack->setSerializationContext($serializationContext);
+        $resolver->resolve($ack);
         $process->initAndStart($context, $instance, $this->wfStartDeferred);
     }
 
@@ -122,7 +135,7 @@ final class StartWorkflow extends Route
         }
     }
 
-    private function convertMemo(?array $param): ?EncodedCollection
+    private function convertMemo(?array $param, DataConverterInterface $converter): ?EncodedCollection
     {
         if (!\is_array($param)) {
             return null;
@@ -141,7 +154,7 @@ final class StartWorkflow extends Route
 
             return EncodedCollection::fromPayloadCollection(
                 $memo->getFields(),
-                $this->services->dataConverter,
+                $converter,
             );
         } catch (\Throwable) {
             return null;

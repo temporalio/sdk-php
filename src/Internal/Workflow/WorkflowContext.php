@@ -17,6 +17,7 @@ use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -26,9 +27,13 @@ use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SideEffectOptions;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\ActivitySerializationContext;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
@@ -61,10 +66,14 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
+use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
+use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
 use Temporal\Internal\Transport\Request\UpsertMemo;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
@@ -107,6 +116,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $readonly = true;
     protected bool $inReadOnlyCallback = false;
     protected ?string $currentDetails = null;
+    protected int $childWorkflowSequence = 0;
+    private ?WorkflowSerializationContext $serializationContext = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -226,6 +237,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
         $clone->trace = &$this->trace;
         $clone->input = $input;
+        $clone->serializationContext = null;
+        $clone->childWorkflowSequence = &$this->childWorkflowSequence;
         return $clone;
     }
 
@@ -328,10 +341,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
-            $this->request(new SideEffect(
-                EncodedValues::fromValues([$value]),
-                $options === null ? [] : $this->services->marshaller->marshal($options),
-            )),
+            $this->request(
+                new SideEffect(
+                    EncodedValues::fromValues([$value]),
+                    $options === null ? [] : $this->services->marshaller->marshal($options),
+                ),
+            ),
             $returnType,
         );
         return $last();
@@ -354,7 +369,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     ? EncodedValues::fromValues($input->result)
                     : EncodedValues::empty();
 
-                return $this->request(new CompleteWorkflow($values, $input->failure), false);
+                return $this->request(
+                    new CompleteWorkflow($values, $input->failure),
+                    false,
+                );
             },
             /** @see WorkflowOutboundCallsInterceptor::complete() */
             'complete',
@@ -364,7 +382,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function panic(?\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            function (PanicInput $failure): PromiseInterface {
+                if ($failure->failure !== null) {
+                    TemporalFailure::bindSerializationContext($failure->failure, $this->getSerializationContext());
+                }
+
+                return $this->request(new Panic($failure->failure), false);
+            },
             /** @see WorkflowOutboundCallsInterceptor::panic() */
             'panic',
         )(new PanicInput($failure));
@@ -543,6 +567,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
             function (RequestInterface $request) use ($waitResponse): PromiseInterface {
+                $this->bindOutboundSerializationContext($request);
+
                 if (!$waitResponse) {
                     $this->client->send($request);
                     return Promise::resolve();
@@ -813,6 +839,27 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->currentDetails = $details;
     }
 
+    public function getSerializationContext(): WorkflowSerializationContext
+    {
+        return $this->serializationContext ??= WorkflowSerializationContext::fromInfo($this->getInfo());
+    }
+
+    public function generateChildWorkflowId(): string
+    {
+        return $this->getInfo()->execution->getRunID() . '_' . (++$this->childWorkflowSequence);
+    }
+
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->services->dataConverter;
+    }
+
+    public function applySerializationContext(ValuesInterface $values): void
+    {
+        $values->setDataConverter($this->getDataConverter());
+        $values->setSerializationContext($this->getSerializationContext());
+    }
+
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $result = [];
@@ -901,5 +948,58 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    private function bindOutboundSerializationContext(RequestInterface $request): void
+    {
+        $context = $this->resolveOutboundSerializationContext($request);
+        if ($context === null) {
+            return;
+        }
+
+        $request->getPayloads()->setSerializationContext($context);
+    }
+
+    private function resolveOutboundSerializationContext(RequestInterface $request): ?SerializationContext
+    {
+        if ($request instanceof CompleteWorkflow
+            || $request instanceof SideEffect
+            || $request instanceof ContinueAsNew
+        ) {
+            return $this->getSerializationContext();
+        }
+
+        $info = $this->getInfo();
+
+        if ($request instanceof ExecuteActivity || $request instanceof ExecuteLocalActivity) {
+            return new ActivitySerializationContext(
+                namespace: $info->namespace,
+                activityType: $request->getActivityName(),
+                taskQueue: $request->getTaskQueue() ?? $info->taskQueue,
+                workflowId: $info->execution->getID(),
+                workflowType: $info->type->name,
+                isLocal: $request instanceof ExecuteLocalActivity,
+            );
+        }
+
+        if ($request instanceof ExecuteChildWorkflow) {
+            $workflowId = $request->getWorkflowId();
+
+            return $workflowId === null
+                ? null
+                : new WorkflowSerializationContext(
+                    $request->getNamespace() !== '' ? $request->getNamespace() : $info->namespace,
+                    $workflowId,
+                );
+        }
+
+        if ($request instanceof SignalExternalWorkflow) {
+            return new WorkflowSerializationContext(
+                $request->getNamespace() !== '' ? $request->getNamespace() : $info->namespace,
+                $request->getWorkflowId(),
+            );
+        }
+
+        return null;
     }
 }

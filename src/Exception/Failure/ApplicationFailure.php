@@ -13,6 +13,7 @@ namespace Temporal\Exception\Failure;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
@@ -98,7 +99,9 @@ class ApplicationFailure extends TemporalFailure
 
     public function setDataConverter(DataConverterInterface $converter): void
     {
+        parent::setDataConverter($converter);
         $this->details->setDataConverter($converter);
+        $this->details->setSerializationContext($this->getSerializationContext());
     }
 
     public function setNextRetryDelay(?\DateInterval $nextRetryDelay): void
@@ -109,5 +112,10 @@ class ApplicationFailure extends TemporalFailure
     public function getApplicationErrorCategory(): ApplicationErrorCategory
     {
         return $this->category;
+    }
+
+    protected function applySerializationContext(?SerializationContext $context): void
+    {
+        $this->details->setSerializationContext($context);
     }
 }
