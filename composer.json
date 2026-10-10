@@ -33,7 +33,7 @@
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
         "roadrunner/api-dto": "^2.1",
-        "roadrunner/cli": "^2.9",
+        "roadrunner/cli": "^3.0",
         "roadrunner/kv": "^4.5",
         "roadrunner/version-checker": "^1.4",
         "roadrunner/worker": "^3.8",
