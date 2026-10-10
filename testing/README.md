@@ -164,7 +164,7 @@ testing workflows. So, we can mock them in order to unit test different flows of
 
 #### RoadRunner config
 
-Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/spiral/roadrunner-kv), so you need to
+Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/roadrunner-php/kv), so you need to
 add the following lines to your `tests/.rr.test.yaml` for testing:
 
 ```yaml
