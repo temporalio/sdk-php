@@ -10,6 +10,8 @@ use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
+use Temporal\Workflow\AwaitOptions;
+use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\WorkflowMethod;
 
 use function PHPUnit\Framework\assertFalse;
@@ -131,6 +133,56 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
         $this->worker->sendSignal('AwaitWorkflow', 'cancel');
         $this->worker->assertWorkflowReturns('CANCEL');
 
+        $this->factory->run($this->worker);
+    }
+
+    public function testAwaitWithTimeoutStartsTimerWithSummaryFromAwaitOptions(): void
+    {
+        // We don't have native PHPUnit assertions in this scenario
+        $this->expectNotToPerformAssertions();
+
+        $this->worker->registerWorkflowObject(
+            new
+            #[Workflow\WorkflowInterface]
+            class {
+                #[WorkflowMethod(name: 'AwaitWorkflow')]
+                public function handler(): iterable
+                {
+                    yield Workflow::awaitWithTimeout(
+                        AwaitOptions::new(5)->withTimerOptions(
+                            TimerOptions::new()->withSummary('await-summary'),
+                        ),
+                        fn() => false,
+                    );
+                    return 'OK';
+                }
+            }
+        );
+
+        $this->worker->runWorkflow('AwaitWorkflow');
+        $this->worker->expectTimer(5, 'await-summary');
+        $this->worker->assertWorkflowReturns('OK');
+        $this->factory->run($this->worker);
+    }
+
+    public function testAwaitWithTimeoutAcceptsAwaitOptionsWithoutTimerOptions(): void
+    {
+        $this->worker->registerWorkflowObject(
+            new
+            #[Workflow\WorkflowInterface]
+            class {
+                #[WorkflowMethod(name: 'AwaitWorkflow')]
+                public function handler(): iterable
+                {
+                    $result = yield Workflow::awaitWithTimeout(AwaitOptions::new(5), fn() => true);
+                    assertTrue($result);
+                    return 'OK';
+                }
+            }
+        );
+
+        $this->worker->runWorkflow('AwaitWorkflow');
+        $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
     }
 }

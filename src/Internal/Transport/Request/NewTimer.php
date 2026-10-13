@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Carbon\CarbonInterval;
-use Temporal\Internal\Workflow\AwaitOptions;
 use Temporal\Worker\Transport\Command\Client\Request;
+use Temporal\Workflow\AwaitOptions;
 
 /**
  * @psalm-immutable

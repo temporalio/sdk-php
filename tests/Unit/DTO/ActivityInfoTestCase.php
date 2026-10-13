@@ -33,9 +33,9 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
             ],
             'TaskQueue'         => 'default',
             'HeartbeatTimeout'  => 0,
-            'ScheduledTime'     => $dto->scheduledTime->toRfc3339String(),
-            'StartedTime'       => $dto->startedTime->toRfc3339String(),
-            'Deadline'          => $dto->deadline->toRfc3339String(),
+            'ScheduledTime'     => $dto->scheduledTime->format(\DATE_RFC3339),
+            'StartedTime'       => $dto->startedTime->format(\DATE_RFC3339),
+            'Deadline'          => $dto->deadline->format(\DATE_RFC3339),
             'Attempt'           => 1,
             'Priority' => [
                 'priority_key' => 0,

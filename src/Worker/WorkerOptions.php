@@ -335,7 +335,7 @@ class WorkerOptions
      * @since RoadRunner 2025.1.3
      */
     #[Marshal(name: 'DeploymentOptions')]
-    public WorkerDeploymentOptions $deploymentOptions;
+    public ?WorkerDeploymentOptions $deploymentOptions = null;
 
     #[Pure]
     public static function new(): self
