@@ -288,7 +288,7 @@ class WorkerOptions
      *
      * @see self::$disableEagerActivities for a description of eager activity execution.
      *
-     * @since RoadRunner 2025.1.16
+     * @since RoadRunner 3.0.0
      */
     #[Marshal(name: 'MaxEagerActivityReservationsPerWorkflowTask')]
     public ?int $maxEagerActivityReservationsPerWorkflowTask = null;
@@ -812,7 +812,7 @@ class WorkerOptions
      *
      * @see self::$disableEagerActivities for a description of eager activity execution.
      *
-     * @since RoadRunner 2025.1.16
+     * @since RoadRunner 3.0.0
      */
     #[Pure]
     public function withMaxEagerActivityReservationsPerWorkflowTask(int $value): self
