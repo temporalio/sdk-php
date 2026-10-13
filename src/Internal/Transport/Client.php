@@ -13,7 +13,9 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -37,7 +39,7 @@ final class Client implements ClientInterface
         'a request with that identifier was not sent';
 
     /**
-     * @var array<int, array{Deferred, WorkflowContextInterface|null}>
+     * @var array<int, array{Deferred, WorkflowContextInterface|null, SerializationContext|null}>
      */
     private array $requests = [];
 
@@ -55,7 +57,7 @@ final class Client implements ClientInterface
             return;
         }
 
-        [$deferred, $context] = $this->requests[$id];
+        [$deferred, $context, $requestContext] = $this->requests[$id];
         unset($this->requests[$id]);
 
         $info = $context->getInfo();
@@ -66,9 +68,18 @@ final class Client implements ClientInterface
         // Bind workflow context for promise resolution
         Workflow::setCurrentContext($context);
         if ($response instanceof FailureResponseInterface) {
-            $deferred->reject($response->getFailure());
+            $failure = $response->getFailure();
+            if ($requestContext !== null && $failure instanceof TemporalFailure) {
+                $failure->setSerializationContext($requestContext);
+            }
+
+            $deferred->reject($failure);
         } else {
-            $deferred->resolve($response->getPayloads());
+            $payloads = $response->getPayloads();
+            if ($requestContext !== null && $payloads !== null) {
+                $payloads->setSerializationContext($requestContext);
+            }
+            $deferred->resolve($payloads);
         }
     }
 
@@ -78,12 +89,14 @@ final class Client implements ClientInterface
 
         $id = $request->getID();
 
-        \array_key_exists($id, $this->requests) and throw new \OutOfBoundsException(
-            \sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id),
-        );
+        if (\array_key_exists($id, $this->requests)) {
+            throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
+        }
+
+        $requestContext = $request->getPayloads()->getSerializationContext();
 
         $deferred = new Deferred();
-        $this->requests[$id] = [$deferred, $context];
+        $this->requests[$id] = [$deferred, $context, $requestContext];
 
         return $deferred->promise();
     }
