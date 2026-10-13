@@ -80,9 +80,17 @@ jobs:
         run: vendor/bin/validate-prefer-lowest
         continue-on-error: true
 
+      - name: Set up Go
+        if: inputs.download-binaries == true
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+
       - name: Download binaries
         if: inputs.download-binaries == true
         run: composer get:binaries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests
         run: ${{ inputs.test-command }}

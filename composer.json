@@ -95,6 +95,7 @@
     "scripts": {
         "get:binaries": [
             "dload get --no-interaction -vv",
+            "dload build --no-interaction",
             "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate"
         ],
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",

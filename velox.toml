@@ -1,0 +1,33 @@
+[roadrunner]
+ref = "master"
+
+[log]
+level = "info"
+mode = "production"
+
+[github.token]
+token = "${GITHUB_TOKEN}"
+
+[plugins.logger]
+tag = "latest"
+module_name = "github.com/roadrunner-server/logger/v6"
+
+[plugins.rpc]
+tag = "latest"
+module_name = "github.com/roadrunner-server/rpc/v6"
+
+[plugins.server]
+tag = "latest"
+module_name = "github.com/roadrunner-server/server/v6"
+
+[plugins.kv]
+tag = "latest"
+module_name = "github.com/roadrunner-server/kv/v6"
+
+[plugins.memory]
+tag = "latest"
+module_name = "github.com/roadrunner-server/memory/v6"
+
+[plugins.temporal]
+tag = "v6.0.1-0.20261013100643-a9a42035d132"
+module_name = "github.com/temporalio/roadrunner-temporal/v6"

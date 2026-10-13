@@ -21,5 +21,3 @@ kv:
 
 logs:
     mode: none #info
-    output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/runtime/rr.log
-    err_output: /Users/xepozz/IdeaProjects/temporalio/sdk-php/runtime/rr.err.log
