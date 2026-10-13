@@ -30,6 +30,7 @@ use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowProxy;
 use Temporal\Internal\Workflow\NexusServiceProxy;
 use Temporal\Workflow\ActivityStubInterface;
+use Temporal\Workflow\AwaitOptions;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
@@ -336,12 +337,24 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param DateIntervalValue $interval
+     * Pass {@see AwaitOptions} instead of a timeout value to configure the underlying timer,
+     * for example to set its summary displayed in UI/CLI:
+     *
+     * ```php
+     *  yield Workflow::awaitWithTimeout(
+     *      AwaitOptions::new(42)->withTimerOptions(
+     *          TimerOptions::new()->withSummary('continued-wait'),
+     *      ),
+     *      fn() => $this->continued,
+     *  );
+     * ```
+     *
+     * @param DateIntervalValue|AwaitOptions $intervalOrOptions Timeout value or await options.
      * @return PromiseInterface<bool>
      */
-    public static function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public static function awaitWithTimeout($intervalOrOptions, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
-        return self::getCurrentContext()->awaitWithTimeout($interval, ...$conditions);
+        return self::getCurrentContext()->awaitWithTimeout($intervalOrOptions, ...$conditions);
     }
 
     /**

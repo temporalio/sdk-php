@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Internal\Transport\Router;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use React\Promise\Deferred;
+use Temporal\DataConverter\RawValue;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -108,7 +109,9 @@ final class GetWorkerInfoTestCase extends TestCase
         self::assertInstanceOf(ValuesInterface::class, $resolved);
         $values = $resolved->getValues();
         self::assertCount(1, $values, 'one worker entry expected');
-        return $values[0];
+        \assert($values[0] instanceof RawValue);
+
+        return (array) \json_decode($values[0]->getPayload()->getData(), true, flags: \JSON_THROW_ON_ERROR);
     }
 
     /**

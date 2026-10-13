@@ -60,6 +60,11 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
         $this->assertEquals($expected, $this->marshal($dto));
     }
 
+    public function testDeploymentOptionsDefaultsToNull(): void
+    {
+        self::assertNull(WorkerOptions::new()->deploymentOptions);
+    }
+
     public function testDeploymentOptionsNoUse(): void
     {
         $dto = new WorkerOptions();

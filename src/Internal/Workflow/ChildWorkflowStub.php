@@ -69,11 +69,19 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             throw new \LogicException('Child workflow already has been executed');
         }
 
+        $options = $this->options->workflowId === null
+            ? $this->options->withWorkflowId($this->generateChildWorkflowId())
+            : $this->options;
+
+        $arguments = EncodedValues::fromValues($args);
+
         $this->request = new ExecuteChildWorkflow(
             $this->workflow,
-            EncodedValues::fromValues($args),
-            $this->getOptionArray(),
+            $arguments,
+            $this->marshaller->marshal($options),
             $this->header,
+            $this->resolveNamespace(),
+            $options->workflowId,
         );
 
         $cancellable = FeatureFlags::$cancelAbandonedChildWorkflows
@@ -113,16 +121,16 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     {
         return $this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
-                $request = new SignalExternalWorkflow(
-                    $this->getOptions()->namespace,
-                    $execution->getID(),
-                    null,
-                    $name,
-                    EncodedValues::fromValues($args),
-                    true,
+                return $this->request(
+                    new SignalExternalWorkflow(
+                        $this->resolveNamespace(),
+                        $execution->getID(),
+                        null,
+                        $name,
+                        EncodedValues::fromValues($args),
+                        true,
+                    ),
                 );
-
-                return $this->request($request);
             },
         );
     }
@@ -132,8 +140,18 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return Workflow::getCurrentContext()->request($request, cancellable: $cancellable);
     }
 
-    private function getOptionArray(): array
+    private function generateChildWorkflowId(): string
     {
-        return $this->marshaller->marshal($this->getOptions());
+        $context = Workflow::getCurrentContext();
+        \assert($context instanceof WorkflowContext);
+
+        return $context->generateChildWorkflowId();
+    }
+
+    private function resolveNamespace(): string
+    {
+        return $this->options->namespace !== ''
+            ? $this->options->namespace
+            : Workflow::getCurrentContext()->getInfo()->namespace;
     }
 }

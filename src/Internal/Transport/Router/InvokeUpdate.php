@@ -14,6 +14,7 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
 use Temporal\Worker\Transport\Command\Client\CommandResponse;
@@ -42,11 +43,14 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             $info = $context->getInfo();
             $request->getTickInfo()->applyTo($info);
 
+            $arguments = $request->getPayloads();
+            $context->applySerializationContext($arguments);
+
             $input = new UpdateInput(
                 updateName: $name,
                 updateId: $updateId,
                 info: $context->getInfo(),
-                arguments: $request->getPayloads(),
+                arguments: $arguments,
                 header: $request->getHeader(),
                 isReplaying: $context->isReplaying(),
             );
@@ -78,6 +82,8 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             }
         } catch (\Throwable $e) {
+            TemporalFailure::bindSerializationContext($e, $context->getSerializationContext());
+
             $context->getClient()->send(
                 new CommandResponse(
                     command: self::COMMAND_VALIDATED,
@@ -94,14 +100,19 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $deferred = new Deferred();
         $deferred->promise()->then(
             static function (mixed $value) use ($updateId, $context): void {
+                $values = EncodedValues::fromValues([$value]);
+                $context->applySerializationContext($values);
+
                 $context->getClient()->send(new CommandResponse(
                     command: self::COMMAND_COMPLETED,
                     options: ['id' => $updateId],
-                    payloads: EncodedValues::fromValues([$value]),
+                    payloads: $values,
                     failure: null,
                 ));
             },
             static function (\Throwable $err) use ($updateId, $context): void {
+                TemporalFailure::bindSerializationContext($err, $context->getSerializationContext());
+
                 $context->getClient()->send(new CommandResponse(
                     command: self::COMMAND_COMPLETED,
                     options: ['id' => $updateId],
