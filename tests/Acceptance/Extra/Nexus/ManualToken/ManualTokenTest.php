@@ -26,7 +26,6 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationHandle;
@@ -41,15 +40,11 @@ use Temporal\Workflow\WorkflowMethod;
  * cancel routes to the handler's cancel() or fails with NOT_IMPLEMENTED
  * when the handler refuses cancellation.
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class ManualTokenTest extends TestCase
 {
     use NexusHistoryAssertions;
 
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function manualTokenReachesCallerUntouched(

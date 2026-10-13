@@ -19,20 +19,15 @@ use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoint;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
  * Acceptance test: Nexus error handling — OperationException and HandlerException.
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class ErrorsTest extends TestCase
 {
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function operationFailureReturns424FailedDependency(

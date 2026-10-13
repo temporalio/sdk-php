@@ -20,7 +20,6 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowExecution;
@@ -31,13 +30,9 @@ use Temporal\Workflow\WorkflowMethod;
  * Handler's WorkflowExecutionStarted event carries a CompletionCallback link
  * back to the caller. Server-set; requires Temporal 1.27+ to populate the slot.
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class ReverseLinkTest extends TestCase
 {
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function handlerWorkflowExecutionStartedCarriesCallbackLinkBackToCaller(

@@ -18,20 +18,15 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class MultipleCallersTest extends TestCase
 {
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function twoCallersShareOneAsyncHandlerWorkflow(

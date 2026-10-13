@@ -24,7 +24,6 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
@@ -34,15 +33,11 @@ use Temporal\Workflow\WorkflowMethod;
 /**
  * Scope cancel over Promise::all of N async Nexus ops fans out per-sibling.
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class CancelPropagationTest extends TestCase
 {
     use NexusHistoryAssertions;
 
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function cancellingScopeWithPromiseAllCancelsAllSiblings(

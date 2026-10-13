@@ -22,7 +22,6 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
@@ -39,15 +38,11 @@ use Temporal\Workflow\WorkflowMethod;
  *      {@see NexusOperationFailure} (cause is either {@see TerminatedFailure}
  *      or some other failure whose message contains "terminat").
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class AsyncFailureTest extends TestCase
 {
     use NexusHistoryAssertions;
 
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function callerReceivesFailureWhenHandlerWorkflowThrows(

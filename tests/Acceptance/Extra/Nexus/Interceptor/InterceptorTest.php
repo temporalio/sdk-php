@@ -31,7 +31,6 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationCancellationType;
 use Temporal\Workflow\NexusOperationOptions;
@@ -44,16 +43,12 @@ use Temporal\Workflow\WorkflowMethod;
  */
 #[Worker(
     pipelineProvider: [InterceptorTestServices::class, 'interceptors'],
-    options: [InterceptorTest::class, 'workerOptions'],
+    options: [NexusWorkerOptions::class, 'default'],
 )]
 class InterceptorTest extends TestCase
 {
     public const AUTH_TOKEN = 'super-secret-token';
 
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function startInvokesInterceptorWithValidToken(

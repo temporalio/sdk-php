@@ -22,7 +22,6 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusHistoryAssertions;
 use Temporal\Tests\Acceptance\Extra\Nexus\NexusWorkerOptions;
-use Temporal\Worker\WorkerOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\WorkflowInterface;
@@ -33,15 +32,11 @@ use Temporal\Workflow\WorkflowMethod;
  * surfaces as TimeoutFailure(SCHEDULE_TO_CLOSE) instead of ApplicationFailure, so the
  * happy path here IS the timeout — hence the short scheduleToClose in the caller.
  */
-#[Worker(options: [self::class, 'workerOptions'])]
+#[Worker(options: [NexusWorkerOptions::class, 'default'])]
 class PartialFailureTest extends TestCase
 {
     use NexusHistoryAssertions;
 
-    public static function workerOptions(): WorkerOptions
-    {
-        return NexusWorkerOptions::default();
-    }
 
     #[Test]
     public function failingSiblingPropagatesAndSchedulesAllOps(
