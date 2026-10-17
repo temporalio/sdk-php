@@ -14,16 +14,16 @@ namespace Temporal\Worker\Transport\Command\Client;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 
-final class UpdateResponse implements ResponseInterface
+final class CommandResponse implements ResponseInterface
 {
-    public const COMMAND_VALIDATED = 'UpdateValidated';
-    public const COMMAND_COMPLETED = 'UpdateCompleted';
-
+    /**
+     * @param array<string, mixed> $options
+     */
     public function __construct(
         private readonly string $command,
-        private ?ValuesInterface $values,
-        private readonly ?\Throwable $failure,
-        private string|int $updateId,
+        private readonly array $options = [],
+        private readonly ?ValuesInterface $payloads = null,
+        private readonly ?\Throwable $failure = null,
     ) {}
 
     public function getID(): int
@@ -36,18 +36,21 @@ final class UpdateResponse implements ResponseInterface
         return $this->command;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
     public function getPayloads(): ?ValuesInterface
     {
-        return $this->values;
+        return $this->payloads;
     }
 
     public function getFailure(): ?\Throwable
     {
         return $this->failure;
-    }
-
-    public function getOptions(): array
-    {
-        return ['id' => $this->updateId];
     }
 }

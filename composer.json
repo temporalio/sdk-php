@@ -30,6 +30,7 @@
         "internal/destroy": "^1.0",
         "internal/promise": "^3.4",
         "nesbot/carbon": "^3.8.4",
+        "psr/clock": "^1.0",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
         "roadrunner-php/roadrunner-api-dto": "^1.15.0",
@@ -94,6 +95,7 @@
     "scripts": {
         "get:binaries": [
             "dload get --no-interaction -vv",
+            "dload build --no-interaction",
             "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate"
         ],
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",

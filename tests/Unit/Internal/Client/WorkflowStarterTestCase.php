@@ -4,16 +4,27 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Client;
 
+use Google\Protobuf\Any;
+use Google\Rpc\Status as RpcStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionResponse;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Nexus\NexusLinkConverter;
+use Temporal\Internal\Client\OnConflictOptions;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Nexus\Link as NexusLink;
+use Temporal\Workflow\CompletionCallback;
 
 /**
  * @internal
@@ -68,6 +79,134 @@ final class WorkflowStarterTestCase extends TestCase
         self::assertNotNull($request->getWorkflowStartDelay());
         self::assertSame(0, $request->getWorkflowStartDelay()->getSeconds());
         self::assertSame(42000, $request->getWorkflowStartDelay()->getNanos());
+    }
+
+    public function testOnConflictOptionsAbsentByDefault(): void
+    {
+        $request = $this->startRequest('test-workflow', new WorkflowOptions());
+
+        self::assertNull($request->getOnConflictOptions());
+    }
+
+    public function testOnConflictOptionsSerializedToProtoWithAllFlags(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withOnConflictOptionsInternal(new OnConflictOptions());
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $proto = $request->getOnConflictOptions();
+        self::assertNotNull($proto);
+        self::assertTrue($proto->getAttachRequestId());
+        self::assertTrue($proto->getAttachCompletionCallbacks());
+        self::assertTrue($proto->getAttachLinks());
+    }
+
+    public function testOnConflictOptionsSerializedToProtoWithMixedFlags(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withOnConflictOptionsInternal(new OnConflictOptions(
+                attachRequestId: false,
+                attachCompletionCallbacks: true,
+                attachLinks: false,
+            ));
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $proto = $request->getOnConflictOptions();
+        self::assertNotNull($proto);
+        self::assertFalse($proto->getAttachRequestId());
+        self::assertTrue($proto->getAttachCompletionCallbacks());
+        self::assertFalse($proto->getAttachLinks());
+    }
+
+    public function testWorkflowIdConflictPolicyUseExistingFlowsToProto(): void
+    {
+        $options = (new WorkflowOptions())
+            ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        self::assertSame(WorkflowIdConflictPolicy::UseExisting->value, $request->getWorkflowIdConflictPolicy());
+    }
+
+    public function testAlreadyStartedThrowsEvenWithUseExisting(): void
+    {
+        $exception = $this->alreadyStartedException('existing-run-id');
+
+        $clientOptions = (new \Temporal\Client\ClientOptions())
+            ->withNamespace(self::NAMESPACE)
+            ->withIdentity(self::IDENTITY);
+
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock
+            ->expects($this->once())
+            ->method('StartWorkflowExecution')
+            ->willThrowException($exception);
+
+        $starter = new WorkflowStarter(
+            serviceClient: $clientMock,
+            converter: DataConverter::createDefault(),
+            clientOptions: $clientOptions,
+            interceptors: Pipeline::prepare([]),
+        );
+
+        $options = (new WorkflowOptions())
+            ->withWorkflowId('my-wf-id')
+            ->withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy::UseExisting);
+
+        $this->expectException(WorkflowExecutionAlreadyStartedException::class);
+        $starter->start('test-workflow', $options, []);
+    }
+
+    private function alreadyStartedException(string $runId): ServiceClientException
+    {
+        $any = new Any();
+        $any->pack((new WorkflowExecutionAlreadyStartedFailure())->setRunId($runId));
+
+        $rpcStatus = (new RpcStatus())->setCode(StatusCode::ALREADY_EXISTS);
+        $rpcStatus->setDetails([$any]);
+
+        $status = new \stdClass();
+        $status->code = StatusCode::ALREADY_EXISTS;
+        $status->details = 'workflow execution already started';
+        $status->metadata = ['grpc-status-details-bin' => [$rpcStatus->serializeToString()]];
+
+        return new ServiceClientException($status);
+    }
+
+    public function testStartRequestCarriesTopLevelLinks(): void
+    {
+        $uri = 'temporal:///namespaces/n/workflows/w/r/history'
+            . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
+        $options = (new WorkflowOptions())
+            ->withLinks([new NexusLink($uri, NexusLinkConverter::TYPE_WORKFLOW_EVENT)]);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $links = \iterator_to_array($request->getLinks());
+        self::assertCount(1, $links);
+        self::assertNotNull($links[0]->getWorkflowEvent());
+    }
+
+    public function testCompletionCallbackProtoIncludesLinks(): void
+    {
+        $uri = 'temporal:///namespaces/n/workflows/w/r/history'
+            . '?referenceType=EventReference&eventID=1&eventType=EVENT_TYPE_WORKFLOW_EXECUTION_STARTED';
+        $callback = CompletionCallback::fromNexusLinks(
+            'http://cb',
+            [],
+            [new NexusLink($uri, NexusLinkConverter::TYPE_WORKFLOW_EVENT)],
+        );
+        $options = (new WorkflowOptions())->withCompletionCallbacks($callback);
+
+        $request = $this->startRequest('test-workflow', $options);
+
+        $callbacks = \iterator_to_array($request->getCompletionCallbacks());
+        self::assertCount(1, $callbacks);
+        $links = \iterator_to_array($callbacks[0]->getLinks());
+        self::assertCount(1, $links);
+        self::assertNotNull($links[0]->getWorkflowEvent());
     }
 
     private function startRequest(

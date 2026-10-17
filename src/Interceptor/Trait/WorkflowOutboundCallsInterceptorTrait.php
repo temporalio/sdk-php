@@ -20,6 +20,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
@@ -197,6 +198,16 @@ trait WorkflowOutboundCallsInterceptorTrait
      * @see WorkflowOutboundCallsInterceptor::awaitWithTimeout()
      */
     public function awaitWithTimeout(AwaitWithTimeoutInput $input, callable $next): PromiseInterface
+    {
+        return $next($input);
+    }
+
+    /**
+     * Default implementation of the `executeNexusOperation` method.
+     *
+     * @see WorkflowOutboundCallsInterceptor::executeNexusOperation()
+     */
+    public function executeNexusOperation(ExecuteNexusOperationInput $input, callable $next): PromiseInterface
     {
         return $next($input);
     }

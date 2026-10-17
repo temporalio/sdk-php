@@ -107,6 +107,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
                         $options->enableLoggingInReplay,
                         $taskQueue,
                     ),
+                    $this->workflowClient,
                 ),
                 $this->rpc,
             ),

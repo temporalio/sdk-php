@@ -20,10 +20,10 @@ use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
+use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
@@ -57,9 +57,6 @@ final class Server implements ServerInterface
         $this->onMessage = $then(...);
     }
 
-    /**
-     * @param RequestInterface $request
-     */
     public function dispatch(ServerRequestInterface $request, array $headers): void
     {
         try {
@@ -74,22 +71,30 @@ final class Server implements ServerInterface
             return;
         }
 
-        $result instanceof PromiseInterface or throw new \BadMethodCallException(\sprintf(
-            self::ERROR_INVALID_RETURN_TYPE,
-            PromiseInterface::class,
-            \get_debug_type($result),
-        ));
+        if (!$result instanceof PromiseInterface) {
+            throw new \BadMethodCallException(\sprintf(
+                self::ERROR_INVALID_RETURN_TYPE,
+                PromiseInterface::class,
+                \get_debug_type($result),
+            ));
+        }
 
         $result->then($this->onFulfilled($request), $this->onRejected($request));
     }
 
     /**
-     * @return \Closure(mixed): SuccessResponseInterface
+     * Routes that need a typed reply command (e.g. {@see \Temporal\Worker\Transport\Command\Client\CommandResponse})
+     * resolve directly with a {@see ResponseInterface} instance and it is
+     * pushed verbatim. Anything else is wrapped as a {@see SuccessClientResponse}.
+     *
+     * @return \Closure(mixed): CommandInterface
      */
     private function onFulfilled(ServerRequestInterface $request): \Closure
     {
-        return function ($result) use ($request) {
-            $response = new SuccessClientResponse($request->getID(), $result);
+        return function ($result) use ($request): CommandInterface {
+            $response = $result instanceof ResponseInterface
+                ? $result
+                : new SuccessClientResponse($request->getID(), $result);
             $this->queue->push($response);
 
             return $response;
