@@ -21,6 +21,9 @@ final class SignalExternalWorkflow extends Request
 {
     public const NAME = 'SignalExternalWorkflow';
 
+    private string $namespace;
+    private string $workflowId;
+
     public function __construct(
         string $namespace,
         string $workflowId,
@@ -29,6 +32,8 @@ final class SignalExternalWorkflow extends Request
         ?ValuesInterface $input = null,
         bool $childWorkflowOnly = false,
     ) {
+        $this->namespace = $namespace;
+        $this->workflowId = $workflowId;
         $options = [
             'namespace' => $namespace,
             'workflowID' => $workflowId,
@@ -38,5 +43,15 @@ final class SignalExternalWorkflow extends Request
         ];
 
         parent::__construct(self::NAME, $options, $input);
+    }
+
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    public function getWorkflowId(): string
+    {
+        return $this->workflowId;
     }
 }
