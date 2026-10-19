@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
@@ -182,9 +181,9 @@ final class ChildWorkflowOptions extends Options
      */
     public function __construct()
     {
-        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
-        $this->workflowRunTimeout = CarbonInterval::seconds(0);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+        $this->workflowExecutionTimeout = new \DateInterval('PT0S');
+        $this->workflowRunTimeout = new \DateInterval('PT0S');
+        $this->workflowTaskTimeout = new \DateInterval('PT0S');
 
         // Inherit Namespace and TaskQueue from the current Workflow if possible
         try {

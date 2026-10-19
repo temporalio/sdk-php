@@ -41,6 +41,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
@@ -84,6 +85,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
     private ?WorkflowExecution $execution = null;
+    private ?WorkflowSerializationContext $serializationContext = null;
     private HeaderInterface $header;
 
     /**
@@ -129,6 +131,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     public function setExecution(WorkflowExecution $execution): void
     {
         $this->execution = $execution;
+        $this->serializationContext = null;
     }
 
     public function hasExecution(): bool
@@ -145,6 +148,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $request->setIdentity($this->clientOptions->identity);
         $request->setNamespace($this->clientOptions->namespace);
         $serviceClient = $this->serviceClient;
+
+        $signalArguments = EncodedValues::fromValues($args, $this->converter);
+        $signalArguments->setSerializationContext($this->getSerializationContext());
 
         $this->interceptors->with(
             static function (SignalInput $input) use ($request, $serviceClient): void {
@@ -175,7 +181,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->getExecution(),
             $this->workflowType,
             $name,
-            EncodedValues::fromValues($args, $this->converter),
+            $signalArguments,
         ));
     }
 
@@ -184,11 +190,15 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $this->assertStarted(__FUNCTION__);
 
         $serviceClient = $this->serviceClient;
-        $converter = $this->converter;
         $clientOptions = $this->clientOptions;
+        $converter = $this->converter;
+        $context = $this->getSerializationContext();
+
+        $queryArguments = EncodedValues::fromValues($args, $converter);
+        $queryArguments->setSerializationContext($context);
 
         return $this->interceptors->with(
-            static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+            static function (QueryInput $input) use ($serviceClient, $converter, $context, $clientOptions): ?EncodedValues {
                 $request = new QueryWorkflowRequest();
                 $request->setNamespace($clientOptions->namespace);
                 $request->setQueryRejectCondition($clientOptions->queryRejectionCondition);
@@ -224,7 +234,10 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         return null;
                     }
 
-                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                    $queryResult = EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                    $queryResult->setSerializationContext($context);
+
+                    return $queryResult;
                 }
 
                 throw new WorkflowQueryRejectedException(
@@ -241,7 +254,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->getExecution(),
             $this->workflowType,
             $name,
-            EncodedValues::fromValues($args, $this->converter),
+            $queryArguments,
         ));
     }
 
@@ -263,7 +276,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
         $serviceClient = $this->serviceClient;
         $converter = $this->converter;
+        $context = $this->getSerializationContext();
         $clientOptions = $this->clientOptions;
+
+        $updateArguments = EncodedValues::fromValues($args, $converter);
+        $updateArguments->setSerializationContext($context);
 
         /**
          * @var StartUpdateOutput $result
@@ -272,7 +289,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $result = $this->interceptors->with(
             static function (
                 UpdateInput $input,
-            ) use (&$updateInput, $serviceClient, $converter, $clientOptions): StartUpdateOutput {
+            ) use (&$updateInput, $serviceClient, $converter, $context, $clientOptions): StartUpdateOutput {
                 $updateInput = $input;
                 $request = (new UpdateWorkflowExecutionRequest())
                     ->setNamespace($clientOptions->namespace)
@@ -295,6 +312,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $i = new \Temporal\Api\Update\V1\Input();
                 $i->setName($input->updateName);
                 $input->arguments->setDataConverter($converter);
+                $input->arguments->setSerializationContext($context);
                 $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
                 $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
                 $r->setInput($i);
@@ -319,6 +337,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         $input->updateName,
                         $input->workflowType,
                         $input->workflowExecution,
+                        $clientOptions->namespace,
                     );
             },
             /** @see WorkflowClientCallsInterceptor::update() */
@@ -327,7 +346,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             workflowExecution: $this->getExecution(),
             workflowType: $this->workflowType,
             updateName: $nameOrOptions->updateName,
-            arguments: EncodedValues::fromValues($args, $this->converter),
+            arguments: $updateArguments,
             header: Header::empty(),
             waitPolicy: $nameOrOptions->waitPolicy,
             updateId: $nameOrOptions->updateId ?? Uuid::v4(),
@@ -394,9 +413,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $serviceClient = $this->serviceClient;
         $clientOptions = $this->clientOptions;
         $converter = $this->converter;
+        $context = $this->getSerializationContext();
 
         $this->interceptors->with(
-            static function (TerminateInput $input) use ($serviceClient, $clientOptions, $details, $converter): void {
+            static function (
+                TerminateInput $input,
+            ) use ($serviceClient, $clientOptions, $details, $converter, $context): void {
                 $request = new TerminateWorkflowExecutionRequest();
                 $request->setNamespace($clientOptions->namespace);
                 $request->setIdentity($clientOptions->identity);
@@ -404,7 +426,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $request->setReason($input->reason);
 
                 if ($details !== []) {
-                    $request->setDetails(EncodedValues::fromValues($details, $converter)->toPayloads());
+                    $values = EncodedValues::fromValues($details, $converter);
+                    $values->setSerializationContext($context);
+                    $request->setDetails($values->toPayloads());
                 }
 
                 $serviceClient->TerminateWorkflowExecution($request);
@@ -462,7 +486,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
 
-                $activityMapper = new PendingActivityInfoMapper($this->converter);
+                $activityMapper = new PendingActivityInfoMapper(
+                    $this->converter,
+                    $input->namespace,
+                    $this->getExecution()->getID(),
+                    $response->getWorkflowExecutionInfo()?->getType()?->getName(),
+                );
                 $pendingActivities = [];
                 /** @psalm-suppress TooManyTemplateParams */
                 foreach ($response->getPendingActivities() as $pendingActivity) {
@@ -473,7 +502,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 return new WorkflowExecutionDescription(
                     config: (new WorkflowExecutionConfigMapper($this->converter))
                         ->fromMessage($response->getExecutionConfig()),
-                    info: (new WorkflowExecutionInfoMapper($this->converter))
+                    info: (new WorkflowExecutionInfoMapper($this->converter, $this->getSerializationContext()))
                         ->fromMessage($response->getWorkflowExecutionInfo()),
                     pendingActivities: $pendingActivities,
                 );
@@ -484,6 +513,14 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->execution,
             $this->clientOptions->namespace,
         ));
+    }
+
+    private function getSerializationContext(): WorkflowSerializationContext
+    {
+        return $this->serializationContext ??= new WorkflowSerializationContext(
+            $this->clientOptions->namespace,
+            $this->getExecution()->getID(),
+        );
     }
 
     /**
@@ -515,7 +552,10 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     return null;
                 }
 
-                return EncodedValues::fromPayloads($attr->getResult(), $this->converter);
+                $result = EncodedValues::fromPayloads($attr->getResult(), $this->converter);
+                $result->setSerializationContext($this->getSerializationContext());
+
+                return $result;
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED:
                 $attr = $closeEvent->getWorkflowExecutionFailedEventAttributes();
 
@@ -530,7 +570,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 $details = $attr->hasDetails()
                     ? EncodedValues::fromPayloads($attr->getDetails(), $this->converter)
-                    : EncodedValues::fromValues([]);
+                    : EncodedValues::fromValues([], $this->converter);
+                $details->setSerializationContext($this->getSerializationContext());
 
                 throw new WorkflowFailedException(
                     $this->execution,
@@ -638,12 +679,18 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     {
         switch (true) {
             case $failure instanceof WorkflowExecutionFailedException:
+                $cause = FailureConverter::mapFailureToException(
+                    $failure->getFailure(),
+                    $this->converter,
+                    $this->getSerializationContext(),
+                );
+
                 return new WorkflowFailedException(
                     $this->execution,
                     $this->workflowType,
                     $failure->getWorkflowTaskCompletedEventId(),
                     $failure->getRetryState(),
-                    FailureConverter::mapFailureToException($failure->getFailure(), $this->converter),
+                    $cause,
                 );
 
             case $failure instanceof ServiceClientException:

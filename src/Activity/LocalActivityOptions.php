@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
@@ -78,8 +77,8 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
      */
     public function __construct()
     {
-        $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
-        $this->startToCloseTimeout = CarbonInterval::seconds(0);
+        $this->scheduleToCloseTimeout = new \DateInterval('PT0S');
+        $this->startToCloseTimeout = new \DateInterval('PT0S');
 
         parent::__construct();
     }
