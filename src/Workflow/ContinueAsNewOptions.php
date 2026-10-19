@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -54,8 +53,8 @@ final class ContinueAsNewOptions
      */
     public function __construct()
     {
-        $this->workflowRunTimeout = CarbonInterval::seconds(0);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+        $this->workflowRunTimeout = new \DateInterval('PT0S');
+        $this->workflowTaskTimeout = new \DateInterval('PT0S');
         try {
             // Inherit TaskQueue from the current Workflow if possible
             $this->taskQueue = Workflow::getInfo()->taskQueue;

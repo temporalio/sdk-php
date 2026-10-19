@@ -22,3 +22,6 @@ temporal
 temporal-test-server
 .ai
 .context
+
+# PHPBench
+.phpbench
