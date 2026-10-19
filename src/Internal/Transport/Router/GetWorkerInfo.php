@@ -13,7 +13,9 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Common\SdkVersion;
+use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\RawValue;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -35,10 +37,11 @@ final class GetWorkerInfo extends Route
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
+        $converter = DataConverter::createDefault();
         $result = [];
 
         foreach ($this->queues as $taskQueue) {
-            $result[] = $this->workerToArray($taskQueue);
+            $result[] = new RawValue($converter->toPayload($this->workerToArray($taskQueue)));
         }
 
         $resolver->resolve(EncodedValues::fromValues($result));
