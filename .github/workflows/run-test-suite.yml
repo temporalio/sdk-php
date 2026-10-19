@@ -80,9 +80,19 @@ jobs:
         run: vendor/bin/validate-prefer-lowest
         continue-on-error: true
 
+      - name: Restore the DLoad version registry
+        if: inputs.download-binaries == true
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: runtime/dload-cache
+          key: dload-registry-${{ github.run_id }}-${{ inputs.test-command }}-${{ strategy.job-index }}
+          restore-keys: dload-registry-
+
       - name: Download binaries
         if: inputs.download-binaries == true
         run: composer get:binaries
+        env:
+          DLOAD_CACHE_DIR: runtime/dload-cache
 
       - name: Run tests
         run: ${{ inputs.test-command }}
