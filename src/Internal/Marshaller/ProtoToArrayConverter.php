@@ -8,6 +8,7 @@ use Google\Protobuf\Duration;
 use Google\Protobuf\Internal\MapField;
 use Google\Protobuf\Internal\Message;
 use Google\Protobuf\Internal\OneofField;
+use Google\Protobuf\Internal\RepeatedField as InternalRepeatedField;
 use Google\Protobuf\RepeatedField;
 use Google\Protobuf\Timestamp;
 use Temporal\Api\Common\V1\Header;
@@ -115,7 +116,11 @@ final class ProtoToArrayConverter
                 continue;
             }
 
-            if ($value instanceof RepeatedField || $value instanceof MapField) {
+            /** @psalm-suppress UndefinedClass, PossibleRawObjectIteration */
+            if ($value instanceof RepeatedField
+                || $value instanceof InternalRepeatedField
+                || $value instanceof MapField
+            ) {
                 $result[$name] = [];
                 foreach ($value as $key => $item) {
                     $result[$name][$key] = $this->convert($item);

@@ -10,8 +10,16 @@ use PHPUnit\Framework\TestCase;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Workflow;
 
-class WorkflowFacadeTest extends TestCase
+class WorkflowFacadeTestCase extends TestCase
 {
+    protected function setUp(): void
+    {
+        // These methods are about being outside a context; make sure the process really is.
+        Workflow::setCurrentContext(null);
+
+        parent::setUp();
+    }
+
     /**
      * @return iterable<string, array{callable, string}>
      */

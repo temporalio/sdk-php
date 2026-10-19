@@ -46,6 +46,27 @@ abstract class Facade
     }
 
     /**
+     * Runs a callback with the given context installed, restoring the previous one afterwards.
+     *
+     * @internal
+     *
+     * @template T
+     * @param callable(): T $callback
+     * @return T
+     */
+    public static function usingContext(?object $ctx, callable $callback): mixed
+    {
+        $saved = self::$ctx;
+        self::$ctx = $ctx;
+
+        try {
+            return $callback();
+        } finally {
+            self::$ctx = $saved;
+        }
+    }
+
+    /**
      * @throws OutOfContextException
      */
     public static function getContextId(): int

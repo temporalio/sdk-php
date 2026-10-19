@@ -10,8 +10,16 @@ use PHPUnit\Framework\TestCase;
 use Temporal\Activity;
 use Temporal\Exception\OutOfContextException;
 
-class ActivityFacadeTest extends TestCase
+class ActivityFacadeTestCase extends TestCase
 {
+    protected function setUp(): void
+    {
+        // These methods are about being outside a context; make sure the process really is.
+        Activity::setCurrentContext(null);
+
+        parent::setUp();
+    }
+
     /**
      * @return iterable<string, array{callable}>
      */

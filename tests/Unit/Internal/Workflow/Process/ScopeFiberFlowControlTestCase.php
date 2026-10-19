@@ -33,6 +33,7 @@ final class ScopeFiberFlowControlTestCase extends TestCase
 {
     private WorkerFactoryMock $factory;
     private ScopeLifecycleRootScope $root;
+    private WorkflowContext $context;
     private ScopeContext $scopeContext;
 
     public function testCancellationUnwindsASuspendedScopeThroughItsFinallyBlock(): void
@@ -320,7 +321,7 @@ final class ScopeFiberFlowControlTestCase extends TestCase
 
     public function testReadonlyContextReportsUninitializedWorkflowRatherThanSuspendMisuse(): void
     {
-        $this->scopeContext->setReadonly(true);
+        $this->context->setReadonly(true);
         Workflow::setCurrentContext($this->scopeContext);
 
         try {
@@ -463,6 +464,7 @@ final class ScopeFiberFlowControlTestCase extends TestCase
             EncodedValues::empty(),
         );
         $context->setReadonly(false);
+        $this->context = $context;
         $this->root = new ScopeLifecycleRootScope($services);
         $this->scopeContext = $this->root->bind($context);
     }

@@ -7,6 +7,10 @@ namespace Temporal\Tests\Unit\Schedule;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Schedule\V1\BackfillRequest;
+use Temporal\Api\Schedule\V1\Range;
+use Temporal\Api\Schedule\V1\Schedule as ScheduleMessage;
+use Temporal\Api\Schedule\V1\ScheduleSpec as ScheduleSpecMessage;
+use Temporal\Api\Schedule\V1\StructuredCalendarSpec as StructuredCalendarSpecMessage;
 use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
 use Temporal\Api\Workflowservice\V1\DeleteScheduleResponse;
 use Temporal\Api\Workflowservice\V1\DescribeScheduleRequest;
@@ -289,6 +293,34 @@ class ScheduleHandleTestCase extends TestCase
         $this->assertSame('test-id', $testContext->request->getScheduleId());
         // Test result
         $this->assertSame('test-conflict-token', $result->conflictToken);
+    }
+
+    public function testDescribeUnwrapsStructuredCalendar(): void
+    {
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('DescribeSchedule')
+            ->willReturn(
+                (new DescribeScheduleResponse())->setSchedule(
+                    (new ScheduleMessage())->setSpec(
+                        (new ScheduleSpecMessage())
+                            ->setTimezoneName('Europe/Moscow')
+                            ->setStructuredCalendar([
+                                (new StructuredCalendarSpecMessage())
+                                    ->setComment('every minute')
+                                    ->setSecond([(new Range())->setStart(0)->setEnd(0)->setStep(1)]),
+                            ]),
+                    ),
+                ),
+            );
+
+        $spec = $this->createScheduleHandle(client: $clientMock)->describe()->schedule->spec;
+
+        $this->assertSame('Europe/Moscow', $spec->timezoneName);
+        $this->assertCount(1, $spec->structuredCalendarList);
+        $this->assertSame('every minute', $spec->structuredCalendarList[0]->comment);
+        $this->assertSame(0, $spec->structuredCalendarList[0]->seconds[0]->start);
+        $this->assertSame(1, $spec->structuredCalendarList[0]->seconds[0]->step);
     }
 
     public function testListScheduleMatchingTimes(): void

@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Temporal\Common\EnvConfig\Client\ConfigCodec;
 
 #[CoversClass(ConfigCodec::class)]
-final class ConfigCodecTest extends TestCase
+final class ConfigCodecTestCase extends TestCase
 {
     public function testConstructorInitializesProperties(): void
     {

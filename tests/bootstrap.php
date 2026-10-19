@@ -35,6 +35,17 @@ $suite = (static function (array $argv): ?string {
     return null;
 })($GLOBALS['argv'] ?? []);
 
+if ($suite === null) {
+    // PHPUnit runs an isolated test by piping the code into PHP, so there is nothing to detect a
+    // suite from and the parent has already run the suite bootstrap. Any output of such a process
+    // is reported as a test error, so only a real command line gets the notice.
+    if (($GLOBALS['argv'][0] ?? '') !== 'Standard input code') {
+        \fwrite(STDERR, "Test suite is not detected from the command line; the suite bootstrap is skipped.\n");
+    }
+
+    return;
+}
+
 $suite = \substr($suite, 0, \strpos($suite, '-') ?: \strlen($suite));
 
 # Include related bootstrap

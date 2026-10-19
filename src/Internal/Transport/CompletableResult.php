@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Workflow;
+use Temporal\Internal\Support\Facade;
 use Temporal\Workflow\WorkflowContextInterface;
 
 /**
@@ -105,8 +105,7 @@ class CompletableResult implements CompletableResultInterface
 
     public function cancel(): void
     {
-        Workflow::setCurrentContext($this->context);
-        $this->promise()->cancel();
+        Facade::usingContext($this->context, $this->promise()->cancel(...));
     }
 
     /**
@@ -133,8 +132,7 @@ class CompletableResult implements CompletableResultInterface
         $this->loop->once(
             $this->layer,//LoopInterface::ON_CALLBACK,
             function (): void {
-                Workflow::setCurrentContext($this->context);
-                $this->deferred->resolve($this->value);
+                Facade::usingContext($this->context, fn() => $this->deferred->resolve($this->value));
             },
         );
     }
@@ -146,8 +144,7 @@ class CompletableResult implements CompletableResultInterface
         $this->loop->once(
             $this->layer,//  LoopInterface::ON_CALLBACK,
             function () use ($e): void {
-                Workflow::setCurrentContext($this->context);
-                $this->deferred->reject($e);
+                Facade::usingContext($this->context, fn() => $this->deferred->reject($e));
             },
         );
     }
@@ -164,9 +161,9 @@ class CompletableResult implements CompletableResultInterface
             return null;
         }
 
-        return function (mixed $value = null) use ($callback): mixed {
-            Workflow::setCurrentContext($this->context);
-            return $callback($value);
-        };
+        return fn(mixed $value = null): mixed => Facade::usingContext(
+            $this->context,
+            static fn(): mixed => $callback($value),
+        );
     }
 }

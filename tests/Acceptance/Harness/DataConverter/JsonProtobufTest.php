@@ -19,7 +19,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-const EXPECTED_RESULT = 0xDEADBEEF;
+\define(__NAMESPACE__ . '\EXPECTED_RESULT', (string)0xDEADBEEF);
 \define(__NAMESPACE__ . '\INPUT', (new DataBlob())->setData(EXPECTED_RESULT));
 
 class JsonProtobufTest extends TestCase

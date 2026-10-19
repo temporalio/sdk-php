@@ -150,7 +150,7 @@ class JsonConverter extends Converter
         if ((\is_object($data) || \is_array($data)) && $type->isClass()) {
             try {
                 $reflection = new \ReflectionClass($type->getName());
-                if (PHP_VERSION_ID >= 80104 && $reflection->isEnum()) {
+                if ($reflection->isEnum()) {
                     /**
                      * @var \UnitEnum $data
                      */

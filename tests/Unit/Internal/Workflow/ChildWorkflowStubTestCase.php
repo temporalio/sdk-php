@@ -115,7 +115,7 @@ final class ChildWorkflowStubTestCase extends TestCase
         return new ChildWorkflowStub(
             $marshaller,
             'TestChildWorkflow',
-            ChildWorkflowOptions::new(),
+            ChildWorkflowOptions::new()->withWorkflowId('child-id')->withNamespace('default'),
             Header::empty(),
         );
     }

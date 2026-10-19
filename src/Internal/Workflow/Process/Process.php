@@ -55,17 +55,16 @@ class Process extends Scope implements ProcessInterface
         $workflowInstance->getQueryDispatcher()
             ->setQueryExecutor(function (QueryInput $input, callable $handler) use ($inboundPipeline): mixed {
                 try {
-                    return $inboundPipeline->with(
+                    return $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (QueryInput $input) use ($handler): mixed {
-                            $context = $this->scopeContext
-                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
-                            $context->setReadonly(true);
-                            Workflow::setCurrentContext($context);
+                            Workflow::setCurrentContext($this->scopeContext
+                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments)));
+
                             return $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                         'handleQuery',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
@@ -76,7 +75,7 @@ class Process extends Scope implements ProcessInterface
             ->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
                 try {
                     Workflow::setCurrentContext($this->scopeContext);
-                    $inboundPipeline->with(
+                    $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
                             $context = $this->scopeContext->withInput(
                                 new Input(
@@ -90,7 +89,7 @@ class Process extends Scope implements ProcessInterface
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
                         'validateUpdate',
-                    )($input);
+                    )($input));
                 } finally {
                     Workflow::setCurrentContext(null);
                 }
@@ -131,12 +130,8 @@ class Process extends Scope implements ProcessInterface
         // Configure signal handler
         $workflowInstance->getSignalDispatcher()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
-                $previous = Facade::getCurrentContext();
-
                 // Define Context for interceptors Pipeline
-                Workflow::setCurrentContext($this->scopeContext);
-
-                try {
+                Facade::usingContext($this->scopeContext, function () use ($inboundPipeline, $handler, $name, $arguments): void {
                     $inboundPipeline->with(
                         function (SignalInput $input) use ($handler): void {
                             $this->createScope(
@@ -167,9 +162,7 @@ class Process extends Scope implements ProcessInterface
                         $this->scopeContext->getHeader(),
                         $this->scopeContext->isReplaying(),
                     ));
-                } finally {
-                    Workflow::setCurrentContext($previous);
-                }
+                });
             },
         );
 
