@@ -52,6 +52,7 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
             'DisableEagerActivities' => false,
             'MaxConcurrentEagerActivityExecutionSize' => 0,
             'MaxEagerActivityReservationsPerWorkflowTask' => null,
+            'DisablePayloadErrorLimit' => false,
             'DisableRegistrationAliasing' => false,
             'BuildID' => "",
             'DeploymentOptions' => null,
@@ -360,6 +361,17 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
         );
 
         (new WorkerOptions())->withMaxEagerActivityReservationsPerWorkflowTask(0);
+    }
+
+    public function testDisablePayloadErrorLimit(): void
+    {
+        $dto = new WorkerOptions();
+        $result = $dto->withDisablePayloadErrorLimit();
+
+        self::assertNotSame($dto, $result);
+        self::assertFalse($dto->disablePayloadErrorLimit);
+        self::assertTrue($result->disablePayloadErrorLimit);
+        self::assertTrue($this->marshal($result)['DisablePayloadErrorLimit']);
     }
 
     public function testDisableRegistrationAliasing(): void
