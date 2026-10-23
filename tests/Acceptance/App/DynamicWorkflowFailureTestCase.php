@@ -57,8 +57,7 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
             $failure = $exception->getPrevious();
             self::assertInstanceOf(ApplicationFailure::class, $failure);
             self::assertSame(InvalidArgumentException::class, $failure->getType());
-            self::assertStringContainsString('TestWorkflow::handle()', $failure->getOriginalMessage());
-            self::assertStringContainsString($message, $failure->getOriginalMessage());
+            self::assertSame($message, $failure->getOriginalMessage());
             self::assertInstanceOf(ApplicationFailure::class, $failure->getPrevious());
             self::assertSame($cause, $failure->getPrevious()->getType());
         }

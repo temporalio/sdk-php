@@ -24,7 +24,7 @@ class DynamicWorkflowArrayParameterTest extends DynamicWorkflowFailureTestCase
         WorkflowClientInterface $client,
         ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, 'must be of type array');
+        $this->assertHandlerFailure($stub, $client, $logger, TestWorkflow::class . '::handle(): Argument #1 ($values) must be of type array, Temporal\\DataConverter\\EncodedValues given');
     }
 }
 

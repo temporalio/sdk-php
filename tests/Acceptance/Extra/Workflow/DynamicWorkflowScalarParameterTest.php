@@ -24,7 +24,7 @@ class DynamicWorkflowScalarParameterTest extends DynamicWorkflowFailureTestCase
         WorkflowClientInterface $client,
         ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, 'must be of type string');
+        $this->assertHandlerFailure($stub, $client, $logger, TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
     }
 }
 

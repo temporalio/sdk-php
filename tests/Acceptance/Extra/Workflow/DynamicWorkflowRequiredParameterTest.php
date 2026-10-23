@@ -25,7 +25,7 @@ class DynamicWorkflowRequiredParameterTest extends DynamicWorkflowFailureTestCas
         WorkflowClientInterface $client,
         ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, 'Too few arguments', \ArgumentCountError::class);
+        $this->assertHandlerFailure($stub, $client, $logger, 'Too few arguments to function ' . TestWorkflow::class . '::handle(), 1 passed and exactly 2 expected', \ArgumentCountError::class);
     }
 }
 
