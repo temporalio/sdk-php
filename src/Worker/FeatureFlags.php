@@ -85,7 +85,7 @@ final class FeatureFlags
      * timeout. FALSE (default) keeps the old behavior so existing histories stay replay-compatible.
      *
      * @experimental
-     * @since SDK 2.18.0
+     * @since SDK 2.19.0
      * @link https://github.com/temporalio/sdk-php/issues/399
      */
     public static bool $settleAwaitOnFirstSettledCondition = false;
