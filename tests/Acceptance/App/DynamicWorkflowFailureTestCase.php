@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
-use React\Promise\PromiseInterface;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
@@ -12,43 +11,13 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Interceptor\SimplePipelineProvider;
-use Temporal\Interceptor\Trait\WorkflowOutboundCallsInterceptorTrait;
-use Temporal\Interceptor\WorkflowOutboundCalls\CompleteInput;
-use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
-use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
-use Temporal\Workflow;
+use Temporal\Testing\Transcript\TranscriptLine;
 
 abstract class DynamicWorkflowFailureTestCase extends TestCase
 {
-    public static function pipelineProvider(): SimplePipelineProvider
-    {
-        return new SimplePipelineProvider([
-            new class implements WorkflowOutboundCallsInterceptor {
-                use WorkflowOutboundCallsInterceptorTrait;
-
-                public function complete(CompleteInput $input, callable $next): PromiseInterface
-                {
-                    if ($input->failure !== null) {
-                        $cause = $input->failure->getPrevious();
-                        Workflow::getLogger()->error('Dynamic workflow handler failed', [
-                            'exception' => $input->failure::class,
-                            'cause' => $cause === null ? null : $cause::class,
-                            'message' => $input->failure->getMessage(),
-                            'pid' => \getmypid(),
-                        ]);
-                    }
-
-                    return $next($input);
-                }
-            },
-        ]);
-    }
-
     protected function assertHandlerFailure(
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
-        ClientLogger $logger,
         string $probeType,
         string $message,
         string $cause = \TypeError::class,
@@ -65,12 +34,12 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
             self::assertSame($cause, $failure->getPrevious()->getType());
         }
 
-        $records = $logger->findByMessage('/^Dynamic workflow handler failed$/');
-        self::assertCount(1, $records);
-        self::assertSame('error', $records[0]->level);
-        self::assertSame(InvalidArgumentException::class, $records[0]->context['exception']);
-        self::assertSame($cause, $records[0]->context['cause']);
-        self::assertSame($failure->getOriginalMessage(), $records[0]->context['message']);
+        $starts = \array_values(\array_filter(
+            $this->readCurrentTestTranscript(),
+            static fn(TranscriptLine $line): bool => $line->getAttribute('event') === 'workflow_execute_start'
+                && $line->getAttribute('workflow_id') === $stub->getExecution()->getID(),
+        ));
+        self::assertCount(1, $starts);
 
         $events = [];
         foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
@@ -84,6 +53,6 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
             WorkflowOptions::new()->withTaskQueue($stub->getOptions()->taskQueue),
         );
         $client->start($probe);
-        self::assertSame($records[0]->context['pid'], $probe->getResult('int', timeout: 5));
+        self::assertSame($starts[0]->processId, $probe->getResult('int', timeout: 5));
     }
 }

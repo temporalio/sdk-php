@@ -8,14 +8,11 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
-use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\DynamicWorkflowFailureTestCase;
-use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-#[Worker(pipelineProvider: [DynamicWorkflowFailureTestCase::class, 'pipelineProvider'])]
 class DynamicWorkflowScalarParameterTest extends DynamicWorkflowFailureTestCase
 {
     #[Test]
@@ -23,9 +20,8 @@ class DynamicWorkflowScalarParameterTest extends DynamicWorkflowFailureTestCase
         #[Stub('Extra_Workflow_Dynamic_ScalarParameter', args: ['hello'])]
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
-        ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, 'Extra_Workflow_Dynamic_ScalarParameter_Probe', TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
+        $this->assertHandlerFailure($stub, $client, 'Extra_Workflow_Dynamic_ScalarParameter_Probe', TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
     }
 }
 

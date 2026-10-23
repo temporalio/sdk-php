@@ -9,14 +9,11 @@ use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
-use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\DynamicWorkflowFailureTestCase;
-use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-#[Worker(pipelineProvider: [DynamicWorkflowFailureTestCase::class, 'pipelineProvider'])]
 class DynamicWorkflowRequiredParameterTest extends DynamicWorkflowFailureTestCase
 {
     #[Test]
@@ -24,9 +21,8 @@ class DynamicWorkflowRequiredParameterTest extends DynamicWorkflowFailureTestCas
         #[Stub('Extra_Workflow_Dynamic_RequiredParameter', args: ['hello', 'world'])]
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
-        ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, 'Extra_Workflow_Dynamic_RequiredParameter_Probe', 'Too few arguments to function ' . TestWorkflow::class . '::handle(), 1 passed and exactly 2 expected', \ArgumentCountError::class);
+        $this->assertHandlerFailure($stub, $client, 'Extra_Workflow_Dynamic_RequiredParameter_Probe', 'Too few arguments to function ' . TestWorkflow::class . '::handle(), 1 passed and exactly 2 expected', \ArgumentCountError::class);
     }
 }
 
