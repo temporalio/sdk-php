@@ -271,6 +271,7 @@ pub struct WorkerJson {
     sticky_queue_schedule_to_start_timeout_ms: u64,
     nondeterminism_fails_workflow: bool,
     max_heartbeat_throttle_interval_ms: Option<u64>,
+    disable_payload_error_limit: bool,
     poller_autoscaling: bool,
     tuner: Option<TunerJson>,
 }
@@ -332,6 +333,7 @@ impl WorkerJson {
             } else {
                 HashSet::new()
             })
+            .disable_payload_error_limit(self.disable_payload_error_limit)
             .task_types(WorkerTaskTypes {
                 enable_workflows: self.workflows,
                 enable_local_activities: self.local_activities,
@@ -459,6 +461,7 @@ mod tests {
         assert_eq!(config.max_worker_activities_per_second, Some(2.5));
         assert_eq!(config.max_task_queue_activities_per_second, None);
         assert!(config.workflow_failure_errors.is_empty());
+        assert!(!config.disable_payload_error_limit);
         assert!(matches!(
             config.workflow_task_poller_behavior,
             Some(PollerBehavior::SimpleMaximum(8))
@@ -479,8 +482,10 @@ mod tests {
         json["poller_autoscaling"] = json!(true);
         json["max_heartbeat_throttle_interval_ms"] = json!(60000);
         json["nondeterminism_fails_workflow"] = json!(true);
+        json["disable_payload_error_limit"] = json!(true);
 
         let config = worker_config(&json)?;
+        assert!(config.disable_payload_error_limit);
 
         assert!(matches!(
             config.workflow_task_poller_behavior,

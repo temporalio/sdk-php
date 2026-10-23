@@ -70,6 +70,7 @@ final class CoreWorkerConfig
             'max_concurrent_activity_task_polls' => $options->maxConcurrentActivityTaskPollers ?: self::SEQUENTIAL_ACTIVITIES,
             'nondeterminism_fails_workflow' => $options->workflowPanicPolicy === WorkflowPanicPolicy::FailWorkflow,
             'max_heartbeat_throttle_interval_ms' => self::milliseconds($options->maxHeartbeatThrottleInterval),
+            'disable_payload_error_limit' => $options->disablePayloadErrorLimit,
             'poller_autoscaling' => $this->options->pollerAutoscaling,
             'tuner' => $this->tuner(),
         ];

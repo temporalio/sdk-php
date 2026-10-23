@@ -322,7 +322,7 @@ final class CommandTranslator
         }
 
         return new WorkflowCommand(['fail_workflow_execution' => new FailWorkflowExecution([
-            'failure' => $this->payloads->failure($failure),
+            'failure' => $this->payloads->failure($failure, $command->getPayloads()->getSerializationContext()),
         ])]);
     }
 

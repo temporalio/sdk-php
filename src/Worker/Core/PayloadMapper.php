@@ -18,6 +18,7 @@ use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\SerializationContext;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
@@ -108,9 +109,11 @@ final class PayloadMapper
     /**
      * @param \Traversable&\ArrayAccess<array-key, mixed>&\Countable $payloads
      */
-    public function decodeCollection(\ArrayAccess $payloads): array
+    public function decodeCollection(\ArrayAccess $payloads, ?SerializationContext $context = null): array
     {
-        return EncodedCollection::fromPayloadCollection($payloads, $this->converter)->getValues();
+        return EncodedCollection::fromPayloadCollection($payloads, $this->converter)
+            ->withSerializationContext($context)
+            ->getValues();
     }
 
     public function decode(Payload $payload): mixed
@@ -118,10 +121,10 @@ final class PayloadMapper
         return $this->converter->fromPayload($payload, null);
     }
 
-    public function failure(\Throwable $error): Failure
+    public function failure(\Throwable $error, ?SerializationContext $context = null): Failure
     {
         try {
-            return FailureConverter::mapExceptionToFailure($error, $this->converter);
+            return FailureConverter::mapExceptionToFailure($error, $this->converter, $context);
         } catch (\Exception $e) {
             if (!self::isInvalidUtf8($e)) {
                 throw $e;

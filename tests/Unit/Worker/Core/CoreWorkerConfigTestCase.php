@@ -43,6 +43,7 @@ final class CoreWorkerConfigTestCase extends TestCase
             'max_concurrent_activity_task_polls' => 1,
             'nondeterminism_fails_workflow' => false,
             'max_heartbeat_throttle_interval_ms' => null,
+            'disable_payload_error_limit' => false,
             'poller_autoscaling' => true,
             'tuner' => null,
         ]];
@@ -65,6 +66,7 @@ final class CoreWorkerConfigTestCase extends TestCase
             ->withMaxConcurrentActivityTaskPollers(3)
             ->withWorkerActivitiesPerSecond(5.0)
             ->withWorkflowPanicPolicy(WorkflowPanicPolicy::FailWorkflow)
+            ->withDisablePayloadErrorLimit()
             ->withDeploymentOptions(WorkerDeploymentOptions::new()->withUseVersioning(true)->withVersion('deployment.build')), [
                 'deployment' => ['UseVersioning' => true, 'Version' => ['DeploymentName' => 'deployment', 'BuildId' => 'build'], 'DefaultVersioningBehavior' => 0],
                 'graceful_shutdown_period_ms' => 5000,
@@ -75,6 +77,7 @@ final class CoreWorkerConfigTestCase extends TestCase
                 'max_concurrent_activity_task_polls' => 3,
                 'nondeterminism_fails_workflow' => true,
                 'max_heartbeat_throttle_interval_ms' => 3000,
+                'disable_payload_error_limit' => true,
             ]];
     }
 

@@ -22,6 +22,7 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\Priority as PriorityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TypedSearchAttributes;
+use Temporal\DataConverter\WorkflowSerializationContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Workflow\WorkflowType;
@@ -72,7 +73,10 @@ final class InfoFactory
         if ($init->hasMemo()) {
             /** @var Memo $memo */
             $memo = $init->getMemo();
-            $info->memo = $this->payloads->decodeCollection($memo->getFields());
+            $info->memo = $this->payloads->decodeCollection(
+                $memo->getFields(),
+                new WorkflowSerializationContext($namespace, $init->getWorkflowId()),
+            );
         }
         $info->retryOptions = self::retryOptions($init->getRetryPolicy());
         $info->priority = self::priorityOptions($init->getPriority());

@@ -204,6 +204,7 @@ pub fn worker_json(target_url: &str) -> serde_json::Value {
         "sticky_queue_schedule_to_start_timeout_ms": 5000,
         "nondeterminism_fails_workflow": false,
         "max_heartbeat_throttle_interval_ms": null,
+        "disable_payload_error_limit": false,
         "poller_autoscaling": false,
     })
 }
