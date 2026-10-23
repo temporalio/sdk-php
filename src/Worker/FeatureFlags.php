@@ -97,7 +97,7 @@ final class FeatureFlags
      *
      * Set to FALSE to keep the previous behavior, where the command is created.
      *
-     * @since SDK 2.18.0
+     * @since SDK 2.20.0
      */
     public static bool $readOnlyWorkflowCallbacks = true;
 }
