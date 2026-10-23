@@ -48,16 +48,16 @@ class TestWorkflow
     private bool $exit = false;
 
     #[WorkflowMethod(name: "Extra_Workflow_ChildWorkflowId")]
-    public function handle(bool $createChild = false)
+    public function handle(bool $createChild = false): void
     {
         // Start a child workflow and store its ID
         if ($createChild) {
             $child = Workflow::newUntypedChildWorkflowStub("Extra_Workflow_ChildWorkflowId");
-            $result = yield $child->start(false);
+            $result = $child->start(false);
             $this->childId = $result->getID();
         }
 
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => $this->exit,
         );
     }

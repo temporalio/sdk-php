@@ -20,36 +20,32 @@ use Temporal\Workflow;
 class SagaWorkflow
 {
     #[Workflow\WorkflowMethod(name: 'SagaWorkflow')]
-    public function run()
+    public function run(): void
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(60)
-                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
+                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1)),
         );
 
         $saga = new Workflow\Saga();
         $saga->setParallelCompensation(true);
 
         try {
-            yield $simple->echo('test');
+            $simple->echo('test');
             $saga->addCompensation(
-                function () use ($simple) {
-                    yield $simple->slow('compensate echo');
-                }
+                static fn() => $simple->slow('compensate echo'),
             );
 
-            yield $simple->lower('TEST');
+            $simple->lower('TEST');
             $saga->addCompensation(
-                function () use ($simple) {
-                    yield $simple->prefix('prefix', 'COMPENSATE LOWER');
-                }
+                static fn() => $simple->prefix('prefix', 'COMPENSATE LOWER'),
             );
 
-            yield $simple->fail();
+            $simple->fail();
         } catch (\Throwable $e) {
-            yield $saga->compensate();
+            $saga->compensate()->await();
             throw $e;
         }
     }

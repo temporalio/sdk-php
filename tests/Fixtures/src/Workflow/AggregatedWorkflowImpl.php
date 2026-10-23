@@ -18,15 +18,15 @@ class AggregatedWorkflowImpl implements AggregatedWorkflow
     private array $values = [];
 
     public function addValue(
-        string $value
-    ) {
+        string $value,
+    ): void {
         $this->values[] = $value;
     }
 
     public function run(
-        int $count
+        int $count,
     ) {
-        yield Workflow::await(fn() => count($this->values) === $count);
+        Workflow::await(fn() => \count($this->values) === $count);
 
         return $this->values;
     }

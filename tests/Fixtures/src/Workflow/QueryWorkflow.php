@@ -21,8 +21,8 @@ class QueryWorkflow
 
     #[Workflow\SignalMethod(name: "add")]
     public function add(
-        int $value
-    ) {
+        int $value,
+    ): void {
         $this->counter += $value;
     }
 
@@ -36,7 +36,7 @@ class QueryWorkflow
     public function handler()
     {
         // collect signals during one second
-        yield Workflow::timer(1);
+        Workflow::timer(1);
 
         return $this->counter;
     }

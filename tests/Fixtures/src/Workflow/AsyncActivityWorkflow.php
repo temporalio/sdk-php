@@ -29,13 +29,14 @@ class AsyncActivityWorkflow
             ActivityOptions::new()
                 ->withStartToCloseTimeout(20)
                 ->withCancellationType(ActivityCancellationType::WAIT_CANCELLATION_COMPLETED)
-                ->withRetryOptions(RetryOptions::new()
-                    ->withMaximumAttempts(1)
-                    ->withInitialInterval(1)
-                    ->withMaximumInterval(2)
-                )
+                ->withRetryOptions(
+                    RetryOptions::new()
+                        ->withMaximumAttempts(1)
+                        ->withInitialInterval(1)
+                        ->withMaximumInterval(2),
+                ),
         );
 
-        return yield $simple->external();
+        return $simple->external();
     }
 }

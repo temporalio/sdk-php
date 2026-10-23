@@ -36,9 +36,9 @@ final class WorkerTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'SimpleWorkflow')]
-                public function handler(): iterable
+                public function handler(): bool
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, fn() => false);
+                    $result = Workflow::awaitWithTimeout(5, static fn() => false);
                     assertFalse($result);
                     return $result;
                 }

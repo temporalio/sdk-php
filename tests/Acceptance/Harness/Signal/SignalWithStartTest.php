@@ -57,11 +57,11 @@ class FeatureWorkflow
     private int $value = 0;
 
     #[WorkflowMethod('Harness_Signal_SignalWithStart')]
-    public function run(int $arg = 0)
+    public function run(int $arg = 0): int
     {
         $this->value += $arg;
 
-        yield Workflow::await(fn() => $this->value > 0);
+        Workflow::await(fn() => $this->value > 0);
 
         return $this->value;
     }

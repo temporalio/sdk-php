@@ -240,7 +240,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_FallbackHandlers")]
     public function handle()
     {
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => $this->exit,
         );
         return [

@@ -21,7 +21,7 @@ use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\Reflection;
-use Temporal\Internal\Transport\CompletableResultInterface;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Workflow\WorkflowContextInterface;
 
 /**
@@ -63,11 +63,10 @@ final class ActivityProxy extends Proxy
         $this->ctx = $ctx;
     }
 
-    /**
-     * @return CompletableResultInterface
-     */
-    public function __call(string $method, array $args = []): PromiseInterface
+    public function __call(string $method, array $args = []): mixed
     {
+        Awaiter::assertManaged();
+
         $prototype = $this->findPrototypeByHandlerNameOrFail($method);
         $type = $prototype->getHandler()->getReturnType();
         $options = $this->options->mergeWith($prototype->getMethodRetry());
@@ -85,12 +84,12 @@ final class ActivityProxy extends Proxy
             );
         }
 
-        return $prototype->isLocalActivity()
+        $result = $prototype->isLocalActivity()
             // Run local activity through an interceptor pipeline
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType, true),
+                    ->executeAsync($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(
@@ -107,7 +106,7 @@ final class ActivityProxy extends Proxy
             : $this->callsInterceptor->with(
                 fn(ExecuteActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType),
+                    ->executeAsync($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
                 'executeActivity',
             )(
@@ -119,6 +118,8 @@ final class ActivityProxy extends Proxy
                     $prototype->getHandler(),
                 )
             );
+
+        return Awaiter::await($result, interruptOnCancel: false);
     }
 
     private function findPrototypeByHandlerNameOrFail(string $name): ActivityPrototype

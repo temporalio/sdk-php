@@ -24,11 +24,11 @@ class SignalChildViaStubWorkflow
         $simple = Workflow::newChildWorkflowStub(SimpleSignalledWorkflow::class);
 
         // start execution
-        $call = $simple->handler();
+        $call = Workflow::async(static fn() => $simple->handler());
 
-        yield $simple->add(8);
+        $simple->add(8);
 
         // expects 8
-        return yield $call;
+        return $call->await();
     }
 }

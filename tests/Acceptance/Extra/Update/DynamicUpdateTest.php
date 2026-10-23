@@ -84,7 +84,7 @@ class TestWorkflow
             fn(int $value): int => $value,
             fn(int $value) => $value > 0 or throw new \InvalidArgumentException('Value must be positive'),
         );
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return $this->result;
     }
 

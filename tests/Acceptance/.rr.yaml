@@ -20,4 +20,5 @@ kv:
         config: { }
 
 logs:
-    mode: none #info
+    mode: development
+    level: info #info

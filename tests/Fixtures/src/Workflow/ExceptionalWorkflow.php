@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Activity\ActivityOptions;
-use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -20,7 +18,7 @@ use Temporal\Workflow\WorkflowMethod;
 class ExceptionalWorkflow
 {
     #[WorkflowMethod(name: 'ExceptionalWorkflow')]
-    public function handler()
+    public function handler(): void
     {
         throw new \RuntimeException("workflow error");
     }

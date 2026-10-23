@@ -43,6 +43,45 @@ final class FunctionMapTestCase extends BaseFunction
         )->then($mock);
     }
 
+    public function testMapTraversableInput(): void
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($this->identicalTo([
+                'first' => 2,
+                'second' => 4,
+            ]));
+
+        Promise::map(
+            new \ArrayIterator([
+                'first' => 1,
+                'second' => Promise::resolve(2),
+            ]),
+            $this->mapper(),
+        )->then($mock);
+    }
+
+    public function testMapRejectsWhenTraversableThrowsDuringMaterialization(): void
+    {
+        $error = new Exception('iterator failed');
+        $rejection = null;
+        $values = (static function () use ($error): \Generator {
+            yield 1;
+            throw $error;
+        })();
+
+        Promise::map($values, $this->mapper())->then(
+            $this->expectCallableNever(),
+            static function (\Throwable $reason) use (&$rejection): void {
+                $rejection = $reason;
+            },
+        );
+
+        self::assertSame($error, $rejection);
+    }
+
     public function testMapMixedInputArray(): void
     {
         $mock = $this->createCallableMock();

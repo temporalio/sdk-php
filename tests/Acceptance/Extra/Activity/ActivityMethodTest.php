@@ -63,7 +63,7 @@ class TestWorkflow
             TestActivity::class,
             Activity\ActivityOptions::new()->withScheduleToCloseTimeout(10),
         );
-        $result = yield $activityStub->{$method}();
+        $result = $activityStub->{$method}();
 
         return [
             'result' => $result,

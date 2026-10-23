@@ -22,7 +22,8 @@ final class EmptyHeaderWorkflow
     public const WORKFLOW_NAME = 'Header.EmptyHeaderWorkflow';
 
     #[WorkflowMethod(name: self::WORKFLOW_NAME)]
-    public function handler(): iterable {
+    public function handler(): array
+    {
         return $this->runActivity();
     }
 }

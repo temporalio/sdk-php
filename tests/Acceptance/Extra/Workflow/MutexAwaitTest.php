@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexYield;
+namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexAwait;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
@@ -13,11 +13,11 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class MutexYieldTest extends TestCase
+class MutexAwaitTest extends TestCase
 {
     #[Test]
     public function runWithUnblockUnblock(
-        #[Stub('Extra_Workflow_MutexYield')]
+        #[Stub('Extra_Workflow_MutexAwait')]
         WorkflowStubInterface $stub,
     ): void {
         $historyLength = $stub->describe()->info->historyLength;
@@ -43,7 +43,7 @@ class MutexYieldTest extends TestCase
 
     #[Test]
     public function runWithUnblockExit(
-        #[Stub('Extra_Workflow_MutexYield')]
+        #[Stub('Extra_Workflow_MutexAwait')]
         WorkflowStubInterface $stub,
     ): void {
         $historyLength = $stub->describe()->info->historyLength;
@@ -65,25 +65,25 @@ class TestWorkflow
     public function __construct()
     {
         $this->mutex = new Workflow\Mutex();
-        $this->mutex->lock();
+        $this->mutex->tryLock();
     }
 
-    #[WorkflowMethod(name: "Extra_Workflow_MutexYield")]
+    #[WorkflowMethod(name: "Extra_Workflow_MutexAwait")]
     #[Workflow\ReturnType(Type::TYPE_ARRAY)]
-    public function handle(): \Generator
+    public function handle(): array
     {
-        yield $this->mutex;
-        $yieldLocked = $this->mutex->isLocked();
+        Workflow::await($this->mutex);
+        $initiallyLocked = $this->mutex->isLocked();
 
         $this->mutex->lock();
 
-        yield Workflow::await(
+        Workflow::await(
             $this->mutex,
             fn() => $this->exit,
         );
         $awaitLocked = $this->mutex->isLocked();
 
-        return [$yieldLocked, $awaitLocked];
+        return [$initiallyLocked, $awaitLocked];
     }
 
     #[Workflow\SignalMethod]

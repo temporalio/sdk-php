@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow\Header;
 
-use Generator;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
@@ -24,15 +23,15 @@ trait HandleTrait
      *        - null: run activity with {@see null} header value
      *        - array: will be passed into activity as is without merging with workflow header
      *
-     * @return Generator<mixed, mixed, mixed, array{array, array}> Returns array of headers:
+     * @return array{array, array} Returns array of headers:
      *         - [0] - header from current workflow
      *         - [1] - header from activity
      */
     protected function runActivity(
         array|null $activityHeader = null,
-    ): iterable {
+    ): array {
         // Run activity
-        $activityResult = yield Workflow::newActivityStub(
+        $activityResult = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)

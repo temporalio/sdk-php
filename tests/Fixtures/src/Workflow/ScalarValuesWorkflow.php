@@ -15,16 +15,11 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class YieldScalarsWorkflow
+class ScalarValuesWorkflow
 {
-    #[WorkflowMethod(name: 'YieldScalarsWorkflow')]
-    public function handler(array $toYield): iterable {
-        $result = [];
-
-        foreach ($toYield as $value) {
-            $result[] = yield $value;
-        }
-
-        return $result;
+    #[WorkflowMethod(name: 'ScalarValuesWorkflow')]
+    public function handler(array $values): array
+    {
+        return $values;
     }
 }

@@ -18,7 +18,7 @@ use Temporal\Workflow;
  * Options for {@see Workflow::awaitWithTimeout()}.
  *
  * ```php
- *  yield Workflow::awaitWithTimeout(
+ *  Workflow::awaitWithTimeout(
  *      AwaitOptions::new(30)->withTimerOptions(
  *          TimerOptions::new()->withSummary('rtds-resolution-wait'),
  *      ),

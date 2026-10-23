@@ -48,7 +48,7 @@ class FeatureWorkflow
             return $input;
         }
 
-        return yield Workflow::continueAsNew(
+        return Workflow::continueAsNew(
             'Harness_ContinueAsNew_ContinueAsSame',
             args: [$input],
         );

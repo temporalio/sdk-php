@@ -113,9 +113,15 @@ class Dispatcher implements DispatcherInterface
                 });
 
 
-                return $fun->isStatic()
-                    ? $closure->bindTo(null, $ctx::class)?->__invoke(...$arguments) ?? $closure(...$arguments)
-                    : $closure->call($ctx, ...$arguments);
+                if (!$fun->isStatic()) {
+                    return $closure->call($ctx, ...$arguments);
+                }
+
+                $bound = $closure->bindTo(null, $ctx::class);
+
+                return $bound === null
+                    ? $closure(...$arguments)
+                    : $bound(...$arguments);
             } finally {
                 \restore_error_handler();
             }

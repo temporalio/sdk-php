@@ -16,8 +16,6 @@ use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\Inheritance\ExtendingWorkflow;
 use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
-use Temporal\Tests\Workflow\YieldGeneratorWorkflow;
-use Temporal\Tests\Workflow\YieldScalarsWorkflow;
 use Temporal\Workflow\WorkflowExecution;
 
 final class SimpleWorkflowTestCase extends TestCase
@@ -103,22 +101,6 @@ final class SimpleWorkflowTestCase extends TestCase
         }
 
         $this->fail('LocalActivity not found in history');
-    }
-
-    public function testYieldNonPromises(): void
-    {
-        $workflow = $this->workflowClient->newWorkflowStub(YieldScalarsWorkflow::class);
-        $run = $this->workflowClient->start($workflow, ['hello', 'world', '!']);
-        $this->assertSame(['hello', 'world', '!'], $run->getResult('array'));
-    }
-
-    public function testYieldGenerator(): void
-    {
-        $workflow = $this->workflowClient->newWorkflowStub(YieldGeneratorWorkflow::class);
-        $run = $this->workflowClient->start($workflow);
-        // When a generator is yielded, the coroutine doesn't return resolved value from the generator
-        // but returns the generator result itself.
-        $this->assertSame('bar', $run->getResult());
     }
 
     public function testWorkflowMethodInAbstractParent(): void

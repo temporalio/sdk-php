@@ -11,6 +11,7 @@ use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowExecutionStatus;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -48,7 +49,7 @@ class WorkflowClientTest extends TestCase
 
         self::assertInstanceOf(\DateTimeInterface::class, $description->info->startTime);
         self::assertNull($description->info->closeTime);
-        self::assertSame(Workflow\WorkflowExecutionStatus::Running, $description->info->status);
+        self::assertSame(WorkflowExecutionStatus::Running, $description->info->status);
         self::assertGreaterThanOrEqual(2, $description->info->historyLength);
         self::assertNull($description->info->parentExecution);
         self::assertNotNull($description->info->executionTime);
@@ -75,7 +76,7 @@ class FeatureWorkflow
     #[WorkflowMethod('Extra_Client_WorkflowClient')]
     public function run()
     {
-        yield Workflow::await(fn(): bool => $this->value !== '');
+        Workflow::await(fn(): bool => $this->value !== '');
         return $this->value;
     }
 

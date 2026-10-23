@@ -210,7 +210,7 @@ class TestWorkflow
         $logger = Workflow::getLogger();
         $logger->info('Workflow execution started');
 
-        yield Workflow::await(fn(): bool => $this->exit);
+        Workflow::await(fn(): bool => $this->exit);
 
         $logger->info('Workflow completed');
 

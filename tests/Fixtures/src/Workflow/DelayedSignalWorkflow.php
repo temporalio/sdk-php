@@ -22,9 +22,9 @@ class DelayedSignalWorkflow
     private ?string $received = null;
 
     #[WorkflowMethod(name: 'DelayedSignalWorkflow')]
-    public function handler(int $timeoutSeconds): iterable
+    public function handler(int $timeoutSeconds): string
     {
-        $arrived = yield Workflow::awaitWithTimeout($timeoutSeconds, fn(): bool => $this->received !== null);
+        $arrived = Workflow::awaitWithTimeout($timeoutSeconds, fn(): bool => $this->received !== null);
 
         return $arrived ? 'signal:' . $this->received : 'timeout';
     }

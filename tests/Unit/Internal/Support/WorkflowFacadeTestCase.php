@@ -78,11 +78,11 @@ class WorkflowFacadeTestCase extends TestCase
         ];
 
         yield 'async' => [
-            static fn() => Workflow::async(static fn() => yield),
+            static fn() => Workflow::async(static fn() => null),
         ];
 
         yield 'asyncDetached' => [
-            static fn() => Workflow::asyncDetached(static fn() => yield),
+            static fn() => Workflow::asyncDetached(static fn() => null),
         ];
 
         yield 'newActivityStub' => [
@@ -126,7 +126,7 @@ class WorkflowFacadeTestCase extends TestCase
         ];
 
         yield 'runLocked' => [
-            static fn() => Workflow::runLocked(new \Temporal\Workflow\Mutex('test'), static fn() => yield),
+            static fn() => Workflow::runLocked(new \Temporal\Workflow\Mutex('test'), static fn() => null),
         ];
 
         yield 'getLogger' => [

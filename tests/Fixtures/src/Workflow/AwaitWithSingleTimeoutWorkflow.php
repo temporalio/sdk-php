@@ -17,10 +17,10 @@ use Temporal\Workflow\WorkflowMethod;
 #[Workflow\WorkflowInterface]
 class AwaitWithSingleTimeoutWorkflow
 {
-    #[WorkflowMethod()]
+    #[WorkflowMethod]
     public function handler()
     {
-        yield Workflow::await(Workflow::timer(5000));
+        Workflow::timer(5000);
 
         return 'ok';
     }

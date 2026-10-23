@@ -51,6 +51,23 @@ final class FunctionAllTestCase extends BaseFunction
             ->then($mock);
     }
 
+    public function testResolveTraversableInput(): void
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($this->identicalTo([
+                'first' => 1,
+                'second' => 2,
+            ]));
+
+        Promise::all(new \ArrayIterator([
+            'first' => Promise::resolve(1),
+            'second' => Promise::resolve(2),
+        ]))->then($mock);
+    }
+
     public function testResolveSparseArrayInput(): void
     {
         $mock = $this->createCallableMock();

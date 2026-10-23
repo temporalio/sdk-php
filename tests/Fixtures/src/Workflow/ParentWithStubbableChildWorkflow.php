@@ -20,10 +20,10 @@ use Temporal\Workflow\WorkflowMethod;
 class ParentWithStubbableChildWorkflow
 {
     #[WorkflowMethod(name: 'ParentWithStubbableChildWorkflow')]
-    public function handler(string $childType, string $input): iterable
+    public function handler(string $childType, string $input): array
     {
         try {
-            $result = yield Workflow::executeChildWorkflow(
+            $result = Workflow::executeChildWorkflow(
                 $childType,
                 [$input],
                 ChildWorkflowOptions::new()

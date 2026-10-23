@@ -20,9 +20,9 @@ use Temporal\Workflow\WorkflowMethod;
 class LocalActivityWorkflow
 {
     #[WorkflowMethod(name: 'LocalActivityWorkflow')]
-    public function handler()
+    public function handler(): void
     {
-        yield Workflow::newActivityStub(
+        Workflow::newActivityStub(
             JustLocalActivity::class,
             LocalActivityOptions::new()->withStartToCloseTimeout('10 seconds'),
         )->echo('test');

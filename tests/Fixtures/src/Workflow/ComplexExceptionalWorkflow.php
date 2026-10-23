@@ -11,9 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
-use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -26,10 +24,10 @@ class ComplexExceptionalWorkflow
         $child = Workflow::newChildWorkflowStub(
             ExceptionalActivityWorkflow::class,
             Workflow\ChildWorkflowOptions::new()->withRetryOptions(
-                (new RetryOptions())->withMaximumAttempts(1)
-            )
+                (new RetryOptions())->withMaximumAttempts(1),
+            ),
         );
 
-        return yield $child->handler();
+        return $child->handler();
     }
 }

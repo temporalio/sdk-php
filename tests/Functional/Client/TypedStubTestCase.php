@@ -20,7 +20,7 @@ use Temporal\Tests\DTO\User;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Workflow\ActivityReturnTypeWorkflow;
 use Temporal\Tests\Workflow\Case335Workflow;
-use Temporal\Tests\Workflow\GeneratorWorkflow;
+use Temporal\Tests\Workflow\NestedActivityWorkflow;
 use Temporal\Tests\Workflow\Php82TypesWorkflow;
 use Temporal\Tests\Workflow\QueryWorkflow;
 use Temporal\Tests\Workflow\SignalledWorkflowReusable;
@@ -139,10 +139,10 @@ class TypedStubTestCase extends AbstractClient
         );
     }
 
-    public function testGeneratorCoroutines()
+    public function testNestedActivityCalls()
     {
         $client = $this->createClient();
-        $simple = $client->newWorkflowStub(GeneratorWorkflow::class);
+        $simple = $client->newWorkflowStub(NestedActivityWorkflow::class);
 
         $this->assertSame(
             [
@@ -153,23 +153,23 @@ class TypedStubTestCase extends AbstractClient
         );
     }
 
-    public function testGeneratorErrorCoroutines()
+    public function testNestedWorkflowActionError()
     {
         $client = $this->createClient();
-        $simple = $client->newWorkflowStub(GeneratorWorkflow::class);
+        $simple = $client->newWorkflowStub(NestedActivityWorkflow::class);
 
         try {
             $simple->handler('error');
             $this->fail('Expected exception to be thrown');
         } catch (WorkflowFailedException $e) {
-            $this->assertStringContainsString('error from generator', $e->getPrevious()->getMessage());
+            $this->assertStringContainsString('error from nested workflow action', $e->getPrevious()->getMessage());
         }
     }
 
-    public function testGeneratorErrorInNestedActionCoroutines()
+    public function testActivityErrorInNestedWorkflowAction()
     {
         $client = $this->createClient();
-        $simple = $client->newWorkflowStub(GeneratorWorkflow::class);
+        $simple = $client->newWorkflowStub(NestedActivityWorkflow::class);
 
         try {
             $simple->handler('failure');

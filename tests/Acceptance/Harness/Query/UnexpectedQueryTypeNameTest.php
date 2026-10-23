@@ -41,9 +41,9 @@ class FeatureWorkflow
     private bool $beDone = false;
 
     #[WorkflowMethod('Harness_Query_UnexpectedQueryTypeName')]
-    public function run()
+    public function run(): void
     {
-        yield Workflow::await(fn(): bool => $this->beDone);
+        Workflow::await(fn(): bool => $this->beDone);
     }
 
     #[SignalMethod('finish')]

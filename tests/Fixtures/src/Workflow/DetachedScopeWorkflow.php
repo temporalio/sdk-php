@@ -20,12 +20,15 @@ class DetachedScopeWorkflow
     #[WorkflowMethod]
     public function handler()
     {
-        yield Workflow::asyncDetached(
+        Workflow::asyncDetached(
             static function (): void {
-                // Don't add `yield` here. It's important for the tests.
-                Workflow::await(Workflow::timer(5000));
+                Workflow::asyncDetached(
+                    static function (): void {
+                        Workflow::timer(5000);
+                    },
+                );
             },
-        );
+        )->await();
 
         return 'ok';
     }

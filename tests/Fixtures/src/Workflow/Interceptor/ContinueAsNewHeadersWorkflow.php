@@ -18,7 +18,7 @@ use Temporal\Workflow\WorkflowMethod;
 class ContinueAsNewHeadersWorkflow
 {
     #[WorkflowMethod(name: 'InterceptorContinueAsNewHeaderWorkflow')]
-    public function handler(): iterable
+    public function handler(): array
     {
         /** @see AwaitHeadersWorkflow */
         Workflow::continueAsNew('InterceptorAwaitHeaderWorkflow');

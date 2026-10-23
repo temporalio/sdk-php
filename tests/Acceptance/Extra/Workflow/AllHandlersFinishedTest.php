@@ -260,7 +260,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_AllHandlersFinished")]
     public function handle()
     {
-        yield Workflow::await(
+        Workflow::await(
             fn(): bool => \count($this->awaits) > 0 && Workflow::allHandlersFinished(),
             fn(): bool => $this->exit,
         );
@@ -274,7 +274,7 @@ class TestWorkflow
     public function addFromUpdate(string $name): mixed
     {
         $this->awaits[$name] ??= null;
-        yield Workflow::await(fn() => $this->awaits[$name] !== null);
+        Workflow::await(fn() => $this->awaits[$name] !== null);
         return $this->awaits[$name];
     }
 
@@ -292,23 +292,23 @@ class TestWorkflow
      * @param non-empty-string $name
      */
     #[Workflow\SignalMethod(name: 'await')]
-    public function addFromSignal(string $name)
+    public function addFromSignal(string $name): void
     {
         $this->awaits[$name] ??= null;
-        yield Workflow::await(fn() => $this->awaits[$name] !== null);
+        Workflow::await(fn() => $this->awaits[$name] !== null);
     }
 
     /**
      * @param non-empty-string $name
      */
     #[Workflow\SignalMethod(name: 'resolve', unfinishedPolicy: Workflow\HandlerUnfinishedPolicy::Abandon)]
-    public function resolveFromSignal(string $name, mixed $value)
+    public function resolveFromSignal(string $name, mixed $value): void
     {
-        yield Workflow::await(fn(): bool => \array_key_exists($name, $this->awaits));
+        Workflow::await(fn(): bool => \array_key_exists($name, $this->awaits));
         $this->awaits[$name] = $value;
     }
 
-    #[Workflow\SignalMethod()]
+    #[Workflow\SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

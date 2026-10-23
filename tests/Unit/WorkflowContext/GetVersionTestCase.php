@@ -29,9 +29,9 @@ final class GetVersionTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'VersionWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $version = yield Workflow::getVersion(
+                    $version = Workflow::getVersion(
                         'test',
                         Workflow::DEFAULT_VERSION,
                         Workflow::DEFAULT_VERSION,

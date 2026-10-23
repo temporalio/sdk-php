@@ -21,16 +21,16 @@ use Temporal\Tests\Activity\HeartBeatActivity;
 class CanceledHeartbeatWorkflow
 {
     #[WorkflowMethod(name: 'CanceledHeartbeatWorkflow')]
-    public function handler(): iterable
+    public function handler(): string
     {
         $act = Workflow::newActivityStub(
             HeartBeatActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(50)
                 ->withCancellationType(ActivityCancellationType::WAIT_CANCELLATION_COMPLETED)
-                ->withHeartbeatTimeout(1)
+                ->withHeartbeatTimeout(1),
         );
 
-        return yield $act->slow('test');
+        return $act->slow('test');
     }
 }

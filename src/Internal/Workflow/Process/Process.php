@@ -77,13 +77,14 @@ class Process extends Scope implements ProcessInterface
                     Workflow::setCurrentContext($this->scopeContext);
                     $this->scopeContext->runReadOnly(fn(): mixed => $inboundPipeline->with(
                         function (UpdateInput $input) use ($handler): void {
-                            Workflow::setCurrentContext($this->scopeContext->withInput(
+                            $context = $this->scopeContext->withInput(
                                 new Input(
                                     $this->scopeContext->getInfo(),
                                     $input->arguments,
                                     $input->header,
                                 ),
-                            ));
+                            );
+                            Workflow::setCurrentContext($context);
                             $handler($input->arguments);
                         },
                         /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
@@ -240,7 +241,8 @@ class Process extends Scope implements ProcessInterface
                 ));
         } catch (\Throwable $e) {
             isset($this->context) or $this->setContext($context);
-            $context->setReadonly(false);
+            $this->context->setReadonly(false);
+            $this->scopeContext->setReadonly(false);
             $this->complete($e);
         } finally {
             Workflow::setCurrentContext(null);
@@ -341,7 +343,7 @@ class Process extends Scope implements ProcessInterface
                 'This may have interrupted work that the update handler was doing, and the client ' .
                 'that sent the update will receive a \'workflow execution already completed\' RPCError ' .
                 'instead of the update result. You can wait for all update and signal handlers ' .
-                'to complete by using `yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                'to complete by using `Workflow::await(fn() => Workflow::allHandlersFinished());`. ' .
                 'Alternatively, if both you and the clients sending the update are okay with interrupting ' .
                 'running handlers when the workflow finishes, and causing clients to receive errors, ' .
                 'then you can disable this warning via the update handler attribute: ' .
@@ -360,7 +362,7 @@ class Process extends Scope implements ProcessInterface
             $message = "Workflow `$workflowName` $happened while signal handlers are still running. " .
                 'This may have interrupted work that the signal handler was doing. ' .
                 'You can wait for all update and signal handlers to complete by using ' .
-                '`yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                '`Workflow::await(fn() => Workflow::allHandlersFinished());`. ' .
                 'Alternatively, if both you and the clients sending the signal are okay ' .
                 'with interrupting running handlers when the workflow finishes, ' .
                 'and causing clients to receive errors, then you can disable this warning via the signal ' .

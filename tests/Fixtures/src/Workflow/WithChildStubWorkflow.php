@@ -18,10 +18,10 @@ use Temporal\Workflow\WorkflowMethod;
 class WithChildStubWorkflow
 {
     #[WorkflowMethod(name: 'WithChildStubWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): string
     {
         $child = Workflow::newChildWorkflowStub(SimpleWorkflow::class);
 
-        return 'Child: ' . (yield $child->handler('child ' . $input));
+        return 'Child: ' . ($child->handler('child ' . $input));
     }
 }

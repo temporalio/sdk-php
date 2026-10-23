@@ -27,21 +27,21 @@ class SignalWorkflow
     {
         $received = [];
         while (true) {
-            yield Workflow::await(fn() => $this->greetings !== [] || $this->exit);
+            Workflow::await(fn() => $this->greetings !== [] || $this->exit);
             if ($this->greetings === [] && $this->exit) {
                 return $received;
             }
 
-            $message = array_shift($this->greetings);
+            $message = \array_shift($this->greetings);
             $received[] = $message;
         }
     }
 
     #[SignalMethod]
     public function addName(
-        string $name
+        string $name,
     ): void {
-        $this->greetings[] = sprintf('Hello, %s!', $name);
+        $this->greetings[] = \sprintf('Hello, %s!', $name);
     }
 
     #[SignalMethod]

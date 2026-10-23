@@ -82,7 +82,7 @@ class FeatureWorkflow
     private bool $beDone = false;
 
     #[WorkflowMethod('Extra_Workflow_Metadata')]
-    public function run(bool $registerFallbacks = false)
+    public function run(bool $registerFallbacks = false): void
     {
         if ($registerFallbacks) {
             Workflow::registerDynamicQuery(static fn(string $name, ValuesInterface $values): mixed => $name);
@@ -93,7 +93,7 @@ class FeatureWorkflow
             );
         }
 
-        yield Workflow::await(fn(): bool => $this->beDone);
+        Workflow::await(fn(): bool => $this->beDone);
     }
 
     #[QueryMethod('get_counter', description: 'Get the current counter value')]

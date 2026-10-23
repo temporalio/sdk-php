@@ -20,13 +20,13 @@ use Temporal\Tests\Activity\HeartBeatActivity;
 class SimpleHeartbeatWorkflow
 {
     #[WorkflowMethod(name: 'SimpleHeartbeatWorkflow')]
-    public function handler(int $iterations): iterable
+    public function handler(int $iterations): string
     {
         $act = Workflow::newActivityStub(
             HeartBeatActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(50)
+            ActivityOptions::new()->withStartToCloseTimeout(50),
         );
 
-        return yield $act->doSomething($iterations);
+        return $act->doSomething($iterations);
     }
 }

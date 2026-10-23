@@ -47,9 +47,9 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, static fn(): bool => false);
+                    $result = Workflow::awaitWithTimeout(5, static fn(): bool => false);
 
                     return $result === false ? 'TIMEOUT' : 'MET';
                 }
@@ -69,9 +69,9 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, static fn(): bool => true);
+                    $result = Workflow::awaitWithTimeout(5, static fn(): bool => true);
 
                     return $result === true ? 'MET' : 'TIMEOUT';
                 }
@@ -91,9 +91,9 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, resolve(true));
+                    $result = Workflow::awaitWithTimeout(5, resolve(true));
 
                     return $result === true ? 'MET' : 'TIMEOUT';
                 }
@@ -113,10 +113,10 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
                     try {
-                        yield Workflow::await(reject(new \RuntimeException('boom')));
+                        Workflow::await(reject(new \RuntimeException('boom')));
                     } catch (\Throwable) {
                         return 'THREW';
                     }
@@ -139,10 +139,10 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
                     try {
-                        yield Workflow::await();
+                        Workflow::await();
                     } catch (\Throwable) {
                         return 'THREW';
                     }
@@ -188,10 +188,10 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
                     try {
-                        yield Workflow::awaitWithTimeout(
+                        Workflow::awaitWithTimeout(
                             5,
                             reject(new \RuntimeException('boom')),
                             static fn(): bool => false,
@@ -217,10 +217,10 @@ final class AwaitPromiseSettlementTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitPromiseWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
                     try {
-                        $result = yield Workflow::awaitWithTimeout(5, reject(new \RuntimeException('boom')));
+                        $result = Workflow::awaitWithTimeout(5, reject(new \RuntimeException('boom')));
                     } catch (\Throwable) {
                         return 'THREW';
                     }

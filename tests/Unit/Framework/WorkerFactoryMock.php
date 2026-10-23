@@ -36,6 +36,7 @@ use Temporal\Internal\Workflow\Logger;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
@@ -169,6 +170,12 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     {
         $this->emit(LoopInterface::ON_SIGNAL);
         $this->emit(LoopInterface::ON_CALLBACK);
+
+        if (Awaiter::isManaged()) {
+            $this->emit(LoopInterface::ON_TICK);
+            return;
+        }
+
         $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
     }

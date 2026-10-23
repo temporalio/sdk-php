@@ -31,32 +31,32 @@ class LoopWithSignalCoroutinesWorkflow
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(10)
-                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
+                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1)),
         );
     }
 
     #[SignalMethod]
     public function addValue(
-        string $value
-    ) {
-        $value = yield $this->simple->prefix('in signal ', $value);
-        $value = yield $this->simple->prefix('in signal 2 ', $value);
+        string $value,
+    ): void {
+        $value = $this->simple->prefix('in signal ', $value);
+        $value = $this->simple->prefix('in signal 2 ', $value);
 
         $this->values[] = $value;
     }
 
     #[WorkflowMethod(name: 'LoopWithSignalCoroutinesWorkflow')]
     public function run(
-        int $count
+        int $count,
     ) {
         while (true) {
-            yield Workflow::await(fn() => $this->values !== []);
-            $value = array_shift($this->values);
+            Workflow::await(fn() => $this->values !== []);
+            $value = \array_shift($this->values);
 
             // uppercases
-            $this->result[] = yield $this->simple->echo($value);
+            $this->result[] = $this->simple->echo($value);
 
-            if (count($this->result) === $count) {
+            if (\count($this->result) === $count) {
                 break;
             }
         }

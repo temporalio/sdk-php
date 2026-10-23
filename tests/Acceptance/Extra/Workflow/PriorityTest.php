@@ -75,7 +75,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_Priority")]
     public function handle(bool $runChild = false)
     {
-        $activity = yield Workflow::executeActivity(
+        $activity = Workflow::executeActivity(
             'Extra_Workflow_Priority.handler',
             options: Activity\ActivityOptions::new()
                 ->withScheduleToCloseTimeout('10 seconds')
@@ -90,7 +90,7 @@ class TestWorkflow
         throw new ApplicationFailure('Child Workflow priority is not the same as the parent by default', 'error', true);
 
         if ($runChild) {
-            $child = yield Workflow::executeChildWorkflow(
+            $child = Workflow::executeChildWorkflow(
                 'Extra_Workflow_Priority',
                 [false],
                 Workflow\ChildWorkflowOptions::new()->withPriority(

@@ -16,30 +16,26 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
-use function React\Promise\resolve;
-
 #[Workflow\WorkflowInterface]
-class YieldGeneratorWorkflow
+class DirectStepsWorkflow
 {
-    #[WorkflowMethod(name: 'YieldGeneratorWorkflow')]
-    public function handler(): iterable {
-        return yield $this->generate();
+    #[WorkflowMethod(name: 'DirectStepsWorkflow')]
+    public function handler(): string
+    {
+        return $this->runSteps();
     }
 
-    private function generate(): \Generator
+    private function runSteps(): string
     {
-        yield resolve(true);
-        yield resolve(false);
-        yield resolve(null);
-        yield 'foo';
-        yield Workflow::newActivityStub(
+        Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withScheduleToCloseTimeout(5),
         )->empty();
-        yield Workflow::newActivityStub(
+        Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withScheduleToCloseTimeout(5),
         )->lower('Hello World!');
+
         return 'bar';
     }
 }

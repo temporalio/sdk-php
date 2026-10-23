@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Carbon\CarbonInterval;
-use InvalidArgumentException;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Workflow;
@@ -31,12 +30,12 @@ class UpdateExceptionsWorkflow
     {
         $received = [];
         while (true) {
-            yield Workflow::await(fn() => $this->greetings !== [] || $this->exit);
+            Workflow::await(fn() => $this->greetings !== [] || $this->exit);
             if ($this->greetings === [] && $this->exit) {
                 return $received;
             }
 
-            $message = array_shift($this->greetings);
+            $message = \array_shift($this->greetings);
             $received[] = $message;
         }
     }
@@ -52,26 +51,26 @@ class UpdateExceptionsWorkflow
     public function failInvalidArgument($name = 'foo'): void
     {
         $this->greetings[] = "invalidArgument $name";
-        throw new InvalidArgumentException("Invalid argument $name");
+        throw new \InvalidArgumentException("Invalid argument $name");
     }
 
     #[Workflow\UpdateMethod]
-    public function failActivity($name = 'foo')
+    public function failActivity($name = 'foo'): void
     {
-        yield Workflow::newUntypedActivityStub(
+        Workflow::newUntypedActivityStub(
             ActivityOptions::new()
                 ->withScheduleToStartTimeout(1)
                 ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(1)
+                    RetryOptions::new()->withMaximumAttempts(1),
                 )
                 ->withStartToCloseTimeout(1),
         )->execute('nonExistingActivityName', [$name]);
     }
 
     #[Workflow\UpdateMethod]
-    public function error()
+    public function error(): void
     {
-        yield Workflow::timer(CarbonInterval::millisecond(10));
+        Workflow::timer(CarbonInterval::millisecond(10));
         10 / 0;
     }
 

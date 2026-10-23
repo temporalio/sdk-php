@@ -21,15 +21,15 @@ use Temporal\Workflow\WorkflowMethod;
 class TimerThenMockedActivityWorkflow
 {
     #[WorkflowMethod(name: 'TimerThenMockedActivityWorkflow')]
-    public function handler(int $seconds): iterable
+    public function handler(int $seconds): string
     {
-        yield Workflow::timer($seconds);
+        Workflow::timer($seconds);
 
         $activity = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(30),
         );
 
-        return yield $activity->echo('ping');
+        return $activity->echo('ping');
     }
 }

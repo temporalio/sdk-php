@@ -441,7 +441,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->callsInterceptor->with(
             fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
                 ->newUntypedChildWorkflowStub($input->type, $input->options)
-                ->execute($input->args, $input->returnType),
+                ->executeAsync($input->args, $input->returnType),
             /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow() */
             'executeChildWorkflow',
         )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
@@ -498,14 +498,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType, true),
+                    ->executeAsync($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))
             : $this->callsInterceptor->with(
                 fn(ExecuteActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType),
+                    ->executeAsync($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
                 'executeActivity',
             )(new ExecuteActivityInput($type, $args, $options, $returnType));
@@ -867,8 +867,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->recordTrace();
 
         foreach ($conditions as $condition) {
-            // Wrap Mutex into callable
-            $condition instanceof Mutex and $condition = static fn(): bool => !$condition->isLocked();
+            if ($condition instanceof Mutex) {
+                $condition = static fn(): bool => !$condition->isLocked();
+            }
 
             if ($condition instanceof \Closure) {
                 $callableResult = $this->runReadOnly(

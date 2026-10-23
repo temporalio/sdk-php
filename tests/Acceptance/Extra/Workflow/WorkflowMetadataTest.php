@@ -36,11 +36,11 @@ class TestWorkflow
     private bool $exit = false;
 
     #[WorkflowMethod(name: "Extra_Workflow_WorkflowMetadata")]
-    public function handle(string $payload)
+    public function handle(string $payload): void
     {
         Workflow::setCurrentDetails("Cooking workflow " . $payload);
 
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
     }
 
     /**

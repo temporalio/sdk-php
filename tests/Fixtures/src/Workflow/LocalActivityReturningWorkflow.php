@@ -20,9 +20,9 @@ use Temporal\Workflow\WorkflowMethod;
 class LocalActivityReturningWorkflow
 {
     #[WorkflowMethod(name: 'LocalActivityReturningWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): string
     {
-        return yield Workflow::newActivityStub(
+        return Workflow::newActivityStub(
             JustLocalActivity::class,
             LocalActivityOptions::new()->withStartToCloseTimeout('10 seconds'),
         )->echo($input);

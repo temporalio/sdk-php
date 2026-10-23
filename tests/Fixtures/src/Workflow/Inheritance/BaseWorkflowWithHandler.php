@@ -15,9 +15,9 @@ use Temporal\Workflow\WorkflowMethod;
 
 abstract class BaseWorkflowWithHandler
 {
-    /** @WorkflowMethod */
+    /**
+     * @WorkflowMethod
+     */
     #[WorkflowMethod]
-    public function handler(): void
-    {
-    }
+    public function handler(): void {}
 }

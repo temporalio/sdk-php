@@ -22,6 +22,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
@@ -30,14 +31,18 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\WorkflowExecution;
 
+use function React\Promise\reject;
+
 /**
  * @psalm-import-type TType from Type
  */
 final class ChildWorkflowStub implements ChildWorkflowStubInterface
 {
     private Deferred $execution;
-    private ?ExecuteChildWorkflow $request = null;
     private ?PromiseInterface $result = null;
+    private bool $started = false;
+    private bool $executionSettled = false;
+    private ?\Throwable $startFailure = null;
     private HeaderInterface $header;
 
     /**
@@ -58,58 +63,113 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $this->workflow;
     }
 
-    public function getExecution(): PromiseInterface
+    public function getExecution(): WorkflowExecution
     {
+        $this->assertStarted();
+        Awaiter::assertManaged();
+
+        return Awaiter::await($this->getExecutionAsync(), interruptOnCancel: false);
+    }
+
+    public function getExecutionAsync(): PromiseInterface
+    {
+        $this->assertStarted();
+
         return $this->execution->promise();
     }
 
-    public function start(... $args): PromiseInterface
+    public function start(...$args): WorkflowExecution
     {
-        if ($this->request !== null) {
+        Awaiter::assertManaged();
+
+        return Awaiter::await($this->startAsync(...$args), interruptOnCancel: false);
+    }
+
+    public function startAsync(...$args): PromiseInterface
+    {
+        if ($this->started) {
             throw new \LogicException('Child workflow already has been executed');
         }
 
-        $options = $this->options->workflowId === null
-            ? $this->options->withWorkflowId($this->generateChildWorkflowId())
-            : $this->options;
+        $this->started = true;
 
-        $arguments = EncodedValues::fromValues($args);
+        try {
+            $options = $this->options->workflowId === null
+                ? $this->options->withWorkflowId($this->generateChildWorkflowId())
+                : $this->options;
 
-        $this->request = new ExecuteChildWorkflow(
-            $this->workflow,
-            $arguments,
-            $this->marshaller->marshal($options),
-            $this->header,
-            $this->resolveNamespace(),
-            $options->workflowId,
-        );
-
-        $cancellable = FeatureFlags::$cancelAbandonedChildWorkflows
-            || $this->options->parentClosePolicy !== ParentClosePolicy::Abandon->value;
-
-        $this->result = $this->request($this->request, cancellable: $cancellable);
-
-        $started = $this->request(new GetChildWorkflowExecution($this->request))
-            ->then(
-                function (ValuesInterface $values): mixed {
-                    $execution = $values->getValue(0, WorkflowExecution::class);
-                    $this->execution->resolve($execution);
-
-                    return $execution;
-                },
+            $request = new ExecuteChildWorkflow(
+                $this->workflow,
+                EncodedValues::fromValues($args),
+                $this->marshaller->marshal($options),
+                $this->header,
+                $this->resolveNamespace(),
+                $options->workflowId,
             );
+
+            $cancellable = FeatureFlags::$cancelAbandonedChildWorkflows
+                || $this->options->parentClosePolicy !== ParentClosePolicy::Abandon->value;
+
+            $this->result = $this->request($request, cancellable: $cancellable);
+
+            $started = $this->request(new GetChildWorkflowExecution($request))
+                ->then(
+                    function (ValuesInterface $values): mixed {
+                        try {
+                            $execution = $values->getValue(0, WorkflowExecution::class);
+                        } catch (\Throwable $error) {
+                            $this->failStart($error);
+                            throw $error;
+                        }
+
+                        $this->resolveExecution($execution);
+
+                        return $execution;
+                    },
+                    function (\Throwable $error): never {
+                        $this->failStart($error);
+                        throw $error;
+                    },
+                );
+        } catch (\Throwable $error) {
+            $this->failStart($error);
+            throw $error;
+        }
 
         return EncodedValues::decodePromise($started);
     }
 
-    public function getResult($returnType = null): PromiseInterface
+    public function getResult($returnType = null): mixed
     {
+        $this->assertStarted();
+        Awaiter::assertManaged();
+
+        return Awaiter::await($this->getResultAsync($returnType));
+    }
+
+    public function getResultAsync($returnType = null): PromiseInterface
+    {
+        $this->assertStarted();
+
+        if ($this->startFailure !== null) {
+            return reject($this->startFailure);
+        }
+
+        \assert($this->result instanceof PromiseInterface);
+
         return EncodedValues::decodePromise($this->result, $returnType);
     }
 
-    public function execute(array $args = [], $returnType = null): PromiseInterface
+    public function execute(array $args = [], $returnType = null): mixed
     {
-        return $this->start(...$args)->then(fn() => $this->getResult($returnType));
+        Awaiter::assertManaged();
+
+        return Awaiter::await($this->executeAsync($args, $returnType));
+    }
+
+    public function executeAsync(array $args = [], $returnType = null): PromiseInterface
+    {
+        return $this->startAsync(...$args)->then(fn() => $this->getResultAsync($returnType));
     }
 
     public function getOptions(): ChildWorkflowOptions
@@ -117,8 +177,18 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $this->options;
     }
 
-    public function signal(string $name, array $args = []): PromiseInterface
+    public function signal(string $name, array $args = []): void
     {
+        $this->assertStarted();
+        Awaiter::assertManaged();
+
+        Awaiter::await($this->signalAsync($name, $args), interruptOnCancel: false);
+    }
+
+    public function signalAsync(string $name, array $args = []): PromiseInterface
+    {
+        $this->assertStarted();
+
         return $this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
                 return $this->request(
@@ -153,5 +223,34 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $this->options->namespace !== ''
             ? $this->options->namespace
             : Workflow::getCurrentContext()->getInfo()->namespace;
+    }
+
+    private function assertStarted(): void
+    {
+        if (!$this->started) {
+            throw new \LogicException('Child workflow has not been started');
+        }
+    }
+
+    private function resolveExecution(WorkflowExecution $execution): void
+    {
+        if ($this->executionSettled) {
+            return;
+        }
+
+        $this->executionSettled = true;
+        $this->execution->resolve($execution);
+    }
+
+    private function failStart(\Throwable $error): void
+    {
+        $this->startFailure ??= $error;
+
+        if ($this->executionSettled) {
+            return;
+        }
+
+        $this->executionSettled = true;
+        $this->execution->reject($error);
     }
 }

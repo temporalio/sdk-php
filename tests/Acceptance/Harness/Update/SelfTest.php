@@ -33,14 +33,14 @@ class FeatureWorkflow
     private bool $done = false;
 
     #[WorkflowMethod('Harness_Update_Self')]
-    public function run()
+    public function run(): string
     {
-        yield Workflow::executeActivity(
+        Workflow::executeActivity(
             'result',
             options: ActivityOptions::new()->withStartToCloseTimeout(10),
         );
 
-        yield Workflow::await(fn(): bool => $this->done);
+        Workflow::await(fn(): bool => $this->done);
 
         return 'Hello, world!';
     }

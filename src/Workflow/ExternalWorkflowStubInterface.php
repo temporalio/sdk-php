@@ -20,7 +20,21 @@ interface ExternalWorkflowStubInterface
     /**
      * @throws \LogicException
      */
-    public function signal(string $name, array $args = []): PromiseInterface;
+    public function signal(string $name, array $args = []): void;
 
-    public function cancel(): PromiseInterface;
+    /**
+     * @internal
+     * @return PromiseInterface<mixed>
+     *
+     * @throws \LogicException
+     */
+    public function signalAsync(string $name, array $args = []): PromiseInterface;
+
+    public function cancel(): void;
+
+    /**
+     * @internal
+     * @return PromiseInterface<mixed>
+     */
+    public function cancelAsync(): PromiseInterface;
 }

@@ -251,9 +251,9 @@ final class ReadOnlyCallbackTestCase extends TestCase
 final class QueryingWorkflow
 {
     #[WorkflowMethod(name: 'QueryingWorkflow')]
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::await(static fn(): bool => false);
+        Workflow::await(static fn(): bool => false);
     }
 
     #[QueryMethod(name: 'sendsACommand')]
@@ -269,9 +269,9 @@ final class QueryingWorkflow
 final class ValidatingWorkflow
 {
     #[WorkflowMethod(name: 'ValidatingWorkflow')]
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::await(static fn(): bool => false);
+        Workflow::await(static fn(): bool => false);
     }
 
     #[Workflow\UpdateMethod(name: 'sendsACommand')]
@@ -293,9 +293,9 @@ final class ConditionSendingWorkflow
     public ?\Throwable $error = null;
 
     #[WorkflowMethod(name: 'ConditionSendingWorkflow')]
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::await(function (): bool {
+        Workflow::await(function (): bool {
             try {
                 Workflow::timer(5);
             } catch (\Throwable $e) {
@@ -313,9 +313,9 @@ final class SideEffectSendingWorkflow
     public ?\Throwable $error = null;
 
     #[WorkflowMethod(name: 'SideEffectSendingWorkflow')]
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::sideEffect(function (): int {
+        Workflow::sideEffect(function (): int {
             try {
                 Workflow::timer(5);
             } catch (\Throwable $e) {
@@ -325,7 +325,7 @@ final class SideEffectSendingWorkflow
             return 1;
         });
 
-        yield Workflow::await(static fn(): bool => false);
+        Workflow::await(static fn(): bool => false);
     }
 }
 
@@ -363,9 +363,9 @@ final class CommandSendingInboundInterceptor implements WorkflowInboundCallsInte
 final class HarmlessHandlersWorkflow
 {
     #[WorkflowMethod(name: 'HarmlessHandlersWorkflow')]
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::await(static fn(): bool => false);
+        Workflow::await(static fn(): bool => false);
     }
 
     #[QueryMethod(name: 'harmless')]

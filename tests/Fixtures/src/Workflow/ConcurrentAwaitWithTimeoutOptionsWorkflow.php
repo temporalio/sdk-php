@@ -26,15 +26,15 @@ class ConcurrentAwaitWithTimeoutOptionsWorkflow
      *
      * @param non-empty-string $first Summary for the timer of the first await.
      * @param non-empty-string $second Summary for the timer of the second await.
-     * @return \Generator<mixed, mixed, mixed, array{bool, bool}> Both awaits are settled by timers.
+     * @return array{bool, bool} Both awaits are settled by timers.
      */
     #[WorkflowMethod]
     public function handler(string $first, string $second)
     {
-        return yield Promise::all([
+        return Workflow::await(Promise::all([
             $this->await($first, 1),
             $this->await($second, 2),
-        ]);
+        ]));
     }
 
     /**
@@ -42,8 +42,8 @@ class ConcurrentAwaitWithTimeoutOptionsWorkflow
      */
     private function await(string $summary, int $timeout): PromiseInterface
     {
-        return Workflow::async(static function () use ($summary, $timeout): \Generator {
-            return yield Workflow::awaitWithTimeout(
+        return Workflow::async(static function () use ($summary, $timeout): bool {
+            return Workflow::awaitWithTimeout(
                 AwaitOptions::new($timeout)->withTimerOptions(
                     TimerOptions::new()->withSummary($summary),
                 ),

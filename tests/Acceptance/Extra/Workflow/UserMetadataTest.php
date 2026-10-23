@@ -274,8 +274,10 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_UserMetadata")]
     public function handle()
     {
-        $timer = Workflow::timer(30, Workflow\TimerOptions::new()->withSummary('test timer summary'));
-        yield Workflow::await($timer, fn() => $this->exit);
+        $timer = Workflow::async(static function (): void {
+            Workflow::timer(30, Workflow\TimerOptions::new()->withSummary('test timer summary'));
+        });
+        Workflow::await($timer, fn() => $this->exit);
         return $this->result;
     }
 
@@ -288,7 +290,7 @@ class TestWorkflow
     #[Workflow\UpdateMethod('await_with_timeout')]
     public function awaitWithTimeout(string $summary)
     {
-        return yield Workflow::awaitWithTimeout(
+        return Workflow::awaitWithTimeout(
             Workflow\AwaitOptions::new(1)->withTimerOptions(
                 Workflow\TimerOptions::new()->withSummary($summary),
             ),
@@ -303,7 +305,7 @@ class TestWorkflow
             'Extra_Workflow_UserMetadata',
             Workflow\ChildWorkflowOptions::new()->withStaticSummary($summary)->withStaticDetails($details),
         );
-        $execution = yield $stub->start();
+        $execution = $stub->start();
 
         return $execution->getID();
     }
@@ -312,7 +314,7 @@ class TestWorkflow
     public function executeActivity(string $summary)
     {
         /** @see TestActivity::execute() */
-        return yield Workflow::executeActivity(
+        return Workflow::executeActivity(
             'Extra_Workflow_UserMetadata.execute',
             options: ActivityOptions::new()
                 ->withScheduleToCloseTimeout(30)
@@ -324,7 +326,7 @@ class TestWorkflow
     public function executeLocalActivity(string $summary)
     {
         /** @see TestActivity::execute() */
-        return yield Workflow::executeActivity(
+        return Workflow::executeActivity(
             'Extra_Workflow_UserMetadata.Local.execute',
             options: LocalActivityOptions::new()
                 ->withScheduleToCloseTimeout(30)
