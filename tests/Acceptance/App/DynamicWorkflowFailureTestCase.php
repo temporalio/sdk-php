@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\App;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -34,6 +35,7 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
                             'exception' => $input->failure::class,
                             'cause' => $cause === null ? null : $cause::class,
                             'message' => $input->failure->getMessage(),
+                            'pid' => \getmypid(),
                         ]);
                     }
 
@@ -47,6 +49,7 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
         ClientLogger $logger,
+        string $probeType,
         string $message,
         string $cause = \TypeError::class,
     ): void {
@@ -75,5 +78,12 @@ abstract class DynamicWorkflowFailureTestCase extends TestCase
         }
         self::assertContains(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED, $events);
         self::assertNotContains(EventType::EVENT_TYPE_WORKFLOW_TASK_FAILED, $events);
+
+        $probe = $client->newUntypedWorkflowStub(
+            $probeType,
+            WorkflowOptions::new()->withTaskQueue($stub->getOptions()->taskQueue),
+        );
+        $client->start($probe);
+        self::assertSame($records[0]->context['pid'], $probe->getResult('int', timeout: 5));
     }
 }

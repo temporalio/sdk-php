@@ -11,6 +11,7 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\DynamicWorkflowFailureTestCase;
 use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -24,7 +25,7 @@ class DynamicWorkflowScalarParameterTest extends DynamicWorkflowFailureTestCase
         WorkflowClientInterface $client,
         ClientLogger $logger,
     ): void {
-        $this->assertHandlerFailure($stub, $client, $logger, TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
+        $this->assertHandlerFailure($stub, $client, $logger, 'Extra_Workflow_Dynamic_ScalarParameter_Probe', TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
     }
 }
 
@@ -35,5 +36,15 @@ class TestWorkflow
     public function handle(string $value): string
     {
         return $value;
+    }
+}
+
+#[WorkflowInterface]
+class ProbeWorkflow
+{
+    #[WorkflowMethod('Extra_Workflow_Dynamic_ScalarParameter_Probe')]
+    public function handle()
+    {
+        return yield Workflow::sideEffect(static fn(): int => \getmypid());
     }
 }
