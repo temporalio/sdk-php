@@ -17,14 +17,17 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Common\CronSchedule;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
+use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Tests\Unit\Declaration\Fixture\Inheritance\ExtendingWorkflow;
 use Temporal\Tests\Unit\Declaration\Fixture\SimpleWorkflow;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithAnotherDynamic;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithConstructor;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCron;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCronAndRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCustomName;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithDynamic;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithQueries;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithRetry;
@@ -49,6 +52,28 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         $prototype = $reader->fromClass(WorkflowWithoutHandler::class);
 
         $this->assertNull($prototype->getHandler());
+    }
+
+    /** @throws \ReflectionException */
+    #[TestDox("Reading a dynamic (catch-all) workflow sets the dynamic flag")]
+    public function testDynamicWorkflow(): void
+    {
+        $reader = new WorkflowReader(new AttributeReader());
+
+        $this->assertTrue($reader->fromClass(WorkflowWithDynamic::class)->isDynamic());
+        $this->assertFalse($reader->fromClass(SimpleWorkflow::class)->isDynamic());
+    }
+
+    /** @throws \ReflectionException */
+    #[TestDox("At most one dynamic workflow may be registered per worker")]
+    public function testMultipleDynamicWorkflowsAreRejected(): void
+    {
+        $reader = new WorkflowReader(new AttributeReader());
+        $collection = new WorkflowCollection();
+        $collection->add($reader->fromClass(WorkflowWithDynamic::class));
+
+        $this->expectException(\LogicException::class);
+        $collection->add($reader->fromClass(WorkflowWithAnotherDynamic::class));
     }
 
     /**

@@ -14,6 +14,12 @@ final class TaskQueueResolver
      * @var list<class-string>
      */
     private const SHARED_QUEUE_EXCLUSIONS = [
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflow\DynamicWorkflowTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowArrayParameter\DynamicWorkflowArrayParameterTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowNoParameter\DynamicWorkflowNoParameterTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowRequiredParameter\DynamicWorkflowRequiredParameterTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowScalarParameter\DynamicWorkflowScalarParameterTest::class,
+        \Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowUntypedParameter\DynamicWorkflowUntypedParameterTest::class,
         \Temporal\Tests\Acceptance\Extra\Workflow\WorkflowA\WorkflowATest::class,
         \Temporal\Tests\Acceptance\Extra\Workflow\WorkflowB\WorkflowBTest::class,
         \Temporal\Tests\Acceptance\Harness\Activity\RetryOnError\RetryOnErrorTest::class,

@@ -36,10 +36,19 @@ final class WorkflowMethod
     public ?string $name = null;
 
     /**
+     * Marks this as a dynamic (catch-all) workflow: it is invoked when the
+     * worker receives a workflow whose type name is not statically registered.
+     * At most one dynamic workflow may be registered per worker.
+     */
+    #[Immutable]
+    public bool $dynamic = false;
+
+    /**
      * @param non-empty-string|null $name
      */
-    public function __construct(?string $name = null)
+    public function __construct(?string $name = null, bool $dynamic = false)
     {
         $this->name = $name;
+        $this->dynamic = $dynamic;
     }
 }
