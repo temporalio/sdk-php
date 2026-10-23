@@ -8,10 +8,15 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Testing\Replay\CoreWorkflowReplayer;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
+use Temporal\Tests\CoreWorker;
+use Temporal\Worker\Core\CoreWorkerFactory;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -23,15 +28,28 @@ class ClassicTest extends TestCase
         #[Stub(
             type: 'Extra_Versioning_Classic',
         )] WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+        Feature $feature,
     ): void {
         $result = $stub->getResult();
         self::assertSame('v2', $result);
 
-        $replayer = new WorkflowReplayer();
+        $replayer = CoreWorker::enabled() ? self::coreReplayer($client, $feature) : new WorkflowReplayer();
         $replayer->replayFromJSON('Extra_Versioning_Classic', __DIR__ . '/Classic/Versioning-default.json');
-        $replayer->replayFromJSON('Extra_Versioning_Classic', __DIR__ . '/Classic/Versioning-v1.json');
+        $replayer->replayFromJSON(
+            'Extra_Versioning_Classic',
+            __DIR__ . (CoreWorker::enabled() ? '/Classic/Versioning-v1-core.json' : '/Classic/Versioning-v1.json'),
+        );
 
         $replayer->replayFromServer($stub->getWorkflowType(), $stub->getExecution());
+    }
+
+    private static function coreReplayer(WorkflowClientInterface $client, Feature $feature): CoreWorkflowReplayer
+    {
+        $factory = CoreWorkerFactory::create();
+        $factory->newWorker($feature->taskQueue)->registerWorkflowTypes(TestWorkflow::class);
+
+        return new CoreWorkflowReplayer($factory, $client);
     }
 }
 

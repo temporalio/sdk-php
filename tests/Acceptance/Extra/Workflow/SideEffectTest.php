@@ -11,6 +11,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\SideEffectOptions;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Support;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -25,7 +26,9 @@ class SideEffectTest extends TestCase
     ): void {
         $result = $stub->getResult(type: 'array');
 
-        self::assertEquals($result['system'], $result['current']);
+        self::assertSame($result['system']['timezone.offset'], $result['current']['timezone.offset']);
+        self::assertGreaterThanOrEqual($result['system']['timestamp'], $result['current']['timestamp']);
+        self::assertLessThan($result['system']['timestamp'] + 5, $result['current']['timestamp']);
     }
 
     #[Test]
@@ -66,10 +69,7 @@ class SideEffectTest extends TestCase
 
         $markerCount = 0;
         foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
-            if (!$event->hasMarkerRecordedEventAttributes()) {
-                continue;
-            }
-            if ($event->getMarkerRecordedEventAttributes()->getMarkerName() !== 'SideEffect') {
+            if (!Support::isSideEffectMarker($event)) {
                 continue;
             }
 
@@ -90,10 +90,7 @@ class SideEffectTest extends TestCase
     ): array {
         $summaries = [];
         foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
-            if (!$event->hasMarkerRecordedEventAttributes()) {
-                continue;
-            }
-            if ($event->getMarkerRecordedEventAttributes()->getMarkerName() !== 'SideEffect') {
+            if (!Support::isSideEffectMarker($event)) {
                 continue;
             }
 

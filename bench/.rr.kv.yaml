@@ -1,0 +1,12 @@
+version: "3"
+
+rpc:
+    listen: tcp://127.0.0.1:6556
+
+kv:
+    bench:
+        driver: memory
+        config: {}
+
+logs:
+    level: error

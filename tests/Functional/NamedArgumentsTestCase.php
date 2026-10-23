@@ -227,10 +227,6 @@ final class NamedArgumentsTestCase extends TestCase
 
     public function testExecuteChildNamedArguments(): void
     {
-        $this->markTestSkipped(
-            'Workflow::executeChildWorkflow executes child as untyped, so named arguments are not supported',
-        );
-
         $workflow = $this->workflowClient->newWorkflowStub(
             ExecuteChildNamedArgumentsWorkflow::class,
         );

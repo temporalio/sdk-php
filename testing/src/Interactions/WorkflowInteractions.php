@@ -7,6 +7,7 @@ namespace Temporal\Testing\Interactions;
 use Google\Protobuf\Duration;
 use PHPUnit\Framework\Assert;
 use Temporal\Api\Enums\V1\EventType;
+use Temporal\Worker\Core\ActivityTasks;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\History\V1\MarkerRecordedEventAttributes;
 use Temporal\Client\WorkflowClient;
@@ -17,8 +18,10 @@ use Temporal\Workflow\WorkflowRunInterface;
 final class WorkflowInteractions
 {
     private const MARKER_LOCAL_ACTIVITY = 'LocalActivity';
+    private const MARKER_CORE_LOCAL_ACTIVITY = 'core_local_activity';
     private const MARKER_DETAIL_DATA = 'data';
     private const MARKER_ACTIVITY_TYPE_KEY = 'ActivityType';
+    private const MARKER_CORE_ACTIVITY_TYPE_KEY = 'activity_type';
 
     /**
      * @param list<RecordedCall> $calls
@@ -101,6 +104,26 @@ final class WorkflowInteractions
         );
     }
 
+    private static function localActivityType(MarkerRecordedEventAttributes $attributes): string
+    {
+        foreach ($attributes->getDetails() as $key => $payloads) {
+            if ($key !== self::MARKER_DETAIL_DATA) {
+                continue;
+            }
+
+            $items = $payloads->getPayloads();
+            if (\count($items) === 0) {
+                return '';
+            }
+
+            $decoded = \json_decode($items[0]->getData(), true);
+
+            return \is_array($decoded) ? (string) ($decoded[self::MARKER_ACTIVITY_TYPE_KEY] ?? $decoded[self::MARKER_CORE_ACTIVITY_TYPE_KEY] ?? '') : '';
+        }
+
+        return '';
+    }
+
     private static function decode(HistoryEvent $event): ?RecordedCall
     {
         switch ($event->getEventType()) {
@@ -138,38 +161,17 @@ final class WorkflowInteractions
                 );
             case EventType::EVENT_TYPE_MARKER_RECORDED:
                 $attributes = $event->getMarkerRecordedEventAttributes();
-                if ($attributes === null || $attributes->getMarkerName() !== self::MARKER_LOCAL_ACTIVITY) {
+                if ($attributes === null || !\in_array($attributes->getMarkerName(), [self::MARKER_LOCAL_ACTIVITY, self::MARKER_CORE_LOCAL_ACTIVITY], true)) {
                     return null;
                 }
-                return new RecordedCall(
-                    RecordedCallKind::LocalActivity,
-                    self::localActivityType($attributes),
-                    null,
-                    null,
-                );
+                $type = self::localActivityType($attributes);
+                if ($type === ActivityTasks::SIDE_EFFECT) {
+                    return null;
+                }
+                return new RecordedCall(RecordedCallKind::LocalActivity, $type, null, null);
             default:
                 return null;
         }
-    }
-
-    private static function localActivityType(MarkerRecordedEventAttributes $attributes): string
-    {
-        foreach ($attributes->getDetails() as $key => $payloads) {
-            if ($key !== self::MARKER_DETAIL_DATA) {
-                continue;
-            }
-
-            $items = $payloads->getPayloads();
-            if (\count($items) === 0) {
-                return '';
-            }
-
-            $decoded = \json_decode($items[0]->getData(), true);
-
-            return \is_array($decoded) ? (string) ($decoded[self::MARKER_ACTIVITY_TYPE_KEY] ?? '') : '';
-        }
-
-        return '';
     }
 
     private static function durationToMs(?Duration $duration): int

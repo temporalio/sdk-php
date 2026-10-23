@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Exception\Failure\FailureConverter;
@@ -131,7 +132,7 @@ class WorkerMock implements HostConnectionInterface
             }
         }
 
-        $this->testCase->assertEquals($pair[0], $frame);
+        $this->testCase->assertEquals($this->decodePayloads($pair[0]), $this->decodePayloads($frame));
 
         $this->indexIn++;
     }
@@ -142,6 +143,21 @@ class WorkerMock implements HostConnectionInterface
     public function error(\Throwable $error): void
     {
         throw $error;
+    }
+
+    private function decodePayloads(string $frame): array
+    {
+        $commands = \json_decode($frame, true);
+
+        foreach ($commands as $i => $command) {
+            if (isset($command['payloads'])) {
+                $payloads = new Payloads();
+                $payloads->mergeFromString(\base64_decode($command['payloads']));
+                $commands[$i]['payloads'] = \json_decode($payloads->serializeToJsonString(), true);
+            }
+        }
+
+        return $commands;
     }
 
     private function getClasses(string $dir): iterable

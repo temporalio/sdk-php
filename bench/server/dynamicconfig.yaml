@@ -1,0 +1,20 @@
+frontend.rps:
+  - value: 100000
+frontend.namespaceRPS:
+  - value: 100000
+frontend.namespaceCount:
+  - value: 100000
+history.rps:
+  - value: 100000
+matching.rps:
+  - value: 100000
+frontend.persistenceMaxQPS:
+  - value: 100000
+history.persistenceMaxQPS:
+  - value: 100000
+matching.persistenceMaxQPS:
+  - value: 100000
+matching.numTaskqueueReadPartitions:
+  - value: 1
+matching.numTaskqueueWritePartitions:
+  - value: 1

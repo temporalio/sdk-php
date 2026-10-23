@@ -1,0 +1,126 @@
+<?php
+
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Temporal\Worker\Core;
+
+use Temporal\Internal\Bridge\CoreEnvironment;
+use Temporal\Client\ClientOptions;
+use Temporal\Common\EnvConfig\Client\ConfigTls;
+use Temporal\Common\EnvConfig\ConfigClient;
+use Temporal\Worker\ServiceCredentials;
+
+/**
+ * @internal
+ * @psalm-type SlotsShape = array{min_slots: int, max_slots: int, ramp_throttle_ms: int}
+ * @psalm-type TunerShape = array{target_memory_usage: float, target_cpu_usage: float, workflow_slots: SlotsShape, activity_slots: SlotsShape}
+ */
+final class CoreOptions
+{
+    private const DEFAULT_ADDRESS = '127.0.0.1:7233';
+    private const DEFAULT_MAX_CACHED_WORKFLOWS = 10_000;
+    private const MIN_DEFAULT_CACHED_WORKFLOWS = 10;
+    private const MEMORY_RESERVE_BYTES = 64 * 1024 * 1024;
+    private const CACHED_WORKFLOW_BYTES = 64 * 1024;
+    private const DEFAULT_GRPC_COMPRESSION = 'gzip';
+    private const DEFAULT_WORKFLOW_MIN_SLOTS = 5;
+    private const DEFAULT_ACTIVITY_MIN_SLOTS = 1;
+    private const DEFAULT_MAX_SLOTS = 500;
+    private const DEFAULT_WORKFLOW_RAMP_THROTTLE_MS = 0;
+    private const DEFAULT_ACTIVITY_RAMP_THROTTLE_MS = 50;
+
+    /**
+     * @param TunerShape|null $tuner
+     */
+    private function __construct(
+        public readonly string $address,
+        public readonly string $namespace,
+        public readonly ?string $apiKey,
+        public readonly ?ConfigTls $tls,
+        public readonly int $maxCachedWorkflows,
+        public readonly string $grpcCompression,
+        public readonly bool $pollerAutoscaling,
+        public readonly ?array $tuner,
+    ) {}
+
+    /**
+     * @psalm-suppress InternalClass, InternalMethod, InternalProperty
+     */
+    public static function create(
+        ?string $address,
+        ?string $namespace,
+        ?ServiceCredentials $credentials,
+    ): self {
+        $configProfile = ConfigClient::load();
+        $apiKey = ($credentials?->apiKey ?? '') ?: $configProfile->apiKey;
+        $tls = $configProfile->tlsConfig;
+
+        return new self(
+            address: $address ?? $configProfile->address ?? self::DEFAULT_ADDRESS,
+            namespace: $namespace ?? $configProfile->namespace ?? ClientOptions::DEFAULT_NAMESPACE,
+            apiKey: $apiKey === null ? null : (string) $apiKey,
+            tls: $tls === null || $tls->disabled ? null : $tls,
+            maxCachedWorkflows: CoreEnvironment::integer(CoreEnvironment::MAX_CACHED_WORKFLOWS, self::defaultMaxCachedWorkflows((string) \ini_get('memory_limit')), 0),
+            grpcCompression: CoreEnvironment::string(CoreEnvironment::GRPC_COMPRESSION) ?? self::DEFAULT_GRPC_COMPRESSION,
+            pollerAutoscaling: CoreEnvironment::flag(CoreEnvironment::POLLER_AUTOSCALING, true),
+            tuner: self::tuner(),
+        );
+    }
+
+    /**
+     * @psalm-suppress ArgumentTypeCoercion
+     */
+    public static function defaultMaxCachedWorkflows(string $memoryLimit): int
+    {
+        $bytes = \ini_parse_quantity($memoryLimit);
+        if ($bytes <= 0) {
+            return self::DEFAULT_MAX_CACHED_WORKFLOWS;
+        }
+
+        return \max(
+            self::MIN_DEFAULT_CACHED_WORKFLOWS,
+            \min(self::DEFAULT_MAX_CACHED_WORKFLOWS, \intdiv($bytes - self::MEMORY_RESERVE_BYTES, self::CACHED_WORKFLOW_BYTES)),
+        );
+    }
+
+    /**
+     * @return TunerShape|null
+     */
+    private static function tuner(): ?array
+    {
+        $memory = CoreEnvironment::fraction(CoreEnvironment::TUNER_TARGET_MEMORY_USAGE);
+        $cpu = CoreEnvironment::fraction(CoreEnvironment::TUNER_TARGET_CPU_USAGE);
+        if ($memory === null && $cpu === null) {
+            return null;
+        }
+        if ($memory === null || $cpu === null) {
+            throw new \InvalidArgumentException(\sprintf('%s and %s must be set together', CoreEnvironment::TUNER_TARGET_MEMORY_USAGE, CoreEnvironment::TUNER_TARGET_CPU_USAGE));
+        }
+
+        return [
+            'target_memory_usage' => $memory,
+            'target_cpu_usage' => $cpu,
+            'workflow_slots' => self::slots(CoreEnvironment::TUNER_WORKFLOW_MIN_SLOTS, self::DEFAULT_WORKFLOW_MIN_SLOTS, CoreEnvironment::TUNER_WORKFLOW_MAX_SLOTS, CoreEnvironment::TUNER_WORKFLOW_RAMP_THROTTLE, self::DEFAULT_WORKFLOW_RAMP_THROTTLE_MS),
+            'activity_slots' => self::slots(CoreEnvironment::TUNER_ACTIVITY_MIN_SLOTS, self::DEFAULT_ACTIVITY_MIN_SLOTS, CoreEnvironment::TUNER_ACTIVITY_MAX_SLOTS, CoreEnvironment::TUNER_ACTIVITY_RAMP_THROTTLE, self::DEFAULT_ACTIVITY_RAMP_THROTTLE_MS),
+        ];
+    }
+
+    /**
+     * @return SlotsShape
+     */
+    private static function slots(string $min, int $defaultMin, string $max, string $rampThrottle, int $defaultRampThrottle): array
+    {
+        return [
+            'min_slots' => CoreEnvironment::integer($min, $defaultMin, 0),
+            'max_slots' => CoreEnvironment::integer($max, self::DEFAULT_MAX_SLOTS, 1),
+            'ramp_throttle_ms' => CoreEnvironment::integer($rampThrottle, $defaultRampThrottle, 0),
+        ];
+    }
+}

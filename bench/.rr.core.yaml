@@ -1,0 +1,28 @@
+version: "3"
+
+rpc:
+    listen: tcp://127.0.0.1:6556
+
+kv:
+    bench:
+        driver: memory
+        config: {}
+
+service:
+    workflow:
+        command: "php -dopcache.enable_cli=1 -dxdebug.mode=off -dpcov.enabled=0 worker.php"
+        process_num: ${BENCH_WORKFLOW_WORKERS}
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: workflow
+    activity:
+        command: "php -dopcache.enable_cli=1 -dxdebug.mode=off -dpcov.enabled=0 worker.php"
+        process_num: ${BENCH_ACTIVITY_WORKERS}
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: activity
+
+logs:
+    level: error

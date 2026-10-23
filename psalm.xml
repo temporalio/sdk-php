@@ -18,6 +18,7 @@
     <projectFiles>
         <directory name="src" />
         <directory name="testing/src" />
+        <directory name="core/grpc" />
         <ignoreFiles>
             <directory name="vendor" />
         </ignoreFiles>
@@ -25,5 +26,20 @@
     <issueHandlers>
         <MissingOverrideAttribute errorLevel="suppress" />
         <ClassMustBeFinal errorLevel="suppress" />
+        <InternalClass>
+            <errorLevel type="suppress">
+                <directory name="core/grpc" />
+            </errorLevel>
+        </InternalClass>
+        <InternalMethod>
+            <errorLevel type="suppress">
+                <directory name="core/grpc" />
+            </errorLevel>
+        </InternalMethod>
+        <PossiblyNullArgument>
+            <errorLevel type="suppress">
+                <referencedFunction name="Grpc\ChannelCredentials::createSsl" />
+            </errorLevel>
+        </PossiblyNullArgument>
     </issueHandlers>
 </psalm>
