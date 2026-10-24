@@ -314,7 +314,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $input->arguments->setDataConverter($converter);
                 $input->arguments->setSerializationContext($context);
                 $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
-                $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
+                $header = $input->header;
+                \assert($header instanceof Header);
+                if ($header->getDataConverter() === null) {
+                    $header->setDataConverter($converter);
+                }
+                $header->isEmpty() or $i->setHeader($header->toHeader());
                 $r->setInput($i);
 
                 try {
