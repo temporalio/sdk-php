@@ -374,9 +374,6 @@
       <code><![CDATA[getStartWorkflow]]></code>
       <code><![CDATA[getUpdateWorkflow]]></code>
     </PossiblyNullReference>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[toHeader]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Client/WorkflowStub.php">
     <ArgumentTypeCoercion>
@@ -411,9 +408,6 @@
       <code><![CDATA[hasResult]]></code>
       <code><![CDATA[toProtoWorkflowExecution]]></code>
     </PossiblyNullReference>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[toHeader]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Declaration/Dispatcher/AutowiredPayloads.php">
     <PossiblyInvalidArgument>
