@@ -196,17 +196,20 @@ class Process extends Scope implements ProcessInterface
             //
             // Resolve arguments if #[WorkflowInit] is used
             if ($instance->getPrototype()->hasInitializer()) {
-                // Resolve args
-                $values = $handler->resolveArguments($context->getInput());
-                $arguments = EncodedValues::fromValues($values);
-                /** @psalm-suppress InaccessibleProperty */
-                $context = $context->withInput(
-                    new Input(
-                        $context->getInfo(),
-                        $arguments,
-                        $context->getHeader(),
-                    ),
-                );
+                if ($dynamic) {
+                    $values = [$context->getInput()];
+                } else {
+                    $values = $handler->resolveArguments($context->getInput());
+                    $arguments = EncodedValues::fromValues($values);
+                    /** @psalm-suppress InaccessibleProperty */
+                    $context = $context->withInput(
+                        new Input(
+                            $context->getInfo(),
+                            $arguments,
+                            $context->getHeader(),
+                        ),
+                    );
+                }
             }
 
             $this->setContext($context);
