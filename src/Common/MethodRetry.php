@@ -17,11 +17,12 @@ use Temporal\Internal\Support\DateInterval;
 /**
  * Specifies a retry policy for a workflow or activity method. This annotation
  * applies only to activity or workflow interface methods. For workflows
- * currently used only for child workflow retries. Not required. When not used
+ * used for child workflow retries and for workflows started via
+ * {@see \Temporal\Client\WorkflowClient}. Not required. When not used
  * either retries don't happen or they are configured through correspondent
- * options. If {@see RetryOptions} are present on {@see ActivityOptions} or
- * {@see ChildWorkflowOptions} the fields that are not default take precedence
- * over parameters of this attribute/annotation.
+ * options. If {@see RetryOptions} are present on {@see ActivityOptions},
+ * {@see ChildWorkflowOptions} or {@see \Temporal\Client\WorkflowOptions} the fields that are
+ * not default take precedence over parameters of this attribute/annotation.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  * @psalm-import-type ExceptionsList from RetryOptions
