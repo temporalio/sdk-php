@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Temporal\Internal\Mapper;
+
+use Temporal\Api\Activity\V1\ActivityExecutionInfo;
+use Temporal\Api\Activity\V1\ActivityExecutionListInfo;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Client\Activity\ActivityExecutionDescription;
+use Temporal\Client\Activity\ActivityExecutionInfo as ActivityExecutionInfoDto;
+use Temporal\Client\Activity\ActivityExecutionStatus;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedCollection;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow\PendingActivityState;
+
+/**
+ * @internal
+ */
+final class ActivityExecutionMapper
+{
+    public function __construct(
+        private readonly DataConverterInterface $converter,
+    ) {}
+
+    public function fromInfo(ActivityExecutionInfo $message): ActivityExecutionDescription
+    {
+        $heartbeatDetails = $message->getHeartbeatDetails();
+        $failure = $message->getLastFailure();
+        $metadata = $message->getUserMetadata();
+
+        return new ActivityExecutionDescription(
+            info: $this->fromListInfo($message),
+            runState: PendingActivityState::from($message->getRunState()),
+            attempt: $message->getAttempt(),
+            heartbeatDetails: $heartbeatDetails === null
+                ? EncodedValues::empty()
+                : EncodedValues::fromPayloads($heartbeatDetails, $this->converter),
+            lastHeartbeatTime: $message->getLastHeartbeatTime()?->toDateTime(),
+            lastStartedTime: $message->getLastStartedTime()?->toDateTime(),
+            lastFailure: $failure === null
+                ? null
+                : FailureConverter::mapFailureToException($failure, $this->converter),
+            lastWorkerIdentity: $message->getLastWorkerIdentity(),
+            canceledReason: $message->getCanceledReason(),
+            staticSummary: $this->decodeString($metadata?->getSummary()),
+            staticDetails: $this->decodeString($metadata?->getDetails()),
+        );
+    }
+
+    public function fromListInfo(ActivityExecutionListInfo|ActivityExecutionInfo $message): ActivityExecutionInfoDto
+    {
+        $searchAttributes = $message->getSearchAttributes();
+
+        return new ActivityExecutionInfoDto(
+            activityId: $message->getActivityId(),
+            runId: $message->getRunId(),
+            activityType: $message->getActivityType()?->getName() ?? '',
+            status: ActivityExecutionStatus::from($message->getStatus()),
+            taskQueue: $message->getTaskQueue(),
+            scheduleTime: $message->getScheduleTime()?->toDateTime(),
+            closeTime: $message->getCloseTime()?->toDateTime(),
+            executionDuration: DateInterval::parseOrNull($message->getExecutionDuration()),
+            searchAttributes: $searchAttributes === null
+                ? EncodedCollection::fromValues([], $this->converter)
+                : EncodedCollection::fromPayloadCollection($searchAttributes->getIndexedFields(), $this->converter),
+        );
+    }
+
+    private function decodeString(?Payload $payload): string
+    {
+        return $payload === null ? '' : $this->converter->fromPayload($payload, 'string');
+    }
+}
