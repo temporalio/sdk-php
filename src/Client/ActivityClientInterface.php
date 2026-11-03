@@ -30,13 +30,21 @@ interface ActivityClientInterface extends ClientContextInterface
 
     /**
      * @param non-empty-string $activityId
+     * @param non-empty-string|null $namespace
      */
-    public function getHandle(string $activityId, ?string $runId = null): ActivityHandle;
+    public function getHandle(string $activityId, ?string $runId = null, ?string $namespace = null): ActivityHandle;
 
     /**
+     * @param non-empty-string|null $namespace
+     *
      * @return Paginator<ActivityExecutionInfo>
      */
-    public function listExecutions(string $query, int $pageSize = 10): Paginator;
+    public function listExecutions(string $query, ?string $namespace = null, int $pageSize = 10): Paginator;
 
-    public function countExecutions(string $query): CountActivityExecutions;
+    /**
+     * @param non-empty-string|null $namespace
+     */
+    public function countExecutions(string $query, ?string $namespace = null): CountActivityExecutions;
+
+    public function newActivityCompletionClient(): ActivityCompletionClientInterface;
 }

@@ -31,6 +31,7 @@ final class ActivityExecutionInfo
         public readonly ActivityExecutionStatus $status,
         public readonly string $taskQueue,
         public readonly ?\DateTimeInterface $scheduleTime,
+        public readonly ?\DateTimeInterface $executionTime,
         public readonly ?\DateTimeInterface $closeTime,
         public readonly ?\DateInterval $executionDuration,
         public readonly EncodedCollection $searchAttributes,

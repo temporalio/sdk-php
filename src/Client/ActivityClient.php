@@ -35,9 +35,18 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityAlreadyStartedException;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Interceptor\ActivityClient\StartInput;
+use Temporal\Interceptor\ActivityClientCallsInterceptor;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\PipelineProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\ActivityExecutionMapper;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Plugin\ClientPluginContext;
+use Temporal\Plugin\ClientPluginInterface;
+use Temporal\Plugin\CompositePipelineProvider;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Worker\Logger\StderrLogger;
@@ -49,19 +58,38 @@ final class ActivityClient implements ActivityClientInterface
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
 
+    /** @var Pipeline<ActivityClientCallsInterceptor, mixed> */
+    private Pipeline $interceptorPipeline;
+
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
         ?PluginRegistry $pluginRegistry = null,
         ?LoggerInterface $logger = null,
     ) {
+        $pluginRegistry ??= new PluginRegistry();
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
 
-        $connectionPlugins = ($pluginRegistry ?? new PluginRegistry())->getPlugins(ConnectionPluginInterface::class);
+        $connectionPlugins = $pluginRegistry->getPlugins(ConnectionPluginInterface::class);
         $serviceClient = Pipeline::prepare($connectionPlugins)
             ->with(static fn(ServiceClientInterface $serviceClient) => $serviceClient, 'configureServiceClient')($serviceClient);
+
+        $pluginContext = new ClientPluginContext(
+            clientOptions: $this->clientOptions,
+            dataConverter: $this->converter,
+        );
+        Pipeline::prepare($pluginRegistry->getPlugins(ClientPluginInterface::class))
+            ->with(static fn(ClientPluginContext $pluginContext) => $pluginContext, 'configureClient')($pluginContext);
+
+        $this->clientOptions = $pluginContext->getClientOptions();
+        $this->converter = $pluginContext->getDataConverter() ?? $this->converter;
+        $this->interceptorPipeline = (new CompositePipelineProvider(
+            $pluginContext->getInterceptors(),
+            $interceptorProvider ?? new SimplePipelineProvider(),
+        ))->getPipeline(ActivityClientCallsInterceptor::class);
 
         if ($serviceClient instanceof BaseClient) {
             $serviceClient = $serviceClient->withDefaultPayloadLimits(
@@ -82,14 +110,92 @@ final class ActivityClient implements ActivityClientInterface
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
         ?PluginRegistry $pluginRegistry = null,
         ?LoggerInterface $logger = null,
     ): ActivityClientInterface {
-        return new self($serviceClient, $options, $converter, $pluginRegistry, $logger);
+        return new self($serviceClient, $options, $converter, $interceptorProvider, $pluginRegistry, $logger);
     }
 
     public function start(string $activityType, StartActivityOptions $options, mixed ...$args): ActivityHandle
     {
+        $context = new ActivitySerializationContext(
+            namespace: $this->clientOptions->namespace,
+            activityType: $activityType,
+            taskQueue: $options->taskQueue,
+        );
+
+        $handle = $this->interceptorPipeline->with(
+            fn(StartInput $input): ActivityHandle => $this->executeStart($input),
+            'start',
+        )(new StartInput(
+            $activityType,
+            Header::empty(),
+            EncodedValues::fromValues($args, $this->converter)->withSerializationContext($context),
+            $options,
+        ));
+        \assert($handle instanceof ActivityHandle);
+
+        return $handle;
+    }
+
+    public function getHandle(string $activityId, ?string $runId = null, ?string $namespace = null): ActivityHandle
+    {
+        return $this->createHandle($namespace ?? $this->clientOptions->namespace, $activityId, $runId);
+    }
+
+    public function listExecutions(string $query, ?string $namespace = null, int $pageSize = 10): Paginator
+    {
+        if ($pageSize <= 0) {
+            throw new \InvalidArgumentException('Page size must be greater than 0.');
+        }
+        $namespace ??= $this->clientOptions->namespace;
+
+        $request = (new ListActivityExecutionsRequest())
+            ->setNamespace($namespace)
+            ->setPageSize($pageSize)
+            ->setQuery($query);
+
+        $mapper = new ActivityExecutionMapper($this->converter, $namespace);
+        $loader = function (ListActivityExecutionsRequest $request) use ($mapper): \Generator {
+            do {
+                $response = $this->client->ListActivityExecutions($request);
+                $nextPageToken = $response->getNextPageToken();
+
+                $page = [];
+                /** @psalm-suppress TooManyTemplateParams */
+                foreach ($response->getExecutions() as $message) {
+                    $page[] = $mapper->fromListInfo($message);
+                }
+                yield $page;
+
+                $request->setNextPageToken($nextPageToken);
+            } while ($nextPageToken !== '');
+        };
+        $counter = fn(): int => \max(0, $this->countExecutions($query, $namespace)->count);
+
+        return Paginator::createFromGenerator($loader($request), $counter);
+    }
+
+    public function countExecutions(string $query, ?string $namespace = null): CountActivityExecutions
+    {
+        $response = $this->client->CountActivityExecutions(
+            (new CountActivityExecutionsRequest())
+                ->setNamespace($namespace ?? $this->clientOptions->namespace)
+                ->setQuery($query),
+        );
+
+        return new CountActivityExecutions(count: (int) $response->getCount());
+    }
+
+    public function newActivityCompletionClient(): ActivityCompletionClientInterface
+    {
+        return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
+    }
+
+    private function executeStart(StartInput $input): ActivityHandle
+    {
+        $options = $input->options;
         if ($options->id === '') {
             throw new \InvalidArgumentException('Activity ID is required.');
         }
@@ -108,7 +214,7 @@ final class ActivityClient implements ActivityClientInterface
             ->setIdentity($this->clientOptions->identity)
             ->setRequestId(Uuid::v4())
             ->setActivityId($options->id)
-            ->setActivityType(new ActivityType(['name' => $activityType]))
+            ->setActivityType(new ActivityType(['name' => $input->activityType]))
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
             ->setScheduleToCloseTimeout(DateInterval::toDuration($options->scheduleToCloseTimeout))
             ->setScheduleToStartTimeout(DateInterval::toDuration($options->scheduleToStartTimeout))
@@ -138,13 +244,14 @@ final class ActivityClient implements ActivityClientInterface
             $request->setUserMetadata($metadata);
         }
 
-        $context = new ActivitySerializationContext(
-            namespace: $this->clientOptions->namespace,
-            activityType: $activityType,
-            taskQueue: $options->taskQueue,
-        );
-        $input = EncodedValues::fromValues($args, $this->converter)->withSerializationContext($context);
-        $input->isEmpty() or $request->setInput($input->toPayloads());
+        $header = $input->header;
+        if ($header->count() > 0) {
+            \assert($header instanceof Header);
+            $header->setDataConverter($this->converter);
+            $request->setHeader($header->toHeader());
+        }
+
+        $input->arguments->isEmpty() or $request->setInput($input->arguments->toPayloads());
 
         try {
             $response = $this->client->StartActivityExecution($request);
@@ -154,67 +261,41 @@ final class ActivityClient implements ActivityClientInterface
 
             throw new ActivityAlreadyStartedException(
                 $options->id,
-                $activityType,
+                $input->activityType,
                 $failure->getRunId() === '' ? null : $failure->getRunId(),
                 $e,
             );
         }
 
+        $runId = $response->getRunId();
+
+        return $this->createHandle(
+            $this->clientOptions->namespace,
+            $options->id,
+            $runId === '' ? null : $runId,
+            new ActivitySerializationContext(
+                namespace: $this->clientOptions->namespace,
+                activityType: $input->activityType,
+                taskQueue: $options->taskQueue,
+            ),
+        );
+    }
+
+    private function createHandle(
+        string $namespace,
+        string $activityId,
+        ?string $runId,
+        ?ActivitySerializationContext $context = null,
+    ): ActivityHandle {
         return new ActivityHandle(
             $this->client,
             $this->clientOptions,
             $this->converter,
-            $options->id,
-            $response->getRunId(),
+            $this->interceptorPipeline,
+            $namespace,
+            $activityId,
+            $runId,
             $context,
         );
-    }
-
-    public function getHandle(string $activityId, ?string $runId = null): ActivityHandle
-    {
-        return new ActivityHandle($this->client, $this->clientOptions, $this->converter, $activityId, $runId);
-    }
-
-    public function listExecutions(string $query, int $pageSize = 10): Paginator
-    {
-        if ($pageSize <= 0) {
-            throw new \InvalidArgumentException('Page size must be greater than 0.');
-        }
-
-        $request = (new ListActivityExecutionsRequest())
-            ->setNamespace($this->clientOptions->namespace)
-            ->setPageSize($pageSize)
-            ->setQuery($query);
-
-        $mapper = new ActivityExecutionMapper($this->converter, $this->clientOptions->namespace);
-        $loader = function (ListActivityExecutionsRequest $request) use ($mapper): \Generator {
-            do {
-                $response = $this->client->ListActivityExecutions($request);
-                $nextPageToken = $response->getNextPageToken();
-
-                $page = [];
-                /** @psalm-suppress TooManyTemplateParams */
-                foreach ($response->getExecutions() as $message) {
-                    $page[] = $mapper->fromListInfo($message);
-                }
-                yield $page;
-
-                $request->setNextPageToken($nextPageToken);
-            } while ($nextPageToken !== '');
-        };
-        $counter = fn(): int => \max(0, $this->countExecutions($query)->count);
-
-        return Paginator::createFromGenerator($loader($request), $counter);
-    }
-
-    public function countExecutions(string $query): CountActivityExecutions
-    {
-        $response = $this->client->CountActivityExecutions(
-            (new CountActivityExecutionsRequest())
-                ->setNamespace($this->clientOptions->namespace)
-                ->setQuery($query),
-        );
-
-        return new CountActivityExecutions(count: (int) $response->getCount());
     }
 }

@@ -18,12 +18,14 @@ class ActivityFailedException extends TemporalException
     public function __construct(
         public readonly string $activityId,
         public readonly ?string $runId,
+        public readonly int $retryState,
         ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage([
                 'activityId' => $activityId,
                 'runId' => $runId,
+                'retryState' => $retryState,
             ]),
             0,
             $previous,
