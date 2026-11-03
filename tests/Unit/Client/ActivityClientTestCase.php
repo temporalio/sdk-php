@@ -6,9 +6,12 @@ namespace Temporal\Tests\Unit\Client;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Temporal\Api\Activity\V1\ActivityExecutionInfo;
 use Temporal\Api\Activity\V1\ActivityExecutionOutcome;
+use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Api\Workflowservice\V1\DescribeActivityExecutionResponse;
 use Temporal\Api\Workflowservice\V1\PollActivityExecutionResponse;
 use Temporal\Api\Workflowservice\V1\StartActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartActivityExecutionResponse;
@@ -97,6 +100,7 @@ final class ActivityClientTestCase extends TestCase
     {
         $client = $this->createMock(ServiceClientInterface::class);
         $client->method('withContext')->willReturnSelf();
+        $client->method('DescribeActivityExecution')->willReturn(self::describeResponse());
         $client->expects($this->exactly(2))
             ->method('PollActivityExecution')
             ->willReturnOnConsecutiveCalls(
@@ -117,6 +121,7 @@ final class ActivityClientTestCase extends TestCase
     {
         $client = $this->createMock(ServiceClientInterface::class);
         $client->method('withContext')->willReturnSelf();
+        $client->method('DescribeActivityExecution')->willReturn(self::describeResponse());
         $client->method('PollActivityExecution')->willReturn(
             (new PollActivityExecutionResponse())->setOutcome(
                 (new ActivityExecutionOutcome())->setFailure(
@@ -136,5 +141,14 @@ final class ActivityClientTestCase extends TestCase
             self::assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             self::assertSame('TestError', $e->getPrevious()->getType());
         }
+    }
+
+    private static function describeResponse(): DescribeActivityExecutionResponse
+    {
+        return (new DescribeActivityExecutionResponse())->setInfo(
+            (new ActivityExecutionInfo())
+                ->setActivityType(new ActivityType(['name' => 'type']))
+                ->setTaskQueue('queue'),
+        );
     }
 }

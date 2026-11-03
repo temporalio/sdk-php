@@ -29,6 +29,7 @@ use Temporal\Client\GRPC\BaseClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\PayloadLimitOptions;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -137,7 +138,12 @@ final class ActivityClient implements ActivityClientInterface
             $request->setUserMetadata($metadata);
         }
 
-        $input = EncodedValues::fromValues($args, $this->converter);
+        $context = new ActivitySerializationContext(
+            namespace: $this->clientOptions->namespace,
+            activityType: $activityType,
+            taskQueue: $options->taskQueue,
+        );
+        $input = EncodedValues::fromValues($args, $this->converter)->withSerializationContext($context);
         $input->isEmpty() or $request->setInput($input->toPayloads());
 
         try {
@@ -154,7 +160,14 @@ final class ActivityClient implements ActivityClientInterface
             );
         }
 
-        return $this->getHandle($options->id, $response->getRunId());
+        return new ActivityHandle(
+            $this->client,
+            $this->clientOptions,
+            $this->converter,
+            $options->id,
+            $response->getRunId(),
+            $context,
+        );
     }
 
     public function getHandle(string $activityId, ?string $runId = null): ActivityHandle
@@ -173,7 +186,7 @@ final class ActivityClient implements ActivityClientInterface
             ->setPageSize($pageSize)
             ->setQuery($query);
 
-        $mapper = new ActivityExecutionMapper($this->converter);
+        $mapper = new ActivityExecutionMapper($this->converter, $this->clientOptions->namespace);
         $loader = function (ListActivityExecutionsRequest $request) use ($mapper): \Generator {
             do {
                 $response = $this->client->ListActivityExecutions($request);

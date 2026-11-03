@@ -17,6 +17,7 @@ use Temporal\Api\Common\V1\Payload;
 use Temporal\Client\Activity\ActivityExecutionDescription;
 use Temporal\Client\Activity\ActivityExecutionInfo as ActivityExecutionInfoDto;
 use Temporal\Client\Activity\ActivityExecutionStatus;
+use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
@@ -31,10 +32,16 @@ final class ActivityExecutionMapper
 {
     public function __construct(
         private readonly DataConverterInterface $converter,
+        private readonly string $namespace,
     ) {}
 
     public function fromInfo(ActivityExecutionInfo $message): ActivityExecutionDescription
     {
+        $context = new ActivitySerializationContext(
+            namespace: $this->namespace,
+            activityType: $message->getActivityType()?->getName() ?? '',
+            taskQueue: $message->getTaskQueue(),
+        );
         $heartbeatDetails = $message->getHeartbeatDetails();
         $failure = $message->getLastFailure();
         $metadata = $message->getUserMetadata();
@@ -45,12 +52,12 @@ final class ActivityExecutionMapper
             attempt: $message->getAttempt(),
             heartbeatDetails: $heartbeatDetails === null
                 ? EncodedValues::empty()
-                : EncodedValues::fromPayloads($heartbeatDetails, $this->converter),
+                : EncodedValues::fromPayloads($heartbeatDetails, $this->converter)->withSerializationContext($context),
             lastHeartbeatTime: $message->getLastHeartbeatTime()?->toDateTime(),
             lastStartedTime: $message->getLastStartedTime()?->toDateTime(),
             lastFailure: $failure === null
                 ? null
-                : FailureConverter::mapFailureToException($failure, $this->converter),
+                : FailureConverter::mapFailureToException($failure, $this->converter, $context),
             lastWorkerIdentity: $message->getLastWorkerIdentity(),
             canceledReason: $message->getCanceledReason(),
             staticSummary: $this->decodeString($metadata?->getSummary()),
