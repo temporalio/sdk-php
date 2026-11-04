@@ -19,6 +19,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
@@ -107,5 +108,51 @@ final class WorkflowStubTestCase extends TestCase
 
         $result = $this->workflowStub->getResult();
         $this->assertNull($result);
+    }
+
+    public function testCloseEventReceivedAtDeadlineIsReturned(): void
+    {
+        $responseWithHistory = (new GetWorkflowExecutionHistoryResponse())
+            ->setHistory(
+                (new History())->setEvents([
+                    (new HistoryEvent())
+                        ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)
+                        ->setWorkflowExecutionCompletedEventAttributes(new WorkflowExecutionCompletedEventAttributes()),
+                ]),
+            );
+
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('GetWorkflowExecutionHistory')
+            ->willReturnCallback(static function () use ($responseWithHistory): GetWorkflowExecutionHistoryResponse {
+                // The response arrives after the whole-second timeout has elapsed
+                self::waitForNextSecond();
+                return $responseWithHistory;
+            });
+
+        $this->assertNull($this->workflowStub->getResult(timeout: 1));
+    }
+
+    public function testEmptyHistoryAtDeadlineThrowsTimeoutException(): void
+    {
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('GetWorkflowExecutionHistory')
+            ->willReturnCallback(static function (): GetWorkflowExecutionHistoryResponse {
+                self::waitForNextSecond();
+                return new GetWorkflowExecutionHistoryResponse();
+            });
+
+        static::expectException(TimeoutException::class);
+
+        $this->workflowStub->getResult(timeout: 1);
+    }
+
+    private static function waitForNextSecond(): void
+    {
+        $start = \time();
+        while (\time() === $start) {
+            \usleep(10_000);
+        }
     }
 }
