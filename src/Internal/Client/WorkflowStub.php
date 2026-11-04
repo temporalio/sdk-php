@@ -639,10 +639,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
             if ($timeout !== null) {
                 $timeout = \max(0, $timeout - $elapsed);
-
-                if ($timeout === 0) {
-                    throw new TimeoutException('Unable to wait for workflow completion, deadline reached');
-                }
             }
 
             $history = $response->getHistory();
@@ -672,7 +668,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             }
 
             return $closeEvent;
-        } while (true);
+        } while ($timeout === null || $timeout > 0);
+
+        throw new TimeoutException('Unable to wait for workflow completion, deadline reached');
     }
 
     private function mapWorkflowFailureToException(\Throwable $failure): \Throwable
