@@ -322,6 +322,7 @@ class WorkflowClient implements WorkflowClientInterface
         ?WorkflowOptions $options = null,
     ): object {
         $workflow = $this->reader->fromClass($class);
+        $options = ($options ?? WorkflowOptions::new())->mergeWith($workflow->getMethodRetry());
 
         return new WorkflowProxy(
             $this,
