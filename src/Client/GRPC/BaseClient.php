@@ -267,12 +267,12 @@ abstract class BaseClient implements GrpcClientInterface
         $attempt = 0;
         $retryOption = RpcRetryOptions::fromRetryOptions($ctx->getRetryOptions());
         $initialIntervalMs = $congestionInitialIntervalMs = $throttler = null;
+        $deadline = $ctx->getDeadline();
 
         do {
             ++$attempt;
             try {
                 $options = $ctx->getOptions();
-                $deadline = $ctx->getDeadline();
                 if ($deadline !== null) {
                     $diff = (new \DateTime())->diff($deadline);
                     $options['timeout'] = \max(0, (int) CarbonInterval::instance($diff)->totalMicroseconds);
@@ -308,11 +308,6 @@ abstract class BaseClient implements GrpcClientInterface
                     throw $e;
                 }
 
-                if ($ctx->getDeadline() !== null && new \DateTimeImmutable() > $ctx->getDeadline()) {
-                    // Deadline is reached
-                    throw new TimeoutException('Call timeout has been reached');
-                }
-
                 // Init interval values in milliseconds
                 $initialIntervalMs ??= $retryOption->initialInterval === null
                     ? (int) CarbonInterval::millisecond(50)->totalMilliseconds
@@ -335,6 +330,10 @@ abstract class BaseClient implements GrpcClientInterface
                     : $initialIntervalMs;
 
                 $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval) * 1000;
+
+                if ($deadline !== null && new \DateTimeImmutable("+{$wait} microseconds") > $deadline) {
+                    throw new TimeoutException('Call timeout has been reached', $e->getCode(), $e);
+                }
 
                 // wait till the next call
                 $this->usleep($wait);
