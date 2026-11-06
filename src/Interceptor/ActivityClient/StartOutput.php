@@ -19,5 +19,6 @@ final class StartOutput
     public function __construct(
         public readonly string $activityId,
         public readonly ?string $runId,
+        public readonly bool $started,
     ) {}
 }
