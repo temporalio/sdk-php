@@ -63,6 +63,10 @@ final class Connection implements ConnectionInterface
             $state = $this->getState();
         } while ($alive && $state === ConnectionState::Connecting);
 
+        if ($state === ConnectionState::Ready) {
+            return;
+        }
+
         $alive or throw new \RuntimeException('Failed to connect to Temporal service. Timeout exceeded.');
         $state === ConnectionState::Idle and throw new \RuntimeException(
             'Failed to connect to Temporal service. Channel is in idle state.',
