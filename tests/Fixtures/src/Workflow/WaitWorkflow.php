@@ -24,8 +24,8 @@ class WaitWorkflow
 
     #[SignalMethod]
     public function unlock(
-        string $value
-    ) {
+        string $value,
+    ): void {
         $this->ready = true;
         $this->value = $value;
     }
@@ -33,7 +33,7 @@ class WaitWorkflow
     #[WorkflowMethod(name: 'WaitWorkflow')]
     public function run()
     {
-        yield Workflow::await(fn() => $this->ready);
+        Workflow::await(fn() => $this->ready);
 
         return $this->value;
     }

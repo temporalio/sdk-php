@@ -38,9 +38,9 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, fn() => false);
+                    $result = Workflow::awaitWithTimeout(5, static fn() => false);
                     assertFalse($result);
                     return 'OK';
                 }
@@ -62,9 +62,9 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    yield Workflow::awaitWithTimeout(5, fn() => false);
+                    Workflow::awaitWithTimeout(5, static fn() => false);
                     return 'OK';
                 }
             }
@@ -83,9 +83,9 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(5, fn() => true);
+                    $result = Workflow::awaitWithTimeout(5, static fn() => true);
                     assertTrue($result);
                     return 'OK';
                 }
@@ -106,11 +106,11 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             class {
                 private bool $doCancel = false;
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(
+                    $result = Workflow::awaitWithTimeout(
                         50,
-                        fn () => $this->doCancel,
+                        fn(): bool => $this->doCancel,
                     );
                     assertTrue($result);
 
@@ -146,9 +146,9 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    yield Workflow::awaitWithTimeout(
+                    Workflow::awaitWithTimeout(
                         AwaitOptions::new(5)->withTimerOptions(
                             TimerOptions::new()->withSummary('await-summary'),
                         ),
@@ -172,9 +172,9 @@ final class AwaitWithTimeoutTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    $result = yield Workflow::awaitWithTimeout(AwaitOptions::new(5), fn() => true);
+                    $result = Workflow::awaitWithTimeout(AwaitOptions::new(5), fn() => true);
                     assertTrue($result);
                     return 'OK';
                 }

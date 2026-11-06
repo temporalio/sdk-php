@@ -96,7 +96,7 @@ class MainWorkflow
     public function run(array $actions)
     {
         $action = \array_shift($actions);
-        return yield match ($action) {
+        return match ($action) {
             self::ARG_ROOT_EXECUTION => Workflow::newChildWorkflowStub(ChildWorkflow::class)->run(),
             self::ARG_RETRY_OPTIONS => Workflow::getInfo()->retryOptions,
             self::ARG_CONTINUE_AS_NEW => Workflow::continueAsNew('Extra_Workflow_WorkflowInfo', args: [$actions]),
@@ -112,7 +112,7 @@ class ChildWorkflow
     #[WorkflowMethod('Extra_Workflow_WorkflowInfo_Child')]
     public function run()
     {
-        return yield Workflow::newChildWorkflowStub(ChildWorkflow2::class)->run();
+        return Workflow::newChildWorkflowStub(ChildWorkflow2::class)->run();
     }
 }
 

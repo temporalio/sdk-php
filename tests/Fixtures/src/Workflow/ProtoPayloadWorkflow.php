@@ -21,11 +21,11 @@ use Temporal\Workflow\WorkflowMethod;
 class ProtoPayloadWorkflow
 {
     #[WorkflowMethod(name: 'ProtoPayloadWorkflow')]
-    public function handler(): iterable
+    public function handler(): WorkflowExecution
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         $e = new WorkflowExecution();
@@ -33,9 +33,9 @@ class ProtoPayloadWorkflow
         $e->setRunId('run id');
 
         /** @var WorkflowExecution $e2 */
-        $e2 = yield $simple->updateRunID($e);
-        assert($e2->getWorkflowId() === $e->getWorkflowId());
-        assert($e2->getRunId() === 'updated');
+        $e2 = $simple->updateRunID($e);
+        \assert($e2->getWorkflowId() === $e->getWorkflowId());
+        \assert($e2->getRunId() === 'updated');
 
         return $e2;
     }

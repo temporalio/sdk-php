@@ -45,9 +45,9 @@ class FeatureWorkflow
     private bool $done = false;
 
     #[WorkflowMethod('Harness_Update_ClientInterceptor')]
-    public function run()
+    public function run(): string
     {
-        yield Workflow::await(fn(): bool => $this->done);
+        Workflow::await(fn(): bool => $this->done);
         return 'Hello, World!';
     }
 

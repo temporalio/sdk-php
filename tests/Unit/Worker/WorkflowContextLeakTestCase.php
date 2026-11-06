@@ -24,9 +24,9 @@ final class WorkflowContextLeakTestCase extends AbstractUnit
             #[Workflow\WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'ContextLeakWorkflow')]
-                public function handler(): iterable
+                public function handler(): string
                 {
-                    yield Workflow::timer(1);
+                    Workflow::timer(1);
 
                     return 'done';
                 }
@@ -51,9 +51,9 @@ final class WorkflowContextLeakTestCase extends AbstractUnit
                 private bool $signalled = false;
 
                 #[WorkflowMethod(name: 'ThrowingConditionWorkflow')]
-                public function handler(): iterable
+                public function handler(): void
                 {
-                    yield Workflow::await(function (): bool {
+                    Workflow::await(function (): bool {
                         $this->signalled and throw new \LogicException('condition failed');
 
                         return false;

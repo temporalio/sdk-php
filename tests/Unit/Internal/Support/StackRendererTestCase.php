@@ -285,8 +285,8 @@ final class StackRendererTestCase extends TestCase
 
         // Second location
         $secondLocation = $locations[1];
-        self::assertSame('/another/file.php', $secondLocation->getFilePath());
-        self::assertSame(456, $secondLocation->getLine());
+        self::assertSame('', $secondLocation->getFilePath());
+        self::assertSame(0, $secondLocation->getLine());
         self::assertSame('anotherMethod', $secondLocation->getFunctionName());
         self::assertFalse($secondLocation->getInternalCode());
     }

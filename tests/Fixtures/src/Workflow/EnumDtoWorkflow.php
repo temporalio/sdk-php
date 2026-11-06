@@ -22,17 +22,17 @@ use Temporal\Workflow\WorkflowMethod;
 class EnumDtoWorkflow
 {
     #[WorkflowMethod]
-    public function handler(WithEnum $enum): iterable
+    public function handler(WithEnum $enum): WithEnum
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)
                 ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(2)
-                )
+                    RetryOptions::new()->withMaximumAttempts(2),
+                ),
         );
 
-        return yield $simple->simpleEnumDto($enum);
+        return $simple->simpleEnumDto($enum);
     }
 }

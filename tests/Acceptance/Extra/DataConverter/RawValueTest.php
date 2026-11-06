@@ -46,7 +46,7 @@ class FeatureWorkflow
                 ->withScheduleToCloseTimeout('1 minute'),
         );
 
-        return yield $activity->bypass($rawValue);
+        return $activity->bypass($rawValue);
     }
 }
 

@@ -18,8 +18,8 @@ use Temporal\Workflow\WorkflowMethod;
 class VersionedWorkflow
 {
     #[WorkflowMethod(name: 'VersionedWorkflow')]
-    public function handler(): iterable
+    public function handler(): int
     {
-        return yield Workflow::getVersion('change-1', Workflow::DEFAULT_VERSION, 5);
+        return Workflow::getVersion('change-1', Workflow::DEFAULT_VERSION, 5);
     }
 }

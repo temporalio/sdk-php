@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexRunLocked;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
+use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 class MutexRunLockedTest extends TestCase
 {
     #[Test]
-    public function runLockedWithGeneratorAndAwait(
+    public function runLockedWithScopeAndAwait(
         #[Stub('Extra_Workflow_MutexRunLocked')]
         WorkflowStubInterface $stub,
     ): void {
@@ -53,7 +53,7 @@ class MutexRunLockedTest extends TestCase
 class TestWorkflow
 {
     private Workflow\Mutex $mutex;
-    private PromiseInterface $promise;
+    private CancellationScopeInterface $scope;
     private bool $unblock = false;
     private bool $exit = false;
 
@@ -67,19 +67,20 @@ class TestWorkflow
 
     #[WorkflowMethod(name: "Extra_Workflow_MutexRunLocked")]
     #[Workflow\ReturnType(Type::TYPE_ARRAY)]
-    public function handle(): \Generator
+    public function handle(): array
     {
+        $result = null;
         $exception = null;
         try {
-            $result = yield $this->promise = Workflow::runLocked($this->mutex, $this->runLocked(...));
+            $result = ($this->scope = Workflow::runLocked($this->mutex, $this->runLocked(...)))->await();
         } catch (\Throwable $e) {
             $exception = $e::class;
         }
 
         $trailed = false;
-        yield Workflow::await(
+        Workflow::await(
             fn() => $this->exit,
-            Workflow::runLocked($this->mutex, static function () use (&$trailed) {
+            Workflow::runLocked($this->mutex, static function () use (&$trailed): void {
                 $trailed = true;
             }),
         );
@@ -96,7 +97,7 @@ class TestWorkflow
     #[Workflow\SignalMethod]
     public function cancel(): void
     {
-        $this->promise->cancel();
+        $this->scope->cancel();
     }
 
     #[Workflow\SignalMethod]
@@ -105,15 +106,15 @@ class TestWorkflow
         $this->exit = true;
     }
 
-    private function runLocked(): \Generator
+    private function runLocked(): bool
     {
         // Permanently lock mutex
-        Workflow::runLocked($this->mutex, function () {
+        Workflow::runLocked($this->mutex, function (): void {
             $this->unlocked = true;
-            yield Workflow::await(fn() => false);
+            Workflow::await(static fn() => false);
         });
 
-        yield Workflow::await(fn() => $this->unblock);
+        Workflow::await(fn() => $this->unblock);
         return $this->mutex->isLocked();
     }
 }

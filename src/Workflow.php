@@ -28,6 +28,8 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\Process\Awaiter;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\AwaitOptions;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -179,21 +181,25 @@ final class Workflow extends Facade
      *  public function handler()
      *  {
      *      // Create the new "group" of executions
-     *      $promise = Workflow::async(function() {
-     *          $first = yield Workflow::executeActivity('first');
-     *          $second = yield Workflow::executeActivity('second');
+     *      $scope = Workflow::async(function() {
+     *          $first = Workflow::async(
+     *              fn() => Workflow::executeActivity('first'),
+     *          );
+     *          $second = Workflow::async(
+     *              fn() => Workflow::executeActivity('second'),
+     *          );
      *
-     *          return yield Promise::all([$first, $second]);
+     *          return Workflow::all([$first, $second]);
      *      });
      *
      *      // Waiting for the execution result
-     *      yield $promise;
+     *      $result = Workflow::await($scope);
      *
      *      // Or cancel all group requests (activity executions)
-     *      $promise->cancel();
+     *      $scope->cancel();
      *
      *      // Or get information about the execution of the group
-     *      $promise->isCancelled();
+     *      $scope->isCancelled();
      *  }
      * ```
      *
@@ -201,13 +207,14 @@ final class Workflow extends Facade
      * asynchronous task in {@see CancellationScopeInterface} interface.
      *
      * @template TReturn
-     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @param callable(): TReturn $task
      * @return CancellationScopeInterface<TReturn>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function async(callable $task): CancellationScopeInterface
     {
+        Awaiter::assertManaged();
         $ctx = self::getCurrentContext();
         \assert($ctx instanceof ScopedContextInterface);
         return $ctx->async($task);
@@ -255,16 +262,63 @@ final class Workflow extends Facade
      * Use asyncDetached to handle cleanup and compensation logic.
      *
      * @template TReturn
-     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @param callable(): TReturn $task
      * @return CancellationScopeInterface<TReturn>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
     {
+        Awaiter::assertManaged();
         $ctx = self::getCurrentContext();
         \assert($ctx instanceof ScopedContextInterface);
         return $ctx->asyncDetached($task);
+    }
+
+    /**
+     * Suspend until all workflow tasks complete.
+     *
+     * ```php
+     *  [$first, $second] = Workflow::all([
+     *      Workflow::async(fn() => Workflow::executeActivity('first')),
+     *      Workflow::async(fn() => Workflow::executeActivity('second')),
+     *  ]);
+     * ```
+     *
+     * @template T
+     * @param iterable<array-key, PromiseInterface<T>|T> $tasks
+     * @return array<array-key, T>
+     */
+    public static function all(iterable $tasks): array
+    {
+        Awaiter::assertManaged();
+        return Awaiter::await(Promise::all($tasks));
+    }
+
+    /**
+     * Suspend until the first workflow task completes successfully.
+     *
+     * @template T
+     * @param iterable<array-key, PromiseInterface<T>|T> $tasks
+     * @return T
+     */
+    public static function any(iterable $tasks): mixed
+    {
+        Awaiter::assertManaged();
+        return Awaiter::await(Promise::any($tasks));
+    }
+
+    /**
+     * Suspend until the first workflow task settles, whether it is fulfilled or rejected.
+     *
+     * @template T
+     * @param iterable<array-key, PromiseInterface<T>|T> $tasks
+     * @return T
+     */
+    public static function race(iterable $tasks): mixed
+    {
+        Awaiter::assertManaged();
+        return Awaiter::await(Promise::race($tasks));
     }
 
     /**
@@ -277,8 +331,8 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      yield Workflow::await(
-     *          Workflow::executeActivity('shouldByContinued')
+     *      Workflow::await(
+     *          Workflow::async(fn() => Workflow::executeActivity('shouldByContinued'))
      *      );
      *
      *      // ...do something
@@ -294,7 +348,7 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      yield Workflow::await(fn() => $this->continued);
+     *      Workflow::await(fn() => $this->continued);
      *
      *      // ...continue execution
      *  }
@@ -306,13 +360,15 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * To wait for the first *fulfilled* condition and ignore rejected promise
-     * conditions, combine them explicitly:
-     * `yield Workflow::await(\Temporal\Promise::any([$a, $b]))`.
+     * When {@see FeatureFlags::$settleAwaitOnFirstSettledCondition} is enabled, a multi-condition
+     * await settles on the first *settled* condition, so a rejected promise condition is propagated
+     * instead of being ignored. To wait for the first *fulfilled* condition in that mode, combine
+     * the conditions explicitly: `Workflow::await(\Temporal\Promise::any([$a, $b]))`.
      */
-    public static function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public static function await(callable|Mutex|PromiseInterface ...$conditions): mixed
     {
-        return self::getCurrentContext()->await(...$conditions);
+        Awaiter::assertManaged();
+        return Awaiter::await(self::getCurrentContext()->await(...$conditions));
     }
 
     /**
@@ -330,7 +386,7 @@ final class Workflow extends Facade
      *  public function handler()
      *  {
      *      // Continue after 42 seconds or when bool "continued" will be true.
-     *      yield Workflow::awaitWithTimeout(42, fn() => $this->continued);
+     *      Workflow::awaitWithTimeout(42, fn() => $this->continued);
      *
      *      // ...continue execution
      *  }
@@ -340,7 +396,7 @@ final class Workflow extends Facade
      * for example to set its summary displayed in UI/CLI:
      *
      * ```php
-     *  yield Workflow::awaitWithTimeout(
+     *  Workflow::awaitWithTimeout(
      *      AwaitOptions::new(42)->withTimerOptions(
      *          TimerOptions::new()->withSummary('continued-wait'),
      *      ),
@@ -349,11 +405,11 @@ final class Workflow extends Facade
      * ```
      *
      * @param DateIntervalValue|AwaitOptions $intervalOrOptions Timeout value or await options.
-     * @return PromiseInterface<bool>
      */
-    public static function awaitWithTimeout($intervalOrOptions, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
+    public static function awaitWithTimeout($intervalOrOptions, callable|Mutex|PromiseInterface ...$conditions): bool
     {
-        return self::getCurrentContext()->awaitWithTimeout($intervalOrOptions, ...$conditions);
+        Awaiter::assertManaged();
+        return Awaiter::await(self::getCurrentContext()->awaitWithTimeout($intervalOrOptions, ...$conditions));
     }
 
     /**
@@ -547,21 +603,24 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      $version = yield Workflow::getVersion('new-activity-added', 1, 2);
+     *      $version = Workflow::getVersion('new-activity-added', 1, 2);
      *
-     *      $result = yield match($version) {
+     *      $result = match($version) {
      *          1 => Workflow::executeActivity('before'),   // Old behaviour
      *          2 => Workflow::executeActivity('after'),    // New behaviour
      *      }
      *  }
      * ```
      *
-     * @return PromiseInterface<int>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
+    public static function getVersion(string $changeId, int $minSupported, int $maxSupported): int
     {
-        return self::getCurrentContext()->getVersion($changeId, $minSupported, $maxSupported);
+        Awaiter::assertManaged();
+        return Awaiter::await(
+            self::getCurrentContext()->getVersion($changeId, $minSupported, $maxSupported),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -580,19 +639,23 @@ final class Workflow extends Facade
      *
      *      // ✅ Good: The calculation of the data with the side-effect
      *      //          will be performed once.
-     *      $time = yield Workflow::sideEffect(fn() => hrtime(true));
+     *      $time = Workflow::sideEffect(fn() => hrtime(true));
      *  }
      * ```
      *
      * @template TReturn
      * @param callable(): TReturn $value
-     * @return PromiseInterface<TReturn>
+     * @return TReturn
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function sideEffect(callable $value, ?SideEffectOptions $options = null): PromiseInterface
+    public static function sideEffect(callable $value, ?SideEffectOptions $options = null): mixed
     {
+        Awaiter::assertManaged();
         /** @psalm-suppress TooManyArguments */
-        return self::getCurrentContext()->sideEffect($value, $options);
+        return Awaiter::await(
+            self::getCurrentContext()->sideEffect($value, $options),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -608,23 +671,26 @@ final class Workflow extends Facade
      *  public function handler()
      *  {
      *      // Wait 10 seconds
-     *      yield Workflow::timer(10);
+     *      Workflow::timer(10);
      *
      *      // Wait 42 hours
-     *      yield Workflow::timer(new \DateInterval('PT42H'));
+     *      Workflow::timer(new \DateInterval('PT42H'));
      *
      *      // Wait 23 months
-     *      yield Workflow::timer('23 months');
+     *      Workflow::timer('23 months');
      *  }
      * ```
      *
      * @param DateIntervalValue $interval
-     * @return PromiseInterface<null>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function timer($interval, ?TimerOptions $options = null): PromiseInterface
+    public static function timer($interval, ?TimerOptions $options = null): void
     {
-        return self::getCurrentContext()->timer($interval, $options);
+        Awaiter::assertManaged();
+        Awaiter::await(
+            self::getCurrentContext()->timer($interval, $options),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -654,7 +720,7 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      return yield Workflow::continueAsNew('AnyAnotherWorkflow');
+     *      return Workflow::continueAsNew('AnyAnotherWorkflow');
      *  }
      * ```
      *
@@ -664,8 +730,12 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ?ContinueAsNewOptions $options = null,
-    ): PromiseInterface {
-        return self::getCurrentContext()->continueAsNew($type, $args, $options);
+    ): mixed {
+        Awaiter::assertManaged();
+        return Awaiter::await(
+            self::getCurrentContext()->continueAsNew($type, $args, $options),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -694,7 +764,7 @@ final class Workflow extends Facade
      *      $proxy = Workflow::newContinueAsNewStub(ExampleWorkflow::class);
      *
      *      // Executes ExampleWorkflow::handle(int $value)
-     *      return yield $proxy->handle(42);
+     *      return $proxy->handle(42);
      *  }
      * ```
      *
@@ -720,30 +790,29 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      $result = yield Workflow::executeChildWorkflow('AnyAnotherWorkflow');
+     *      $result = Workflow::executeChildWorkflow('AnyAnotherWorkflow');
      *
      *      // Do something else
      *  }
      * ```
      *
-     * Please note that due to the fact that PHP does not allow defining the
-     * type on {@see \Generator}, you sometimes need to specify the type of
-     * the child workflow result explicitly.
+     * For untyped child workflows, pass the expected result type explicitly
+     * when it cannot be inferred from a PHP workflow contract.
      *
      * ```php
-     *  // External child workflow handler method with Generator return type-hint
-     *  public function handle(): \Generator
+     *  // External child workflow handler method with a native return type-hint
+     *  public function handle(): int
      *  {
-     *      yield Workflow::executeActivity('example');
+     *      Workflow::executeActivity('example');
      *
-     *      return 42; // Generator which returns int type (Type::TYPE_INT)
+     *      return 42; // int type (Type::TYPE_INT)
      *  }
      *
      *  // Child workflow execution
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
-     *      $result = yield Workflow::executeChildWorkflow(
+     *      $result = Workflow::executeChildWorkflow(
      *          type: 'ChildWorkflow',
      *          returnType: Type::TYPE_INT,
      *      );
@@ -755,7 +824,6 @@ final class Workflow extends Facade
      * @param non-empty-string $type
      * @param list<mixed> $args
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
-     * @return PromiseInterface<mixed>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -764,8 +832,12 @@ final class Workflow extends Facade
         array $args = [],
         ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
-    ): PromiseInterface {
-        return self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType);
+    ): mixed {
+        Awaiter::assertManaged();
+        return Awaiter::await(
+            self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -795,7 +867,7 @@ final class Workflow extends Facade
      *      $proxy = Workflow::newChildWorkflowStub(ChildWorkflowExample::class);
      *
      *      // Executes ChildWorkflowExample::handle(int $value)
-     *      $result = yield $proxy->handle(42);
+     *      $result = $proxy->handle(42);
      *
      *      // etc ...
      *  }
@@ -838,7 +910,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * To start abandoned child workflow use `yield` and method `start()`:
+     * To start an abandoned child workflow, call `start()`:
      *
      * ```php
      *  #[WorkflowMethod]
@@ -851,7 +923,7 @@ final class Workflow extends Facade
      *      );
      *
      *      // Start child workflow
-     *      yield $workflow->start(42);
+     *      $workflow->start(42);
      *  }
      * ```
      *
@@ -877,7 +949,7 @@ final class Workflow extends Facade
      *      );
      *
      *      // The method "signalMethod" from the class "ClassName" will be called:
-     *      yield $externalWorkflow->signalMethod();
+     *      $externalWorkflow->signalMethod();
      *  }
      * ```
      *
@@ -926,32 +998,27 @@ final class Workflow extends Facade
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
-     *      $result1 = yield Workflow::executeActivity('activityName');
-     *      $result2 = yield Workflow::executeActivity('anotherActivityName');
+     *      $result1 = Workflow::executeActivity('activityName');
+     *      $result2 = Workflow::executeActivity('anotherActivityName');
      *  }
      * ```
      *
-     * In addition to this method of calling, you can use alternative methods
-     * of working with the result using Promise API ({@see PromiseInterface}).
+     * Run independent activities concurrently by putting each direct call in
+     * an async scope and waiting for all scopes:
      *
      * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
-     *      Workflow::executeActivity('activityName')
-     *          ->then(function ($result) {
-     *              // Execution result
-     *          })
-     *          ->catch(function (\Throwable $error) {
-     *              // Execution error
-     *          })
-     *      ;
+     *      [$first, $second] = Workflow::all([
+     *          Workflow::async(fn() => Workflow::executeActivity('activityName')),
+     *          Workflow::async(fn() => Workflow::executeActivity('anotherActivityName')),
+     *      ]);
      *  }
      * ```
      *
      * @param non-empty-string $type
      * @param ActivityOptions|null $options
-     * @return PromiseInterface<mixed>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function executeActivity(
@@ -959,8 +1026,12 @@ final class Workflow extends Facade
         array $args = [],
         ?ActivityOptionsInterface $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-    ): PromiseInterface {
-        return self::getCurrentContext()->executeActivity($type, $args, $options, $returnType);
+    ): mixed {
+        Awaiter::assertManaged();
+        return Awaiter::await(
+            self::getCurrentContext()->executeActivity($type, $args, $options, $returnType),
+            interruptOnCancel: false,
+        );
     }
 
     /**
@@ -984,8 +1055,8 @@ final class Workflow extends Facade
      *      $activities = Workflow::newActivityStub(ExampleActivityClass::class);
      *
      *      // Activity methods execution
-     *      yield $activities->firstActivity();
-     *      yield $activities->secondActivity();
+     *      $activities->firstActivity();
+     *      $activities->secondActivity();
      *  }
      * ```
      *
@@ -1018,7 +1089,7 @@ final class Workflow extends Facade
      *      $activities = Workflow::newUntypedActivityStub($options);
      *
      *      // Executes an activity named "activity"
-     *      $result = yield $activities->execute('activity');
+     *      $result = $activities->execute('activity');
      *  }
      * ```
      *
@@ -1047,7 +1118,7 @@ final class Workflow extends Facade
      * interruption of in-progress handlers by workflow exit:
      *
      * ```php
-     *  yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     *  Workflow::await(static fn() => Workflow::allHandlersFinished());
      * ```
      *
      * @return bool True if all handlers have finished executing.
@@ -1134,26 +1205,24 @@ final class Workflow extends Facade
 
     /**
      * Generate a UUID.
-     *
-     * @return PromiseInterface<UuidInterface>
      */
-    public static function uuid(): PromiseInterface
+    public static function uuid(): UuidInterface
     {
+        Awaiter::assertManaged();
         $context = self::getCurrentContext();
 
-        return $context->uuid();
+        return Awaiter::await($context->uuid(), interruptOnCancel: false);
     }
 
     /**
      * Generate a UUID version 4 (random).
-     *
-     * @return PromiseInterface<UuidInterface>
      */
-    public static function uuid4(): PromiseInterface
+    public static function uuid4(): UuidInterface
     {
+        Awaiter::assertManaged();
         $context = self::getCurrentContext();
 
-        return $context->uuid4();
+        return Awaiter::await($context->uuid4(), interruptOnCancel: false);
     }
 
     /**
@@ -1162,14 +1231,13 @@ final class Workflow extends Facade
      * @param \DateTimeInterface|null $dateTime An optional date/time from which
      *        to create the version 7 UUID. If not provided, the UUID is generated
      *        using the current date/time.
-     *
-     * @return PromiseInterface<UuidInterface>
      */
-    public static function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
+    public static function uuid7(?\DateTimeInterface $dateTime = null): UuidInterface
     {
+        Awaiter::assertManaged();
         $context = self::getCurrentContext();
 
-        return $context->uuid7($dateTime);
+        return Awaiter::await($context->uuid7($dateTime), interruptOnCancel: false);
     }
 
     /**
@@ -1187,11 +1255,14 @@ final class Workflow extends Facade
      */
     public static function runLocked(Mutex $mutex, callable $callable): CancellationScopeInterface
     {
-        return Workflow::async(static function () use ($mutex, $callable): \Generator {
-            yield $mutex->lock();
+        return Workflow::async(static function () use ($mutex, $callable): mixed {
+            $mutex->lock();
 
             try {
-                return yield $callable();
+                $result = $callable();
+                return $result instanceof PromiseInterface
+                    ? Awaiter::await($result)
+                    : $result;
             } finally {
                 $mutex->unlock();
             }

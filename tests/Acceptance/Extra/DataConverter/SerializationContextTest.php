@@ -252,16 +252,16 @@ class FeatureWorkflow
     #[WorkflowMethod(name: 'Extra_DataConverter_SerializationContext')]
     public function handle(SignedDto $input)
     {
-        yield Workflow::sideEffect(static fn(): SignedDto => new SignedDto($input->value . '-side'));
+        Workflow::sideEffect(static fn(): SignedDto => new SignedDto($input->value . '-side'));
 
-        $fromActivity = yield Workflow::executeActivity(
+        $fromActivity = Workflow::executeActivity(
             'Extra_DataConverter_SerializationContext.echo',
             [$input],
             ActivityOptions::new()->withScheduleToCloseTimeout(10),
             SignedDto::class,
         );
 
-        yield Workflow::executeActivity(
+        Workflow::executeActivity(
             'Extra_DataConverter_SerializationContext.Local.echo',
             [$input],
             LocalActivityOptions::new()->withScheduleToCloseTimeout(10),
@@ -274,7 +274,7 @@ class FeatureWorkflow
                 ChildWorkflowOptions::new()
                     ->withWorkflowId(Workflow::getInfo()->execution->getID() . '-child'),
             );
-            yield $child->execute([$input], SignedDto::class);
+            $child->execute([$input], SignedDto::class);
         }
 
         return $fromActivity;
@@ -305,7 +305,7 @@ class FailingWorkflow
     #[WorkflowMethod(name: 'Extra_DataConverter_SerializationContext_Failure')]
     public function handle()
     {
-        yield Workflow::timer(1);
+        Workflow::timer(1);
 
         throw new ApplicationFailure(
             'boom',
@@ -323,7 +323,7 @@ class ActivityFailureWorkflow
     public function handle()
     {
         try {
-            yield Workflow::executeActivity(
+            Workflow::executeActivity(
                 'Extra_DataConverter_SerializationContext_Failure.fail',
                 [],
                 ActivityOptions::new()->withScheduleToCloseTimeout(10),
@@ -365,7 +365,7 @@ class InteractiveWorkflow
     #[WorkflowMethod(name: 'Extra_DataConverter_SerializationContext_Interactive')]
     public function handle()
     {
-        yield Workflow::await(fn(): bool => $this->exit);
+        Workflow::await(fn(): bool => $this->exit);
 
         return $this->stored;
     }
@@ -408,7 +408,7 @@ class ContinueAsNewWorkflow
             return $input;
         }
 
-        return yield Workflow::continueAsNew(
+        return Workflow::continueAsNew(
             'Extra_DataConverter_SerializationContext_ContinueAsNew',
             args: [new SignedDto($input->value . '-continued')],
         );
@@ -434,7 +434,7 @@ class HeartbeatWorkflow
     #[WorkflowMethod(name: 'Extra_DataConverter_SerializationContext_Heartbeat')]
     public function handle()
     {
-        return yield Workflow::executeActivity(
+        return Workflow::executeActivity(
             'Extra_DataConverter_SerializationContext_Heartbeat.run',
             [],
             ActivityOptions::new()

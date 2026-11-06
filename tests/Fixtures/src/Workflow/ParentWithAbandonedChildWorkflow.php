@@ -9,7 +9,6 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\WorkflowMethod;
 
-
 #[Workflow\WorkflowInterface]
 class ParentWithAbandonedChildWorkflow
 {
@@ -19,12 +18,12 @@ class ParentWithAbandonedChildWorkflow
         $child = Workflow::newUntypedChildWorkflowStub(
             'abandoned_workflow',
             ChildWorkflowOptions::new()
-                ->withParentClosePolicy(ParentClosePolicy::POLICY_ABANDON)
+                ->withParentClosePolicy(ParentClosePolicy::POLICY_ABANDON),
         );
 
-        yield $child->start($childTimeoutInSeconds);
+        $child->start($childTimeoutInSeconds);
         if ($shouldWaitForChild) {
-           return yield $child->getResult();
+            return $child->getResult();
         }
 
         return 'Welcome from parent';

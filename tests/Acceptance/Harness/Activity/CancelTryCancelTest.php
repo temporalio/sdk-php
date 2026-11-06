@@ -66,7 +66,7 @@ class FeatureWorkflow
     private string $result = '';
 
     #[WorkflowMethod('Harness_Activity_CancelTryCancel')]
-    public function run()
+    public function run(): string
     {
         # Start workflow
         $activity = Workflow::newActivityStub(
@@ -82,17 +82,17 @@ class FeatureWorkflow
         $scope = Workflow::async(static fn() => $activity->cancellableActivity());
 
         # Sleep for short time (force task turnover)
-        yield Workflow::timer(1);
+        Workflow::timer(1);
 
         try {
             $scope->cancel();
-            yield $scope;
+            $scope->await();
         } catch (CanceledFailure) {
             # Expected
         }
 
         # Wait for activity result
-        yield Workflow::awaitWithTimeout('5 seconds', fn() => $this->result !== '');
+        Workflow::awaitWithTimeout('5 seconds', fn() => $this->result !== '');
 
         return $this->result;
     }

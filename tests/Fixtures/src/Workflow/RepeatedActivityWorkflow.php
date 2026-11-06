@@ -20,7 +20,7 @@ use Temporal\Workflow\WorkflowMethod;
 class RepeatedActivityWorkflow
 {
     #[WorkflowMethod(name: 'RepeatedActivityWorkflow')]
-    public function handler(): iterable
+    public function handler(): array
     {
         $activity = Workflow::newActivityStub(
             SimpleActivity::class,
@@ -28,8 +28,8 @@ class RepeatedActivityWorkflow
         );
 
         $result = [];
-        $result[] = yield $activity->echo('x');
-        $result[] = yield $activity->echo('x');
+        $result[] = $activity->echo('x');
+        $result[] = $activity->echo('x');
 
         return $result;
     }

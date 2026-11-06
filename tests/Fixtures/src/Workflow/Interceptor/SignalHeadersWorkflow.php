@@ -23,7 +23,7 @@ class SignalHeadersWorkflow
     #[WorkflowMethod(name: 'InterceptorSignalHeadersWorkflow')]
     public function handler(): mixed
     {
-        yield Workflow::await(fn() => $this->signalled);
+        Workflow::await(fn() => $this->signalled);
         return $this->headers;
     }
 

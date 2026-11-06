@@ -25,14 +25,14 @@ class CancelledWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         // waits for 2 seconds
-        $slow = $simple->slow('DOING SLOW ACTIVITY');
+        $slow = Workflow::async(static fn() => $simple->slow('DOING SLOW ACTIVITY'));
 
         try {
-            return yield $slow;
+            return $slow->await();
         } catch (CanceledFailure $e) {
             return "CANCELLED";
         }

@@ -48,13 +48,13 @@ class TestWorkflow
             return $value;
         });
 
-        yield $this->promiseSignal('begin');
+        Workflow::await($this->promiseSignal('begin'));
         $value++;
 
-        yield $this->promiseSignal('next1');
+        Workflow::await($this->promiseSignal('next1'));
         $value++;
 
-        yield $this->promiseSignal('next2');
+        Workflow::await($this->promiseSignal('next2'));
         $value++;
 
         return $value;

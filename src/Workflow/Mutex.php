@@ -4,26 +4,25 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
-use Temporal\Promise;
+use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Workflow;
 
 /**
- * If a mutex is yielded without calling `lock()`, the Workflow will continue
- * only when the lock is released.
+ * Use the mutex as an await condition when the Workflow should continue only
+ * after the current owner releases it.
  *
  * ```
  *  $this->mutex = new Mutex();
  *
  *  // Continue only when the lock is released
- *  yield $this->mutex;
+ *  Workflow::await($this->mutex);
  * ```
  */
 final class Mutex
 {
     private bool $locked = false;
 
-    /** @var Deferred[] */
+    /** @var list<object> FIFO acquisition tickets. */
     private array $waiters = [];
 
     /**
@@ -31,22 +30,42 @@ final class Mutex
      *
      * ```
      *  // Continue only when the lock is acquired
-     *  yield $this->mutex->lock();
+     *  $this->mutex->lock();
      * ```
      *
-     * @return PromiseInterface<self> A promise that resolves when the lock is acquired.
+     * @return self The acquired mutex.
      */
-    public function lock(): PromiseInterface
+    public function lock(): self
     {
-        if (!$this->locked) {
-            $this->locked = true;
-            return Promise::resolve($this);
+        if ($this->tryLock()) {
+            return $this;
         }
 
-        $deferred = new Deferred();
-        $this->waiters[] = $deferred;
+        $ticket = new \stdClass();
+        $this->waiters[] = $ticket;
+        $acquired = false;
 
-        return $deferred->promise();
+        try {
+            Workflow::await(
+                fn(): bool => !$this->locked && ($this->waiters[0] ?? null) === $ticket,
+            );
+            $this->locked = true;
+            $acquired = true;
+            return $this;
+        } finally {
+            $wasFirst = ($this->waiters[0] ?? null) === $ticket;
+            $index = \array_search($ticket, $this->waiters, true);
+            if ($index !== false) {
+                \array_splice($this->waiters, $index, 1);
+            }
+
+            if (!$acquired && $wasFirst && !$this->locked) {
+                $context = Workflow::getCurrentContext();
+                if ($context instanceof WorkflowContext) {
+                    $context->resolveConditions();
+                }
+            }
+        }
     }
 
     /**
@@ -56,7 +75,12 @@ final class Mutex
      */
     public function tryLock(): bool
     {
-        return !$this->locked and $this->locked = true;
+        if ($this->locked || $this->waiters !== []) {
+            return false;
+        }
+
+        $this->locked = true;
+        return true;
     }
 
     /**
@@ -64,12 +88,7 @@ final class Mutex
      */
     public function unlock(): void
     {
-        if ($this->waiters === []) {
-            $this->locked = false;
-            return;
-        }
-
-        \array_shift($this->waiters)->resolve($this);
+        $this->locked = false;
     }
 
     /**

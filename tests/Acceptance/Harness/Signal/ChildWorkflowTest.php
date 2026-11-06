@@ -27,7 +27,7 @@ class ChildWorkflowTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_Signal_ChildWorkflow')]
-    public function run()
+    public function run(): string
     {
         $wf = Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
@@ -35,10 +35,10 @@ class FeatureWorkflow
                 // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
                 ->withTaskQueue(Workflow::getInfo()->taskQueue)
         );
-        $handle = $wf->run();
+        $handle = Workflow::async(static fn(): string => $wf->run());
 
-        yield $wf->mySignal('child-wf-arg');
-        return yield $handle;
+        $wf->mySignal('child-wf-arg');
+        return $handle->await();
     }
 }
 
@@ -48,9 +48,9 @@ class ChildWorkflow
     private string $value = '';
 
     #[WorkflowMethod('Harness_Signal_ChildWorkflow_Child')]
-    public function run()
+    public function run(): string
     {
-        yield Workflow::await(fn(): bool => $this->value !== '');
+        Workflow::await(fn(): bool => $this->value !== '');
         return $this->value;
     }
 

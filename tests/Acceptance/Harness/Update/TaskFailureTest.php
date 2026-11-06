@@ -58,9 +58,9 @@ class FeatureWorkflow
     private static int $fails = 0;
 
     #[WorkflowMethod('Harness_Update_TaskFailure')]
-    public function run()
+    public function run(): int
     {
-        yield Workflow::await(fn(): bool => $this->done);
+        Workflow::await(fn(): bool => $this->done);
 
         return static::$fails;
     }

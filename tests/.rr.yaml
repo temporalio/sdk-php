@@ -10,7 +10,7 @@ server:
 
 # Workflow and activity mesh service
 temporal:
-    address: "127.0.0.1:7233"
+    address: "${TEMPORAL_ADDRESS:-127.0.0.1:7233}"
     activities:
       num_workers: 4
     debug_level: 2

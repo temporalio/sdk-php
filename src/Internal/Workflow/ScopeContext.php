@@ -124,6 +124,11 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $this->updateContext;
     }
 
+    public function releaseScope(): void
+    {
+        unset($this->scope, $this->onRequest);
+    }
+
     public function resolveConditions(): void
     {
         $this->parent->resolveConditions();
@@ -143,7 +148,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function destroy(): void
     {
         parent::destroy();
-        unset($this->scope, $this->parent, $this->onRequest);
+        $this->releaseScope();
+        unset($this->parent);
     }
 
     protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface

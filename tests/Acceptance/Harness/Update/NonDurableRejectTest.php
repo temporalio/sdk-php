@@ -46,9 +46,9 @@ class FeatureWorkflow
     private int $counter = 0;
 
     #[WorkflowMethod('Harness_Update_NonDurableReject')]
-    public function run()
+    public function run(): int
     {
-        yield Workflow::await(fn(): bool => $this->counter === 5);
+        Workflow::await(fn(): bool => $this->counter === 5);
         return $this->counter;
     }
 

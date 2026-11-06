@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
+use Temporal\Internal\Workflow\Process\Awaiter;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -54,11 +54,10 @@ final class ContinueAsNewProxy extends Proxy
         $this->context = $context;
     }
 
-    /**
-     * @return PromiseInterface
-     */
-    public function __call(string $method, array $args)
+    public function __call(string $method, array $args): mixed
     {
+        Awaiter::assertManaged();
+
         if ($this->isContinued()) {
             throw new \BadMethodCallException(
                 \sprintf(self::ERROR_ALREADY_CONTINUED, $this->workflow->getID()),
@@ -79,7 +78,10 @@ final class ContinueAsNewProxy extends Proxy
             $args = Reflection::orderArguments($handler, $args);
         }
 
-        return $this->context->continueAsNew($this->workflow->getID(), $args, $this->options);
+        return Awaiter::await(
+            $this->context->continueAsNew($this->workflow->getID(), $args, $this->options),
+            interruptOnCancel: false,
+        );
     }
 
     private function isContinued(): bool

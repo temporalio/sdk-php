@@ -24,22 +24,22 @@ class SimpleUuidWorkflow
     public function handler(UuidInterface $uuid)
     {
         // Side effect
-        $seUuid = yield Workflow::sideEffect(static fn(): UuidInterface => Uuid::uuid4());
+        $seUuid = Workflow::sideEffect(static fn(): UuidInterface => Uuid::uuid4());
         if (!$seUuid instanceof UuidInterface) {
             throw new \RuntimeException('Invalid type');
         }
         // UUID
-        $newUuid = yield Workflow::uuid();
+        $newUuid = Workflow::uuid();
         if (!$newUuid instanceof UuidInterface) {
             throw new \RuntimeException('Invalid UUID type');
         }
         // UUID4
-        $uuid4 = yield Workflow::uuid4();
+        $uuid4 = Workflow::uuid4();
         if (!$uuid4 instanceof UuidInterface) {
             throw new \RuntimeException('Invalid UUID4 type');
         }
         // UUID7
-        $uuid7 = yield Workflow::uuid7(Workflow::now());
+        $uuid7 = Workflow::uuid7(Workflow::now());
         if (!$uuid7 instanceof UuidInterface) {
             throw new \RuntimeException('Invalid UUID7 type');
         }

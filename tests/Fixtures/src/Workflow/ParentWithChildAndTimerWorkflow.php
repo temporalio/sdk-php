@@ -20,15 +20,15 @@ use Temporal\Workflow\WorkflowMethod;
 class ParentWithChildAndTimerWorkflow
 {
     #[WorkflowMethod(name: 'ParentWithChildAndTimerWorkflow')]
-    public function handler(): iterable
+    public function handler(): string
     {
-        $child = yield Workflow::executeChildWorkflow(
+        $child = Workflow::executeChildWorkflow(
             'LongTimerWorkflow',
             [1800],
             ChildWorkflowOptions::new(),
         );
 
-        yield Workflow::timer(CarbonInterval::minutes(30));
+        Workflow::timer(CarbonInterval::minutes(30));
 
         return 'parent: ' . $child;
     }

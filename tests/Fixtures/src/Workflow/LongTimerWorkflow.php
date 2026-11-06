@@ -19,9 +19,9 @@ use Temporal\Workflow\WorkflowMethod;
 class LongTimerWorkflow
 {
     #[WorkflowMethod(name: 'LongTimerWorkflow')]
-    public function handler(int $seconds): iterable
+    public function handler(int $seconds): string
     {
-        yield Workflow::timer($seconds);
+        Workflow::timer($seconds);
 
         return 'done';
     }
