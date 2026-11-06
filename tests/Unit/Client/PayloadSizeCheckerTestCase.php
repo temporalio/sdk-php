@@ -40,6 +40,7 @@ use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdRequest;
 use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedRequest;
+use Temporal\Api\Workflowservice\V1\StartActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartBatchOperationRequest;
 use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
@@ -76,6 +77,12 @@ final class PayloadSizeCheckerTestCase extends TestCase
             static fn() => (new StartWorkflowExecutionRequest())->setMemo(self::memo(2000)),
             'StartWorkflowExecution',
             ['memo'],
+        ];
+
+        yield 'StartActivityExecution: input' => [
+            static fn() => (new StartActivityExecutionRequest())->setInput(self::payloads(2000)),
+            'StartActivityExecution',
+            ['payloads'],
         ];
 
         yield 'SignalWithStartWorkflowExecution: input and signal input' => [
