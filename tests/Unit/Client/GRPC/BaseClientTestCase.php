@@ -15,7 +15,6 @@ use Temporal\Client\GRPC\BaseClient;
 use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\GRPC\StatusCode;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -163,10 +162,10 @@ class BaseClientTestCase extends TestCase
                 private readonly \ArrayObject $timeouts,
             ) {}
 
-            public function testCall(object $arg, array $metadata, array $options): void
+            public function testCall(object $arg, array $metadata, array $options): object
             {
                 $this->timeouts[] = $options['timeout'];
-                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
+                return new FailedCall();
             }
 
             public function close(): void {}
@@ -195,10 +194,10 @@ class BaseClientTestCase extends TestCase
                 private readonly \ArrayObject $timeouts,
             ) {}
 
-            public function testCall(object $arg, array $metadata, array $options): void
+            public function testCall(object $arg, array $metadata, array $options): object
             {
                 $this->timeouts[] = $options['timeout'];
-                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
+                return new FailedCall();
             }
 
             public function close(): void {}
@@ -230,9 +229,9 @@ class BaseClientTestCase extends TestCase
         $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
             public function __construct() {}
 
-            public function testCall(): void
+            public function testCall(): object
             {
-                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
+                return new FailedCall();
             }
 
             public function close(): void {}
@@ -292,20 +291,10 @@ class BaseClientTestCase extends TestCase
         $client = $this->createClientMock(fn() => new class extends WorkflowServiceClient {
             public function __construct() {}
 
-            public function testCall(): void
+            public function testCall(): object
             {
                 static $counter = 0;
-                throw new class(++$counter) extends ServiceClientException {
-                    public function __construct(public int $attempt)
-                    {
-                        parent::__construct((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]);
-                    }
-
-                    public function isTestError(): bool
-                    {
-                        return true;
-                    }
-                };
+                return new FailedCall('attempt ' . ++$counter);
             }
 
             public function close(): void {}
@@ -321,8 +310,7 @@ class BaseClientTestCase extends TestCase
             $client->testCall();
             self::fail('Expected exception');
         } catch (ServiceClientException $e) {
-            self::assertTrue($e->isTestError());
-            self::assertSame(3, $e->attempt);
+            self::assertSame('attempt 3 (code: 2)', $e->getMessage());
         }
     }
 

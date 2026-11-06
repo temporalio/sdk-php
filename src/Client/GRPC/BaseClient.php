@@ -271,73 +271,72 @@ abstract class BaseClient implements GrpcClientInterface
 
         do {
             ++$attempt;
-            try {
-                $options = $ctx->getOptions();
-                if ($deadline !== null) {
-                    $diff = (new \DateTime())->diff($deadline);
-                    $options['timeout'] = \max(0, (int) CarbonInterval::instance($diff)->totalMicroseconds);
-                }
 
-                /** @var UnaryCall $call */
-                $call = $this->connection->getClient()->{$method}($arg, $ctx->getMetadata(), $options);
-                [$result, $status] = $call->wait();
+            $options = $ctx->getOptions();
+            if ($deadline !== null) {
+                $diff = (new \DateTime())->diff($deadline);
+                $options['timeout'] = \max(0, (int) CarbonInterval::instance($diff)->totalMicroseconds);
+            }
 
-                if ($status->code !== 0) {
-                    throw new ServiceClientException($status);
-                }
+            /** @var UnaryCall $call */
+            $call = $this->connection->getClient()->{$method}($arg, $ctx->getMetadata(), $options);
+            [$result, $status] = $call->wait();
 
+            if ($status->code === 0) {
                 \assert($result !== null);
 
                 return $result;
-            } catch (ServiceClientException $e) {
-                if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
-                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
-                        throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
-                    }
-
-                    if ($e->getCode() === StatusCode::CANCELLED) {
-                        throw new CanceledException($e->getMessage(), $e->getCode(), $e);
-                    }
-
-                    // non retryable
-                    throw $e;
-                }
-
-                if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
-                    // Reached maximum attempts
-                    throw $e;
-                }
-
-                // Init interval values in milliseconds
-                $initialIntervalMs ??= $retryOption->initialInterval === null
-                    ? (int) CarbonInterval::millisecond(50)->totalMilliseconds
-                    : (int) (new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
-                $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
-                    ? (int) CarbonInterval::millisecond(1000)->totalMilliseconds
-                    : (int) (new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
-
-                $throttler ??= new BackoffThrottler(
-                    maxInterval: $retryOption->maximumInterval !== null
-                        ? (int) (new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
-                        : $initialIntervalMs * 200,
-                    maxJitterCoefficient: $retryOption->maximumJitterCoefficient,
-                    backoffCoefficient: $retryOption->backoffCoefficient,
-                );
-
-                // Initial interval always depends on the *most recent* failure.
-                $baseInterval = $e->getCode() === StatusCode::RESOURCE_EXHAUSTED
-                    ? $congestionInitialIntervalMs
-                    : $initialIntervalMs;
-
-                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval) * 1000;
-
-                if ($deadline !== null && new \DateTimeImmutable("+{$wait} microseconds") > $deadline) {
-                    throw new TimeoutException('Call timeout has been reached', $e->getCode(), $e);
-                }
-
-                // wait till the next call
-                $this->usleep($wait);
             }
+
+            $e = new ServiceClientException($status);
+
+            if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
+                if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
+                    throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
+                }
+
+                if ($e->getCode() === StatusCode::CANCELLED) {
+                    throw new CanceledException($e->getMessage(), $e->getCode(), $e);
+                }
+
+                // non retryable
+                throw $e;
+            }
+
+            if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
+                // Reached maximum attempts
+                throw $e;
+            }
+
+            // Init interval values in milliseconds
+            $initialIntervalMs ??= $retryOption->initialInterval === null
+                ? (int) CarbonInterval::millisecond(50)->totalMilliseconds
+                : (int) (new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
+            $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
+                ? (int) CarbonInterval::millisecond(1000)->totalMilliseconds
+                : (int) (new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
+
+            $throttler ??= new BackoffThrottler(
+                maxInterval: $retryOption->maximumInterval !== null
+                    ? (int) (new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
+                    : $initialIntervalMs * 200,
+                maxJitterCoefficient: $retryOption->maximumJitterCoefficient,
+                backoffCoefficient: $retryOption->backoffCoefficient,
+            );
+
+            // Initial interval always depends on the *most recent* failure.
+            $baseInterval = $e->getCode() === StatusCode::RESOURCE_EXHAUSTED
+                ? $congestionInitialIntervalMs
+                : $initialIntervalMs;
+
+            $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval) * 1000;
+
+            if ($deadline !== null && new \DateTimeImmutable("+{$wait} microseconds") > $deadline) {
+                throw new TimeoutException('Call timeout has been reached', $e->getCode(), $e);
+            }
+
+            // wait till the next call
+            $this->usleep($wait);
         } while (true);
     }
 
