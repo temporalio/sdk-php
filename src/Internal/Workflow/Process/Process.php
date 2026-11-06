@@ -186,6 +186,7 @@ class Process extends Scope implements ProcessInterface
         bool $deferred,
     ): void {
         $handler = $instance->getHandler();
+        $dynamic = $instance->getPrototype()->isDynamic();
         $instance = $context->getWorkflowInstance();
         $arguments = null;
         $values = [];
@@ -195,17 +196,20 @@ class Process extends Scope implements ProcessInterface
             //
             // Resolve arguments if #[WorkflowInit] is used
             if ($instance->getPrototype()->hasInitializer()) {
-                // Resolve args
-                $values = $handler->resolveArguments($context->getInput());
-                $arguments = EncodedValues::fromValues($values);
-                /** @psalm-suppress InaccessibleProperty */
-                $context = $context->withInput(
-                    new Input(
-                        $context->getInfo(),
-                        $arguments,
-                        $context->getHeader(),
-                    ),
-                );
+                if ($dynamic) {
+                    $values = [$context->getInput()];
+                } else {
+                    $values = $handler->resolveArguments($context->getInput());
+                    $arguments = EncodedValues::fromValues($values);
+                    /** @psalm-suppress InaccessibleProperty */
+                    $context = $context->withInput(
+                        new Input(
+                            $context->getInfo(),
+                            $arguments,
+                            $context->getHeader(),
+                        ),
+                    );
+                }
             }
 
             $this->setContext($context);
@@ -220,9 +224,13 @@ class Process extends Scope implements ProcessInterface
             $this->services->interceptorProvider
                 ->getPipeline(WorkflowInboundCallsInterceptor::class)
                 ->with(
-                    function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred): void {
+                    function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred, $dynamic): void {
                         // Prepare typed input if values have been changed
-                        if ($arguments === null || $input->arguments !== $context->getInput()) {
+                        if ($dynamic) {
+                            // Dynamic workflows receive the untouched argument collection so
+                            // they can interpret types that are unknown at registration time.
+                            $arguments = EncodedValues::fromValues([$input->arguments]);
+                        } elseif ($arguments === null || $input->arguments !== $context->getInput()) {
                             $arguments = EncodedValues::fromValues($handler->resolveArguments($input->arguments));
                         }
 

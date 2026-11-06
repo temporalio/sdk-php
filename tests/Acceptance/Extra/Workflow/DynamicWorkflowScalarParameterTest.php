@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Acceptance\Extra\Workflow\DynamicWorkflowScalarParameter;
+
+use PHPUnit\Framework\Attributes\Test;
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowStubInterface;
+use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\DynamicWorkflowFailureTestCase;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
+
+class DynamicWorkflowScalarParameterTest extends DynamicWorkflowFailureTestCase
+{
+    #[Test]
+    public function scalarParameterFailsWithSdkException(
+        #[Stub('Extra_Workflow_Dynamic_ScalarParameter', args: ['hello'])]
+        WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+    ): void {
+        $this->assertHandlerFailure($stub, $client, 'Extra_Workflow_Dynamic_ScalarParameter_Probe', TestWorkflow::class . '::handle(): Argument #1 ($value) must be of type string, Temporal\\DataConverter\\EncodedValues given');
+    }
+}
+
+#[WorkflowInterface]
+class TestWorkflow
+{
+    #[WorkflowMethod(dynamic: true)]
+    public function handle(string $value): string
+    {
+        return $value;
+    }
+}
+
+#[WorkflowInterface]
+class ProbeWorkflow
+{
+    #[WorkflowMethod('Extra_Workflow_Dynamic_ScalarParameter_Probe')]
+    public function handle()
+    {
+        return yield Workflow::sideEffect(static fn(): int => \getmypid());
+    }
+}

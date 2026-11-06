@@ -58,3 +58,34 @@ jobs:
       fail-fast: false
       test-command: composer test:accept-fast
       download-binaries: true
+
+  dynamic-workflow-compatibility:
+    name: Dynamic Workflow Compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        roadrunner: ['3.0.0', '2025.1.15']
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TEMPORAL_HEADLESS: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          extensions: dom, sockets, grpc, curl
+
+      - uses: ramsey/composer-install@5c2bcf28d7b060ef3c601d7b476d5430a7b46c27 # v4
+
+      - name: Download binaries
+        run: vendor/bin/dload get 'rr:${{ matrix.roadrunner }}' temporal --no-interaction
+
+      - name: Test dynamic workflow compatibility
+        run: >-
+          vendor/bin/phpunit tests/Acceptance/Extra/Workflow/DynamicWorkflowTest.php
+          --filter=roadRunnerVersionCompatibility --testdox
+        env:
+          TEMPORAL_TRANSCRIPT_DUMP_ON_FAIL: '1'
