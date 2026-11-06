@@ -16,9 +16,6 @@ namespace Temporal\Internal\Events;
  * @mixin EventListenerInterface
  *
  * @template T of string
- *
- * @template-implements EventEmitterInterface<T>
- * @template-implements EventListenerInterface<T>
  */
 trait EventEmitterTrait
 {

@@ -13,8 +13,6 @@ namespace Temporal\Plugin;
 
 /**
  * No-op defaults for {@see ScheduleClientPluginInterface}.
- *
- * @implements ScheduleClientPluginInterface
  */
 trait ScheduleClientPluginTrait
 {
