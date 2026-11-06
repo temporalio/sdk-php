@@ -87,6 +87,15 @@ $response = $operatorClient->DeleteNamespace(
 > that change the behavior of the entire PHP worker.  
 > It's recommended to disable deprecated behavior.
 
+#### Update headers
+
+Client interceptors can supply update headers with `Temporal\Interceptor\Header::fromValues()`.
+For updates and the update portion of `updateWithStart()`, PHP header values use the client's
+configured data converter unless the header already has an explicitly supplied converter.
+Prebuilt `Payload` entries supplied through `Header::fromPayloadCollection()` or `withValue()`
+are forwarded unchanged, even when the same header also contains PHP values. Prepare those
+payloads with any application-specific encoding they require; they are not decoded or re-encoded.
+
 ## Testing
 
 The PHP SDK includes a toolkit for testing Workflows.
