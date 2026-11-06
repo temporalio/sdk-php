@@ -44,6 +44,7 @@ use Temporal\Interceptor\ActivityClient\CancelInput;
 use Temporal\Interceptor\ActivityClient\DescribeInput;
 use Temporal\Interceptor\ActivityClient\GetResultInput;
 use Temporal\Interceptor\ActivityClient\StartInput;
+use Temporal\Interceptor\ActivityClient\StartOutput;
 use Temporal\Interceptor\ActivityClient\TerminateInput;
 use Temporal\Interceptor\ActivityClientCallsInterceptor;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -108,8 +109,8 @@ final class ActivityClientTestCase extends TestCase
             ['arg', 42],
             EncodedValues::fromPayloads($request->getInput(), DataConverter::createDefault())->getValues(),
         );
-        self::assertSame('activity-id', $handle->getId());
-        self::assertSame('run-id', $handle->getRunId());
+        self::assertSame('activity-id', $handle->getID());
+        self::assertSame('run-id', $handle->getRunID());
     }
 
     #[DataProvider('provideInvalidOptions')]
@@ -247,7 +248,7 @@ final class ActivityClientTestCase extends TestCase
 
         $handle = ActivityClient::create($client)->start('type', self::validOptions());
 
-        self::assertNull($handle->getRunId());
+        self::assertNull($handle->getRunID());
     }
 
     public function testDescribeRequestsHeartbeatDetailsAndLastFailure(): void
@@ -305,6 +306,78 @@ final class ActivityClientTestCase extends TestCase
         ActivityClient::create($client)->getHandle('activity-id')->getResult();
 
         self::assertSame('run-2', $captured['describe']->getRunId());
+    }
+
+    public function testHandleWithoutRunIdReadsContextOfEachRun(): void
+    {
+        $describedRuns = new \ArrayObject();
+        $client = $this->mockClient();
+        $client->method('PollActivityExecution')->willReturnOnConsecutiveCalls(
+            self::resultResponse('run-1', ['first']),
+            self::resultResponse('run-2', ['second']),
+        );
+        $client->method('DescribeActivityExecution')->willReturnCallback(
+            static function (DescribeActivityExecutionRequest $request) use ($describedRuns) {
+                $describedRuns[] = $request->getRunId();
+                return self::describeResponse();
+            },
+        );
+
+        $handle = ActivityClient::create($client)->getHandle('activity-id');
+        $handle->getResult();
+        $handle->getResult();
+
+        self::assertSame(['run-1', 'run-2'], $describedRuns->getArrayCopy());
+    }
+
+    public function testHandleWithRunIdReadsContextOnce(): void
+    {
+        $client = $this->mockClient();
+        $client->method('PollActivityExecution')->willReturn(self::resultResponse('run-id', ['done']));
+        $client->expects($this->once())->method('DescribeActivityExecution')->willReturn(self::describeResponse());
+
+        $handle = ActivityClient::create($client)->getHandle('activity-id', 'run-id');
+        $handle->getResult();
+        $handle->getResult();
+    }
+
+    public function testGetResultPausesBetweenEmptyPollsNearDeadline(): void
+    {
+        $polls = new \ArrayObject();
+        $client = $this->mockClient();
+        $client->method('PollActivityExecution')->willReturnCallback(
+            static function () use ($polls) {
+                $polls[] = true;
+                return new PollActivityExecutionResponse();
+            },
+        );
+
+        try {
+            ActivityClient::create($client)->getHandle('activity-id')->getResult(timeout: 1);
+            self::fail('Expected TimeoutException');
+        } catch (TimeoutException) {
+            self::assertLessThanOrEqual(11, $polls->count());
+        }
+    }
+
+    public function testInterceptorReturnsStartOutputWithoutCallingService(): void
+    {
+        $client = $this->mockClient();
+        $client->expects($this->never())->method('StartActivityExecution');
+        $interceptor = new class implements ActivityClientCallsInterceptor {
+            use ActivityClientCallsInterceptorTrait;
+
+            public function start(StartInput $input, callable $next): StartOutput
+            {
+                return new StartOutput('intercepted-id', 'intercepted-run');
+            }
+        };
+
+        $handle = ActivityClient::create($client, interceptorProvider: new SimplePipelineProvider([$interceptor]))
+            ->start('type', self::validOptions());
+
+        self::assertSame('intercepted-id', $handle->getID());
+        self::assertSame('intercepted-run', $handle->getRunID());
     }
 
     public function testNotFoundBecomesActivityNotFoundException(): void
@@ -397,7 +470,7 @@ final class RecordingInterceptor implements ActivityClientCallsInterceptor
     /** @var list<string> */
     public array $calls = [];
 
-    public function start(StartInput $input, callable $next): ActivityHandle
+    public function start(StartInput $input, callable $next): StartOutput
     {
         $this->calls[] = 'start';
         return $next($input->with(header: $input->header->withValue('trace', 'traced')));

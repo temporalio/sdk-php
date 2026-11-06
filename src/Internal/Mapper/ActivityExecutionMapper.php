@@ -51,7 +51,7 @@ final class ActivityExecutionMapper
 
         return new ActivityExecutionDescription(
             info: $this->fromListInfo($message),
-            runState: PendingActivityState::from($message->getRunState()),
+            runState: PendingActivityState::tryFrom($message->getRunState()) ?? PendingActivityState::Unspecified,
             attempt: $message->getAttempt(),
             scheduleToCloseTimeout: DateInterval::parseOrNull($message->getScheduleToCloseTimeout()),
             scheduleToStartTimeout: DateInterval::parseOrNull($message->getScheduleToStartTimeout()),
@@ -91,7 +91,7 @@ final class ActivityExecutionMapper
             activityId: $message->getActivityId(),
             runId: $message->getRunId(),
             activityType: $message->getActivityType()?->getName() ?? '',
-            status: ActivityExecutionStatus::from($message->getStatus()),
+            status: ActivityExecutionStatus::tryFrom($message->getStatus()) ?? ActivityExecutionStatus::Unspecified,
             taskQueue: $message->getTaskQueue(),
             scheduleTime: $message->getScheduleTime()?->toDateTime(),
             executionTime: $message->getExecutionTime()?->toDateTime(),

@@ -60,7 +60,7 @@ class StandaloneActivitySerializationContextTest extends TestCase
         $client = $this->client($serviceClient, $runtime);
         $started = $client->start('Extra_Activity_StandaloneSC.echo', $this->options($feature), new SignedDto('hello'));
 
-        $result = $client->getHandle($started->getId())->getResult(SignedDto::class);
+        $result = $client->getHandle($started->getID())->getResult(SignedDto::class);
 
         self::assertInstanceOf(SignedDto::class, $result);
         self::assertSame('echo:hello', $result->value);

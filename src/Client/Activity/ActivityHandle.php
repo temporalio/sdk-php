@@ -42,6 +42,8 @@ use Temporal\Internal\Support\DateInterval;
 final class ActivityHandle
 {
     private const POLL_TIMEOUT_MS = 60_000;
+    private const SERVER_LONG_POLL_BUFFER_SECONDS = 1.0;
+    private const EMPTY_POLL_PAUSE_MICROSECONDS = 100_000;
 
     /**
      * @param Pipeline<ActivityClientCallsInterceptor, mixed> $interceptors
@@ -59,12 +61,12 @@ final class ActivityHandle
         private ?ActivitySerializationContext $serializationContext = null,
     ) {}
 
-    public function getId(): string
+    public function getID(): string
     {
         return $this->activityId;
     }
 
-    public function getRunId(): ?string
+    public function getRunID(): ?string
     {
         return $this->runId;
     }
@@ -161,6 +163,9 @@ final class ActivityHandle
         do {
             $response = $this->poll($request, $deadline);
             $outcome = $response?->getOutcome();
+            if ($outcome === null && $this->isInsideServerBuffer($deadline)) {
+                \usleep(self::EMPTY_POLL_PAUSE_MICROSECONDS);
+            }
         } while ($outcome === null);
         \assert($response instanceof PollActivityExecutionResponse);
 
@@ -185,6 +190,11 @@ final class ActivityHandle
 
         return EncodedValues::fromPayloads($result, $this->converter)
             ->withSerializationContext($this->getSerializationContext($response->getRunId()));
+    }
+
+    private function isInsideServerBuffer(?float $deadline): bool
+    {
+        return $deadline !== null && $deadline - \microtime(true) < self::SERVER_LONG_POLL_BUFFER_SECONDS;
     }
 
     private function poll(PollActivityExecutionRequest $request, ?float $deadline): ?PollActivityExecutionResponse
@@ -213,16 +223,22 @@ final class ActivityHandle
 
     private function getSerializationContext(string $runId): ActivitySerializationContext
     {
-        if ($this->serializationContext === null) {
-            $info = $this->describeExecution($runId, false);
-            $this->serializationContext = new ActivitySerializationContext(
-                namespace: $this->namespace,
-                activityType: $info->getActivityType()?->getName() ?? '',
-                taskQueue: $info->getTaskQueue(),
-            );
+        if ($this->serializationContext !== null) {
+            return $this->serializationContext;
         }
 
-        return $this->serializationContext;
+        $info = $this->describeExecution($runId, false);
+        $context = new ActivitySerializationContext(
+            namespace: $this->namespace,
+            activityType: $info->getActivityType()?->getName() ?? '',
+            taskQueue: $info->getTaskQueue(),
+        );
+
+        if ($this->runId !== null) {
+            $this->serializationContext = $context;
+        }
+
+        return $context;
     }
 
     /**

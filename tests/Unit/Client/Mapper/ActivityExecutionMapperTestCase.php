@@ -98,6 +98,16 @@ final class ActivityExecutionMapperTestCase extends TestCase
         self::assertSame('details', $description->userMetadata->details);
     }
 
+    public function testUnknownEnumValuesBecomeUnspecified(): void
+    {
+        $description = (new ActivityExecutionMapper(DataConverter::createDefault(), 'default'))->fromInfo(
+            (new ActivityExecutionInfo())->setStatus(999)->setRunState(999),
+        );
+
+        self::assertSame(ActivityExecutionStatus::Unspecified, $description->info->status);
+        self::assertSame(PendingActivityState::Unspecified, $description->runState);
+    }
+
     public function testFromListInfo(): void
     {
         $mapper = new ActivityExecutionMapper(DataConverter::createDefault(), 'default');

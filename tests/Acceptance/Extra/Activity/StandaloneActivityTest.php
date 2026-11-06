@@ -36,7 +36,7 @@ class StandaloneActivityTest extends TestCase
     {
         $handle = $client->start('Extra_Activity_StandaloneActivity.echo', $this->options($feature), 'hello');
 
-        self::assertNotSame('', (string) $handle->getRunId());
+        self::assertNotSame('', (string) $handle->getRunID());
         self::assertSame('hello', $handle->getResult('string'));
     }
 
@@ -47,8 +47,8 @@ class StandaloneActivityTest extends TestCase
 
         $info = $handle->getResult('array');
 
-        self::assertSame($handle->getId(), $info['id']);
-        self::assertSame($handle->getRunId(), $info['activityRunId']);
+        self::assertSame($handle->getID(), $info['id']);
+        self::assertSame($handle->getRunID(), $info['activityRunId']);
         self::assertSame('', (string) $info['workflowId']);
         self::assertSame($runtime->namespace, $info['namespace']);
     }
@@ -62,7 +62,7 @@ class StandaloneActivityTest extends TestCase
             $handle->getResult();
             self::fail('Expected ActivityFailedException');
         } catch (ActivityFailedException $e) {
-            self::assertSame($handle->getId(), $e->activityId);
+            self::assertSame($handle->getID(), $e->activityId);
             $previous = $e->getPrevious();
             self::assertInstanceOf(ApplicationFailure::class, $previous);
             self::assertSame('TestError', $previous->getType());
@@ -81,8 +81,8 @@ class StandaloneActivityTest extends TestCase
 
         $description = $handle->describe();
 
-        self::assertSame($handle->getId(), $description->info->activityId);
-        self::assertSame($handle->getRunId(), $description->info->runId);
+        self::assertSame($handle->getID(), $description->info->activityId);
+        self::assertSame($handle->getRunID(), $description->info->runId);
         self::assertSame('Extra_Activity_StandaloneActivity.echo', $description->info->activityType);
         self::assertSame($feature->taskQueue, $description->info->taskQueue);
         self::assertSame(ActivityExecutionStatus::Completed, $description->info->status);
@@ -99,8 +99,8 @@ class StandaloneActivityTest extends TestCase
             $client->start('Extra_Activity_StandaloneActivity.block', $options, 5);
             self::fail('Expected ActivityAlreadyStartedException');
         } catch (ActivityAlreadyStartedException $e) {
-            self::assertSame($handle->getId(), $e->activityId);
-            self::assertSame($handle->getRunId(), $e->runId);
+            self::assertSame($handle->getID(), $e->activityId);
+            self::assertSame($handle->getRunID(), $e->runId);
         } finally {
             $handle->terminate();
         }
@@ -212,9 +212,9 @@ class StandaloneActivityTest extends TestCase
         $second = $client->start('Extra_Activity_StandaloneActivity.echo', $options, 'second');
         $second->getResult();
 
-        self::assertNotSame($first->getRunId(), $second->getRunId());
+        self::assertNotSame($first->getRunID(), $second->getRunID());
         self::assertSame('second', $client->getHandle($options->id)->getResult('string'));
-        self::assertSame('first', $client->getHandle($options->id, $first->getRunId())->getResult('string'));
+        self::assertSame('first', $client->getHandle($options->id, $first->getRunID())->getResult('string'));
     }
 
     #[Test]
@@ -241,7 +241,7 @@ class StandaloneActivityTest extends TestCase
         try {
             $existing = $client->start('Extra_Activity_StandaloneActivity.block', $options, 5);
 
-            self::assertSame($handle->getRunId(), $existing->getRunId());
+            self::assertSame($handle->getRunID(), $existing->getRunID());
         } finally {
             $handle->terminate();
         }
@@ -277,7 +277,7 @@ class StandaloneActivityTest extends TestCase
             static fn(ActivityExecutionDescription $d): bool => $d->lastStartedTime !== null,
         );
 
-        $client->newActivityCompletionClient()->complete('', $handle->getRunId(), $handle->getId(), 'done');
+        $client->newActivityCompletionClient()->complete('', $handle->getRunID(), $handle->getID(), 'done');
 
         self::assertSame('done', $handle->getResult('string'));
     }
@@ -295,7 +295,7 @@ class StandaloneActivityTest extends TestCase
     {
         $handle = $client->start('Extra_Activity_StandaloneActivity.echo', $this->options($feature), 'hello');
         $handle->getResult();
-        $query = \sprintf("ActivityId = '%s'", $handle->getId());
+        $query = \sprintf("ActivityId = '%s'", $handle->getID());
 
         $deadline = \microtime(true) + 10;
         while ($client->countExecutions($query)->count === 0 && \microtime(true) < $deadline) {
@@ -305,8 +305,8 @@ class StandaloneActivityTest extends TestCase
         self::assertSame(1, $client->countExecutions($query)->count);
         $items = $client->listExecutions($query)->getPageItems();
         self::assertCount(1, $items);
-        self::assertSame($handle->getId(), $items[0]->activityId);
-        self::assertSame($handle->getRunId(), $items[0]->runId);
+        self::assertSame($handle->getID(), $items[0]->activityId);
+        self::assertSame($handle->getRunID(), $items[0]->runId);
     }
 
     /**

@@ -12,12 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\Client\Activity\ActivityExecutionDescription;
-use Temporal\Client\Activity\ActivityHandle;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\ActivityClient\CancelInput;
 use Temporal\Interceptor\ActivityClient\DescribeInput;
 use Temporal\Interceptor\ActivityClient\GetResultInput;
 use Temporal\Interceptor\ActivityClient\StartInput;
+use Temporal\Interceptor\ActivityClient\StartOutput;
 use Temporal\Interceptor\ActivityClient\TerminateInput;
 use Temporal\Interceptor\Trait\ActivityClientCallsInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
@@ -28,9 +28,9 @@ use Temporal\Internal\Interceptor\Interceptor;
 interface ActivityClientCallsInterceptor extends Interceptor
 {
     /**
-     * @param callable(StartInput): ActivityHandle $next
+     * @param callable(StartInput): StartOutput $next
      */
-    public function start(StartInput $input, callable $next): ActivityHandle;
+    public function start(StartInput $input, callable $next): StartOutput;
 
     /**
      * @param callable(GetResultInput): ?ValuesInterface $next

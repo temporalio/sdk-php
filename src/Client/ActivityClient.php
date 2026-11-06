@@ -36,6 +36,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityAlreadyStartedException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Interceptor\ActivityClient\StartInput;
+use Temporal\Interceptor\ActivityClient\StartOutput;
 use Temporal\Interceptor\ActivityClientCallsInterceptor;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\PipelineProvider;
@@ -125,18 +126,33 @@ final class ActivityClient implements ActivityClientInterface
             taskQueue: $options->taskQueue,
         );
 
-        $handle = $this->interceptorPipeline->with(
-            fn(StartInput $input): ActivityHandle => $this->executeStart($input),
-            'start',
-        )(new StartInput(
+        $startInput = new StartInput(
             $activityType,
             Header::empty(),
             EncodedValues::fromValues($args, $this->converter)->withSerializationContext($context),
             $options,
-        ));
-        \assert($handle instanceof ActivityHandle);
+        );
 
-        return $handle;
+        $output = $this->interceptorPipeline->with(
+            function (StartInput $input) use (&$startInput): StartOutput {
+                $startInput = $input;
+
+                return $this->executeStart($input);
+            },
+            'start',
+        )($startInput);
+        \assert($output instanceof StartOutput);
+
+        return $this->createHandle(
+            $this->clientOptions->namespace,
+            $output->activityId,
+            $output->runId,
+            new ActivitySerializationContext(
+                namespace: $this->clientOptions->namespace,
+                activityType: $startInput->activityType,
+                taskQueue: $startInput->options->taskQueue,
+            ),
+        );
     }
 
     public function getHandle(string $activityId, ?string $runId = null, ?string $namespace = null): ActivityHandle
@@ -193,7 +209,7 @@ final class ActivityClient implements ActivityClientInterface
         return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
     }
 
-    private function executeStart(StartInput $input): ActivityHandle
+    private function executeStart(StartInput $input): StartOutput
     {
         $options = $input->options;
         if ($options->id === '') {
@@ -269,16 +285,7 @@ final class ActivityClient implements ActivityClientInterface
 
         $runId = $response->getRunId();
 
-        return $this->createHandle(
-            $this->clientOptions->namespace,
-            $options->id,
-            $runId === '' ? null : $runId,
-            new ActivitySerializationContext(
-                namespace: $this->clientOptions->namespace,
-                activityType: $input->activityType,
-                taskQueue: $options->taskQueue,
-            ),
-        );
+        return new StartOutput($options->id, $runId === '' ? null : $runId);
     }
 
     private function createHandle(

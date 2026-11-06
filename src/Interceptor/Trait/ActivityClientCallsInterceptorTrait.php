@@ -12,17 +12,17 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\Trait;
 
 use Temporal\Client\Activity\ActivityExecutionDescription;
-use Temporal\Client\Activity\ActivityHandle;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\ActivityClient\CancelInput;
 use Temporal\Interceptor\ActivityClient\DescribeInput;
 use Temporal\Interceptor\ActivityClient\GetResultInput;
 use Temporal\Interceptor\ActivityClient\StartInput;
+use Temporal\Interceptor\ActivityClient\StartOutput;
 use Temporal\Interceptor\ActivityClient\TerminateInput;
 
 trait ActivityClientCallsInterceptorTrait
 {
-    public function start(StartInput $input, callable $next): ActivityHandle
+    public function start(StartInput $input, callable $next): StartOutput
     {
         return $next($input);
     }
