@@ -23,7 +23,7 @@ class TerminateInput
     public function __construct(
         public readonly string $activityId,
         public readonly ?string $runId,
-        public readonly string $reason,
+        public readonly ?string $reason,
     ) {}
 
     public function with(

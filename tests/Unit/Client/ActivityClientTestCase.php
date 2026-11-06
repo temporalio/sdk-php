@@ -31,6 +31,7 @@ use Temporal\Api\Workflowservice\V1\CountActivityExecutionsResponse;
 use Temporal\Api\Workflowservice\V1\DescribeActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelActivityExecutionResponse;
+use Temporal\Api\Workflowservice\V1\TerminateActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateActivityExecutionResponse;
 use Temporal\Client\Activity\ActivityExecutionDescription;
 use Temporal\Client\ClientOptions;
@@ -306,6 +307,63 @@ final class ActivityClientTestCase extends TestCase
         ActivityClient::create($client)->getHandle('activity-id')->getResult();
 
         self::assertSame('run-2', $captured['describe']->getRunId());
+    }
+
+    public function testCancelAndTerminateSendReason(): void
+    {
+        $captured = new \ArrayObject();
+        $client = $this->mockClient();
+        $client->method('RequestCancelActivityExecution')->willReturnCallback(
+            static function (RequestCancelActivityExecutionRequest $request) use ($captured) {
+                $captured['cancel'] = $request;
+                return new RequestCancelActivityExecutionResponse();
+            },
+        );
+        $client->method('TerminateActivityExecution')->willReturnCallback(
+            static function (TerminateActivityExecutionRequest $request) use ($captured) {
+                $captured['terminate'] = $request;
+                return new TerminateActivityExecutionResponse();
+            },
+        );
+
+        $handle = ActivityClient::create($client)->getHandle('activity-id', 'run-id');
+        $handle->cancel('cancel reason');
+        $handle->terminate('terminate reason');
+
+        self::assertSame('cancel reason', $captured['cancel']->getReason());
+        self::assertSame('terminate reason', $captured['terminate']->getReason());
+    }
+
+    public function testCancelAndTerminateWithoutReasonPassNull(): void
+    {
+        $client = $this->mockClient();
+        $client->method('RequestCancelActivityExecution')->willReturn(new RequestCancelActivityExecutionResponse());
+        $client->method('TerminateActivityExecution')->willReturn(new TerminateActivityExecutionResponse());
+        $interceptor = new class implements ActivityClientCallsInterceptor {
+            use ActivityClientCallsInterceptorTrait;
+
+            /** @var list<string|null> */
+            public array $reasons = [];
+
+            public function cancel(CancelInput $input, callable $next): void
+            {
+                $this->reasons[] = $input->reason;
+                $next($input);
+            }
+
+            public function terminate(TerminateInput $input, callable $next): void
+            {
+                $this->reasons[] = $input->reason;
+                $next($input);
+            }
+        };
+
+        $handle = ActivityClient::create($client, interceptorProvider: new SimplePipelineProvider([$interceptor]))
+            ->getHandle('activity-id', 'run-id');
+        $handle->cancel();
+        $handle->terminate();
+
+        self::assertSame([null, null], $interceptor->reasons);
     }
 
     public function testHandleWithoutRunIdReadsContextOfEachRun(): void

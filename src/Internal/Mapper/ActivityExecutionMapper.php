@@ -48,6 +48,7 @@ final class ActivityExecutionMapper
         $failure = $message->getLastFailure();
         $metadata = $message->getUserMetadata();
         $retryPolicy = $message->getRetryPolicy();
+        $canceledReason = $message->getCanceledReason();
 
         return new ActivityExecutionDescription(
             info: $this->fromListInfo($message),
@@ -75,7 +76,7 @@ final class ActivityExecutionMapper
                 : FailureConverter::mapFailureToException($failure, $this->converter, $context),
             lastWorkerIdentity: $message->getLastWorkerIdentity(),
             lastDeploymentVersion: $pendingMapper->prepareDeploymentVersion($message->getLastDeploymentVersion()),
-            canceledReason: $message->getCanceledReason(),
+            canceledReason: $canceledReason === '' ? null : $canceledReason,
             userMetadata: new UserMetadata(
                 $this->decodeString($metadata?->getSummary()),
                 $this->decodeString($metadata?->getDetails()),

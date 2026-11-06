@@ -52,7 +52,7 @@ final class ActivityExecutionDescription
         public readonly ?TemporalFailure $lastFailure,
         public readonly string $lastWorkerIdentity,
         public readonly ?WorkerDeploymentVersion $lastDeploymentVersion,
-        public readonly string $canceledReason,
+        public readonly ?string $canceledReason,
         public readonly UserMetadata $userMetadata,
     ) {}
 }

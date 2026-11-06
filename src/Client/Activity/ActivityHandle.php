@@ -113,19 +113,21 @@ final class ActivityHandle
     /**
      * @throws ActivityNotFoundException
      */
-    public function cancel(string $reason = ''): void
+    public function cancel(?string $reason = null): void
     {
         $this->interceptors->with(
             function (CancelInput $input): void {
-                $this->call(fn() => $this->client->RequestCancelActivityExecution(
-                    (new RequestCancelActivityExecutionRequest())
-                        ->setNamespace($this->namespace)
-                        ->setActivityId($input->activityId)
-                        ->setRunId($input->runId ?? '')
-                        ->setIdentity($this->clientOptions->identity)
-                        ->setRequestId(Uuid::v4())
-                        ->setReason($input->reason),
-                ));
+                $request = (new RequestCancelActivityExecutionRequest())
+                    ->setNamespace($this->namespace)
+                    ->setActivityId($input->activityId)
+                    ->setRunId($input->runId ?? '')
+                    ->setIdentity($this->clientOptions->identity)
+                    ->setRequestId(Uuid::v4());
+                if ($input->reason !== null) {
+                    $request->setReason($input->reason);
+                }
+
+                $this->call(fn() => $this->client->RequestCancelActivityExecution($request));
             },
             'cancel',
         )(new CancelInput($this->activityId, $this->runId, $reason));
@@ -134,19 +136,21 @@ final class ActivityHandle
     /**
      * @throws ActivityNotFoundException
      */
-    public function terminate(string $reason = ''): void
+    public function terminate(?string $reason = null): void
     {
         $this->interceptors->with(
             function (TerminateInput $input): void {
-                $this->call(fn() => $this->client->TerminateActivityExecution(
-                    (new TerminateActivityExecutionRequest())
-                        ->setNamespace($this->namespace)
-                        ->setActivityId($input->activityId)
-                        ->setRunId($input->runId ?? '')
-                        ->setIdentity($this->clientOptions->identity)
-                        ->setRequestId(Uuid::v4())
-                        ->setReason($input->reason),
-                ));
+                $request = (new TerminateActivityExecutionRequest())
+                    ->setNamespace($this->namespace)
+                    ->setActivityId($input->activityId)
+                    ->setRunId($input->runId ?? '')
+                    ->setIdentity($this->clientOptions->identity)
+                    ->setRequestId(Uuid::v4());
+                if ($input->reason !== null) {
+                    $request->setReason($input->reason);
+                }
+
+                $this->call(fn() => $this->client->TerminateActivityExecution($request));
             },
             'terminate',
         )(new TerminateInput($this->activityId, $this->runId, $reason));
