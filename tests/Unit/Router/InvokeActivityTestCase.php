@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Router;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\NullLogger;
 use React\Promise\Deferred;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
@@ -27,6 +29,8 @@ use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class InvokeActivityTestCase extends AbstractUnit
@@ -34,6 +38,7 @@ final class InvokeActivityTestCase extends AbstractUnit
     private ServiceContainer $services;
     private InvokeActivity $router;
     private ActivityContext $activityContext;
+    private MarshallerInterface&MockObject $marshaller;
 
     public function testFinalizerIsCalledOnSuccessActivityInvocation(): void
     {
@@ -44,6 +49,7 @@ final class InvokeActivityTestCase extends AbstractUnit
             },
         );
 
+        $this->expectUnmarshal();
         $this->activityContext->getInfo()->type->name = 'DummyActivityDoNothing';
         $request = new Request('DummyActivityDoNothing', EncodedValues::fromValues([]));
         $this->router->handle($request, [], new Deferred());
@@ -61,28 +67,43 @@ final class InvokeActivityTestCase extends AbstractUnit
             },
         );
 
+        $this->expectUnmarshal();
         $this->activityContext->getInfo()->type->name = 'DummyActivityDoFail';
         $request = new Request('DummyActivityDoFail', EncodedValues::fromValues([]));
         $this->router->handle($request, [], new Deferred());
         $this->assertTrue($finalizerWasCalled);
     }
 
+    public function testPrebuiltInfoIsUsedWithoutTheMarshaller(): void
+    {
+        $this->marshaller->expects($this->never())->method('unmarshal');
+        $info = new ActivityInfo();
+        $info->type->name = 'DummyActivityDoNothing';
+        $finalizerWasCalled = false;
+        $this->services->activities->addFinalizer(
+            static function () use (&$finalizerWasCalled): void {
+                $finalizerWasCalled = true;
+            },
+        );
+
+        $request = new ServerRequest(
+            name: 'InvokeActivity',
+            info: new TickInfo(new \DateTimeImmutable()),
+            options: ['name' => 'DummyActivityDoNothing', 'info' => $info],
+            payloads: EncodedValues::fromValues([]),
+            id: 'activity-id',
+        );
+        $this->router->handle($request, [], new Deferred());
+
+        $this->assertTrue($finalizerWasCalled);
+    }
+
     protected function setUp(): void
     {
         $rpc = $this->createMock(RPCConnectionInterface::class);
-
         $dataConverter = $this->createMock(DataConverterInterface::class);
-        $marshaller = $this->createMock(MarshallerInterface::class);
-        $this->activityContext = new ActivityContext(
-            $rpc,
-            $dataConverter,
-            EncodedValues::empty(),
-            Header::empty(),
-        );
-        $marshaller->expects($this->once())
-            ->method('unmarshal')
-            ->willReturn($this->activityContext);
-
+        $this->marshaller = $marshaller = $this->createMock(MarshallerInterface::class);
+        $this->activityContext = new ActivityContext($rpc, $dataConverter, EncodedValues::empty(), Header::empty());
         $this->services = new ServiceContainer(
             $this->createMock(LoopInterface::class),
             $this->createMock(EnvironmentInterface::class),
@@ -103,5 +124,12 @@ final class InvokeActivityTestCase extends AbstractUnit
         $this->router = new InvokeActivity($this->services, $rpc, new SimplePipelineProvider());
 
         parent::setUp();
+    }
+
+    private function expectUnmarshal(): void
+    {
+        $this->marshaller->expects($this->once())
+            ->method('unmarshal')
+            ->willReturn($this->activityContext);
     }
 }

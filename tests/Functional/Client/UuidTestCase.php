@@ -13,7 +13,6 @@ namespace Temporal\Tests\Functional\Client;
 
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\Workflow\SimpleUuidWorkflow;
 
 /**
@@ -43,7 +42,7 @@ class UuidTestCase extends AbstractClient
         $run = $client->start($workflow, $uuid);
         $result = $run->getResult(UuidInterface::class);
 
-        (new WorkflowReplayer())->replayFromServer(
+        $this->createReplayer($client, SimpleUuidWorkflow::class)->replayFromServer(
             'SimpleUuidWorkflow',
             $run->getExecution(),
         );

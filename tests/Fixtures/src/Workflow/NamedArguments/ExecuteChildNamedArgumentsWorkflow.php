@@ -16,38 +16,26 @@ class ExecuteChildNamedArgumentsWorkflow
         ?string $nullableString = null,
         array $array = [],
     ): \Generator|array {
-        $oneParamRes = yield Workflow::executeChildWorkflow(
-            'SimpleNamedArgumentsWorkflow',
-            [
-                'int' => $int,
-            ]
+        $oneParamRes = yield Workflow::newChildWorkflowStub(SimpleNamedArgumentsWorkflow::class)->handler(
+            int: $int,
         );
 
-        $paramsInDifferentOrderRes = yield Workflow::executeChildWorkflow(
-            'SimpleNamedArgumentsWorkflow',
-            [
-                'string' => $string,
-                'int' => $int,
-                'bool' => $bool,
-                'nullableString' => $nullableString,
-                'array' => $array,
-            ]
+        $paramsInDifferentOrderRes = yield Workflow::newChildWorkflowStub(SimpleNamedArgumentsWorkflow::class)->handler(
+            string: $string,
+            int: $int,
+            bool: $bool,
+            nullableString: $nullableString,
+            array: $array,
         );
 
-        $missingParamsRes = yield Workflow::executeChildWorkflow(
-            'SimpleNamedArgumentsWorkflow',
-            [
-                'int' => $int,
-                'nullableString' => $nullableString,
-            ]
+        $missingParamsRes = yield Workflow::newChildWorkflowStub(SimpleNamedArgumentsWorkflow::class)->handler(
+            int: $int,
+            nullableString: $nullableString,
         );
 
-        $missingParamAndDifferentOrderRes = yield Workflow::executeChildWorkflow(
-            'SimpleNamedArgumentsWorkflow',
-            [
-                'nullableString' => $nullableString,
-                'int' => $int,
-            ]
+        $missingParamAndDifferentOrderRes = yield Workflow::newChildWorkflowStub(SimpleNamedArgumentsWorkflow::class)->handler(
+            nullableString: $nullableString,
+            int: $int,
         );
 
         return [
