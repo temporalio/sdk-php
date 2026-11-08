@@ -26,11 +26,13 @@ final class ActivitySerializationContext implements HasWorkflowSerializationCont
 
     public static function fromActivityInfo(ActivityInfo $info, bool $isLocal): self
     {
+        $standalone = $info->activityRunId !== '';
+
         return new self(
-            namespace: $info->workflowNamespace,
+            namespace: $standalone ? $info->namespace : $info->workflowNamespace,
             activityType: $info->type->name,
             taskQueue: $info->taskQueue,
-            workflowId: $info->workflowExecution?->getID(),
+            workflowId: $standalone ? null : $info->workflowExecution?->getID(),
             workflowType: $info->workflowType?->name,
             isLocal: $isLocal,
         );

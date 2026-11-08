@@ -59,6 +59,12 @@ final class ActivityInfo
     #[Marshal(name: 'ActivityID')]
     public string $id;
 
+    #[Marshal(name: 'ActivityRunID')]
+    public string $activityRunId = '';
+
+    #[Marshal(name: 'Namespace')]
+    public string $namespace = 'default';
+
     /**
      * Type (name) of the activity.
      */

@@ -18,6 +18,8 @@ use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\ActivityClient;
+use Temporal\Client\ActivityClientInterface;
 use Temporal\Client\ScheduleClient;
 use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClient;
@@ -141,11 +143,18 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
             converter: $converter,
         )->withTimeout(5);
 
+        $activityClient = ActivityClient::create(
+            serviceClient: $serviceClient,
+            options: (new ClientOptions())->withNamespace($state->namespace),
+            converter: $converter,
+        )->withTimeout(5);
+
         $container->bindSingleton(RRStarter::class, $rrRunner);
         $container->bindSingleton(TemporalStarter::class, $temporalRunner);
         $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
         $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
         $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
+        $container->bindSingleton(ActivityClientInterface::class, $activityClient);
         $container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
         $container->bindSingleton(DataConverterInterface::class, $converter);
         $container->bind(RPCInterface::class, static fn() => RPC::create(\getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));

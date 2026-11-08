@@ -13,8 +13,12 @@ use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\History\V1\WorkflowExecutionCompletedEventAttributes;
+use Temporal\Api\History\V1\WorkflowExecutionContinuedAsNewEventAttributes;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
 use Temporal\Client\ClientOptions;
+use Temporal\Client\Common\RpcRetryOptions;
+use Temporal\Client\GRPC\Context;
+use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\DataConverter\DataConverterInterface;
@@ -112,25 +116,12 @@ final class WorkflowStubTestCase extends TestCase
 
     public function testCloseEventReceivedAtDeadlineIsReturned(): void
     {
-        $responseWithHistory = (new GetWorkflowExecutionHistoryResponse())
-            ->setHistory(
-                (new History())->setEvents([
-                    (new HistoryEvent())
-                        ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)
-                        ->setWorkflowExecutionCompletedEventAttributes(new WorkflowExecutionCompletedEventAttributes()),
-                ]),
-            );
-
         $this->serviceClient
             ->expects(static::once())
             ->method('GetWorkflowExecutionHistory')
-            ->willReturnCallback(static function () use ($responseWithHistory): GetWorkflowExecutionHistoryResponse {
-                // The response arrives after the whole-second timeout has elapsed
-                self::waitForNextSecond();
-                return $responseWithHistory;
-            });
+            ->willReturn(self::completedResponse());
 
-        $this->assertNull($this->workflowStub->getResult(timeout: 1));
+        $this->assertNull($this->workflowStub->getResult(timeout: 0));
     }
 
     public function testEmptyHistoryAtDeadlineThrowsTimeoutException(): void
@@ -138,21 +129,97 @@ final class WorkflowStubTestCase extends TestCase
         $this->serviceClient
             ->expects(static::once())
             ->method('GetWorkflowExecutionHistory')
-            ->willReturnCallback(static function (): GetWorkflowExecutionHistoryResponse {
-                self::waitForNextSecond();
-                return new GetWorkflowExecutionHistoryResponse();
-            });
+            ->willReturn(new GetWorkflowExecutionHistoryResponse());
+
+        static::expectException(TimeoutException::class);
+
+        $this->workflowStub->getResult(timeout: 0);
+    }
+
+    public function testEmptyHistoryAfterThePositiveTimeoutThrowsTimeoutException(): void
+    {
+        $this->serviceClient->method('getContext')->willReturn(Context::default());
+
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('GetWorkflowExecutionHistory')
+            ->willReturnCallback(
+                static function (mixed $request, ContextInterface $context): GetWorkflowExecutionHistoryResponse {
+                    \time_sleep_until((float) $context->getDeadline()->format('U.u') + 0.001);
+                    return new GetWorkflowExecutionHistoryResponse();
+                },
+            );
 
         static::expectException(TimeoutException::class);
 
         $this->workflowStub->getResult(timeout: 1);
     }
 
-    private static function waitForNextSecond(): void
+    public function testContinueAsNewKeepsTheDeadlineOfTheFirstPoll(): void
     {
-        $start = \time();
-        while (\time() === $start) {
-            \usleep(10_000);
-        }
+        $this->serviceClient->method('getContext')->willReturn(Context::default());
+
+        $continuedAsNew = (new GetWorkflowExecutionHistoryResponse())
+            ->setHistory(
+                (new History())->setEvents([
+                    (new HistoryEvent())
+                        ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW)
+                        ->setWorkflowExecutionContinuedAsNewEventAttributes(
+                            (new WorkflowExecutionContinuedAsNewEventAttributes())->setNewExecutionRunId('next-run'),
+                        ),
+                ]),
+            );
+        $deadlines = [];
+        $this->serviceClient
+            ->expects(static::exactly(2))
+            ->method('GetWorkflowExecutionHistory')
+            ->with(
+                static::anything(),
+                static::callback(static function (ContextInterface $context) use (&$deadlines): bool {
+                    $deadlines[] = $context->getDeadline()->format('U.u');
+                    return true;
+                }),
+            )
+            ->willReturnOnConsecutiveCalls($continuedAsNew, self::completedResponse());
+
+        $this->workflowStub->getResult(timeout: 60);
+
+        $this->assertCount(2, $deadlines);
+        $this->assertSame($deadlines[0], $deadlines[1]);
+        $this->assertEqualsWithDelta(\microtime(true) + 60, (float) $deadlines[0], 5.0);
+    }
+
+    public function testTimeoutKeepsTheContextOfTheClient(): void
+    {
+        $retryOptions = RpcRetryOptions::new();
+        $this->serviceClient
+            ->method('getContext')
+            ->willReturn(Context::default()->withMetadata(['x-client' => ['value']])->withRetryOptions($retryOptions));
+
+        $this->serviceClient
+            ->expects(static::once())
+            ->method('GetWorkflowExecutionHistory')
+            ->with(
+                static::anything(),
+                static::callback(
+                    static fn(ContextInterface $context): bool => $context->getMetadata() === ['x-client' => ['value']]
+                        && $context->getRetryOptions() === $retryOptions,
+                ),
+            )
+            ->willReturn(self::completedResponse());
+
+        $this->workflowStub->getResult(timeout: 60);
+    }
+
+    private static function completedResponse(): GetWorkflowExecutionHistoryResponse
+    {
+        return (new GetWorkflowExecutionHistoryResponse())
+            ->setHistory(
+                (new History())->setEvents([
+                    (new HistoryEvent())
+                        ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)
+                        ->setWorkflowExecutionCompletedEventAttributes(new WorkflowExecutionCompletedEventAttributes()),
+                ]),
+            );
     }
 }
