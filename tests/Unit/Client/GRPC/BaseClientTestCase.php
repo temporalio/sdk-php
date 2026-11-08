@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client\GRPC;
 
+use Carbon\CarbonInterval;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
@@ -18,6 +19,7 @@ use Temporal\Client\GRPC\StatusCode;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Support\DateInterval;
 
 class BaseClientTestCase extends TestCase
 {
@@ -155,11 +157,15 @@ class BaseClientTestCase extends TestCase
 
     public function testServiceClientCallDeadlineReached(): void
     {
-        $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
-            public function __construct() {}
+        $timeouts = new \ArrayObject();
+        $client = $this->createClientMock(static fn() => new class($timeouts) extends WorkflowServiceClient {
+            public function __construct(
+                private readonly \ArrayObject $timeouts,
+            ) {}
 
-            public function testCall(): void
+            public function testCall(object $arg, array $metadata, array $options): void
             {
+                $this->timeouts[] = $options['timeout'];
                 throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
             }
 
@@ -174,7 +180,83 @@ class BaseClientTestCase extends TestCase
 
         self::expectException(TimeoutException::class);
 
-        $client->testCall();
+        try {
+            $client->testCall();
+        } finally {
+            self::assertSame([0], $timeouts->getArrayCopy());
+        }
+    }
+
+    public function testServiceClientCallTimeoutCoversAllRetries(): void
+    {
+        $timeouts = new \ArrayObject();
+        $client = $this->createClientMock(static fn() => new class($timeouts) extends WorkflowServiceClient {
+            public function __construct(
+                private readonly \ArrayObject $timeouts,
+            ) {}
+
+            public function testCall(object $arg, array $metadata, array $options): void
+            {
+                $this->timeouts[] = $options['timeout'];
+                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
+            }
+
+            public function close(): void {}
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext(
+            $client->getContext()
+                ->withTimeout(20, DateInterval::FORMAT_MILLISECONDS)
+                ->withRetryOptions(
+                    RpcRetryOptions::new()
+                        ->withInitialInterval(CarbonInterval::milliseconds(10))
+                        ->withBackoffCoefficient(1.0)
+                        ->withMaximumAttempts(10),
+                ),
+        );
+
+        self::expectException(TimeoutException::class);
+
+        try {
+            $client->testCall();
+        } finally {
+            self::assertGreaterThan(0, $timeouts[0]);
+            self::assertLessThan(15_000, $timeouts[1] ?? 0);
+        }
+    }
+
+    public function testServiceClientCallTimeoutDoesNotSleepPastTheDeadline(): void
+    {
+        $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
+            public function __construct() {}
+
+            public function testCall(): void
+            {
+                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
+            }
+
+            public function close(): void {}
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext(
+            $client->getContext()
+                ->withTimeout(20, DateInterval::FORMAT_MILLISECONDS)
+                ->withRetryOptions(
+                    RpcRetryOptions::new()
+                        ->withInitialInterval(CarbonInterval::seconds(3))
+                        ->withMaximumAttempts(10),
+                ),
+        );
+
+        $start = \microtime(true);
+
+        try {
+            $client->testCall();
+            self::fail('The call must time out.');
+        } catch (TimeoutException $e) {
+            self::assertLessThan(1.0, \microtime(true) - $start);
+            self::assertInstanceOf(ServiceClientException::class, $e->getPrevious());
+        }
     }
 
     public function testServiceClientCallCustomException(): void

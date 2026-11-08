@@ -27,6 +27,7 @@ use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedRequest;
 use Temporal\Api\Workflowservice\V1\ResetWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\StartActivityExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartBatchOperationRequest;
 use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
@@ -73,6 +74,10 @@ final class PayloadSizeChecker
                 $this->payloads($method, $request->getInput());
                 $this->payloads($method, $request->getLastCompletionResult());
                 $this->memo($method, $request->getMemo());
+                return;
+
+            case $request instanceof StartActivityExecutionRequest:
+                $this->payloads($method, $request->getInput());
                 return;
 
             case $request instanceof SignalWithStartWorkflowExecutionRequest:
