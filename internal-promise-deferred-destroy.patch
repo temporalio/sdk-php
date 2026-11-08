@@ -1,0 +1,401 @@
+diff --git a/src/Deferred.php b/src/Deferred.php
+index f51a25d..2ab9df9 100644
+--- a/src/Deferred.php
++++ b/src/Deferred.php
+@@ -10,7 +10,7 @@ namespace React\Promise;
+ final class Deferred
+ {
+     /**
+-     * @var PromiseInterface<T>
++     * @var Promise<T>
+      */
+     private $promise;
+ 
+@@ -51,4 +51,9 @@ final class Deferred
+     {
+         ($this->rejectCallback)($reason);
+     }
++
++    public function destroy(): void
++    {
++        $this->promise->destroy();
++    }
+ }
+diff --git a/src/Promise.php b/src/Promise.php
+index f70224b..9e88c19 100644
+--- a/src/Promise.php
++++ b/src/Promise.php
+@@ -18,7 +18,7 @@ final class Promise implements PromiseInterface
+     /** @var ?PromiseInterface<T> */
+     private $result;
+ 
+-    /** @var list<callable(PromiseInterface<T>):void> */
++    /** @var list<\Closure(PromiseInterface<T>):void> */
+     private $handlers = [];
+ 
+     /** @var int */
+@@ -27,6 +27,9 @@ final class Promise implements PromiseInterface
+     /** @var bool */
+     private $cancelled = false;
+ 
++    /** @var bool */
++    private $destroyed = false;
++
+     /**
+      * @param callable(callable(T):void,callable(\Throwable):void):void $resolver
+      * @param (callable(callable(T):void,callable(\Throwable):void):void)|null $canceller
+@@ -148,6 +151,24 @@ final class Promise implements PromiseInterface
+         }
+     }
+ 
++    public function destroy(): void
++    {
++        if ($this->result !== null || $this->destroyed) {
++            return;
++        }
++
++        $this->destroyed = true;
++        $this->canceller = null;
++        $handlers = $this->handlers;
++        $this->handlers = [];
++
++        /** @var \WeakMap<\Closure, true> $visited */
++        $visited = new \WeakMap();
++        foreach ($handlers as $handler) {
++            self::destroySettlers($handler, $visited);
++        }
++    }
++
+     /**
+      * @deprecated 3.0.0 Use `catch()` instead
+      * @see self::catch()
+@@ -166,6 +187,32 @@ final class Promise implements PromiseInterface
+         return $this->finally($onFulfilledOrRejected);
+     }
+ 
++    /**
++     * @param \WeakMap<\Closure, true> $visited
++     */
++    private static function destroySettlers(\Closure $closure, \WeakMap $visited): void
++    {
++        if (isset($visited[$closure])) {
++            return;
++        }
++
++        $visited[$closure] = true;
++        $function = new \ReflectionFunction($closure);
++        $captured = $function->getClosureUsedVariables();
++        $target = $captured['target'] ?? null;
++
++        if ($target instanceof self && $function->getClosureScopeClass()?->getName() === self::class) {
++            $target->destroy();
++            return;
++        }
++
++        foreach ($captured as $value) {
++            if ($value instanceof \Closure) {
++                self::destroySettlers($value, $visited);
++            }
++        }
++    }
++
+     private function resolver(?callable $onFulfilled = null, ?callable $onRejected = null): callable
+     {
+         return function (callable $resolve, callable $reject) use ($onFulfilled, $onRejected): void {
+@@ -284,13 +331,13 @@ final class Promise implements PromiseInterface
+ 
+                 $callback(
+                     static function ($value) use (&$target): void {
+-                        if ($target !== null) {
++                        if ($target !== null && !$target->destroyed) {
+                             $target->settle(resolve($value));
+                             $target = null;
+                         }
+                     },
+                     static function (\Throwable $reason) use (&$target): void {
+-                        if ($target !== null) {
++                        if ($target !== null && !$target->destroyed) {
+                             $target->reject($reason);
+                             $target = null;
+                         }
+diff --git a/tests/Unit/DestroyTest.php b/tests/Unit/DestroyTest.php
+new file mode 100644
+index 0000000..28aca3b
+--- /dev/null
++++ b/tests/Unit/DestroyTest.php
+@@ -0,0 +1,275 @@
++<?php
++
++declare(strict_types=1);
++
++namespace React\Promise\Tests\Unit;
++
++use PHPUnit\Framework\Attributes\DataProvider;
++use PHPUnit\Framework\Attributes\Test;
++use React\Promise\Deferred;
++use React\Promise\Promise;
++use React\Promise\PromiseInterface;
++
++use function React\Promise\all;
++use function React\Promise\any;
++use function React\Promise\race;
++use function React\Promise\resolve;
++
++final class DestroyTest extends TestCase
++{
++    private static int $calls = 0;
++
++    /**
++     * @return iterable<string, array{\Closure}>
++     */
++    public static function graphs(): iterable
++    {
++        yield 'then catch finally chain' => [static function (): array {
++            $root = new Deferred(self::spy());
++            $promises = [$root->promise()];
++            $promises[] = $root->promise()->then(self::spy(), self::spy());
++            $promises[] = \end($promises)->catch(self::spy());
++            $promises[] = \end($promises)->finally(self::spy());
++            $promises[] = $root->promise()->then(self::spy());
++
++            return [[$root], $promises];
++        }];
++
++        yield 'promise that follows a pending promise' => [static function (): array {
++            $followed = new Deferred(self::spy());
++            $follower = new Deferred(self::spy());
++            $promises = [$followed->promise(), $follower->promise()];
++            $promises[] = $follower->promise()->then(self::spy(), self::spy());
++            $follower->resolve($followed->promise());
++            $promises[] = $follower->promise()->then(self::spy(), self::spy());
++            $promises[] = \end($promises)->then(self::spy());
++
++            return [[$followed, $follower], $promises];
++        }];
++
++        yield 'then callback that returns a pending promise' => [static function (): array {
++            $first = new Deferred(self::spy());
++            $second = new Deferred(self::spy());
++            $promises = [$first->promise(), $second->promise()];
++            $promises[] = $first->promise()->then(static fn(): PromiseInterface => $second->promise());
++            $promises[] = \end($promises)->then(self::spy(), self::spy());
++            $first->resolve(1);
++
++            return [[$first, $second], $promises];
++        }];
++
++        yield 'resolve of a thenable' => [static function (): array {
++            $root = new Deferred(self::spy());
++            $thenable = new class($root->promise()) {
++                /**
++                 * @param PromiseInterface<mixed> $promise
++                 */
++                public function __construct(private PromiseInterface $promise) {}
++
++                /**
++                 * @return PromiseInterface<mixed>
++                 */
++                public function then(callable $onFulfilled, callable $onRejected): PromiseInterface
++                {
++                    return $this->promise->then($onFulfilled, $onRejected);
++                }
++
++                public function cancel(): void
++                {
++                    $this->promise->cancel();
++                }
++            };
++            $promises = [$root->promise(), resolve($thenable)];
++            $promises[] = $promises[1]->then(self::spy(), self::spy());
++            $promises[] = \end($promises)->then(self::spy());
++
++            return [[$root], $promises];
++        }];
++
++        yield 'settler captured three closures deep' => [static function (): array {
++            $root = new Deferred(self::spy());
++            $combined = new Promise(static function (callable $resolve) use ($root): void {
++                $forward = static fn(mixed $value): mixed => $resolve($value);
++                $wrap = static fn(mixed $value): mixed => $forward($value);
++                $root->promise()->then($wrap);
++            }, self::spy());
++            $promises = [$root->promise(), $combined];
++            $promises[] = $combined->then(self::spy(), self::spy());
++            $promises[] = \end($promises)->then(self::spy());
++
++            return [[$root], $promises];
++        }];
++
++        foreach (['race' => race(...), 'all' => all(...), 'any' => any(...)] as $name => $combinator) {
++            yield $name => [static function () use ($combinator): array {
++                $first = new Deferred(self::spy());
++                $second = new Deferred(self::spy());
++                $combined = $combinator([$first->promise(), $second->promise()]);
++                $promises = [$first->promise(), $second->promise(), $combined];
++                $promises[] = $combined->then(self::spy(), self::spy());
++                $promises[] = \end($promises)->then(self::spy());
++
++                return [[$first, $second], $promises];
++            }];
++        }
++    }
++
++    /**
++     * @return iterable<string, array{\Closure, string}>
++     */
++    public static function combinators(): iterable
++    {
++        foreach (['race' => race(...), 'all' => all(...), 'any' => any(...)] as $name => $combinator) {
++            yield $name . ' resolve' => [$combinator, 'resolve'];
++            yield $name . ' reject' => [$combinator, 'reject'];
++        }
++    }
++
++    #[Test]
++    #[DataProvider('graphs')]
++    public function destroyReleasesGraphWithoutCallbacks(\Closure $build): void
++    {
++        \gc_collect_cycles();
++        \gc_disable();
++        self::$calls = 0;
++
++        [$roots, $references] = self::weaken($build);
++        foreach ($roots as $root) {
++            $root->destroy();
++        }
++        unset($roots, $root);
++
++        $this->assertSame([], \array_keys(\array_filter($references, static fn(\WeakReference $reference): bool => $reference->get() !== null)));
++        $this->assertSame(0, \gc_collect_cycles());
++        $this->assertSame(0, self::$calls);
++        \gc_enable();
++    }
++
++    #[Test]
++    #[DataProvider('graphs')]
++    public function graphWithoutDestroyNeedsCycleCollector(\Closure $build): void
++    {
++        \gc_collect_cycles();
++        \gc_disable();
++
++        [$roots] = self::weaken($build);
++        unset($roots);
++
++        $this->assertGreaterThan(0, \gc_collect_cycles());
++        \gc_enable();
++    }
++
++    #[Test]
++    #[DataProvider('combinators')]
++    public function combinatorWithOneDestroyedInputIgnoresLiveInput(\Closure $combinator, string $settle): void
++    {
++        \gc_collect_cycles();
++        \gc_disable();
++        self::$calls = 0;
++
++        [[$destroyed, $live], $references] = self::weaken(static function () use ($combinator): array {
++            $first = new Deferred(self::spy());
++            $second = new Deferred(self::spy());
++            $combined = $combinator([$first->promise(), $second->promise()]);
++            $promises = [$first->promise(), $second->promise(), $combined];
++            $promises[] = $combined->then(self::spy(), self::spy());
++            $promises[] = \end($promises)->finally(self::spy());
++
++            return [[$first, $second], $promises];
++        });
++        $destroyed->destroy();
++        $settle === 'resolve' ? $live->resolve(1) : $live->reject(new \RuntimeException());
++        unset($destroyed, $live);
++
++        $this->assertSame([], \array_keys(\array_filter($references, static fn(\WeakReference $reference): bool => $reference->get() !== null)));
++        $this->assertSame(0, \gc_collect_cycles());
++        $this->assertSame(0, self::$calls);
++        \gc_enable();
++    }
++
++    #[Test]
++    public function destroyedDeferredIgnoresLaterSettlement(): void
++    {
++        self::$calls = 0;
++        $deferred = new Deferred(self::spy());
++        $child = $deferred->promise()->then(self::spy(), self::spy());
++        $deferred->destroy();
++
++        $deferred->resolve(1);
++        $deferred->reject(new \RuntimeException());
++        $deferred->promise()->cancel();
++        $child->cancel();
++        $deferred->promise()->then(self::spy(), self::spy());
++
++        $this->assertSame(0, self::$calls);
++    }
++
++    #[Test]
++    public function destroyOfSettledPromiseKeepsResult(): void
++    {
++        $deferred = new Deferred();
++        $deferred->resolve(42);
++        $deferred->destroy();
++
++        $value = null;
++        $deferred->promise()->then(static function (int $result) use (&$value): void {
++            $value = $result;
++        });
++
++        $this->assertSame(42, $value);
++    }
++
++    #[Test]
++    public function destroyDoesNotReachParentPromise(): void
++    {
++        $parent = new Deferred();
++        $child = $parent->promise()->then();
++        \assert($child instanceof Promise);
++        $child->destroy();
++
++        $value = null;
++        $parent->promise()->then(static function (int $result) use (&$value): void {
++            $value = $result;
++        });
++        $parent->resolve(7);
++
++        $this->assertSame(7, $value);
++    }
++
++    #[Test]
++    public function destroyDoesNotReachPromiseCapturedByUserCallback(): void
++    {
++        $root = new Deferred();
++        $other = new Deferred();
++        $target = $other->promise();
++        $root->promise()->then(static function () use ($target): PromiseInterface {
++            return $target;
++        });
++        $root->destroy();
++
++        $value = null;
++        $other->promise()->then(static function (int $result) use (&$value): void {
++            $value = $result;
++        });
++        $other->resolve(3);
++
++        $this->assertSame(3, $value);
++    }
++
++    private static function spy(): \Closure
++    {
++        return static function (): void {
++            ++self::$calls;
++        };
++    }
++
++    /**
++     * @return array{list<Deferred<mixed>>, list<\WeakReference<object>>}
++     */
++    private static function weaken(\Closure $build): array
++    {
++        [$roots, $promises] = $build();
++
++        return [$roots, \array_map(\WeakReference::create(...), [...$roots, ...$promises])];
++    }
++}
