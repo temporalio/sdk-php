@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Worker;
 
 use Internal\Destroy\Destroyable;
+use React\Promise\Deferred;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Promise;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -89,6 +90,39 @@ final class DestroyWorkflowTestCase extends AbstractUnit
         self::assertTrue(ThrowingFinallyWorkflow::$destroyed);
     }
 
+    public function testEvictionRunsFinallyBlocksOfChildScopesBeforeTheirParents(): void
+    {
+        $this->worker->registerWorkflowObject(new NestedScopesWorkflow());
+        $this->worker->runWorkflow('NestedScopesWorkflow');
+        $this->worker->destroyWorkflow('NestedScopesWorkflow');
+
+        $this->factory->run($this->worker);
+
+        self::assertSame(['grandchild', 'child', 'main'], NestedScopesWorkflow::$finally);
+    }
+
+    public function testEvictionDoesNotResumeScopesFromFinallyBlocks(): void
+    {
+        $this->worker->registerWorkflowObject(new SiblingResolveWorkflow());
+        $this->worker->runWorkflow('SiblingResolveWorkflow');
+        $this->worker->destroyWorkflow('SiblingResolveWorkflow');
+
+        $this->factory->run($this->worker);
+
+        self::assertSame(['closer', 'waiter'], SiblingResolveWorkflow::$events);
+    }
+
+    public function testEvictionMarksScopesAsCancelled(): void
+    {
+        $this->worker->registerWorkflowObject(new CancelledScopeWorkflow());
+        $this->worker->runWorkflow('CancelledScopeWorkflow');
+        $this->worker->destroyWorkflow('CancelledScopeWorkflow');
+
+        $this->factory->run($this->worker);
+
+        self::assertSame([true, true], CancelledScopeWorkflow::$cancelled);
+    }
+
     protected function setUp(): void
     {
         EvictedWorkflow::$caught = [];
@@ -97,6 +131,9 @@ final class DestroyWorkflowTestCase extends AbstractUnit
         CommandInFinallyWorkflow::$failure = null;
         OnCancelWorkflow::$cancelled = false;
         DestroyOrderWorkflow::$events = [];
+        NestedScopesWorkflow::$finally = [];
+        SiblingResolveWorkflow::$events = [];
+        CancelledScopeWorkflow::$cancelled = [];
         $this->factory = WorkerFactoryMock::create();
         $this->worker = $this->factory->newWorker();
         \gc_collect_cycles();
@@ -248,5 +285,77 @@ final class DestroyOrderWorkflow implements Destroyable
     public function destroy(): void
     {
         self::$events[] = 'destroy';
+    }
+}
+
+#[Workflow\WorkflowInterface]
+final class NestedScopesWorkflow
+{
+    public static array $finally = [];
+
+    #[WorkflowMethod(name: 'NestedScopesWorkflow')]
+    public function handler(): iterable
+    {
+        Workflow::async(static function (): \Generator {
+            Workflow::async(static fn(): \Generator => yield from self::guarded('grandchild'));
+            yield from self::guarded('child');
+        });
+        yield from self::guarded('main');
+    }
+
+    private static function guarded(string $name): \Generator
+    {
+        try {
+            yield Workflow::timer(100);
+        } finally {
+            self::$finally[] = $name;
+        }
+    }
+}
+
+#[Workflow\WorkflowInterface]
+final class SiblingResolveWorkflow
+{
+    public static array $events = [];
+
+    #[WorkflowMethod(name: 'SiblingResolveWorkflow')]
+    public function handler(): iterable
+    {
+        $deferred = new Deferred();
+        Workflow::async(static function () use ($deferred): \Generator {
+            try {
+                yield $deferred->promise();
+                self::$events[] = 'resumed';
+            } finally {
+                self::$events[] = 'waiter';
+            }
+        });
+        Workflow::async(static function () use ($deferred): \Generator {
+            try {
+                yield Workflow::timer(100);
+            } finally {
+                self::$events[] = 'closer';
+                $deferred->resolve(1);
+            }
+        });
+        yield Workflow::timer(100);
+    }
+}
+
+#[Workflow\WorkflowInterface]
+final class CancelledScopeWorkflow
+{
+    public static array $cancelled = [];
+
+    #[WorkflowMethod(name: 'CancelledScopeWorkflow')]
+    public function handler(): iterable
+    {
+        $attached = Workflow::async(static fn(): \Generator => yield Workflow::timer(100));
+        $detached = Workflow::asyncDetached(static fn(): \Generator => yield Workflow::timer(100));
+        try {
+            yield Workflow::timer(100);
+        } finally {
+            self::$cancelled = [$attached->isCancelled(), $detached->isCancelled()];
+        }
     }
 }

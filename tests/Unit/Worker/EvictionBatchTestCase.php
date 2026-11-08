@@ -20,6 +20,8 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+use function React\Promise\all;
+
 final class EvictionBatchTestCase extends AbstractUnit
 {
     private WorkerFactoryMock $factory;
@@ -45,14 +47,23 @@ final class EvictionBatchTestCase extends AbstractUnit
         );
     }
 
+    public function testEvictionDoesNotCancelInputsOfTemporalCombinators(): void
+    {
+        $this->dispatch([new StartWorkflow('run-combinator', 'CombinatorCancellerWorkflow'), new DestroyWorkflow('run-combinator')]);
+
+        self::assertSame([], CombinatorCancellerWorkflow::$canceller);
+    }
+
     protected function setUp(): void
     {
         AwaitedCancellerWorkflow::$canceller = [];
+        CombinatorCancellerWorkflow::$canceller = [];
         $this->factory = WorkerFactoryMock::create();
         $worker = $this->factory->newWorker();
         $worker->registerWorkflowObject(new MutexHandoffWorkflow());
         $worker->registerWorkflowObject(new SingleTimerWorkflow());
         $worker->registerWorkflowObject(new AwaitedCancellerWorkflow());
+        $worker->registerWorkflowObject(new CombinatorCancellerWorkflow());
 
         parent::setUp();
     }
@@ -143,6 +154,22 @@ final class AwaitedCancellerWorkflow
             } catch (\Throwable $e) {
                 self::$canceller[] = $e::class;
             }
+        });
+
+        yield all([$deferred->promise(), Workflow::timer(100)]);
+    }
+}
+
+#[Workflow\WorkflowInterface]
+final class CombinatorCancellerWorkflow
+{
+    public static array $canceller = [];
+
+    #[WorkflowMethod(name: 'CombinatorCancellerWorkflow')]
+    public function handler(): iterable
+    {
+        $deferred = new Deferred(static function (): void {
+            self::$canceller[] = Workflow::getInfo()->execution->getRunID();
         });
 
         yield Promise::all([$deferred->promise(), Workflow::timer(100)]);
