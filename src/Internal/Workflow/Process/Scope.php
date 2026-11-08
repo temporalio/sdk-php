@@ -16,7 +16,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
@@ -211,8 +210,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function cancel(?\Throwable $reason = null): void
     {
-        if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
-            // detaches scopes can be offload via memory flush
+        if ($this->detached) {
             return;
         }
 
@@ -379,14 +377,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $cancelID = $this->addOnCancel(function (?\Throwable $reason = null) use ($request, $cancellable): void {
+        $cancelID = $this->addOnCancel(function () use ($request, $cancellable): void {
             $client = $this->context->getClient();
-            if ($reason instanceof DestructMemorizedInstanceException) {
-                // memory flush
-                $client->reject($request, $reason);
-                return;
-            }
-
             if ($client->isQueued($request)) {
                 $client->cancel($request);
                 return;
