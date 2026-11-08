@@ -312,6 +312,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        $this->context->startEviction();
+
         $scopes = [];
         $roots = [];
         foreach ($this->owned as $item => $_) {

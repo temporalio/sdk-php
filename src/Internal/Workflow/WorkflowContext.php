@@ -115,6 +115,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
     protected bool $inReadOnlyCallback = false;
+    protected bool $evicting = false;
     protected ?string $currentDetails = null;
     protected int $childWorkflowSequence = 0;
     private ?WorkflowSerializationContext $serializationContext = null;
@@ -235,6 +236,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $clone->awaits = &$this->awaits;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->evicting = &$this->evicting;
         $clone->trace = &$this->trace;
         $clone->input = $input;
         $clone->serializationContext = null;
@@ -354,7 +357,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function isReplaying(): bool
     {
-        return $this->services->env->isReplaying();
+        return $this->evicting || $this->services->env->isReplaying();
+    }
+
+    public function startEviction(): void
+    {
+        $this->evicting = true;
     }
 
     public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface

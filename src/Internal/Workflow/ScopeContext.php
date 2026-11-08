@@ -58,6 +58,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $ctx->readonly = $context->readonly;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $ctx->inReadOnlyCallback = &$context->inReadOnlyCallback;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $ctx->evicting = &$context->evicting;
         $ctx->continueAsNew = $context->continueAsNew;
         $ctx->trace = &$context->trace;
         $ctx->currentDetails = &$context->currentDetails;

@@ -123,6 +123,22 @@ final class DestroyWorkflowTestCase extends AbstractUnit
         self::assertSame([true, true], CancelledScopeWorkflow::$cancelled);
     }
 
+    public function testEvictionRunsFinallyBlocksAndDestroyInReplayMode(): void
+    {
+        $this->worker->registerWorkflowObject(new ReplayModeWorkflow());
+        $this->worker->runWorkflow('ReplayModeWorkflow');
+        $this->worker->sendSignal('ReplayModeWorkflow', 'wait');
+        $this->worker->destroyWorkflow('ReplayModeWorkflow');
+
+        $this->factory->run($this->worker);
+
+        \ksort(ReplayModeWorkflow::$replaying);
+        self::assertSame(
+            ['destroy' => true, 'finally' => true, 'run' => false, 'signal' => true],
+            ReplayModeWorkflow::$replaying,
+        );
+    }
+
     protected function setUp(): void
     {
         EvictedWorkflow::$caught = [];
@@ -134,6 +150,7 @@ final class DestroyWorkflowTestCase extends AbstractUnit
         NestedScopesWorkflow::$finally = [];
         SiblingResolveWorkflow::$events = [];
         CancelledScopeWorkflow::$cancelled = [];
+        ReplayModeWorkflow::$replaying = [];
         $this->factory = WorkerFactoryMock::create();
         $this->worker = $this->factory->newWorker();
         \gc_collect_cycles();
@@ -357,5 +374,37 @@ final class CancelledScopeWorkflow
         } finally {
             self::$cancelled = [$attached->isCancelled(), $detached->isCancelled()];
         }
+    }
+}
+
+#[Workflow\WorkflowInterface]
+final class ReplayModeWorkflow implements Destroyable
+{
+    public static array $replaying = [];
+
+    #[WorkflowMethod(name: 'ReplayModeWorkflow')]
+    public function handler(): iterable
+    {
+        self::$replaying['run'] = Workflow::isReplaying();
+        try {
+            yield Workflow::timer(100);
+        } finally {
+            self::$replaying['finally'] = Workflow::isReplaying();
+        }
+    }
+
+    #[Workflow\SignalMethod(name: 'wait')]
+    public function wait(): iterable
+    {
+        try {
+            yield Workflow::timer(100);
+        } finally {
+            self::$replaying['signal'] = Workflow::isReplaying();
+        }
+    }
+
+    public function destroy(): void
+    {
+        self::$replaying['destroy'] = Workflow::isReplaying();
     }
 }
