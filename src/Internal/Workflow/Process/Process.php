@@ -16,7 +16,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
@@ -261,11 +260,6 @@ class Process extends Scope implements ProcessInterface
     protected function complete(mixed $result): void
     {
         if ($result instanceof \Throwable) {
-            if ($result instanceof DestructMemorizedInstanceException) {
-                // do not handle
-                return;
-            }
-
             $this->logRunningHandlers($result instanceof CanceledFailure ? 'cancelled' : 'failed');
 
             if ($this->services->exceptionInterceptor->isRetryable($result)) {

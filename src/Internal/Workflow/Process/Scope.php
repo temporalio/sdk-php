@@ -16,14 +16,15 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
+use Temporal\Internal\Promise\Abandoned;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -87,6 +88,8 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private array $onClose = [];
 
+    private \WeakMap $owned;
+    private ?PromiseInterface $awaiting = null;
     private bool $detached = false;
     private bool $cancelled = false;
     private bool $closed = false;
@@ -97,6 +100,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     ) {
         $this->services = $services;
         $this->deferred = new Deferred();
+        $this->owned = new \WeakMap();
     }
 
     /**
@@ -211,7 +215,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function cancel(?\Throwable $reason = null): void
     {
-        if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
+        if ($this->detached) {
             // detaches scopes can be offload via memory flush
             return;
         }
@@ -302,23 +306,53 @@ class Scope implements CancellationScopeInterface, Destroyable
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
+    public function own(CompletableResult|\Closure $root): void
+    {
+        $this->owned[$root] = null;
+    }
+
     public function destroy(): void
     {
+        $scopes = [];
+        $roots = [];
+        foreach ($this->owned as $item => $_) {
+            if ($item instanceof self) {
+                $scopes[] = $item;
+            } else {
+                $roots[] = $item;
+            }
+        }
+
+        $scopes[] = $this;
+
+        foreach ($scopes as $scope) {
+            $scope->cancelled = true;
+            $scope->closed = true;
+        }
+
+        $this->context->runReadOnly(static function () use ($scopes): void {
+            foreach ($scopes as $scope) {
+                $scope->close();
+            }
+        });
+
         // A Destroyable workflow instance may use the Workflow facade from its destroy().
         Facade::usingContext($this->scopeContext, function (): void {
             $this->context?->destroy();
             $this->scopeContext?->destroy();
         });
 
-        unset(
-            $this->coroutine,
-            $this->context,
-            $this->scopeContext,
-            $this->deferred,
-            $this->services,
-            $this->onCancel,
-            $this->onClose,
-        );
+        foreach ($roots as $root) {
+            if ($root instanceof \Closure) {
+                $root(new Abandoned());
+            } else {
+                $root->abandon();
+            }
+        }
+
+        foreach ($scopes as $scope) {
+            $scope->release();
+        }
     }
 
     /**
@@ -333,6 +367,8 @@ class Scope implements CancellationScopeInterface, Destroyable
         $scope = new Scope($this->services);
         $scope->setContext($context ?? $this->context, $updateContext);
         $scope->detached = $detached;
+        $scope->owned = $this->owned;
+        $this->owned[$scope] = null;
 
         if ($layer !== null) {
             $scope->layer = $layer;
@@ -379,14 +415,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $cancelID = $this->addOnCancel(function (?\Throwable $reason = null) use ($request, $cancellable): void {
+        $cancelID = $this->addOnCancel(function () use ($request, $cancellable): void {
             $client = $this->context->getClient();
-            if ($reason instanceof DestructMemorizedInstanceException) {
-                // memory flush
-                $client->reject($request, $reason);
-                return;
-            }
-
             if ($client->isQueued($request)) {
                 $client->cancel($request);
                 return;
@@ -522,7 +552,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             throw $e;
         };
 
-        $promise
+        $this->awaiting = $promise
             ->then($onFulfilled, $onRejected)
             // Handle last error
             ->then(null, static fn(\Throwable $e) => null);
@@ -581,9 +611,44 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
+    private function close(): void
+    {
+        Facade::usingContext($this->scopeContext, function (): void {
+            try {
+                unset($this->coroutine);
+            } catch (\Throwable) {
+            }
+
+            try {
+                $this->awaiting?->cancel();
+            } catch (\Throwable) {
+            }
+        });
+    }
+
+    private function release(): void
+    {
+        unset(
+            $this->coroutine,
+            $this->context,
+            $this->scopeContext,
+            $this->deferred,
+            $this->services,
+            $this->onCancel,
+            $this->onClose,
+        );
+    }
+
     private function defer(\Closure $tick): void
     {
-        $this->services->loop->once($this->layer, fn(): mixed => Facade::usingContext($this->scopeContext, $tick));
+        if ($this->closed) {
+            return;
+        }
+
+        $this->services->loop->once(
+            $this->layer,
+            fn(): mixed => $this->closed ? null : Facade::usingContext($this->scopeContext, $tick),
+        );
         $this->services->queue->count() === 0 and $this->services->loop->tick();
     }
 }

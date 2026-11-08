@@ -16,8 +16,9 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 use Temporal\Internal\Promise\Reasons;
 use Temporal\Internal\Promise\RejectedValue;
+use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Workflow\ScopeContext;
 
-use function React\Promise\race;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
@@ -81,6 +82,7 @@ final class Promise
 
         return new \React\Promise\Promise(
             static function (callable $resolve, callable $reject) use ($promises, $count, $cancellationQueue): void {
+                self::own($resolve);
                 resolve($promises)->then(
                     static function (iterable $array) use ($count, $cancellationQueue, $resolve, $reject): void {
                         if (!\is_array($array) || $count < 1) {
@@ -164,6 +166,7 @@ final class Promise
 
         return new \React\Promise\Promise(
             static function (callable $resolve, callable $reject) use ($promises, $map, $cancellationQueue): void {
+                self::own($resolve);
                 resolve($promises)
                     ->then(static function (iterable $array) use ($map, $cancellationQueue, $resolve, $reject): void {
                         if (!\is_array($array) || !$array) {
@@ -309,6 +312,32 @@ final class Promise
      */
     public static function race(iterable $promisesOrValues): PromiseInterface
     {
-        return race([...$promisesOrValues]);
+        $promises = [...$promisesOrValues];
+        $cancellationQueue = new CancellationQueue();
+
+        /** @var PromiseInterface<T> */
+        return new \React\Promise\Promise(
+            /**
+             * @param callable(mixed): void $resolve
+             * @param callable(\Throwable): void $reject
+             */
+            static function (callable $resolve, callable $reject) use ($promises, $cancellationQueue): void {
+                self::own($resolve);
+
+                foreach ($promises as $promiseOrValue) {
+                    $cancellationQueue->enqueue($promiseOrValue);
+                    resolve($promiseOrValue)->then($resolve, $reject);
+                }
+            },
+            $cancellationQueue,
+        );
+    }
+
+    private static function own(callable $resolve): void
+    {
+        $context = Facade::getCurrentContext();
+        if ($context instanceof ScopeContext) {
+            $context->own(\Closure::fromCallable($resolve));
+        }
     }
 }

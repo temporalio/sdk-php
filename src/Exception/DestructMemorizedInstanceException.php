@@ -16,5 +16,6 @@ namespace Temporal\Exception;
  * memory. Used by the DestroyWorkflow command.
  *
  * @internal
+ * @deprecated The SDK does not throw the exception.
  */
 class DestructMemorizedInstanceException extends TemporalException {}
