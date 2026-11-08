@@ -14,7 +14,7 @@ use Temporal\Common\SearchAttributes\ValueType;
 final class KeywordListValue extends SearchAttributeKey
 {
     /**
-     * @param iterable<string|\Stringable> $value
+     * @param array<string|\Stringable> $value
      */
     public function valueSet(array $value): SearchAttributeUpdate
     {
