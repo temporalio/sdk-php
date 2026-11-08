@@ -54,6 +54,7 @@ final class FeatureFlags
      * Throw {@see DestructMemorizedInstanceException} when a Workflow instance is destructed.
      *
      * @since SDK 2.16.0
+     * @deprecated The SDK does not throw the exception. The flag has no effect.
      */
     public static bool $throwDestructMemorizedInstanceException = true;
 

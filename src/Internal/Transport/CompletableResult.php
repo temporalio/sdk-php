@@ -161,8 +161,10 @@ class CompletableResult implements CompletableResultInterface
             return null;
         }
 
-        return fn(mixed $value = null): mixed => Facade::usingContext(
-            $this->context,
+        $context = $this->context;
+
+        return static fn(mixed $value = null): mixed => Facade::usingContext(
+            $context,
             static fn(): mixed => $callback($value),
         );
     }

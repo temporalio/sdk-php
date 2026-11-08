@@ -17,6 +17,7 @@ use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
 use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
+use Temporal\Tests\Unit\Framework\Requests\DestroyWorkflow;
 use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
@@ -73,6 +74,11 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
 
         }
         $this->server->addCommand(new InvokeSignal($workflowRunId, $name, ...$args));
+    }
+
+    public function destroyWorkflow(string $workflow): void
+    {
+        $this->server->addCommand(new DestroyWorkflow($this->execution[$workflow]));
     }
 
     public function waitBatch(): ?CommandBatchMock
