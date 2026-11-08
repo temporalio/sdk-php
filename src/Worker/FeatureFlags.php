@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Workflow;
 
 /**
@@ -51,9 +50,8 @@ final class FeatureFlags
     public static bool $cancelAbandonedChildWorkflows = true;
 
     /**
-     * Throw {@see DestructMemorizedInstanceException} when a Workflow instance is destructed.
-     *
      * @since SDK 2.16.0
+     * @deprecated The SDK destroys a Workflow instance without an exception. The flag has no effect.
      */
     public static bool $throwDestructMemorizedInstanceException = true;
 

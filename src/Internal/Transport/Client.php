@@ -127,7 +127,10 @@ final class Client implements ClientInterface
     {
         return new DetachedClient($this, function (array $ids): void {
             foreach ($ids as $id) {
-                unset($this->requests[$id]);
+                if (isset($this->requests[$id])) {
+                    $this->requests[$id][0]->destroy();
+                    unset($this->requests[$id]);
+                }
             }
         });
     }

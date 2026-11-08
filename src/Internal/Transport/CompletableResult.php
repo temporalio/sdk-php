@@ -88,7 +88,7 @@ class CompletableResult implements CompletableResultInterface
      */
     public function promise(): PromiseInterface
     {
-        return $this->deferred->promise();
+        return $this->promise;
     }
 
     public function catch(callable $onRejected): PromiseInterface
@@ -124,7 +124,7 @@ class CompletableResult implements CompletableResultInterface
         return $this->finally($onFulfilledOrRejected);
     }
 
-    private function onFulfilled(mixed $result): void
+    private function onFulfilled(mixed $result): PromiseInterface
     {
         $this->resolved = true;
         $this->value = $result;
@@ -135,9 +135,11 @@ class CompletableResult implements CompletableResultInterface
                 Facade::usingContext($this->context, fn() => $this->deferred->resolve($this->value));
             },
         );
+
+        return $this->deferred->promise();
     }
 
-    private function onRejected(\Throwable $e): void
+    private function onRejected(\Throwable $e): PromiseInterface
     {
         $this->resolved = true;
 
@@ -147,6 +149,8 @@ class CompletableResult implements CompletableResultInterface
                 Facade::usingContext($this->context, fn() => $this->deferred->reject($e));
             },
         );
+
+        return $this->deferred->promise();
     }
 
     /**
@@ -161,8 +165,10 @@ class CompletableResult implements CompletableResultInterface
             return null;
         }
 
-        return fn(mixed $value = null): mixed => Facade::usingContext(
-            $this->context,
+        $context = $this->context;
+
+        return static fn(mixed $value = null): mixed => Facade::usingContext(
+            $context,
             static fn(): mixed => $callback($value),
         );
     }

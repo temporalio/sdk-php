@@ -799,6 +799,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     #[\Override]
     public function destroy(): void
     {
+        foreach ($this->awaits as $awaitsGroup) {
+            foreach ($awaitsGroup as [, $deferred]) {
+                $deferred->destroy();
+            }
+        }
+
         $this->awaits = [];
         $this->client->destroy();
         $this->queryDispatcher->destroy();

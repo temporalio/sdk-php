@@ -16,7 +16,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
@@ -87,6 +86,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private array $onClose = [];
 
+    private \WeakMap $scopes;
     private bool $detached = false;
     private bool $cancelled = false;
     private bool $closed = false;
@@ -94,9 +94,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function __construct(
         ServiceContainer $services,
+        ?\WeakMap $scopes = null,
     ) {
         $this->services = $services;
         $this->deferred = new Deferred();
+        $this->scopes = $scopes ?? new \WeakMap();
     }
 
     /**
@@ -211,7 +213,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function cancel(?\Throwable $reason = null): void
     {
-        if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
+        if ($this->detached) {
             // detaches scopes can be offload via memory flush
             return;
         }
@@ -304,21 +306,29 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        $scopes = [];
+        foreach ($this->scopes as $scope => $_) {
+            $scopes[] = $scope;
+        }
+
+        $scopes = [...\array_reverse($scopes), $this];
+        foreach ($scopes as $scope) {
+            $scope->destroyCoroutine();
+        }
+
+        foreach ($scopes as $scope) {
+            $scope->deferred->destroy();
+        }
+
         // A Destroyable workflow instance may use the Workflow facade from its destroy().
         Facade::usingContext($this->scopeContext, function (): void {
             $this->context?->destroy();
             $this->scopeContext?->destroy();
         });
 
-        unset(
-            $this->coroutine,
-            $this->context,
-            $this->scopeContext,
-            $this->deferred,
-            $this->services,
-            $this->onCancel,
-            $this->onClose,
-        );
+        foreach ($scopes as $scope) {
+            $scope->release();
+        }
     }
 
     /**
@@ -330,7 +340,8 @@ class Scope implements CancellationScopeInterface, Destroyable
         ?WorkflowContext $context = null,
         ?Workflow\UpdateContext $updateContext = null,
     ): self {
-        $scope = new Scope($this->services);
+        $scope = new Scope($this->services, $this->scopes);
+        $this->scopes[$scope] = true;
         $scope->setContext($context ?? $this->context, $updateContext);
         $scope->detached = $detached;
 
@@ -379,14 +390,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $cancelID = $this->addOnCancel(function (?\Throwable $reason = null) use ($request, $cancellable): void {
+        $cancelID = $this->addOnCancel(function () use ($request, $cancellable): void {
             $client = $this->context->getClient();
-            if ($reason instanceof DestructMemorizedInstanceException) {
-                // memory flush
-                $client->reject($request, $reason);
-                return;
-            }
-
             if ($client->isQueued($request)) {
                 $client->cancel($request);
                 return;
@@ -579,6 +584,30 @@ class Scope implements CancellationScopeInterface, Destroyable
         foreach ($this->onClose as $close) {
             $close($result);
         }
+    }
+
+    private function destroyCoroutine(): void
+    {
+        Facade::usingContext($this->scopeContext, function (): void {
+            try {
+                unset($this->coroutine);
+            } catch (\Throwable) {
+            }
+        });
+    }
+
+    private function release(): void
+    {
+        unset(
+            $this->coroutine,
+            $this->context,
+            $this->scopeContext,
+            $this->deferred,
+            $this->services,
+            $this->onCancel,
+            $this->onClose,
+            $this->scopes,
+        );
     }
 
     private function defer(\Closure $tick): void

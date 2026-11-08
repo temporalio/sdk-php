@@ -28,7 +28,7 @@
         "google/protobuf": "^4.33.6 || ^5.34.0",
         "grpc/grpc": "^1.57",
         "internal/destroy": "^1.0",
-        "internal/promise": "^3.4",
+        "internal/promise": "^3.5",
         "nesbot/carbon": "^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
