@@ -20,11 +20,11 @@ interface AggregatedWorkflow
 {
     #[SignalMethod]
     public function addValue(
-        string $value
+        string $value,
     );
 
     #[WorkflowMethod]
     public function run(
-        int $count
+        int $count,
     );
 }

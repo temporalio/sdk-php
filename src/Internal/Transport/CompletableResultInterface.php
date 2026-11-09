@@ -16,7 +16,6 @@ use React\Promise\PromiseInterface;
 /**
  * @template T
  * @extends PromiseInterface<T>
- * @yield T
  */
 interface CompletableResultInterface extends PromiseInterface
 {

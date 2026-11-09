@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Activity\ActivityInfo;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
 use Temporal\Activity;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\RetryOptions;
@@ -42,12 +41,12 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Activity_ActivityInfo")]
     public function handle(string $arg)
     {
-        return yield match ($arg) {
+        return match ($arg) {
             self::ARG_RETRY_OPTIONS => $this->getRetryOptions(),
         };
     }
 
-    private function getRetryOptions(): PromiseInterface
+    private function getRetryOptions(): mixed
     {
         return Workflow::newActivityStub(
             TestActivity::class,

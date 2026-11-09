@@ -28,9 +28,9 @@ class SignalOnlyWorkflow
     private bool $done = false;
 
     #[WorkflowMethod(name: 'SignalOnlyWorkflow')]
-    public function handler(): iterable
+    public function handler(): int
     {
-        yield Workflow::await(fn(): bool => $this->done);
+        Workflow::await(fn(): bool => $this->done);
 
         return $this->received;
     }

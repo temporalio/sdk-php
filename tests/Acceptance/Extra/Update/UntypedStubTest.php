@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Update\UntypedStub;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\TimeoutException;
@@ -263,7 +262,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Update_UntypedStub")]
     public function handle()
     {
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return $this->awaits;
     }
 
@@ -275,7 +274,7 @@ class TestWorkflow
     public function add(string $name): mixed
     {
         $this->awaits[$name] ??= null;
-        yield Workflow::await(fn() => $this->awaits[$name] !== null);
+        Workflow::await(fn() => $this->awaits[$name] !== null);
         return $this->awaits[$name];
     }
 
@@ -287,7 +286,6 @@ class TestWorkflow
 
     /**
      * @param non-empty-string $name
-     * @return PromiseInterface<bool>
      */
     #[Workflow\UpdateMethod(name: 'awaitWithTimeout')]
     public function addWithTimeout(string $name, string|int $timeout, mixed $value): mixed
@@ -297,7 +295,7 @@ class TestWorkflow
             return $this->awaits[$name];
         }
 
-        $notTimeout = yield Workflow::awaitWithTimeout(
+        $notTimeout = Workflow::awaitWithTimeout(
             $timeout,
             fn() => $this->awaits[$name] !== null,
         );

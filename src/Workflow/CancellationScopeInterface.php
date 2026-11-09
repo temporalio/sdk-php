@@ -15,11 +15,21 @@ use React\Promise\PromiseInterface;
 
 /**
  * @template-covariant T
- * @yield T
  * @extends PromiseInterface<T>
  */
 interface CancellationScopeInterface extends PromiseInterface
 {
+    /**
+     * Suspend the current workflow until this scope completes.
+     *
+     * ```
+     *  $result = Workflow::async(static fn(): string => 'done')->await();
+     * ```
+     *
+     * @return T
+     */
+    public function await(): mixed;
+
     /**
      * Detached scopes can continue working even if parent scope was cancelled.
      */

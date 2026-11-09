@@ -70,7 +70,7 @@ final class TranscriptRetryTest extends TestCase
 class RetryWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Transcript_TranscriptRetry_run')]
-    public function run(): \Generator
+    public function run(): string
     {
         $activity = Workflow::newActivityStub(
             RetryActivity::class,
@@ -78,7 +78,7 @@ class RetryWorkflow
                 ->withScheduleToCloseTimeout(30)
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(3)->withInitialInterval(1)),
         );
-        return yield $activity->flaky();
+        return $activity->flaky();
     }
 }
 

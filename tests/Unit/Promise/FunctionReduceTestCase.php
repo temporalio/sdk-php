@@ -29,6 +29,39 @@ final class FunctionReduceTestCase extends BaseFunction
         )->then($mock);
     }
 
+    public function testReduceTraversableInput(): void
+    {
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($this->identicalTo(6));
+
+        Promise::reduce(
+            new \ArrayIterator([1, Promise::resolve(2), 3]),
+            $this->plus(),
+        )->then($mock);
+    }
+
+    public function testReduceRejectsWhenTraversableThrowsDuringMaterialization(): void
+    {
+        $error = new Exception('iterator failed');
+        $rejection = null;
+        $values = (static function () use ($error): \Generator {
+            yield 1;
+            throw $error;
+        })();
+
+        Promise::reduce($values, $this->plus())->then(
+            $this->expectCallableNever(),
+            static function (\Throwable $reason) use (&$rejection): void {
+                $rejection = $reason;
+            },
+        );
+
+        self::assertSame($error, $rejection);
+    }
+
     public function testReduceValuesWithInitialValue(): void
     {
         $mock = $this->createCallableMock();

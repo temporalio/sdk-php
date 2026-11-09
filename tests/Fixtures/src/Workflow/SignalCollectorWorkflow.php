@@ -22,15 +22,16 @@ class SignalCollectorWorkflow
 {
     /** @var list<array{value: string, at: int}> */
     private array $events = [];
+
     private bool $done = false;
 
     /**
-     * @return iterable<mixed>
+     * @return array<mixed>
      */
     #[WorkflowMethod(name: 'SignalCollectorWorkflow')]
-    public function handler(int $maxSeconds): iterable
+    public function handler(int $maxSeconds): array
     {
-        yield Workflow::awaitWithTimeout($maxSeconds, fn(): bool => $this->done);
+        Workflow::awaitWithTimeout($maxSeconds, fn(): bool => $this->done);
 
         return $this->events;
     }

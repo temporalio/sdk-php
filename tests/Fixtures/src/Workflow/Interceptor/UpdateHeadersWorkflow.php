@@ -23,7 +23,7 @@ class UpdateHeadersWorkflow
     #[WorkflowMethod(name: 'InterceptorUpdateHeadersWorkflow')]
     public function handler(): mixed
     {
-        yield Workflow::await(fn() => $this->updated);
+        Workflow::await(fn() => $this->updated);
 
         $this->headers = \iterator_to_array(Workflow::getCurrentContext()->getHeader());
 

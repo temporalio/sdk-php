@@ -9,7 +9,6 @@ use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
-use Temporal\Promise;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -37,25 +36,26 @@ class FeatureWorkflow
     private int $total = 0;
 
     #[WorkflowMethod('Harness_Update_Activities')]
-    public function run()
+    public function run(): int
     {
-        yield Workflow::await(fn(): bool => $this->total > 0);
+        Workflow::await(fn(): bool => $this->total > 0);
         return $this->total;
     }
 
     #[Workflow\UpdateMethod('my_update')]
-    public function myUpdate()
+    public function myUpdate(): int
     {
-        $promises = [];
+        $scopes = [];
         for ($i = 0; $i < ACTIVITY_COUNT; ++$i) {
-            $promises[] = Workflow::executeActivity(
-                'result',
-                options: ActivityOptions::new()->withStartToCloseTimeout(10)
+            $scopes[] = Workflow::async(
+                static fn() => Workflow::executeActivity(
+                    'result',
+                    options: ActivityOptions::new()->withStartToCloseTimeout(10)
+                ),
             );
         }
 
-        return yield Promise::all($promises)
-            ->then(fn(array $results) => $this->total = \array_sum($results));
+        return $this->total = \array_sum(Workflow::all($scopes));
     }
 }
 

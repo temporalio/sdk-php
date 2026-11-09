@@ -23,15 +23,15 @@ use Temporal\Tests\Activity\SimpleActivity;
 class TimerWorkflow
 {
     #[WorkflowMethod(name: 'TimerWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): string
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
-        yield Workflow::timer(1);
+        Workflow::timer(1);
 
-        return yield $simple->lower($input);
+        return $simple->lower($input);
     }
 }

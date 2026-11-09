@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Interceptors\Context;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
+use Ramsey\Uuid\UuidInterface;
 use Temporal\Activity;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -102,12 +102,12 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Interceptors_Context")]
     public function handle(string $class)
     {
-        $activityClass = yield Workflow::executeActivity(
+        $activityClass = Workflow::executeActivity(
             'Extra_Interceptors_Context.handler',
             ['foo'],
             Activity\ActivityOptions::new()->withScheduleToCloseTimeout('10 seconds'),
         );
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return [
             'activity' => $activityClass,
             'workflow' => $class,
@@ -143,7 +143,7 @@ class TestFailingWorkflow
 #[WorkflowInterface]
 class TestReadonlyConstructorWorkflow
 {
-    private ?PromiseInterface $uuid = null;
+    private ?UuidInterface $uuid = null;
 
     #[Workflow\WorkflowInit]
     public function __construct(mixed ...$input)

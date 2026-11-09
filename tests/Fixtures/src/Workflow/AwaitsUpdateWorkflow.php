@@ -26,19 +26,18 @@ class AwaitsUpdateWorkflow
     #[WorkflowMethod(name: "AwaitsUpdate.greet")]
     public function greet()
     {
-        yield Workflow::await(fn() => $this->exit);
+        Workflow::await(fn() => $this->exit);
         return $this->awaits;
     }
 
     /**
      * @param non-empty-string $name
-     * @return mixed
      */
     #[Workflow\UpdateMethod(name: 'await')]
     public function add(string $name): mixed
     {
         $this->awaits[$name] ??= null;
-        yield Workflow::await(fn() => $this->awaits[$name] !== null);
+        Workflow::await(fn() => $this->awaits[$name] !== null);
         return $this->awaits[$name];
     }
 
@@ -60,7 +59,7 @@ class AwaitsUpdateWorkflow
             return $this->awaits[$name];
         }
 
-        $notTimeout = yield Workflow::awaitWithTimeout(
+        $notTimeout = Workflow::awaitWithTimeout(
             $timeout,
             fn() => $this->awaits[$name] !== null,
         );
@@ -78,13 +77,12 @@ class AwaitsUpdateWorkflow
         $value === null and throw new \InvalidArgumentException('Value must not be null');
         empty($name) and throw new \InvalidArgumentException('Name must not be empty');
         DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)->isEmpty() and throw new \InvalidArgumentException(
-            'Timeout must not be empty'
+            'Timeout must not be empty',
         );
     }
 
     /**
      * @param non-empty-string $name
-     * @return mixed
      */
     #[Workflow\UpdateMethod(name: 'resolveValue')]
     public function resolve(string $name, mixed $value): mixed
@@ -102,7 +100,6 @@ class AwaitsUpdateWorkflow
 
     /**
      * @param non-empty-string $name
-     * @return mixed
      */
     #[Workflow\QueryMethod(name: 'getValue')]
     public function get(string $name): mixed

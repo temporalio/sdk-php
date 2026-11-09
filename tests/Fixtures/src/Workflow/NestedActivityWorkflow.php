@@ -19,43 +19,43 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class GeneratorWorkflow
+class NestedActivityWorkflow
 {
-    #[WorkflowMethod(name: 'GeneratorWorkflow')]
+    #[WorkflowMethod(name: 'NestedActivityWorkflow')]
     public function handler(
-        string $input
+        string $input,
     ) {
         // typed stub
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(5)->withRetryOptions(
-                RetryOptions::new()->withMaximumAttempts(1)
-            )
+                RetryOptions::new()->withMaximumAttempts(1),
+            ),
         );
 
         return [
-            yield $this->doSomething($simple, $input),
-            yield $this->doSomething($simple, 'another')
+            $this->doSomething($simple, $input),
+            $this->doSomething($simple, 'another'),
         ];
     }
 
     /**
      * @param ActivityProxy<SimpleActivity> $simple
      */
-    private function doSomething(ActivityProxy $simple, string $input): \Generator
+    private function doSomething(ActivityProxy $simple, string $input): array
     {
         if ($input === 'error') {
-            throw new \Exception('error from generator');
+            throw new \Exception('error from nested workflow action');
         }
 
         if ($input === 'failure') {
-            yield $simple->fail();
+            $simple->fail();
             throw new \Exception('Unreachable statement');
         }
 
         $result = [];
-        $result[] = yield $simple->echo($input);
-        $result[] = yield $simple->echo($input);
+        $result[] = $simple->echo($input);
+        $result[] = $simple->echo($input);
 
         return $result;
     }

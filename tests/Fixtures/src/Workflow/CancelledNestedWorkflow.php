@@ -31,31 +31,31 @@ class CancelledNestedWorkflow
     {
         $this->status[] = 'begin';
         try {
-            yield Workflow::async(
-                function () {
+            Workflow::async(
+                function (): void {
                     $this->status[] = 'first scope';
 
                     $scope = Workflow::async(
-                        function () {
+                        function (): void {
                             $this->status[] = 'second scope';
 
                             try {
-                                yield Workflow::timer(2);
+                                Workflow::timer(2);
                             } catch (CanceledFailure $e) {
                                 $this->status[] = 'second scope cancelled';
                                 throw $e;
                             }
 
                             $this->status[] = 'second scope done';
-                        }
+                        },
                     )->onCancel(
-                        function () {
+                        function (): void {
                             $this->status[] = 'close second scope';
-                        }
+                        },
                     );
 
                     try {
-                        yield Workflow::timer(1);
+                        Workflow::timer(1);
                     } catch (CanceledFailure $e) {
                         $this->status[] = 'first scope cancelled';
                         throw $e;
@@ -63,13 +63,13 @@ class CancelledNestedWorkflow
 
                     $this->status[] = 'first scope done';
 
-                    yield $scope;
-                }
+                    $scope->await();
+                },
             )->onCancel(
-                function () {
+                function (): void {
                     $this->status[] = 'close first scope';
-                }
-            );
+                },
+            )->await();
         } catch (CanceledFailure $e) {
             $this->status[] = 'close process';
 

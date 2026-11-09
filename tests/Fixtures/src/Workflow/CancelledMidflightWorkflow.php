@@ -32,20 +32,20 @@ class CancelledMidflightWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         $this->status[] = 'start';
 
         $scope = Workflow::async(
-            function () use ($simple) {
+            function () use ($simple): void {
                 $this->status[] = 'in scope';
                 $simple->slow('1');
-            }
+            },
         )->onCancel(
-            function () {
+            function (): void {
                 $this->status[] = 'on cancel';
-            }
+            },
         );
 
         $scope->cancel();

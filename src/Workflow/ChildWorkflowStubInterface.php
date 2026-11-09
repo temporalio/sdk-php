@@ -13,7 +13,6 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
-use Temporal\Internal\Transport\CompletableResultInterface;
 
 /**
  * @psalm-import-type TType from Type
@@ -23,7 +22,14 @@ interface ChildWorkflowStubInterface
     /**
      * @throws \LogicException
      */
-    public function getExecution(): PromiseInterface;
+    public function getExecution(): WorkflowExecution;
+
+    /**
+     * @internal
+     * @return PromiseInterface<WorkflowExecution>
+     * @throws \LogicException
+     */
+    public function getExecutionAsync(): PromiseInterface;
 
     public function getChildWorkflowType(): string;
 
@@ -31,28 +37,52 @@ interface ChildWorkflowStubInterface
 
     /**
      * @param TType $returnType
-     *
-     * @return CompletableResultInterface
      */
-    public function execute(array $args = [], $returnType = null): PromiseInterface;
+    public function execute(array $args = [], $returnType = null): mixed;
 
     /**
-     * @param array $args
-     *
-     * @return CompletableResultInterface<WorkflowExecution>
+     * @param TType $returnType
+     * @return PromiseInterface<mixed>
      */
-    public function start(...$args): PromiseInterface;
+    public function executeAsync(array $args = [], $returnType = null): PromiseInterface;
+
+    /**
+     * @param mixed ...$args
+     */
+    public function start(...$args): WorkflowExecution;
+
+    /**
+     * @param mixed ...$args
+     * @internal
+     * @return PromiseInterface<WorkflowExecution>
+     */
+    public function startAsync(...$args): PromiseInterface;
 
     /**
      * @param TType $returnType
      */
-    public function getResult($returnType = null): PromiseInterface;
+    public function getResult($returnType = null): mixed;
+
+    /**
+     * @param TType $returnType
+     * @internal
+     * @return PromiseInterface<mixed>
+     */
+    public function getResultAsync($returnType = null): PromiseInterface;
 
     /**
      * @param non-empty-string $name
      *
-     * @return CompletableResultInterface
      * @throws \LogicException
      */
-    public function signal(string $name, array $args = []): PromiseInterface;
+    public function signal(string $name, array $args = []): void;
+
+    /**
+     * @param non-empty-string $name
+     * @internal
+     * @return PromiseInterface<mixed>
+     *
+     * @throws \LogicException
+     */
+    public function signalAsync(string $name, array $args = []): PromiseInterface;
 }

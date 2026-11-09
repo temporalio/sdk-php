@@ -26,7 +26,7 @@ class AwaitWithTimeoutOptionsWorkflow
      *        NULL means no {@see TimerOptions} are passed.
      * @param int $timeout Await timeout in seconds.
      * @param bool $useAwaitOptions FALSE means the await is called with a plain timeout value.
-     * @return \Generator<mixed, mixed, mixed, bool> FALSE because of the timeout.
+     * @return bool FALSE because of the timeout.
      */
     #[WorkflowMethod]
     public function handler(?string $summary = null, int $timeout = 1, bool $useAwaitOptions = true)
@@ -37,6 +37,6 @@ class AwaitWithTimeoutOptionsWorkflow
             )
             : $timeout;
 
-        return yield Workflow::awaitWithTimeout($intervalOrOptions, static fn(): bool => false);
+        return Workflow::awaitWithTimeout($intervalOrOptions, static fn(): bool => false);
     }
 }

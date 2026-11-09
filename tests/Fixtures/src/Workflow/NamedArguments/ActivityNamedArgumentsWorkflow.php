@@ -25,32 +25,32 @@ class ActivityNamedArgumentsWorkflow
         string $string,
         bool $bool,
         string $secondString,
-    ): \Generator|array {
+    ): array {
         $activity = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)
                 ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(2)
-                )
+                    RetryOptions::new()->withMaximumAttempts(2),
+                ),
         );
 
-        $oneParamRes = yield $activity->namedArguments(
+        $oneParamRes = $activity->namedArguments(
             input: $string,
         );
 
-        $paramsInDifferentOrderRes = yield $activity->namedArguments(
+        $paramsInDifferentOrderRes = $activity->namedArguments(
             optionalNullableString: $secondString,
             optionalBool: $bool,
             input: $string,
         );
 
-        $missingParamsRes = yield $activity->namedArguments(
+        $missingParamsRes = $activity->namedArguments(
             input: $string,
             optionalNullableString: $secondString,
         );
 
-        $missingParamAndDifferentOrderRes = yield $activity->namedArguments(
+        $missingParamAndDifferentOrderRes = $activity->namedArguments(
             optionalNullableString: $secondString,
             input: $string,
         );

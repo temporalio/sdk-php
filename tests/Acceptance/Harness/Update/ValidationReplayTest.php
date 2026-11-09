@@ -31,9 +31,9 @@ class FeatureWorkflow
     private static int $validations = 0;
 
     #[WorkflowMethod('Harness_Update_ValidationReplay')]
-    public function run()
+    public function run(): int
     {
-        yield Workflow::await(fn(): bool => $this->done);
+        Workflow::await(fn(): bool => $this->done);
 
         return static::$validations;
     }

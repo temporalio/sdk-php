@@ -17,19 +17,22 @@ use Temporal\Workflow\WorkflowMethod;
 #[Workflow\WorkflowInterface]
 class AwaitWithTimeoutWorkflow
 {
-    #[WorkflowMethod()]
+    #[WorkflowMethod]
     public function handler()
     {
-        yield Workflow::awaitWithTimeout(
+        Workflow::awaitWithTimeout(
             999,
-            fn() => false,
+            static fn() => false,
         );
 
-        yield Workflow::awaitWithTimeout(
-            20,
-            Workflow::awaitWithTimeout(500, fn() => false),
-            Workflow::awaitWithTimeout(120, fn() => false),
+        $longWait = Workflow::async(
+            static fn(): bool => Workflow::awaitWithTimeout(500, static fn() => false),
         );
+        $shortWait = Workflow::async(
+            static fn(): bool => Workflow::awaitWithTimeout(120, static fn() => false),
+        );
+
+        Workflow::awaitWithTimeout(20, $longWait, $shortWait);
 
         return 'ok';
     }

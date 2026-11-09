@@ -20,7 +20,7 @@ use Temporal\Workflow\WorkflowMethod;
 class HistoryLengthWorkflow
 {
     #[WorkflowMethod(name: 'HistoryLengthWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): array
     {
         $result = [Workflow::getInfo()->historyLength];
         $simple = Workflow::newActivityStub(
@@ -28,20 +28,20 @@ class HistoryLengthWorkflow
             ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
-        $str = yield Workflow::sideEffect(
-            function () use ($input) {
+        $str = Workflow::sideEffect(
+            static function () use ($input) {
                 return $input . '-42';
             },
         );
         $result[] = Workflow::getInfo()->historyLength;
 
-        yield $simple->lower($str);
+        $simple->lower($str);
         $result[] = Workflow::getInfo()->historyLength;
 
-        yield $simple->lower($str);
+        $simple->lower($str);
         $result[] = Workflow::getInfo()->historyLength;
 
-        yield $simple->lower($str);
+        $simple->lower($str);
         $result[] = Workflow::getInfo()->historyLength;
 
         return $result;

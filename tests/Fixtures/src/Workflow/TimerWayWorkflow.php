@@ -18,16 +18,18 @@ use Temporal\Workflow\WorkflowMethod;
 class TimerWayWorkflow
 {
     #[WorkflowMethod(name: 'TimerWayWorkflow')]
-    public function handler(): iterable
+    public function handler(): bool
     {
         $timerResolved = false;
 
-        $timer = Workflow::timer(20)
-            ->then(function () use (&$timerResolved) {
+        $timer = Workflow::async(
+            static function () use (&$timerResolved): void {
+                Workflow::timer(20);
                 $timerResolved = true;
-            });
+            },
+        );
 
-        yield Workflow::await($timer, fn() => true);
+        Workflow::await($timer, static fn() => true);
 
         return $timerResolved;
     }

@@ -135,9 +135,9 @@ final class FailureSerializationContextTestCase extends TestCase
 
 final class FailingQueryWorkflow
 {
-    public function handle(): \Generator
+    public function handle(): void
     {
-        yield Workflow::await(static fn(): bool => false);
+        Workflow::await(static fn(): bool => false);
     }
 
     public function fail(): string

@@ -19,20 +19,20 @@ use Temporal\Workflow\WorkflowMethod;
 class ChainedWorkflow
 {
     #[WorkflowMethod(name: 'ChainedWorkflow')]
-    public function handler(string $input): iterable
+    public function handler(string $input): string
     {
         $opts = ActivityOptions::new()->withStartToCloseTimeout(5);
 
-        return yield Workflow::executeActivity(
+        $result = Workflow::executeActivity(
             'SimpleActivity.echo',
             [$input],
-            $opts
-        )->then(function ($result) use ($opts) {
-            return Workflow::executeActivity(
-                'SimpleActivity.lower',
-                ['Result:' . $result],
-                $opts
-            );
-        });
+            $opts,
+        );
+
+        return Workflow::executeActivity(
+            'SimpleActivity.lower',
+            ['Result:' . $result],
+            $opts,
+        );
     }
 }
