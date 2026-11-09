@@ -175,7 +175,12 @@ final class WorkflowStarter
                 $i = new \Temporal\Api\Update\V1\Input();
                 $i->setName($input->updateInput->updateName);
                 $input->updateInput->arguments->isEmpty() or $i->setArgs($input->updateInput->arguments->toPayloads());
-                $input->updateInput->header->isEmpty() or $i->setHeader($input->updateInput->header->toHeader());
+                $header = $input->updateInput->header;
+                \assert($header instanceof Header);
+                if ($header->getDataConverter() === null) {
+                    $header->setDataConverter($this->converter);
+                }
+                $header->isEmpty() or $i->setHeader($header->toHeader());
                 $r->setInput($i);
 
                 $ops = [
