@@ -34,7 +34,7 @@ if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
     $this->startTemporalTestServer();
 }
 
-$environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
+$environment->startRoadRunner(['./rr', 'serve', '-c', '.rr.silent.yaml', '-w', 'tests'], configFile: '.rr.silent.yaml');
 register_shutdown_function(fn() => $environment->stop());
 ```
 
@@ -42,10 +42,10 @@ Alternatively, if you have multiple workers because of task-queue separation, yo
 
 ```php
 $environment1 = Environment::create();
-$environment1->startRoadRunner('./rr serve -c .rr.task1.yaml -w tests');
+$environment1->startRoadRunner(['./rr', 'serve', '-c', '.rr.task1.yaml', '-w', 'tests'], configFile: '.rr.task1.yaml');
 
 $environment2 = Environment::create();
-$environment2->startRoadRunner('./rr serve -c .rr.task2.yaml -w tests');
+$environment2->startRoadRunner(['./rr', 'serve', '-c', '.rr.task2.yaml', '-w', 'tests'], configFile: '.rr.task2.yaml');
 
 register_shutdown_function(function() use($environment1, $environment2): void {
     $environment1->stop();
@@ -164,7 +164,7 @@ testing workflows. So, we can mock them in order to unit test different flows of
 
 #### RoadRunner config
 
-Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/spiral/roadrunner-kv), so you need to
+Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/roadrunner-php/kv), so you need to
 add the following lines to your `tests/.rr.test.yaml` for testing:
 
 ```yaml

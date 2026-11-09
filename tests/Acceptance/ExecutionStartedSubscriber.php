@@ -20,6 +20,8 @@ use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\ActivityClient;
+use Temporal\Client\ActivityClientInterface;
 use Temporal\Client\ScheduleClient;
 use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClient;
@@ -154,6 +156,12 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         );
         $nexusHttp = new NexusHttpClient(HttpClient::createForBaseUri("http://{$nexusHost}:7243"));
 
+        $activityClient = ActivityClient::create(
+            serviceClient: $serviceClient,
+            options: (new ClientOptions())->withNamespace($state->namespace),
+            converter: $converter,
+        )->withTimeout(5);
+
         $container->bindSingleton(RRStarter::class, $rrRunner);
         $container->bindSingleton(TemporalStarter::class, $temporalRunner);
         $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
@@ -161,6 +169,7 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
         $container->bindSingleton(NexusEndpoints::class, $nexusEndpoints);
         $container->bindSingleton(NexusHttpClient::class, $nexusHttp);
+        $container->bindSingleton(ActivityClientInterface::class, $activityClient);
         $container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
         $container->bindSingleton(DataConverterInterface::class, $converter);
         $container->bind(RPCInterface::class, static fn() => RPC::create(\getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));

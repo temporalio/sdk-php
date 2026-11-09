@@ -28,6 +28,8 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
             'WorkflowNamespace' => 'default',
             'WorkflowExecution' => null,
             'ActivityID'        => '0',
+            'ActivityRunID'     => '',
+            'Namespace'         => 'default',
             'ActivityType'      => [
                 'Name' => '',
             ],

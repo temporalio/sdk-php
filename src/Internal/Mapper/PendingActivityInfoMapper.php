@@ -82,6 +82,53 @@ final class PendingActivityInfoMapper
         );
     }
 
+    /**
+     * @psalm-suppress ArgumentTypeCoercion
+     */
+    public function prepareDeploymentVersion(?WorkerDeploymentVersionMessage $version): ?WorkerDeploymentVersion
+    {
+        return $version === null
+            ? null
+            : WorkerDeploymentVersion::new($version->getDeploymentName(), $version->getBuildId());
+    }
+
+    public function preparePriority(?PriorityMessage $priority): ?PriorityDto
+    {
+        if ($priority === null) {
+            return null;
+        }
+
+        $result = PriorityDto::new($priority->getPriorityKey())
+            ->withFairnessKey($priority->getFairnessKey());
+
+        $weight = $priority->getFairnessWeight();
+        $weight >= 0.001 && $weight <= 1000.0 and $result = $result->withFairnessWeight($weight);
+
+        return $result;
+    }
+
+    /**
+     * @psalm-suppress DocblockTypeContradiction, RedundantConditionGivenDocblockType, TooManyTemplateParams
+     */
+    public function prepareRetryPolicy(RetryPolicy $policy): PendingActivityRetryPolicy
+    {
+        $initialInterval = $policy->getInitialInterval();
+        $maximumInterval = $policy->getMaximumInterval();
+
+        $nonRetryableErrorTypes = [];
+        foreach ($policy->getNonRetryableErrorTypes() as $errorType) {
+            $nonRetryableErrorTypes[] = $errorType;
+        }
+
+        return new PendingActivityRetryPolicy(
+            initialInterval: $initialInterval === null ? null : DateInterval::parse($initialInterval),
+            backoffCoefficient: $policy->getBackoffCoefficient(),
+            maximumInterval: $maximumInterval === null ? null : DateInterval::parse($maximumInterval),
+            maximumAttempts: $policy->getMaximumAttempts(),
+            nonRetryableErrorTypes: $nonRetryableErrorTypes,
+        );
+    }
+
     private function prepareHeartbeatDetails(
         PendingActivityInfo $message,
         ActivitySerializationContext $context,
@@ -101,31 +148,6 @@ final class PendingActivityInfoMapper
         }
 
         return FailureConverter::mapFailureToException($failure, $this->converter, $context);
-    }
-
-    /**
-     * @psalm-suppress ArgumentTypeCoercion
-     */
-    private function prepareDeploymentVersion(?WorkerDeploymentVersionMessage $version): ?WorkerDeploymentVersion
-    {
-        return $version === null
-            ? null
-            : WorkerDeploymentVersion::new($version->getDeploymentName(), $version->getBuildId());
-    }
-
-    private function preparePriority(?PriorityMessage $priority): ?PriorityDto
-    {
-        if ($priority === null) {
-            return null;
-        }
-
-        $result = PriorityDto::new($priority->getPriorityKey())
-            ->withFairnessKey($priority->getFairnessKey());
-
-        $weight = $priority->getFairnessWeight();
-        $weight >= 0.001 && $weight <= 1000.0 and $result = $result->withFairnessWeight($weight);
-
-        return $result;
     }
 
     private function preparePauseInfo(?PauseInfo $pauseInfo): ?PendingActivityPauseInfo
@@ -170,28 +192,6 @@ final class PendingActivityInfoMapper
             startToCloseTimeout: $startToClose === null ? null : DateInterval::parse($startToClose),
             heartbeatTimeout: $heartbeat === null ? null : DateInterval::parse($heartbeat),
             retryPolicy: $retryPolicy === null ? null : $this->prepareRetryPolicy($retryPolicy),
-        );
-    }
-
-    /**
-     * @psalm-suppress DocblockTypeContradiction, RedundantConditionGivenDocblockType, TooManyTemplateParams
-     */
-    private function prepareRetryPolicy(RetryPolicy $policy): PendingActivityRetryPolicy
-    {
-        $initialInterval = $policy->getInitialInterval();
-        $maximumInterval = $policy->getMaximumInterval();
-
-        $nonRetryableErrorTypes = [];
-        foreach ($policy->getNonRetryableErrorTypes() as $errorType) {
-            $nonRetryableErrorTypes[] = $errorType;
-        }
-
-        return new PendingActivityRetryPolicy(
-            initialInterval: $initialInterval === null ? null : DateInterval::parse($initialInterval),
-            backoffCoefficient: $policy->getBackoffCoefficient(),
-            maximumInterval: $maximumInterval === null ? null : DateInterval::parse($maximumInterval),
-            maximumAttempts: $policy->getMaximumAttempts(),
-            nonRetryableErrorTypes: $nonRetryableErrorTypes,
         );
     }
 }

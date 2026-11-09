@@ -185,12 +185,7 @@ final class Environment
         $process = new Process(command: $rrCommand, env: $envs, timeout: $commandTimeout);
         $this->roadRunnerProcess = $process;
 
-        $this->runProcess('RoadRunner', $process, $commandTimeout, function () use ($process, $configFile) {
-            $output = $process->getOutput();
-            if (!\str_contains($output, 'RoadRunner server started')) {
-                return false;
-            }
-
+        $this->runProcess('RoadRunner', $process, $commandTimeout, function () use ($configFile) {
             $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
             $check->setTimeout(1);
 
@@ -288,15 +283,17 @@ final class Environment
         $process->start();
 
         $deadline = \microtime(true) + (float) $commandTimeout;
+        $ready = false;
 
         while ($process->isRunning() && \microtime(true) < $deadline) {
             if ($readiness()) {
+                $ready = true;
                 break;
             }
             \usleep(10_000);
         }
 
-        if (!$process->isRunning()) {
+        if (!$ready || !$process->isRunning()) {
             ($onFailure ?? function (Process $process) use ($name): void {
                 $this->io->error(\sprintf(
                     'Failed to start until %s is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',

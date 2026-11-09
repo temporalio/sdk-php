@@ -51,6 +51,8 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
             'MaxHeartbeatThrottleInterval' => null,
             'DisableEagerActivities' => false,
             'MaxConcurrentEagerActivityExecutionSize' => 0,
+            'MaxEagerActivityReservationsPerWorkflowTask' => null,
+            'DisablePayloadErrorLimit' => false,
             'DisableRegistrationAliasing' => false,
             'BuildID' => "",
             'DeploymentOptions' => null,
@@ -337,6 +339,39 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
         self::assertNotSame($dto, $result);
         self::assertSame(0, $dto->maxConcurrentEagerActivityExecutionSize);
         self::assertSame(10, $result->maxConcurrentEagerActivityExecutionSize);
+    }
+
+    public function testMaxEagerActivityReservationsPerWorkflowTask(): void
+    {
+        $dto = new WorkerOptions();
+        $result = $dto->withMaxEagerActivityReservationsPerWorkflowTask(10);
+
+        self::assertNotSame($dto, $result);
+        self::assertNull($dto->maxEagerActivityReservationsPerWorkflowTask);
+        self::assertSame(10, $result->maxEagerActivityReservationsPerWorkflowTask);
+        self::assertSame(10, $this->marshal($result)['MaxEagerActivityReservationsPerWorkflowTask']);
+    }
+
+    public function testMaxEagerActivityReservationsPerWorkflowTaskRejectsNonPositive(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'MaxEagerActivityReservationsPerWorkflowTask must be positive; '
+            . 'use withDisableEagerActivities() to disable eager activity execution.',
+        );
+
+        (new WorkerOptions())->withMaxEagerActivityReservationsPerWorkflowTask(0);
+    }
+
+    public function testDisablePayloadErrorLimit(): void
+    {
+        $dto = new WorkerOptions();
+        $result = $dto->withDisablePayloadErrorLimit();
+
+        self::assertNotSame($dto, $result);
+        self::assertFalse($dto->disablePayloadErrorLimit);
+        self::assertTrue($result->disablePayloadErrorLimit);
+        self::assertTrue($this->marshal($result)['DisablePayloadErrorLimit']);
     }
 
     public function testDisableRegistrationAliasing(): void
