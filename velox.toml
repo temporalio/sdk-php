@@ -29,5 +29,5 @@ tag = "latest"
 module_name = "github.com/roadrunner-server/memory/v6"
 
 [plugins.temporal]
-tag = "v6.0.1-0.20261013100643-a9a42035d132"
+tag = "v6.0.1-0.20261109134410-426b5fc7a976"
 module_name = "github.com/temporalio/roadrunner-temporal/v6"
