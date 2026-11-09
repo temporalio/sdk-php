@@ -125,8 +125,7 @@
             "sources": [
                 {
                     "from": "github",
-                    "package": "temporalio/skill-temporal-developer",
-                    "ref": "main"
+                    "package": "temporalio/skill-temporal-developer"
                 }
             ]
         },
