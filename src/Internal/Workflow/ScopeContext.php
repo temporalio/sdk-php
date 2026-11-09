@@ -58,6 +58,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $ctx->readonly = $context->readonly;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $ctx->inReadOnlyCallback = &$context->inReadOnlyCallback;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $ctx->evicted = &$context->evicted;
         $ctx->continueAsNew = $context->continueAsNew;
         $ctx->trace = &$context->trace;
         $ctx->currentDetails = &$context->currentDetails;
@@ -111,12 +113,20 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $promise = $this->parent->request($request, cancellable: $cancellable);
         ($this->onRequest)($request, $promise, $cancellable);
 
-        return new CompletableResult(
+        $result = new CompletableResult(
             $this,
             $this->services->loop,
             $promise,
             $this->scope->getLayer(),
         );
+        $this->scope->own($result);
+
+        return $result;
+    }
+
+    public function own(PromiseInterface $promise): void
+    {
+        $this->scope->own($promise);
     }
 
     public function getUpdateContext(): ?UpdateContext
@@ -152,11 +162,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $this->parent->awaits[$conditionGroupId][] = [$condition, $deferred];
         $this->scope->onAwait($deferred);
 
-        return new CompletableResult(
+        $result = new CompletableResult(
             $this,
             $this->services->loop,
             $deferred->promise(),
             $this->scope->getLayer(),
         );
+        $this->scope->own($result);
+
+        return $result;
     }
 }

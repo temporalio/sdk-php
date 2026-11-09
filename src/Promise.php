@@ -16,6 +16,8 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 use Temporal\Internal\Promise\Reasons;
 use Temporal\Internal\Promise\RejectedValue;
+use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Workflow\ScopeContext;
 
 use function React\Promise\race;
 use function React\Promise\reject;
@@ -213,7 +215,7 @@ final class Promise
         $cancellationQueue = new CancellationQueue();
         $cancellationQueue->enqueue($promises);
 
-        return new \React\Promise\Promise(
+        $promise = new \React\Promise\Promise(
             static function (callable $resolve, callable $reject) use ($promises, $reduce, $initial, $cancellationQueue): void {
                 resolve($promises)
                     ->then(
@@ -260,6 +262,13 @@ final class Promise
             },
             $cancellationQueue,
         );
+
+        $context = Facade::getCurrentContext();
+        if ($context instanceof ScopeContext) {
+            $context->own($promise);
+        }
+
+        return $promise;
     }
 
     /**
