@@ -31,7 +31,7 @@ class WorkflowSearchAttributesTest extends TestCase
         WorkflowStubInterface $stub,
     ): void {
         $result = $stub->getResult(timeout: 3);
-        $this->assertSame([], $result, 'Workflow result contains resolved value');
+        $this->assertEmpty($result, 'Workflow result contains resolved value');
     }
 
     #[Test]

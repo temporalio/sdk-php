@@ -15,8 +15,6 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 
 /**
  * No-op defaults for {@see ConnectionPluginInterface}.
- *
- * @implements ConnectionPluginInterface
  */
 trait ConnectionPluginTrait
 {

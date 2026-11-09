@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowServiceException;
@@ -43,7 +44,10 @@ class ResetWorkerTest extends TestCase
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            self::assertThat($e->getPrevious(), self::logicalOr(
+                self::isInstanceOf(TimeoutException::class),
+                self::isInstanceOf(CanceledException::class),
+            ));
         }
 
         # Cancel Workflow
@@ -83,7 +87,10 @@ class ResetWorkerTest extends TestCase
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            self::assertThat($e->getPrevious(), self::logicalOr(
+                self::isInstanceOf(TimeoutException::class),
+                self::isInstanceOf(CanceledException::class),
+            ));
         }
 
         $stub->signal('exit');

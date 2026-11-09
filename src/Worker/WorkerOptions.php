@@ -293,6 +293,9 @@ class WorkerOptions
     #[Marshal(name: 'MaxEagerActivityReservationsPerWorkflowTask')]
     public ?int $maxEagerActivityReservationsPerWorkflowTask = null;
 
+    #[Marshal(name: 'DisablePayloadErrorLimit')]
+    public bool $disablePayloadErrorLimit = false;
+
     /**
      * Optional: Disable allowing workflow and activity functions that are
      * registered with custom names from being able to be called with their
@@ -826,6 +829,13 @@ class WorkerOptions
 
         $self = clone $this;
         $self->maxEagerActivityReservationsPerWorkflowTask = $value;
+        return $self;
+    }
+
+    public function withDisablePayloadErrorLimit(bool $disable = true): self
+    {
+        $self = clone $this;
+        $self->disablePayloadErrorLimit = $disable;
         return $self;
     }
 
