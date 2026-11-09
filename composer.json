@@ -121,6 +121,14 @@
         }
     },
     "extra": {
+        "skills": {
+            "sources": [
+                {
+                    "from": "github",
+                    "package": "temporalio/skill-temporal-developer"
+                }
+            ]
+        },
         "patches": {
             "phpunit/phpunit": {
                 "Improve assertInstanceOf error message": "patches/phpunit-instance-of.patch",
