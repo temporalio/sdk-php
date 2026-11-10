@@ -205,6 +205,18 @@ final class ExternalStorageRunnerTestCase extends TestCase
         self::assertCount(1, $driver->objects);
     }
 
+    public function testExistingReferenceIsNotStoredAgain(): void
+    {
+        $driver = new InMemoryStorageDriver();
+        $runner = $this->runner($driver, threshold: 0);
+        $reference = $runner->store($this->startRequest(self::payload(1)))->getInput()->getPayloads()[0];
+
+        $result = $runner->store($this->startRequest($reference));
+
+        self::assertSame($reference->serializeToString(), $result->getInput()->getPayloads()[0]->serializeToString());
+        self::assertCount(1, $driver->objects);
+    }
+
     public function testSelectorGetsTheSelectContextAndRoutesPayloads(): void
     {
         $small = new InMemoryStorageDriver('small');
