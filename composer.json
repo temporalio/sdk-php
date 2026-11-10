@@ -58,6 +58,7 @@
     },
     "require-dev": {
         "ext-simplexml": "*",
+        "aws/aws-sdk-php": "^3.300",
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
         "cweagans/composer-patches": "^2.0",
@@ -90,7 +91,8 @@
         "ext-protobuf": "For better performance",
         "buggregator/trap": "For better debugging",
         "roadrunner/psr-logger": "RoadRunner PSR-3 logger integration",
-        "internal/toml": "To load TOML config files"
+        "internal/toml": "To load TOML config files",
+        "aws/aws-sdk-php": "For the S3 external storage driver"
     },
     "scripts": {
         "get:binaries": [
