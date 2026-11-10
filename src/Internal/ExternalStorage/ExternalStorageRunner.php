@@ -241,6 +241,10 @@ final class ExternalStorageRunner
 
     private function exceedsThreshold(Payload $payload): bool
     {
+        if (ReferencePayload::isReference($payload)) {
+            return false;
+        }
+
         $threshold = $this->options->payloadSizeThreshold;
 
         return $threshold === 0 || \strlen($payload->serializeToString()) >= $threshold;
