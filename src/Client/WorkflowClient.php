@@ -59,6 +59,8 @@ use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
+use Temporal\Internal\ExternalStorage\ExternalStorageDataConverter;
+use Temporal\Internal\ExternalStorage\ExternalStorageRunner;
 
 class WorkflowClient implements WorkflowClientInterface
 {
@@ -112,6 +114,16 @@ class WorkflowClient implements WorkflowClientInterface
             $this->converter = $pluginConverter;
         }
 
+        $externalStorage = null;
+        if ($this->clientOptions->externalStorage !== null) {
+            $externalStorage = new ExternalStorageRunner(
+                $this->clientOptions->externalStorage,
+                $this->clientOptions->namespace,
+                $logger ?? new StderrLogger(),
+            );
+            $this->converter = new ExternalStorageDataConverter($this->converter, $externalStorage);
+        }
+
         // Build interceptor pipeline: merge plugin-contributed interceptors with user-provided ones
         $provider = new CompositePipelineProvider(
             $pluginContext->getInterceptors(),
@@ -126,6 +138,10 @@ class WorkflowClient implements WorkflowClientInterface
                 $this->clientOptions->payloadLimits ?? PayloadLimitOptions::new(),
                 $logger ?? new StderrLogger(),
             );
+
+            if ($externalStorage !== null) {
+                $serviceClient = $serviceClient->withExternalStorage($externalStorage);
+            }
         }
 
         // Set Temporal-Namespace metadata

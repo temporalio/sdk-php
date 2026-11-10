@@ -45,6 +45,8 @@ use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
+use Temporal\Internal\ExternalStorage\ExternalStorageDataConverter;
+use Temporal\Internal\ExternalStorage\ExternalStorageRunner;
 
 final class ScheduleClient implements ScheduleClientInterface
 {
@@ -88,6 +90,16 @@ final class ScheduleClient implements ScheduleClientInterface
             $this->converter = $pluginConverter;
         }
 
+        $externalStorage = null;
+        if ($this->clientOptions->externalStorage !== null) {
+            $externalStorage = new ExternalStorageRunner(
+                $this->clientOptions->externalStorage,
+                $this->clientOptions->namespace,
+                $logger ?? new StderrLogger(),
+            );
+            $this->converter = new ExternalStorageDataConverter($this->converter, $externalStorage);
+        }
+
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(new AttributeReader()),
         );
@@ -98,6 +110,10 @@ final class ScheduleClient implements ScheduleClientInterface
                 $this->clientOptions->payloadLimits ?? PayloadLimitOptions::new(),
                 $logger ?? new StderrLogger(),
             );
+
+            if ($externalStorage !== null) {
+                $serviceClient = $serviceClient->withExternalStorage($externalStorage);
+            }
         }
 
         // Set Temporal-Namespace metadata

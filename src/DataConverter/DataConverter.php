@@ -13,6 +13,7 @@ namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
+use Temporal\Internal\ExternalStorage\ReferencePayload;
 
 /**
  * @psalm-import-type TType from Type
@@ -76,6 +77,14 @@ final class DataConverter implements DataConverterInterface, SerializationContex
 
         if ($type->isClass() && $type->getName() === RawValue::class) {
             return new RawValue($payload);
+        }
+
+        if (ReferencePayload::isReference($payload)) {
+            throw new DataConverterException(
+                '[TMPRL1105] Externally stored payload encountered but no external storage is configured. '
+                . 'Configure ClientOptions::withExternalStorage() for a client, '
+                . 'or the temporal.external_storage section of RoadRunner for a worker.',
+            );
         }
 
         /** @var \ArrayAccess $meta */
