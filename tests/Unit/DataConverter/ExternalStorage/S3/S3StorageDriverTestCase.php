@@ -7,7 +7,6 @@ namespace Temporal\Tests\Unit\DataConverter\ExternalStorage\S3;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Common\V1\Payload;
-use Temporal\DataConverter\ExternalStorage\S3\S3ClientInterface;
 use Temporal\DataConverter\ExternalStorage\S3\S3StorageDriver;
 use Temporal\DataConverter\ExternalStorage\StorageDriverActivityInfo;
 use Temporal\DataConverter\ExternalStorage\StorageDriverClaim;
@@ -16,6 +15,7 @@ use Temporal\DataConverter\ExternalStorage\StorageDriverTargetInfo;
 use Temporal\DataConverter\ExternalStorage\StorageDriverStoreContext;
 use Temporal\DataConverter\ExternalStorage\StorageDriverWorkflowInfo;
 use Temporal\Exception\DataConverterException;
+use Temporal\Testing\ExternalStorage\InMemoryS3Client;
 use Temporal\Tests\Unit\DataConverter\ExternalStorage\Stub\CountingLimiter;
 
 final class S3StorageDriverTestCase extends TestCase
@@ -164,29 +164,5 @@ final class S3StorageDriverTestCase extends TestCase
         }
 
         self::assertSame(0, $client->puts);
-    }
-}
-
-final class InMemoryS3Client implements S3ClientInterface
-{
-    /** @var array<string, string> */
-    public array $objects = [];
-
-    public int $puts = 0;
-
-    public function putObject(string $bucket, string $key, string $data): void
-    {
-        ++$this->puts;
-        $this->objects["$bucket/$key"] = $data;
-    }
-
-    public function objectExists(string $bucket, string $key): bool
-    {
-        return isset($this->objects["$bucket/$key"]);
-    }
-
-    public function getObject(string $bucket, string $key): string
-    {
-        return $this->objects["$bucket/$key"];
     }
 }
