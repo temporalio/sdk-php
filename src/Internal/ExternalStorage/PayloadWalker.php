@@ -36,10 +36,7 @@ final class PayloadWalker
     public static function collect(Message $message): array
     {
         $payloads = [];
-        $descriptor = DescriptorPool::getGeneratedPool()->getDescriptorByClassName($message::class);
-        if ($descriptor !== null) {
-            self::walk($message, $descriptor, $payloads);
-        }
+        self::walk($message, DescriptorPool::getGeneratedPool()->getDescriptorByClassName($message::class), $payloads);
 
         return $payloads;
     }
