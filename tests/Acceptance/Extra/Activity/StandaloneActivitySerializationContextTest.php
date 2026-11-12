@@ -14,6 +14,7 @@ use Temporal\Client\ActivityClient;
 use Temporal\Client\ActivityClientInterface;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Common\ActivityIdConflictPolicy;
 use Temporal\DataConverter\ActivitySerializationContext;
 use Temporal\DataConverter\BinaryConverter;
 use Temporal\DataConverter\DataConverter;
@@ -62,6 +63,25 @@ class StandaloneActivitySerializationContextTest extends TestCase
 
         $result = $client->getHandle($started->getID())->getResult(SignedDto::class);
 
+        self::assertInstanceOf(SignedDto::class, $result);
+        self::assertSame('echo:hello', $result->value);
+    }
+
+    #[Test]
+    public function resultOfExistingExecutionUsesItsContext(
+        ServiceClientInterface $serviceClient,
+        State $runtime,
+        Feature $feature,
+    ): void {
+        $client = $this->client($serviceClient, $runtime);
+        $options = $this->options($feature)
+            ->withIdConflictPolicy(ActivityIdConflictPolicy::UseExisting)
+            ->withStartDelay(2);
+        $client->start('Extra_Activity_StandaloneSC.echo', $options, new SignedDto('hello'));
+
+        $existing = $client->start('Extra_Activity_StandaloneSC.fail', $options);
+
+        $result = $existing->getResult(SignedDto::class);
         self::assertInstanceOf(SignedDto::class, $result);
         self::assertSame('echo:hello', $result->value);
     }
