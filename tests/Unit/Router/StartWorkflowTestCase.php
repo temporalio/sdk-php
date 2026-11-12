@@ -98,10 +98,12 @@ final class StartWorkflowTestCase extends AbstractUnit
             ->method('unmarshal')
             ->willReturn(new Input($workflowInfo));
 
-        $this->expectException(\OutOfRangeException::class);
-        $this->expectExceptionMessage('Workflow with the specified name "UnknownWorkflow" was not registered');
-
-        $this->router->handle($request, [], new Deferred());
+        try {
+            $this->router->handle($request, [], new Deferred());
+            $this->fail('An unknown workflow type must be rejected.');
+        } catch (\OutOfRangeException $e) {
+            $this->assertSame('Workflow with the specified name "UnknownWorkflow" was not registered', $e->getMessage());
+        }
     }
 
     protected function setUp(): void
