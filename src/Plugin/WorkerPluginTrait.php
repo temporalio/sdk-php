@@ -18,8 +18,6 @@ use Temporal\Worker\WorkerInterface;
 
 /**
  * No-op defaults for {@see WorkerPluginInterface}.
- *
- * @implements WorkerPluginInterface
  */
 trait WorkerPluginTrait
 {

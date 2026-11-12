@@ -27,7 +27,6 @@ use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
-use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Update\LifecycleStage;
@@ -314,7 +313,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $input->arguments->setDataConverter($converter);
                 $input->arguments->setSerializationContext($context);
                 $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
-                $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
+                $header = $input->header;
+                \assert($header instanceof Header);
+                if ($header->getDataConverter() === null) {
+                    $header->setDataConverter($converter);
+                }
+                $header->isEmpty() or $i->setHeader($header->toHeader());
                 $r->setInput($i);
 
                 try {
@@ -629,21 +633,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             ->setHistoryEventFilterType(HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT)
             ->setExecution($this->execution->toProtoWorkflowExecution());
 
+        $deadline = $timeout === null ? null : new \DateTimeImmutable("+{$timeout} seconds");
+        $context = $deadline === null ? null : $this->serviceClient->getContext()->withDeadline($deadline);
+
         do {
-            $start = \time();
-            $response = $this->serviceClient->GetWorkflowExecutionHistory(
-                $historyRequest,
-                $timeout === null ? null : Context::default()->withTimeout($timeout),
-            );
-            $elapsed = \time() - $start;
-
-            if ($timeout !== null) {
-                $timeout = \max(0, $timeout - $elapsed);
-
-                if ($timeout === 0) {
-                    throw new TimeoutException('Unable to wait for workflow completion, deadline reached');
-                }
-            }
+            $response = $this->serviceClient->GetWorkflowExecutionHistory($historyRequest, $context);
 
             $history = $response->getHistory();
             if ($history === null) {
@@ -672,7 +666,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             }
 
             return $closeEvent;
-        } while (true);
+        } while ($deadline === null || new \DateTimeImmutable() < $deadline);
+
+        throw new TimeoutException('Unable to wait for workflow completion, deadline reached');
     }
 
     private function mapWorkflowFailureToException(\Throwable $failure): \Throwable

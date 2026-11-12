@@ -163,6 +163,10 @@ class CloudClient extends BaseClient implements CloudClientInterface
     }
 
     /**
+     * Add a new region to a namespace
+     * Deprecated: Use the UpdateNamespace() to add new replica in the namespace spec
+     * instead.
+     *
      * @throws ServiceClientException
      */
     public function AddNamespaceRegion(V1\AddNamespaceRegionRequest $arg, ?ContextInterface $ctx = null): V1\AddNamespaceRegionResponse
@@ -171,6 +175,10 @@ class CloudClient extends BaseClient implements CloudClientInterface
     }
 
     /**
+     * Delete a region from a namespace
+     * Deprecated: Use the UpdateNamespace() to delete a replica in the namespace spec
+     * instead.
+     *
      * @throws ServiceClientException
      */
     public function DeleteNamespaceRegion(V1\DeleteNamespaceRegionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNamespaceRegionResponse

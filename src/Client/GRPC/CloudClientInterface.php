@@ -127,11 +127,19 @@ interface CloudClientInterface extends GrpcClientInterface
     public function FailoverNamespaceRegion(V1\FailoverNamespaceRegionRequest $arg, ?ContextInterface $ctx = null): V1\FailoverNamespaceRegionResponse;
 
     /**
+     * Add a new region to a namespace
+     * Deprecated: Use the UpdateNamespace() to add new replica in the namespace spec
+     * instead.
+     *
      * @throws ServiceClientException
      */
     public function AddNamespaceRegion(V1\AddNamespaceRegionRequest $arg, ?ContextInterface $ctx = null): V1\AddNamespaceRegionResponse;
 
     /**
+     * Delete a region from a namespace
+     * Deprecated: Use the UpdateNamespace() to delete a replica in the namespace spec
+     * instead.
+     *
      * @throws ServiceClientException
      */
     public function DeleteNamespaceRegion(V1\DeleteNamespaceRegionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNamespaceRegionResponse;

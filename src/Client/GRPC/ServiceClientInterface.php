@@ -92,6 +92,9 @@ interface ServiceClientInterface extends GrpcClientInterface
      * Upon failure, it returns `MultiOperationExecutionFailure` where the status code
      * equals the status code of the *first* operation that failed to be started.
      *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: To be exposed over HTTP in the future. --)
+     *
      * @throws ServiceClientException
      */
     public function ExecuteMultiOperation(V1\ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): V1\ExecuteMultiOperationResponse;
@@ -206,14 +209,23 @@ interface ServiceClientInterface extends GrpcClientInterface
      * RecordActivityTaskHeartbeat is optionally called by workers while they execute
      * activities.
      *
-     * If worker fails to heartbeat within the `heartbeat_timeout` interval for the
+     * If a worker fails to heartbeat within the `heartbeat_timeout` interval for the
      * activity task,
-     * then it will be marked as timed out and an `ACTIVITY_TASK_TIMED_OUT` event will
-     * be written to
-     * the workflow history. Calling `RecordActivityTaskHeartbeat` will fail with
-     * `NotFound` in
-     * such situations, in that event, the SDK should request cancellation of the
-     * activity.
+     * then the current attempt times out. Depending on RetryPolicy, this may trigger a
+     * retry or
+     * time out the activity.
+     *
+     * For workflow activities, an `ACTIVITY_TASK_TIMED_OUT` event will be written to
+     * the workflow
+     * history. Calling `RecordActivityTaskHeartbeat` will fail with `NotFound` in such
+     * situations,
+     * in that event, the SDK should request cancellation of the activity.
+     *
+     * The request may contain response `details` which will be persisted by the server
+     * and may be
+     * used by the activity to checkpoint progress. The `cancel_requested` field in the
+     * response
+     * indicates whether cancellation has been requested for the activity.
      *
      * @throws ServiceClientException
      */
@@ -236,8 +248,8 @@ interface ServiceClientInterface extends GrpcClientInterface
      * complete an activity
      * task.
      *
-     * This results in a new `ACTIVITY_TASK_COMPLETED` event being written to the
-     * workflow history
+     * For workflow activities, this results in a new `ACTIVITY_TASK_COMPLETED` event
+     * being written to the workflow history
      * and a new workflow task created for the workflow. Fails with `NotFound` if the
      * task token is
      * no longer valid due to activity timeout, already being completed, or never
@@ -248,7 +260,7 @@ interface ServiceClientInterface extends GrpcClientInterface
     public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCompletedResponse;
 
     /**
-     * See `RecordActivityTaskCompleted`. This version allows clients to record
+     * See `RespondActivityTaskCompleted`. This version allows clients to record
      * completions by
      * namespace/workflow id/activity id instead of task token.
      *
@@ -290,8 +302,8 @@ interface ServiceClientInterface extends GrpcClientInterface
      * RespondActivityTaskFailed is called by workers when processing an activity task
      * fails.
      *
-     * This results in a new `ACTIVITY_TASK_CANCELED` event being written to the
-     * workflow history
+     * For workflow activities, this results in a new `ACTIVITY_TASK_CANCELED` event
+     * being written to the workflow history
      * and a new workflow task created for the workflow. Fails with `NotFound` if the
      * task token is
      * no longer valid due to activity timeout, already being completed, or never
@@ -302,8 +314,8 @@ interface ServiceClientInterface extends GrpcClientInterface
     public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ?ContextInterface $ctx = null): V1\RespondActivityTaskCanceledResponse;
 
     /**
-     * See `RecordActivityTaskCanceled`. This version allows clients to record failures
-     * by
+     * See `RespondActivityTaskCanceled`. This version allows clients to record
+     * failures by
      * namespace/workflow id/activity id instead of task token.
      *
      * (-- api-linter: core::0136::prepositions=disabled
@@ -366,9 +378,11 @@ interface ServiceClientInterface extends GrpcClientInterface
      * ResetWorkflowExecution will reset an existing workflow execution to a specified
      * `WORKFLOW_TASK_COMPLETED` event (exclusive). It will immediately terminate the
      * current
-     * execution instance.
-     * TODO: Does exclusive here mean *just* the completed event, or also WFT started?
-     * Otherwise the task is doomed to time out?
+     * execution instance. "Exclusive" means the identified completed event itself is
+     * not replayed
+     * in the reset history; the preceding `WORKFLOW_TASK_STARTED` event remains and
+     * will be marked as failed
+     * immediately, and a new workflow task will be scheduled to retry it.
      *
      * @throws ServiceClientException
      */
@@ -628,7 +642,15 @@ interface ServiceClientInterface extends GrpcClientInterface
     public function ListSchedules(V1\ListSchedulesRequest $arg, ?ContextInterface $ctx = null): V1\ListSchedulesResponse;
 
     /**
+     * CountSchedules is a visibility API to count schedules in a specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function CountSchedules(V1\CountSchedulesRequest $arg, ?ContextInterface $ctx = null): V1\CountSchedulesResponse;
+
+    /**
      * Deprecated. Use `UpdateWorkerVersioningRules`.
+     * Will be removed in server version v1.32.0.
      *
      * Allows users to specify sets of worker build id versions on a per task queue
      * basis. Versions
@@ -658,6 +680,7 @@ interface ServiceClientInterface extends GrpcClientInterface
 
     /**
      * Deprecated. Use `GetWorkerVersioningRules`.
+     * Will be removed in server version v1.32.0.
      * Fetches the worker build id versioning sets for a task queue.
      *
      * @throws ServiceClientException
@@ -699,8 +722,7 @@ interface ServiceClientInterface extends GrpcClientInterface
      * Build ID by using [Patching](https://docs.temporal.io/workflows#patching) or
      * other means.
      *
-     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
-     * incompatibly.
+     * Will be removed in server version v1.32.0.
      * (-- api-linter: core::0127::http-annotation=disabled
      * aip.dev/not-precedent: We do yet expose versioning API to HTTP. --)
      *
@@ -710,8 +732,7 @@ interface ServiceClientInterface extends GrpcClientInterface
 
     /**
      * Fetches the Build ID assignment and redirect rules for a Task Queue.
-     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
-     * incompatibly.
+     * Will be removed in server version v1.32.0.
      *
      * @throws ServiceClientException
      */
@@ -719,6 +740,7 @@ interface ServiceClientInterface extends GrpcClientInterface
 
     /**
      * Deprecated. Use `DescribeTaskQueue`.
+     * Will be removed in server version v1.32.0.
      *
      * Fetches task reachability to determine whether a worker may be retired.
      * The request may specify task queues to query for or let the server fetch all
@@ -862,6 +884,41 @@ interface ServiceClientInterface extends GrpcClientInterface
     public function ListWorkerDeployments(V1\ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkerDeploymentsResponse;
 
     /**
+     * Creates a new Worker Deployment.
+     *
+     * Experimental. This API might significantly change or be removed in a
+     * future release.
+     *
+     * @throws ServiceClientException
+     */
+    public function CreateWorkerDeployment(V1\CreateWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkerDeploymentResponse;
+
+    /**
+     * Creates a new Worker Deployment Version.
+     *
+     * Experimental. This API might significantly change or be removed in a
+     * future release.
+     *
+     * @throws ServiceClientException
+     */
+    public function CreateWorkerDeploymentVersion(V1\CreateWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkerDeploymentVersionResponse;
+
+    /**
+     * Updates the compute config attached to a Worker Deployment Version.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerDeploymentVersionComputeConfig(V1\UpdateWorkerDeploymentVersionComputeConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionComputeConfigResponse;
+
+    /**
+     * Validates the compute config without attaching it to a Worker Deployment
+     * Version.
+     *
+     * @throws ServiceClientException
+     */
+    public function ValidateWorkerDeploymentVersionComputeConfig(V1\ValidateWorkerDeploymentVersionComputeConfigRequest $arg, ?ContextInterface $ctx = null): V1\ValidateWorkerDeploymentVersionComputeConfigResponse;
+
+    /**
      * Updates the user-given metadata attached to a Worker Deployment Version.
      *
      * @throws ServiceClientException
@@ -958,6 +1015,9 @@ interface ServiceClientInterface extends GrpcClientInterface
      * activity by its ID or type.
      * If there are multiple pending activities of the provided type - all of them will
      * be updated.
+     * This API will be deprecated soon and replaced with a newer
+     * UpdateActivityExecutionOptions that is better named and
+     * structured to work well for standalone activities.
      *
      * @throws ServiceClientException
      */
@@ -993,6 +1053,9 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * Returns a `NotFound` error if there is no pending activity with the provided ID
      * or type
+     * This API will be deprecated soon and replaced with a newer
+     * PauseActivityExecution that is better named and
+     * structured to work well for standalone activities.
      *
      * @throws ServiceClientException
      */
@@ -1017,6 +1080,9 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * Returns a `NotFound` error if there is no pending activity with the provided ID
      * or type
+     * This API will be deprecated soon and replaced with a newer
+     * UnpauseActivityExecution that is better named and
+     * structured to work well for standalone activities.
      *
      * @throws ServiceClientException
      */
@@ -1045,6 +1111,9 @@ interface ServiceClientInterface extends GrpcClientInterface
      *
      * Returns a `NotFound` error if there is no pending activity with the provided ID
      * or type.
+     * This API will be deprecated soon and replaced with a newer
+     * ResetActivityExecution that is better named and
+     * structured to work well for standalone activities.
      *
      * @throws ServiceClientException
      */
@@ -1111,6 +1180,13 @@ interface ServiceClientInterface extends GrpcClientInterface
     public function ListWorkers(V1\ListWorkersRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkersResponse;
 
     /**
+     * CountWorkers counts the number of workers in a specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function CountWorkers(V1\CountWorkersRequest $arg, ?ContextInterface $ctx = null): V1\CountWorkersResponse;
+
+    /**
      * Updates task queue configuration.
      * For the overall queue rate limit: the rate limit set by this api overrides the
      * worker-set rate limit,
@@ -1144,4 +1220,287 @@ interface ServiceClientInterface extends GrpcClientInterface
      * @throws ServiceClientException
      */
     public function DescribeWorker(V1\DescribeWorkerRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerResponse;
+
+    /**
+     * Note: This is an experimental API and the behavior may change in a future
+     * release.
+     * PauseWorkflowExecution pauses the workflow execution specified in the request.
+     * Pausing a workflow execution results in
+     * - The workflow execution status changes to `PAUSED` and a new
+     * WORKFLOW_EXECUTION_PAUSED event is added to the history
+     * - No new workflow tasks or activity tasks are dispatched.
+     * - Any workflow task currently executing on the worker will be allowed to
+     * complete.
+     * - Any activity task currently executing will be paused.
+     * - All server-side events will continue to be processed by the server.
+     * - Queries & Updates on a paused workflow will be rejected.
+     *
+     * @throws ServiceClientException
+     */
+    public function PauseWorkflowExecution(V1\PauseWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\PauseWorkflowExecutionResponse;
+
+    /**
+     * Note: This is an experimental API and the behavior may change in a future
+     * release.
+     * UnpauseWorkflowExecution unpauses a previously paused workflow execution
+     * specified in the request.
+     * Unpausing a workflow execution results in
+     * - The workflow execution status changes to `RUNNING` and a new
+     * WORKFLOW_EXECUTION_UNPAUSED event is added to the history
+     * - Workflow tasks and activity tasks are resumed.
+     *
+     * @throws ServiceClientException
+     */
+    public function UnpauseWorkflowExecution(V1\UnpauseWorkflowExecutionRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseWorkflowExecutionResponse;
+
+    /**
+     * StartActivityExecution starts a new activity execution.
+     *
+     * Returns an `ActivityExecutionAlreadyStarted` error if an instance already exists
+     * with same activity ID in this namespace
+     * unless permitted by the specified ID conflict policy.
+     *
+     * @throws ServiceClientException
+     */
+    public function StartActivityExecution(V1\StartActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\StartActivityExecutionResponse;
+
+    /**
+     * StartNexusOperationExecution starts a new Nexus operation.
+     *
+     * Returns a `NexusOperationExecutionAlreadyStarted` error if an instance already
+     * exists with same operation ID in this
+     * namespace unless permitted by the specified ID conflict policy.
+     *
+     * @throws ServiceClientException
+     */
+    public function StartNexusOperationExecution(V1\StartNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\StartNexusOperationExecutionResponse;
+
+    /**
+     * DescribeActivityExecution returns information about an activity execution.
+     * It can be used to:
+     * - Get current activity info without waiting
+     * - Long-poll for next state change and return new activity info
+     * Response can optionally include activity input or outcome (if the activity has
+     * completed).
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeActivityExecution(V1\DescribeActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeActivityExecutionResponse;
+
+    /**
+     * DescribeNexusOperationExecution returns information about a Nexus operation.
+     * Supported use cases include:
+     * - Get current operation info without waiting
+     * - Long-poll for next state change and return new operation info
+     * Response can optionally include operation input or outcome (if the operation has
+     * completed).
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeNexusOperationExecution(V1\DescribeNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeNexusOperationExecutionResponse;
+
+    /**
+     * PollActivityExecution long-polls for an activity execution to complete and
+     * returns the
+     * outcome (result or failure).
+     *
+     * @throws ServiceClientException
+     */
+    public function PollActivityExecution(V1\PollActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\PollActivityExecutionResponse;
+
+    /**
+     * PollNexusOperationExecution long-polls for a Nexus operation for a given wait
+     * stage to complete and returns
+     * the outcome (result or failure).
+     *
+     * @throws ServiceClientException
+     */
+    public function PollNexusOperationExecution(V1\PollNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\PollNexusOperationExecutionResponse;
+
+    /**
+     * ListActivityExecutions is a visibility API to list activity executions in a
+     * specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListActivityExecutions(V1\ListActivityExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListActivityExecutionsResponse;
+
+    /**
+     * ListNexusOperationExecutions is a visibility API to list Nexus operations in a
+     * specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListNexusOperationExecutions(V1\ListNexusOperationExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\ListNexusOperationExecutionsResponse;
+
+    /**
+     * CountActivityExecutions is a visibility API to count activity executions in a
+     * specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function CountActivityExecutions(V1\CountActivityExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\CountActivityExecutionsResponse;
+
+    /**
+     * CountNexusOperationExecutions is a visibility API to count Nexus operations in a
+     * specific namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function CountNexusOperationExecutions(V1\CountNexusOperationExecutionsRequest $arg, ?ContextInterface $ctx = null): V1\CountNexusOperationExecutionsResponse;
+
+    /**
+     * RequestCancelActivityExecution requests cancellation of an activity execution.
+     *
+     * Cancellation is cooperative: this call records the request, but the activity
+     * must detect and
+     * acknowledge it for the activity to reach CANCELED status. The cancellation
+     * signal is
+     * delivered via `cancel_requested` in the heartbeat response; SDKs surface this
+     * via
+     * language-idiomatic mechanisms (context cancellation, exceptions, abort signals).
+     *
+     * @throws ServiceClientException
+     */
+    public function RequestCancelActivityExecution(V1\RequestCancelActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\RequestCancelActivityExecutionResponse;
+
+    /**
+     * RequestCancelNexusOperationExecution requests cancellation of a Nexus operation.
+     *
+     * Requesting to cancel an operation does not automatically transition the
+     * operation to canceled status.
+     * The operation will only transition to canceled status if it supports
+     * cancellation and the handler
+     * processes the cancellation request.
+     *
+     * @throws ServiceClientException
+     */
+    public function RequestCancelNexusOperationExecution(V1\RequestCancelNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\RequestCancelNexusOperationExecutionResponse;
+
+    /**
+     * TerminateActivityExecution terminates an existing activity execution
+     * immediately.
+     *
+     * Termination does not reach the worker and the activity code cannot react to it.
+     * A terminated activity may have a
+     * running attempt.
+     *
+     * @throws ServiceClientException
+     */
+    public function TerminateActivityExecution(V1\TerminateActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\TerminateActivityExecutionResponse;
+
+    /**
+     * DeleteActivityExecution asynchronously deletes a specific activity execution
+     * (when
+     * ActivityExecution.run_id is provided) or the latest activity execution (when
+     * ActivityExecution.run_id is not provided). If the activity Execution is running,
+     * it will be
+     * terminated before deletion.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: Activity deletion not exposed to HTTP, users should use
+     * cancel or terminate. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteActivityExecution(V1\DeleteActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteActivityExecutionResponse;
+
+    /**
+     * PauseActivityExecution pauses the execution of an activity specified by its ID.
+     * This API can be used to target a workflow activity or a standalone activity
+     *
+     * Pausing an activity means:
+     * - If the activity is currently waiting for a retry or is running and
+     * subsequently fails,
+     * it will not be rescheduled until it is unpaused.
+     * - If the activity is already paused, calling this method will have no effect.
+     * - If the activity is running and finishes successfully, the activity will be
+     * completed.
+     * - If the activity is running and finishes with failure:
+     * if there is no retry left - the activity will be completed.
+     * if there are more retries left - the activity will be paused.
+     * For long-running activities:
+     * - activities in paused state will send a cancellation with "activity_paused" set
+     * to 'true' in response to 'RecordActivityTaskHeartbeat'.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     *
+     * @throws ServiceClientException
+     */
+    public function PauseActivityExecution(V1\PauseActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityExecutionResponse;
+
+    /**
+     * ResetActivityExecution resets the execution of an activity specified by its ID.
+     * This API can be used to target a workflow activity or a standalone activity.
+     *
+     * Resetting an activity means:
+     * number of attempts will be reset to 0.
+     * activity timeouts will be reset.
+     * if the activity is waiting for retry, and it is not paused or 'keep_paused' is
+     * not provided:
+     * it will be scheduled immediately (* see 'jitter' flag)
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type.
+     *
+     * @throws ServiceClientException
+     */
+    public function ResetActivityExecution(V1\ResetActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityExecutionResponse;
+
+    /**
+     * UnpauseActivityExecution unpauses the execution of an activity specified by its
+     * ID.
+     * This API can be used to target a workflow activity or a standalone activity.
+     *
+     * If activity is not paused, this call will have no effect.
+     * If the activity was paused while waiting for retry, it will be scheduled
+     * immediately (* see 'jitter' flag).
+     * Once the activity is unpaused, all timeout timers will be regenerated.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     *
+     * @throws ServiceClientException
+     */
+    public function UnpauseActivityExecution(V1\UnpauseActivityExecutionRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityExecutionResponse;
+
+    /**
+     * UpdateActivityExecutionOptions is called by the client to update the options of
+     * an activity by its ID.
+     * This API can be used to target a workflow activity or a standalone activity.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateActivityExecutionOptions(V1\UpdateActivityExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityExecutionOptionsResponse;
+
+    /**
+     * TerminateNexusOperationExecution terminates an existing Nexus operation
+     * immediately.
+     *
+     * Termination happens immediately and the operation handler cannot react to it. A
+     * terminated operation will have
+     * its outcome set to a failure with a termination reason.
+     *
+     * @throws ServiceClientException
+     */
+    public function TerminateNexusOperationExecution(V1\TerminateNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\TerminateNexusOperationExecutionResponse;
+
+    /**
+     * DeleteNexusOperationExecution asynchronously deletes a specific Nexus operation
+     * run (when
+     * run_id is provided) or the latest run (when run_id is not provided). If the
+     * operation
+     * is running, it will be terminated before deletion.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: Nexus operation deletion not exposed to HTTP, users
+     * should use cancel or terminate. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteNexusOperationExecution(V1\DeleteNexusOperationExecutionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNexusOperationExecutionResponse;
+
+    /**
+     * @throws ServiceClientException
+     */
+    public function PollWorkflowExecutionTimeSkipping(V1\PollWorkflowExecutionTimeSkippingRequest $arg, ?ContextInterface $ctx = null): V1\PollWorkflowExecutionTimeSkippingResponse;
 }
