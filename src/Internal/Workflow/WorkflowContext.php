@@ -115,6 +115,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
     protected bool $inReadOnlyCallback = false;
+    protected bool $evicted = false;
     protected ?string $currentDetails = null;
     protected int $childWorkflowSequence = 0;
     private ?WorkflowSerializationContext $serializationContext = null;
@@ -235,6 +236,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $clone->awaits = &$this->awaits;
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $clone->inReadOnlyCallback = &$this->inReadOnlyCallback;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $clone->evicted = &$this->evicted;
         $clone->trace = &$this->trace;
         $clone->input = $input;
         $clone->serializationContext = null;
@@ -354,7 +357,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function isReplaying(): bool
     {
-        return $this->services->env->isReplaying();
+        return $this->evicted || $this->services->env->isReplaying();
+    }
+
+    public function evict(): void
+    {
+        $this->evicted = true;
+    }
+
+    public function isEvicted(): bool
+    {
+        return $this->evicted;
     }
 
     public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface
@@ -561,6 +574,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         bool $cancellable = true,
         bool $waitResponse = true,
     ): PromiseInterface {
+        if ($this->evicted) {
+            return self::inertPromise();
+        }
+
         $this->assertWritable();
         $this->recordTrace();
 
@@ -860,8 +877,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $values->setSerializationContext($this->getSerializationContext());
     }
 
+    protected static function inertPromise(): PromiseInterface
+    {
+        return new \React\Promise\Promise(static function (): void {});
+    }
+
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
+        if ($this->evicted) {
+            return self::inertPromise();
+        }
+
         $result = [];
         $conditionGroupId = Uuid::v4();
         $this->recordTrace();

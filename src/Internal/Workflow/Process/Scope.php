@@ -16,14 +16,15 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\MethodHandler;
+use Temporal\Internal\Promise\Abandoned;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -91,12 +92,17 @@ class Scope implements CancellationScopeInterface, Destroyable
     private bool $cancelled = false;
     private bool $closed = false;
     private ?\Throwable $cancelReason = null;
+    private ?PromiseInterface $awaiting = null;
+    private \WeakMap $scopes;
+    private \WeakMap $owned;
 
     public function __construct(
         ServiceContainer $services,
     ) {
         $this->services = $services;
         $this->deferred = new Deferred();
+        $this->scopes = new \WeakMap();
+        $this->owned = new \WeakMap();
     }
 
     /**
@@ -211,8 +217,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function cancel(?\Throwable $reason = null): void
     {
-        if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
-            // detaches scopes can be offload via memory flush
+        if ($this->detached || $this->isEvicted()) {
             return;
         }
 
@@ -237,6 +242,10 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
+        if ($this->isEvicted()) {
+            return new self($this->services);
+        }
+
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler(...), EncodedValues::empty(), false);
 
@@ -282,6 +291,11 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this->finally($onFulfilledOrRejected);
     }
 
+    public function own(PromiseInterface $promise): void
+    {
+        $this->owned[$promise] = true;
+    }
+
     /**
      * Connects promise to scope context to be cancelled on promise cancel.
      */
@@ -304,21 +318,37 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
+        $this->context->evict();
+
+        $scopes = [...\array_reverse(self::keysOf($this->scopes)), $this];
+
+        foreach ($scopes as $scope) {
+            $scope->closeCoroutine();
+        }
+
+        $owned = self::keysOf($this->owned);
+
+        foreach ([...\array_column($scopes, 'awaiting'), ...$owned] as $promise) {
+            if ($promise instanceof PromiseInterface && !$promise instanceof CompletableResult) {
+                Abandoned::dissolve($promise);
+            }
+        }
+
+        foreach ($owned as $promise) {
+            if ($promise instanceof CompletableResult) {
+                $promise->abandon();
+            }
+        }
+
         // A Destroyable workflow instance may use the Workflow facade from its destroy().
         Facade::usingContext($this->scopeContext, function (): void {
             $this->context?->destroy();
             $this->scopeContext?->destroy();
         });
 
-        unset(
-            $this->coroutine,
-            $this->context,
-            $this->scopeContext,
-            $this->deferred,
-            $this->services,
-            $this->onCancel,
-            $this->onClose,
-        );
+        foreach ($scopes as $scope) {
+            $scope->release();
+        }
     }
 
     /**
@@ -333,6 +363,9 @@ class Scope implements CancellationScopeInterface, Destroyable
         $scope = new Scope($this->services);
         $scope->setContext($context ?? $this->context, $updateContext);
         $scope->detached = $detached;
+        $scope->scopes = $this->scopes;
+        $scope->owned = $this->owned;
+        $this->scopes[$scope] = true;
 
         if ($layer !== null) {
             $scope->layer = $layer;
@@ -379,14 +412,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $cancelID = $this->addOnCancel(function (?\Throwable $reason = null) use ($request, $cancellable): void {
+        $cancelID = $this->addOnCancel(function () use ($request, $cancellable): void {
             $client = $this->context->getClient();
-            if ($reason instanceof DestructMemorizedInstanceException) {
-                // memory flush
-                $client->reject($request, $reason);
-                return;
-            }
-
             if ($client->isQueued($request)) {
                 $client->cancel($request);
                 return;
@@ -467,6 +494,16 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
+    private static function keysOf(\WeakMap $map): array
+    {
+        $keys = [];
+        foreach ($map as $key => $_) {
+            $keys[] = $key;
+        }
+
+        return $keys;
+    }
+
     private function addOnCancel(callable $handler, bool $cancellable = true): int
     {
         $id = ++$this->cancelID;
@@ -522,7 +559,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             throw $e;
         };
 
-        $promise
+        $this->awaiting = $promise
             ->then($onFulfilled, $onRejected)
             // Handle last error
             ->then(null, static fn(\Throwable $e) => null);
@@ -583,7 +620,42 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function defer(\Closure $tick): void
     {
-        $this->services->loop->once($this->layer, fn(): mixed => Facade::usingContext($this->scopeContext, $tick));
+        $this->services->loop->once(
+            $this->layer,
+            fn(): mixed => $this->isEvicted() ? null : Facade::usingContext($this->scopeContext, $tick),
+        );
         $this->services->queue->count() === 0 and $this->services->loop->tick();
+    }
+
+    /**
+     * @psalm-suppress TypeDoesNotContainType
+     */
+    private function isEvicted(): bool
+    {
+        return !isset($this->context) || $this->context->isEvicted();
+    }
+
+    private function closeCoroutine(): void
+    {
+        Facade::usingContext($this->scopeContext, function (): void {
+            try {
+                unset($this->coroutine);
+            } catch (\Throwable) {
+            }
+        });
+    }
+
+    private function release(): void
+    {
+        unset(
+            $this->coroutine,
+            $this->context,
+            $this->scopeContext,
+            $this->deferred,
+            $this->services,
+            $this->onCancel,
+            $this->onClose,
+        );
+        $this->awaiting = null;
     }
 }
