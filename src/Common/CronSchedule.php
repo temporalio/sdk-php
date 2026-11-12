@@ -26,6 +26,8 @@ use Temporal\Internal\Support\DateInterval;
  * (or retrying), then it will skip that schedule. Cron workflow will not stop
  * until it is terminated or canceled.
  *
+ * Applies to child workflows only. Workflows started via {@see \Temporal\Client\WorkflowClient} ignore it.
+ *
  * @psalm-import-type DateIntervalValue from DateInterval
  * @see DateInterval
  *
