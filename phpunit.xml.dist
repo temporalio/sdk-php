@@ -76,6 +76,10 @@
         <testsuite name="Unit">
             <directory suffix="TestCase.php">tests/Unit</directory>
         </testsuite>
+        <testsuite name="Core">
+            <directory suffix="TestCase.php">tests/Unit</directory>
+            <directory suffix="TestCase.php">tests/Core</directory>
+        </testsuite>
         <testsuite name="Functional">
             <directory suffix="TestCase.php">tests/Functional</directory>
             <exclude>tests/Functional/TimerOnlyTimeSkipTestCase.php</exclude>
@@ -117,6 +121,7 @@
     <source>
         <include>
             <directory>src</directory>
+            <directory>testing/src</directory>
         </include>
     </source>
 </phpunit>

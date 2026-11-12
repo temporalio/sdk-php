@@ -62,7 +62,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, sockets, grpc, curl ${{ matrix.extensions-suffix }}
+          extensions: dom, sockets, grpc, curl, ffi ${{ matrix.extensions-suffix }}
 
       - name: Validate composer.json and composer.lock
         run: composer validate --strict

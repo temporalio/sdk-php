@@ -71,8 +71,8 @@ abstract class BaseClient implements GrpcClientInterface
      */
     public static function create(string $address): static
     {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        if (!\extension_loaded('grpc') && !\extension_loaded('ffi')) {
+            throw new \RuntimeException('The gRPC or FFI extension is required to use Temporal Client.');
         }
 
         return new static(
@@ -101,8 +101,8 @@ abstract class BaseClient implements GrpcClientInterface
         ?string $clientPem = null,
         ?string $overrideServerName = null,
     ): static {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        if (!\extension_loaded('grpc') && !\extension_loaded('ffi')) {
+            throw new \RuntimeException('The gRPC or FFI extension is required to use Temporal Client.');
         }
 
         $loadCert = static function (?string $cert): ?string {
@@ -271,6 +271,7 @@ abstract class BaseClient implements GrpcClientInterface
 
         do {
             ++$attempt;
+            $deadline = $ctx->getDeadline();
             try {
                 $options = $ctx->getOptions();
                 if ($deadline !== null) {
@@ -290,8 +291,10 @@ abstract class BaseClient implements GrpcClientInterface
 
                 return $result;
             } catch (ServiceClientException $e) {
+                $deadlineReached = $deadline !== null && new \DateTimeImmutable() > $deadline;
                 if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
-                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
+                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED
+                        || ($deadlineReached && $e->getCode() === StatusCode::CANCELLED)) {
                         throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
                     }
 
@@ -301,6 +304,10 @@ abstract class BaseClient implements GrpcClientInterface
 
                     // non retryable
                     throw $e;
+                }
+
+                if ($deadlineReached) {
+                    throw new TimeoutException('Call timeout has been reached');
                 }
 
                 if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {

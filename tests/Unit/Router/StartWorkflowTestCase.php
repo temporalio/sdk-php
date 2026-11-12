@@ -34,6 +34,8 @@ use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -59,6 +61,26 @@ final class StartWorkflowTestCase extends AbstractUnit
         $this->router->handle($request, [], new Deferred());
         $this->assertNotNull($this->services->running->find($runId));
         $this->assertNotNull($this->services->running->find($workflowInfo->execution->getRunID()));
+    }
+
+    public function testPrebuiltInfoIsUsedWithoutTheMarshaller(): void
+    {
+        $runId = Uuid::v4();
+        $workflowInfo = new WorkflowInfo();
+        $workflowInfo->type->name = 'DummyWorkflow';
+        $workflowInfo->execution = new WorkflowExecution('123', $runId);
+        $request = new ServerRequest(
+            name: 'StartWorkflow',
+            info: new TickInfo(new \DateTimeImmutable()),
+            options: ['info' => $workflowInfo],
+            payloads: EncodedValues::fromValues([]),
+            id: $runId,
+        );
+
+        $this->marshaller->expects($this->never())->method('unmarshal');
+
+        $this->router->handle($request, [], new Deferred());
+        $this->assertNotNull($this->services->running->find($runId));
     }
 
     public function testRequestRunId(): void
