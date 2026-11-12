@@ -11,6 +11,7 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
@@ -137,6 +138,24 @@ class DeploymentTest extends TestCase
         self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
     }
 
+    #[Test]
+    public function dynamicWorkflowCustomBehaviorPinned(
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $behavior = self::executeWorkflow(
+            $environment,
+            $roadRunnerStarter,
+            $client,
+            $feature,
+            'Extra_Versioning_Deployment_Dynamic',
+            WorkflowOptions::new(),
+        );
+        self::assertSame(VersioningBehavior::Pinned, $behavior);
+    }
+
     /**
      * @param null|callable(VersioningBehavior): void $postAction
      */
@@ -245,5 +264,16 @@ class PinnedWorkflow
     public function handle()
     {
         return 'pinned';
+    }
+}
+
+#[WorkflowInterface]
+class DynamicPinnedWorkflow
+{
+    #[WorkflowMethod(dynamic: true)]
+    #[WorkflowVersioningBehavior(VersioningBehavior::Pinned)]
+    public function handle(ValuesInterface $arguments)
+    {
+        return 'dynamic';
     }
 }

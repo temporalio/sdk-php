@@ -30,6 +30,7 @@
             <exclude>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Versioning/DeploymentTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Versioning/DynamicDeploymentTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Schedule/BasicTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Schedule/TriggerTest.php</exclude>
@@ -52,6 +53,7 @@
             <file>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</file>
             <file>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</file>
             <file>tests/Acceptance/Extra/Versioning/DeploymentTest.php</file>
+            <file>tests/Acceptance/Extra/Versioning/DynamicDeploymentTest.php</file>
             <file>tests/Acceptance/Harness/Schedule/BasicTest.php</file>
             <file>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</file>
             <file>tests/Acceptance/Harness/Schedule/TriggerTest.php</file>
