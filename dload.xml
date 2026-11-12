@@ -4,7 +4,7 @@
        temp-dir="./runtime"
 >
     <actions>
-        <download software="rr" version="^3.0"/>
+        <velox velox-version="3.0.0" config-file="velox.toml" binary-path="./rr"/>
         <download software="temporal" version="^1.9"/>
         <download software="temporal-tests-server"/>
     </actions>

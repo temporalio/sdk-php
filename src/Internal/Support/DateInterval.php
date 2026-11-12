@@ -55,7 +55,6 @@ final class DateInterval
     /**
      * @psalm-param DateIntervalFormat $format
      *
-     * @psalm-assert DateIntervalValue|null $interval
      * @psalm-suppress InvalidOperand
      */
     public static function parse(mixed $interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval

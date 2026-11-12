@@ -15,6 +15,8 @@ use Spiral\Goridge\RPC\RPC;
 use Spiral\Goridge\RPC\RPCInterface;
 use Spiral\RoadRunner\KeyValue\Factory;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
+use Symfony\Component\HttpClient\HttpClient;
+use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -37,6 +39,8 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Tests\Acceptance\App\Support;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusEndpoints;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHttpClient;
 use Temporal\Worker\Logger\StderrLogger;
 
 final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInterface
@@ -143,6 +147,15 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
             converter: $converter,
         )->withTimeout(5);
 
+        $nexusHost = \parse_url("http://{$state->address}", PHP_URL_HOST) ?: '127.0.0.1';
+        $nexusEndpoints = new NexusEndpoints(
+            new OperatorServiceClient(
+                $state->address,
+                ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
+            ),
+        );
+        $nexusHttp = new NexusHttpClient(HttpClient::createForBaseUri("http://{$nexusHost}:7243"));
+
         $activityClient = ActivityClient::create(
             serviceClient: $serviceClient,
             options: (new ClientOptions())->withNamespace($state->namespace),
@@ -154,6 +167,8 @@ final class ExecutionStartedSubscriber implements ExecutionStartedSubscriberInte
         $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
         $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
         $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
+        $container->bindSingleton(NexusEndpoints::class, $nexusEndpoints);
+        $container->bindSingleton(NexusHttpClient::class, $nexusHttp);
         $container->bindSingleton(ActivityClientInterface::class, $activityClient);
         $container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
         $container->bindSingleton(DataConverterInterface::class, $converter);

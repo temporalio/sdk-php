@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Common\WorkerVersionStamp;
 use Temporal\DataConverter\EncodedCollection;
@@ -96,4 +97,32 @@ final class WorkflowExecutionInfo
          */
         public readonly string $firstRunId,
     ) {}
+
+    /**
+     * Drops {@see self::$memo} and {@see self::$searchAttributes} — their lazily-decoded payloads dump as dozens of nested protobuf objects.
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'execution' => $this->execution,
+            'type' => $this->type,
+            'startTime' => $this->startTime?->format(\DateTimeInterface::ATOM),
+            'closeTime' => $this->closeTime?->format(\DateTimeInterface::ATOM),
+            'status' => $this->status,
+            'historyLength' => $this->historyLength,
+            'parentNamespaceId' => $this->parentNamespaceId,
+            'parentExecution' => $this->parentExecution,
+            'executionTime' => $this->executionTime?->format(\DateTimeInterface::ATOM),
+            'autoResetPoints' => $this->autoResetPoints,
+            'taskQueue' => $this->taskQueue,
+            'stateTransitionCount' => $this->stateTransitionCount,
+            'historySizeBytes' => $this->historySizeBytes,
+            'mostRecentWorkerVersionStamp' => $this->mostRecentWorkerVersionStamp,
+            'executionDuration' => $this->executionDuration === null
+                ? null
+                : CarbonInterval::instance($this->executionDuration)->spec(),
+            'rootExecution' => $this->rootExecution,
+            'firstRunId' => $this->firstRunId,
+        ];
+    }
 }
