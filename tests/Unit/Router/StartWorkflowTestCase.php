@@ -86,6 +86,26 @@ final class StartWorkflowTestCase extends AbstractUnit
         $this->router->handle($request, [], new Deferred());
     }
 
+    public function testUnknownWorkflowWithoutDynamicWorkflowThrows(): void
+    {
+        $request = new Request($runId = Uuid::v4(), 'UnknownWorkflow', EncodedValues::fromValues([]));
+
+        $workflowInfo = new WorkflowInfo();
+        $workflowInfo->type->name = 'UnknownWorkflow';
+        $workflowInfo->execution = new WorkflowExecution('123', $runId);
+
+        $this->marshaller->expects($this->once())
+            ->method('unmarshal')
+            ->willReturn(new Input($workflowInfo));
+
+        try {
+            $this->router->handle($request, [], new Deferred());
+            $this->fail('An unknown workflow type must be rejected.');
+        } catch (\OutOfRangeException $e) {
+            $this->assertSame('Workflow with the specified name "UnknownWorkflow" was not registered', $e->getMessage());
+        }
+    }
+
     protected function setUp(): void
     {
         $workflow = new \stdClass();
