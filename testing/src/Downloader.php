@@ -64,7 +64,10 @@ final class Downloader
         $assetsMacOs = null;
 
         foreach ($assets as $asset) {
-            \preg_match('/^temporal-test-server_[^_]+_([^_]+)_([^.]+)\.(?:zip|tar.gz)$/', $asset['name'], $match);
+            if (\preg_match('/^temporal-test-server_[^_]+_([^_]+)_([^.]+)\.(?:zip|tar.gz)$/', $asset['name'], $match) !== 1) {
+                continue;
+            }
+
             [, $assetPlatform, $assetArch] = $match;
 
 
