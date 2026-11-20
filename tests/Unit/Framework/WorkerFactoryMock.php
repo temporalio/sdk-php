@@ -171,6 +171,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         $this->emit(LoopInterface::ON_CALLBACK);
         $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
+        $this->emit(LoopInterface::ON_FINALLY);
     }
 
     private function boot(): void
