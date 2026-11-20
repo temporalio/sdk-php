@@ -7,6 +7,7 @@ require_once 'vendor/autoload.php';
 return \Spiral\CodeStyle\Builder::create()
     ->include(__DIR__ . '/src')
     ->include(__DIR__ . '/testing/src')
+    ->include(__DIR__ . '/core/grpc')
     ->include(__FILE__)
     ->allowRisky(true)
     ->build();

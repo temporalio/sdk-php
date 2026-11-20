@@ -14,7 +14,6 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
 use Temporal\Testing\Replay\Exception\ReplayerException;
-use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Testing\TemporalServer;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
@@ -46,7 +45,7 @@ final class ReplayerTestCase extends TestCase
         $run = $this->workflowClient->start($workflow, 'hello');
         $run->getResult('string');
 
-        (new WorkflowReplayer())->replayFromServer(
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromServer(
             'WorkflowWithSequence',
             $run->getExecution(),
         );
@@ -70,7 +69,7 @@ final class ReplayerTestCase extends TestCase
         $stub->signal('exit');
         $stub->getResult();
 
-        (new WorkflowReplayer())->replayFromServer(
+        $this->createReplayer($this->workflowClient, AwaitsUpdateWorkflow::class)->replayFromServer(
             'AwaitsUpdate.greet',
             $stub->getExecution(),
         );
@@ -91,10 +90,11 @@ final class ReplayerTestCase extends TestCase
                 \unlink($file);
             }
 
-            (new WorkflowReplayer())->downloadHistory('WorkflowWithSequence', $run->getExecution(), $file);
+            $replayer = $this->createReplayer($this->workflowClient, WorkflowWithSequence::class);
+            $replayer->downloadHistory('WorkflowWithSequence', $run->getExecution(), $file);
             $this->assertFileExists($file);
 
-            (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+            $replayer->replayFromJSON('WorkflowWithSequence', $file);
         } finally {
             if (\is_file($file)) {
                 \unlink($file);
@@ -108,14 +108,14 @@ final class ReplayerTestCase extends TestCase
 
         $this->expectException(NonDeterministicWorkflowException::class);
 
-        (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromJSON('WorkflowWithSequence', $file);
     }
 
     public function testReplayNonDetermenisticWorkflowThroughFirstDetermenisticEvents(): void
     {
         $file = \dirname(__DIR__, 1) . '/Fixtures/history/squence-workflow-damaged.json';
 
-        (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file, lastEventId: 11);
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromJSON('WorkflowWithSequence', $file, lastEventId: 11);
 
         $this->assertTrue(true);
     }
@@ -126,7 +126,7 @@ final class ReplayerTestCase extends TestCase
 
         $this->expectException(ReplayerException::class);
 
-        (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayFromJSON('WorkflowWithSequence', $file);
     }
 
     /**
@@ -187,7 +187,7 @@ final class ReplayerTestCase extends TestCase
 
         $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
 
-        (new WorkflowReplayer())->replayHistory($history);
+        $this->createReplayer($this->workflowClient, SignalWorkflow::class)->replayHistory($history);
     }
 
     /**
@@ -215,7 +215,7 @@ final class ReplayerTestCase extends TestCase
 
         $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
 
-        (new WorkflowReplayer())->replayHistory($history);
+        $this->createReplayer($this->workflowClient, SignalWorkflow::class)->replayHistory($history);
 
         // Broke the history and replay it again.
         /** @var HistoryEvent $event */
@@ -230,7 +230,7 @@ final class ReplayerTestCase extends TestCase
         }
 
         $this->expectException(NonDeterministicWorkflowException::class);
-        (new WorkflowReplayer())->replayHistory($history);
+        $this->createReplayer($this->workflowClient, SignalWorkflow::class)->replayHistory($history);
     }
 
     /**
@@ -294,7 +294,7 @@ final class ReplayerTestCase extends TestCase
     {
         $this->expectException(\LogicException::class);
 
-        (new WorkflowReplayer())->replayHistory(new History());
+        $this->createReplayer($this->workflowClient, WorkflowWithSequence::class)->replayHistory(new History());
     }
 
     /**
@@ -325,7 +325,7 @@ final class ReplayerTestCase extends TestCase
             ->setName('nonExistingWorkflowTypeTestFooBar123');
 
         $this->expectException(ReplayerException::class);
-        (new WorkflowReplayer())->replayHistory($history);
+        $this->createReplayer($this->workflowClient, SignalWorkflow::class)->replayHistory($history);
     }
 
     private function createAwaitsUpdateUntypedStub(WorkflowClient $client): WorkflowStubInterface

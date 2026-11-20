@@ -94,7 +94,7 @@ final class SimpleWorkflowTestCase extends TestCase
         );
         foreach ($history as $item) {
             if ($item->getEventType() === EventType::EVENT_TYPE_MARKER_RECORDED &&
-                $item->getMarkerRecordedEventAttributes()->getMarkerName() === 'LocalActivity'
+                \in_array($item->getMarkerRecordedEventAttributes()->getMarkerName(), ['LocalActivity', 'core_local_activity'], true)
             ) {
                 // LocalActivity found
                 $this->assertTrue(true);

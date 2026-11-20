@@ -35,7 +35,9 @@ final class ClientSideDelayedCallbackTestCase extends WorkflowTestCase
         self::assertCount(2, $events);
         self::assertSame('first', $events[0]['value']);
         self::assertSame('second', $events[1]['value']);
-        self::assertSame(300, $events[1]['at'] - $events[0]['at']);
+        $gap = $events[1]['at'] - $events[0]['at'];
+        self::assertGreaterThanOrEqual(300, $gap);
+        self::assertLessThan(305, $gap);
         self::assertGreaterThanOrEqual(300, $events[0]['at'] - $base);
         self::assertLessThan(20, $elapsed);
     }

@@ -130,10 +130,6 @@ class WorkflowTestCase extends AbstractFunctional
 
     public function testExecuteProtoWorkflow(): void
     {
-        if (\extension_loaded('protobuf')) {
-            $this->markTestSkipped('The test conflicts with "protobuf" extension.');
-        }
-
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_ExecuteProtoWorkflow.log')->getQueue());

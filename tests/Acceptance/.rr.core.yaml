@@ -1,0 +1,27 @@
+version: "3"
+rpc:
+    listen: ${ROADRUNNER_ADDRESS:-tcp://127.0.0.1:6001}
+
+service:
+    workflow:
+        command: "php worker.php"
+        process_num: 1
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: workflow
+    activity:
+        command: "php worker.php"
+        process_num: 2
+        remain_after_exit: true
+        restart_sec: 1
+        env:
+            TEMPORAL_CORE_ROLE: activity
+
+kv:
+    harness:
+        driver: memory
+        config: { }
+
+logs:
+    mode: raw

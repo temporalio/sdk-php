@@ -14,6 +14,7 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Support;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\ReturnType;
@@ -107,8 +108,7 @@ class ResetWorkerTest extends TestCase
         $found = false;
         foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
             if ($event->hasMarkerRecordedEventAttributes()) {
-                $record = $event->getMarkerRecordedEventAttributes();
-                self::assertSame('SideEffect', $record->getMarkerName());
+                self::assertTrue(Support::isSideEffectMarker($event));
                 $found = true;
                 break;
             }
