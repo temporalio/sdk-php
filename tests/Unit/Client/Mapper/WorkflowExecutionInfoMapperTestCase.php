@@ -97,6 +97,19 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertTrue($info->mostRecentWorkerVersionStamp->useVersioning);
     }
 
+    public function testFromPayloadWithPausedStatus(): void
+    {
+        $info = $this->createMapper()->fromMessage(
+            new WorkflowExecutionInfo([
+                'execution' => new WorkflowExecution(['workflow_id' => 'workflowId', 'run_id' => 'runId']),
+                'type' => new WorkflowType(['name' => 'PausedWorkflow']),
+                'status' => \Temporal\Api\Enums\V1\WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_PAUSED,
+            ]),
+        );
+
+        $this->assertSame(WorkflowExecutionStatus::Paused, $info->status);
+    }
+
     private function createMapper(): WorkflowExecutionInfoMapper
     {
         return new WorkflowExecutionInfoMapper(
