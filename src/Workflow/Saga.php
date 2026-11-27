@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Temporal\Exception\CompensationException;
-use Temporal\Promise;
 use Temporal\Workflow;
 
 final class Saga
@@ -67,7 +66,23 @@ final class Saga
                         $scopes[] = Workflow::asyncDetached($handler);
                     }
 
-                    yield Promise::all($scopes);
+                    $sagaException = null;
+                    foreach ($scopes as $scope) {
+                        try {
+                            yield $scope;
+                        } catch (\Exception $e) {
+                            if ($sagaException === null) {
+                                $sagaException = new CompensationException($e->getMessage(), (int) $e->getCode(), $e);
+                            } else {
+                                $sagaException->addSuppressed($e);
+                            }
+                        }
+                    }
+
+                    if ($sagaException !== null) {
+                        throw $sagaException;
+                    }
+
                     return;
                 }
 
