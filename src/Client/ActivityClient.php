@@ -147,11 +147,13 @@ final class ActivityClient implements ActivityClientInterface
             $this->clientOptions->namespace,
             $output->activityId,
             $output->runId,
-            new ActivitySerializationContext(
-                namespace: $this->clientOptions->namespace,
-                activityType: $startInput->activityType,
-                taskQueue: $startInput->options->taskQueue,
-            ),
+            $output->started
+                ? new ActivitySerializationContext(
+                    namespace: $this->clientOptions->namespace,
+                    activityType: $startInput->activityType,
+                    taskQueue: $startInput->options->taskQueue,
+                )
+                : null,
         );
     }
 
@@ -285,7 +287,7 @@ final class ActivityClient implements ActivityClientInterface
 
         $runId = $response->getRunId();
 
-        return new StartOutput($options->id, $runId === '' ? null : $runId);
+        return new StartOutput($options->id, $runId === '' ? null : $runId, $response->getStarted());
     }
 
     private function createHandle(

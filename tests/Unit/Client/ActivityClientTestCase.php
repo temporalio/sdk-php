@@ -80,7 +80,7 @@ final class ActivityClientTestCase extends TestCase
             ->method('StartActivityExecution')
             ->willReturnCallback(static function (StartActivityExecutionRequest $request) use ($captured) {
                 $captured['request'] = $request;
-                return (new StartActivityExecutionResponse())->setRunId('run-id');
+                return (new StartActivityExecutionResponse())->setRunId('run-id')->setStarted(true);
             });
 
         $handle = ActivityClient::create($client)->start(
@@ -180,7 +180,7 @@ final class ActivityClientTestCase extends TestCase
         $client->method('StartActivityExecution')->willReturnCallback(
             static function (StartActivityExecutionRequest $request) use ($captured) {
                 $captured['start'] = $request;
-                return (new StartActivityExecutionResponse())->setRunId('run-id');
+                return (new StartActivityExecutionResponse())->setRunId('run-id')->setStarted(true);
             },
         );
         $client->method('PollActivityExecution')->willReturn(self::resultResponse('run-id', ['done']));
@@ -212,7 +212,7 @@ final class ActivityClientTestCase extends TestCase
         $client->method('StartActivityExecution')->willReturnCallback(
             static function (StartActivityExecutionRequest $request) use ($captured) {
                 $captured['start'] = $request;
-                return (new StartActivityExecutionResponse())->setRunId('run-id');
+                return (new StartActivityExecutionResponse())->setRunId('run-id')->setStarted(true);
             },
         );
         $interceptor = new RecordingInterceptor();
@@ -308,6 +308,30 @@ final class ActivityClientTestCase extends TestCase
         self::assertSame('run-2', $captured['describe']->getRunId());
     }
 
+    public function testHandleOfExistingExecutionReadsItsContext(): void
+    {
+        $client = $this->mockClient();
+        $client->method('StartActivityExecution')->willReturn(
+            (new StartActivityExecutionResponse())->setRunId('run-id')->setStarted(false),
+        );
+        $client->method('PollActivityExecution')->willReturn(self::resultResponse('run-id', ['done']));
+        $client->expects($this->once())->method('DescribeActivityExecution')->willReturn(self::describeResponse());
+
+        ActivityClient::create($client)->start('other-type', self::validOptions())->getResult();
+    }
+
+    public function testHandleOfStartedExecutionKeepsRequestContext(): void
+    {
+        $client = $this->mockClient();
+        $client->method('StartActivityExecution')->willReturn(
+            (new StartActivityExecutionResponse())->setRunId('run-id')->setStarted(true),
+        );
+        $client->method('PollActivityExecution')->willReturn(self::resultResponse('run-id', ['done']));
+        $client->expects($this->never())->method('DescribeActivityExecution');
+
+        ActivityClient::create($client)->start('type', self::validOptions())->getResult();
+    }
+
     public function testHandleWithoutRunIdReadsContextOfEachRun(): void
     {
         $describedRuns = new \ArrayObject();
@@ -369,7 +393,7 @@ final class ActivityClientTestCase extends TestCase
 
             public function start(StartInput $input, callable $next): StartOutput
             {
-                return new StartOutput('intercepted-id', 'intercepted-run');
+                return new StartOutput('intercepted-id', 'intercepted-run', true);
             }
         };
 
