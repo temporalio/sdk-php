@@ -51,6 +51,8 @@ use Temporal\Plugin\CompositePipelineProvider;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Worker\Logger\StderrLogger;
+use Temporal\Internal\ExternalStorage\ExternalStorageDataConverter;
+use Temporal\Internal\ExternalStorage\ExternalStorageRunner;
 
 final class ActivityClient implements ActivityClientInterface
 {
@@ -87,6 +89,16 @@ final class ActivityClient implements ActivityClientInterface
 
         $this->clientOptions = $pluginContext->getClientOptions();
         $this->converter = $pluginContext->getDataConverter() ?? $this->converter;
+
+        $externalStorage = null;
+        if ($this->clientOptions->externalStorage !== null) {
+            $externalStorage = new ExternalStorageRunner(
+                $this->clientOptions->externalStorage,
+                $this->clientOptions->namespace,
+                $logger ?? new StderrLogger(),
+            );
+            $this->converter = new ExternalStorageDataConverter($this->converter, $externalStorage);
+        }
         $this->interceptorPipeline = (new CompositePipelineProvider(
             $pluginContext->getInterceptors(),
             $interceptorProvider ?? new SimplePipelineProvider(),
@@ -97,6 +109,10 @@ final class ActivityClient implements ActivityClientInterface
                 $this->clientOptions->payloadLimits ?? PayloadLimitOptions::new(),
                 $logger ?? new StderrLogger(),
             );
+
+            if ($externalStorage !== null) {
+                $serviceClient = $serviceClient->withExternalStorage($externalStorage);
+            }
         }
 
         $context = $serviceClient->getContext();

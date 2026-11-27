@@ -25,6 +25,7 @@ use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
 use Temporal\Internal\Client\PayloadSizeChecker;
+use Temporal\Internal\ExternalStorage\ExternalStorageRunner;
 use Temporal\Internal\Interceptor\Pipeline;
 
 abstract class BaseClient implements GrpcClientInterface
@@ -43,6 +44,7 @@ abstract class BaseClient implements GrpcClientInterface
     private \Stringable|string $apiKey = '';
     private ?PayloadSizeChecker $payloadSizeChecker = null;
     private bool $payloadLimitsConfigured = false;
+    private ?ExternalStorageRunner $externalStorage = null;
 
     /**
      * @param BaseStub|\Closure(): BaseStub $serviceClient Service Client or its factory
@@ -197,6 +199,16 @@ abstract class BaseClient implements GrpcClientInterface
     }
 
     /**
+     * @internal
+     */
+    final public function withExternalStorage(?ExternalStorageRunner $externalStorage): static
+    {
+        $clone = clone $this;
+        $clone->externalStorage = $externalStorage;
+        return $clone;
+    }
+
+    /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
      */
     final public function withInterceptorPipeline(?Pipeline $pipeline): static
@@ -239,6 +251,10 @@ abstract class BaseClient implements GrpcClientInterface
             $ctx = $ctx->withMetadata([
                 'Authorization' => ["Bearer $key"],
             ] + $ctx->getMetadata());
+        }
+
+        if ($this->externalStorage !== null) {
+            $arg = $this->externalStorage->store($arg);
         }
 
         $this->payloadSizeChecker?->check($method, $arg);

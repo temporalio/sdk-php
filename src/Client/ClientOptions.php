@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Enums\V1\QueryRejectCondition;
 use Temporal\Common\PayloadLimitOptions;
+use Temporal\DataConverter\ExternalStorage\ExternalStorage;
 use Temporal\Internal\Assert;
 
 /**
@@ -43,6 +44,11 @@ class ClientOptions
     public ?PayloadLimitOptions $payloadLimits = null;
 
     /**
+     * @experimental This API is experimental and may change in the future.
+     */
+    public ?ExternalStorage $externalStorage = null;
+
+    /**
      * ClientOptions constructor.
      */
     public function __construct()
@@ -59,6 +65,19 @@ class ClientOptions
         $self = clone $this;
 
         $self->payloadLimits = $options;
+
+        return $self;
+    }
+
+    /**
+     * @experimental This API is experimental and may change in the future.
+     */
+    #[Pure]
+    public function withExternalStorage(?ExternalStorage $options): self
+    {
+        $self = clone $this;
+
+        $self->externalStorage = $options;
 
         return $self;
     }
