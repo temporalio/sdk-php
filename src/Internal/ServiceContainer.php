@@ -13,14 +13,19 @@ namespace Temporal\Internal;
 
 use Psr\Log\LoggerInterface;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
+use Temporal\Internal\Declaration\Prototype\NexusServiceCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Internal\Declaration\Reader\NexusServiceReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Nexus\NexusInvocationRegistry;
+use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -39,6 +44,10 @@ final class ServiceContainer
     public readonly ActivityCollection $activities;
     public readonly WorkflowReader $workflowsReader;
     public readonly ActivityReader $activitiesReader;
+    public readonly NexusServiceCollection $nexusServices;
+    public readonly NexusInvocationRegistry $nexusInvocations;
+    public readonly NexusTaskHandler $nexusTaskHandler;
+    public readonly NexusServiceReader $nexusServicesReader;
 
     /**
      * @param MarshallerInterface<array> $marshaller
@@ -54,12 +63,24 @@ final class ServiceContainer
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
         public readonly LoggerInterface $logger,
+        public readonly ?WorkflowClientInterface $workflowClient = null,
     ) {
         $this->workflows = new WorkflowCollection();
-        $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection();
+        $this->activities = new ActivityCollection();
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);
+
+        $this->nexusServices = new NexusServiceCollection();
+        $this->nexusInvocations = new NexusInvocationRegistry();
+        $this->nexusTaskHandler = new NexusTaskHandler(
+            $this->nexusServices,
+            $this->dataConverter,
+            interceptorProvider: $this->interceptorProvider,
+            workflowClient: $workflowClient,
+            env: $this->env,
+        );
+        $this->nexusServicesReader = new NexusServiceReader($this->reader);
     }
 
     public static function fromWorkerFactory(
@@ -67,6 +88,7 @@ final class ServiceContainer
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
         LoggerInterface $logger,
+        ?WorkflowClientInterface $workflowClient = null,
     ): self {
         return new self(
             $worker,
@@ -79,6 +101,7 @@ final class ServiceContainer
             $exceptionInterceptor,
             $interceptorProvider,
             $logger,
+            $workflowClient,
         );
     }
 }

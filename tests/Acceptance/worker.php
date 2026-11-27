@@ -97,20 +97,6 @@ try {
     $converter = new DataConverter(...$converters);
     $container->bindSingleton(DataConverter::class, $converter);
 
-    $plugins = [new TranscriptPlugin($workerTranscript)];
-    $container->bindSingleton(
-        WorkerFactoryInterface::class,
-        WorkerFactory::create(
-            converter: $converter,
-            pluginRegistry: new PluginRegistry($plugins),
-        )
-    );
-
-    $workerFactory = $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
-    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
-        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
-    };
-
     $serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
         ? ServiceClient::create($runtime->address)
         : ServiceClient::createSSL(
@@ -122,6 +108,21 @@ try {
     $workflowClient = WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
     $scheduleClient = ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
 
+    $container->bindSingleton(
+        WorkerFactoryInterface::class,
+        WorkerFactory::create(
+            converter: $converter,
+            pluginRegistry: new PluginRegistry([new TranscriptPlugin($workerTranscript)]),
+            client: $workflowClient,
+        ),
+    );
+
+    $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
+    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
+        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
+    };
+
+    // Bind services
     $container->bindSingleton(State::class, $runtime);
     $container->bindSingleton(LoggerInterface::class, $logger);
     $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
@@ -139,6 +140,11 @@ try {
 
     foreach ($runtime->activities() as $feature => $activity) {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
+    }
+
+    // Register Nexus Services
+    foreach ($runtime->nexusServices() as $feature => $nexusService) {
+        $getWorker($feature)->registerNexusServiceImplementation($container->make($nexusService));
     }
 
     $host = new RecordingHost(RoadRunner::create(), $workerTranscript);

@@ -17,6 +17,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\RawValue;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\NexusServicePrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -63,7 +64,12 @@ final class GetWorkerInfo extends Route
             'Name' => $activity->getID(),
         ];
 
-        $map = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
+        $nexusServiceMap = static fn(NexusServicePrototype $service): array => [
+            'name' => $service->getID(),
+            'operations' => \array_keys($service->getOperations()),
+        ];
+
+        $plugins = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
             'Name' => $plugin->getName(),
             'Version' => null,
         ]);
@@ -75,8 +81,9 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
-            'Plugins' => $map,
+            'Plugins' => $plugins,
             'Flags' => (object) $this->prepareFlags(),
+            'NexusServices' => $this->map($worker->getNexusServices(), $nexusServiceMap),
         ];
     }
 

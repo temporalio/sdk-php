@@ -25,6 +25,7 @@ final class TemporalStarter
 
         $this->environment->startTemporalServer(
             parameters: [
+                '--http-port', '7243',
                 '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecution=true',
                 '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
                 '--dynamic-config-value', 'frontend.enableExecuteMultiOperation=true',
