@@ -17,7 +17,9 @@ use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
 use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
+use Temporal\Tests\Unit\Framework\Requests\DestroyWorkflow;
 use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
+use Temporal\Tests\Unit\Framework\Requests\InvokeUpdate;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
 use Temporal\Tests\Unit\Framework\Server\ServerMock;
@@ -73,6 +75,16 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
 
         }
         $this->server->addCommand(new InvokeSignal($workflowRunId, $name, ...$args));
+    }
+
+    public function sendUpdate(string $workflow, string $name, mixed ...$args): void
+    {
+        $this->server->addCommand(new InvokeUpdate($this->execution[$workflow], $name, Uuid::v4(), ...$args));
+    }
+
+    public function destroyWorkflow(string $workflow): void
+    {
+        $this->server->addCommand(new DestroyWorkflow($this->execution[$workflow]));
     }
 
     public function waitBatch(): ?CommandBatchMock
@@ -204,6 +216,7 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
         $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->loop));
         $router->add(new Router\InvokeSignal($this->services->running));
+        $router->add(new Router\InvokeUpdate($this->services->running));
 
         return $router;
     }

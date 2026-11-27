@@ -14,6 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Internal\Promise\Abandoned;
 use Temporal\Internal\Support\Facade;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -106,6 +107,11 @@ class CompletableResult implements CompletableResultInterface
     public function cancel(): void
     {
         Facade::usingContext($this->context, $this->promise()->cancel(...));
+    }
+
+    public function abandon(): void
+    {
+        $this->deferred->resolve(new Abandoned());
     }
 
     /**
