@@ -19,4 +19,5 @@ enum WorkflowExecutionStatus: int
     case Terminated = 5;
     case ContinuedAsNew = 6;
     case TimedOut = 7;
+    case Paused = 8;
 }
